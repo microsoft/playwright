@@ -20795,8 +20795,9 @@ export interface Clock {
    * await page.clock.fastForward('30:00');
    * ```
    *
-   * @param ticks Time may be the number of milliseconds to advance the clock by or a human-readable string. Valid string formats are
-   * "08" for eight seconds, "01:00" for one minute and "02:34:10" for two hours, 34 minutes and ten seconds.
+   * @param ticks Time may be a finite number of milliseconds to advance the clock by or a human-readable string. Valid string
+   * formats are "08" for eight seconds, "01:00" for one minute and "02:34:10" for two hours, 34 minutes and ten
+   * seconds.
    */
   fastForward(ticks: number|string): Promise<void>;
 
@@ -20876,8 +20877,9 @@ export interface Clock {
    * await page.clock.runFor('30:00');
    * ```
    *
-   * @param ticks Time may be the number of milliseconds to advance the clock by or a human-readable string. Valid string formats are
-   * "08" for eight seconds, "01:00" for one minute and "02:34:10" for two hours, 34 minutes and ten seconds.
+   * @param ticks Time may be a finite number of milliseconds to advance the clock by or a human-readable string. Valid string
+   * formats are "08" for eight seconds, "01:00" for one minute and "02:34:10" for two hours, 34 minutes and ten
+   * seconds.
    */
   runFor(ticks: number|string): Promise<void>;
 
