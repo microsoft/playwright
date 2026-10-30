@@ -455,6 +455,26 @@ test('should support omitBackground option for locator', async ({ runInlineTest 
   expect.soft(png.data[3], 'image A must be 0').toBe(0);
 });
 
+test('should enforce strictness for locator screenshots', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43745' } }, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    ...playwrightConfig({}),
+    'a.spec.js': `
+      const { test, expect } = require('@playwright/test');
+      test('is a test', async ({ page }) => {
+        await page.setContent('<button>First</button><button>Second</button>');
+        const buttons = page.getByRole('button');
+        await expect(buttons).toHaveCount(2);
+        await expect(buttons.first()).toHaveScreenshot('button.png');
+        await expect(buttons.screenshot()).rejects.toThrow('strict mode violation');
+        await expect(expect(buttons).toHaveScreenshot('button.png')).rejects.toThrow('strict mode violation');
+      });
+    `
+  }, { 'update-snapshots': true });
+  expect(result.exitCode).toBe(0);
+  const regularResult = await runInlineTest({});
+  expect(regularResult.exitCode).toBe(0);
+});
+
 test('should fail to screenshot an element with infinite animation', async ({ runInlineTest }, testInfo) => {
   const infiniteAnimationURL = pathToFileURL(path.join(__dirname, '../assets/rotate-z.html'));
   const result = await runInlineTest({

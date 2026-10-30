@@ -686,6 +686,8 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
         if (!(e instanceof PlaywrightError))
           throw e;
         const details = e.details as channels.PageExpectScreenshotErrorDetails;
+        if (!details.customErrorMessage)
+          throw e;
         return { ...details, errorMessage: details.customErrorMessage };
       }
     }, { title });
