@@ -17,3 +17,14 @@ pipelines:
           lastModifiedDate: 2026-08-07
         spotbugs:
           lastModifiedDate: 2026-08-07
+  28460:
+    retail:
+      source:
+        eslint:
+          lastModifiedDate: 2026-10-30
+        psscriptanalyzer:
+          lastModifiedDate: 2026-10-30
+        armory:
+          lastModifiedDate: 2026-10-30
+        accessibilityinsights:
+          lastModifiedDate: 2026-10-30
