@@ -260,10 +260,15 @@ export class TestServer {
       this._requestSubscribers.delete(pathWithSearch);
     }
     const handler = this._routes.get(pathWithSearch);
-    if (handler)
+    if (handler) {
       handler.call(null, request as IncomingMessageWithBody, response);
-    else
+    } else if (pathWithSearch === '/favicon.ico') {
+      // Headless Chrome requests the favicon after a load and logs a 404 to the console of the page.
+      response.statusCode = 204;
+      response.end();
+    } else {
       this.serveFile(request, response);
+    }
   }
 
   serveFile(request: http.IncomingMessage, response: http.ServerResponse, filePath?: string): void {
