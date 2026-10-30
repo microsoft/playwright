@@ -21,7 +21,7 @@ import realColors from 'colors/safe';
 import { noColors } from '@isomorphic/colors';
 import { msToString } from '@isomorphic/formatUtils';
 import { parseErrorStack } from '@utils/stackTrace';
-import { getPackageManagerExecCommand } from '@utils/env';
+import { getAsBooleanFromENV, getPackageManagerExecCommand } from '@utils/env';
 import { fitToWidth } from '@utils/stringWidth';
 
 import { resolveReporterOutputPath, stripAnsiEscapes } from '../util';
@@ -397,8 +397,9 @@ export function isFailure(test: TestCase): boolean {
 
 export type TestFilter = (test: TestCase) => boolean;
 
-export function createTestFilter(options: CommonReporterOptions): TestFilter | undefined {
-  return options.onlyFailures ? isFailure : undefined;
+export function createTestFilter(options: CommonReporterOptions, reporterName: 'HTML' | 'JSON' | 'JUNIT'): TestFilter | undefined {
+  const onlyFailures = options._mode !== 'list' && getAsBooleanFromENV(`PLAYWRIGHT_${reporterName}_ONLY_FAILURES`, !!options.onlyFailures);
+  return onlyFailures ? isFailure : undefined;
 }
 
 export function* visitTests(suite: Suite, filter?: TestFilter): Generator<TestCase> {

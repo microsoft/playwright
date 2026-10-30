@@ -69,19 +69,6 @@ const testFiles = {
   `,
 };
 
-test('rejects --reporter-only-failures', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43794' } }, async ({ runInlineTest, mergeReports }, testInfo) => {
-  const result = await runInlineTest({
-    'a.test.ts': passingTest,
-  }, { 'reporter-only-failures': true });
-  expect(result.exitCode).toBe(1);
-  expect(result.output).toContain("unknown option '--reporter-only-failures'");
-  const merged = await mergeReports(testInfo.outputPath('blob-report'), {}, {
-    additionalArgs: ['--reporter-only-failures'],
-  });
-  expect(merged.exitCode).toBe(1);
-  expect(merged.output).toContain("unknown option '--reporter-only-failures'");
-});
-
 test('failures reporter accounts for passing and failing test durations', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
@@ -188,10 +175,21 @@ test('onlyFailures can be configured independently for each reporter', async ({ 
   const complete: JSONReport = JSON.parse(fs.readFileSync(testInfo.outputPath('complete.json'), 'utf8'));
   expect(jsonTestSpecs(failures.suites).map(spec => spec.title)).toEqual(['fails']);
   expect(jsonTestSpecs(complete.suites).map(spec => spec.title)).toEqual(['passes', 'fails']);
+
+  const overridden = await runInlineTest({}, { workers: 1 }, { PLAYWRIGHT_JSON_ONLY_FAILURES: 'false' });
+  expect(overridden.exitCode).toBe(1);
+  const unfiltered: JSONReport = JSON.parse(fs.readFileSync(testInfo.outputPath('failures.json'), 'utf8'));
+  expect(jsonTestSpecs(unfiltered.suites).map(spec => spec.title)).toEqual(['passes', 'fails']);
 });
 
 for (const merge of [false, true]) {
-  test(`onlyFailures filters final reports and preserves blobs when ${merge ? 'merging' : 'running'}`, async ({ runInlineTest, mergeReports }, testInfo) => {
+  test(`onlyFailures filters final reports and preserves blobs when ${merge ? 'merging' : 'running'}`, { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43794' } }, async ({ runInlineTest, mergeReports }, testInfo) => {
+    const env = {
+      PLAYWRIGHT_JUNIT_INCLUDE_RETRIES: '0',
+      PLAYWRIGHT_HTML_ONLY_FAILURES: merge ? '1' : undefined,
+      PLAYWRIGHT_JSON_ONLY_FAILURES: merge ? '1' : undefined,
+      PLAYWRIGHT_JUNIT_ONLY_FAILURES: merge ? '1' : undefined,
+    };
     const result = await runInlineTest({
       ...testFiles,
       'playwright.config.ts': `
@@ -199,9 +197,9 @@ for (const merge of [false, true]) {
           retries: 1,
           reporter: [
             ['failures'],
-            ['json', { onlyFailures: true, outputFile: 'failures.json' }],
-            ['junit', { onlyFailures: true, outputFile: 'report.xml', includeRetries: false }],
-            ['html', { onlyFailures: true, open: 'never' }],
+            ['json', { onlyFailures: ${!merge}, outputFile: 'failures.json' }],
+            ['junit', { onlyFailures: ${!merge}, outputFile: 'report.xml', includeRetries: false }],
+            ['html', { onlyFailures: ${!merge}, open: 'never' }],
             ['blob', { outputDir: 'complete-blob-report' }],
             ['perfetto', { outputFile: 'perfetto.json' }],
             ['./integrity-reporter.ts', { onlyFailures: false }],
@@ -228,11 +226,11 @@ for (const merge of [false, true]) {
           }
         }
       `,
-    }, merge ? { reporter: 'blob', workers: 1 } : { workers: 1 }, { PLAYWRIGHT_JUNIT_INCLUDE_RETRIES: '0' });
+    }, merge ? { reporter: 'blob', workers: 1 } : { workers: 1 }, env);
     expect(result.exitCode).toBe(1);
     let output = result.output;
     if (merge) {
-      const merged = await mergeReports(testInfo.outputPath('blob-report'), { PLAYWRIGHT_JUNIT_INCLUDE_RETRIES: '0' }, {
+      const merged = await mergeReports(testInfo.outputPath('blob-report'), env, {
         cwd: testInfo.outputPath(),
         additionalArgs: ['--config', testInfo.outputPath('playwright.config.ts')],
       });
@@ -389,7 +387,7 @@ test('onlyFailures does not filter --list', async ({ runInlineTest }, testInfo) 
       };
     `,
     'a.test.ts': passingTest,
-  }, { 'list': true });
+  }, { 'list': true }, { PLAYWRIGHT_JSON_ONLY_FAILURES: 'true' });
   expect(result.exitCode).toBe(0);
   expect(result.output).toContain('Listing tests:');
   expect(result.output).toContain('› passes');

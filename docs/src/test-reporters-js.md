@@ -350,7 +350,7 @@ HTML report supports the following configuration options and environment variabl
 | Environment Variable Name | Reporter Config Option| Description | Default
 |---|---|---|---|
 | `PLAYWRIGHT_HTML_TITLE` | `title` | A title to display in the generated report. | No title is displayed by default
-| | `onlyFailures` | Include only tests with unexpected outcomes, flaky tests (including successful retries), and interrupted tests. See [Report only failures](#report-only-failures). | `false`
+| `PLAYWRIGHT_HTML_ONLY_FAILURES` | `onlyFailures` | Include only tests with unexpected outcomes, flaky tests (including successful retries), and interrupted tests. See [Report only failures](#report-only-failures). | `false`
 | `PLAYWRIGHT_HTML_OUTPUT_DIR` | `outputFolder` | Directory to save the report to. | `playwright-report`
 | `PLAYWRIGHT_HTML_OPEN` | `open` | When to open the html report in the browser, one of `'always'`, `'never'` or `'on-failure'` | `'on-failure'`
 | `PLAYWRIGHT_HTML_HOST` | `host` | When report opens in the browser, it will be served bound to this hostname. | `localhost`
@@ -456,7 +456,7 @@ JSON report supports following configuration options and environment variables:
 | Environment Variable Name | Reporter Config Option| Description | Default
 |---|---|---|---|
 | `PLAYWRIGHT_JSON_OUTPUT_DIR` | | Directory to save the output file. Ignored if output file is specified. | `cwd` or config directory.
-| | `onlyFailures` | Include only tests with unexpected outcomes, flaky tests (including successful retries), and interrupted tests. See [Report only failures](#report-only-failures). | `false`
+| `PLAYWRIGHT_JSON_ONLY_FAILURES` | `onlyFailures` | Include only tests with unexpected outcomes, flaky tests (including successful retries), and interrupted tests. See [Report only failures](#report-only-failures). | `false`
 | `PLAYWRIGHT_JSON_OUTPUT_NAME` | | Base file name for the output, relative to the output dir. | JSON report is printed to the stdout.
 | `PLAYWRIGHT_JSON_OUTPUT_FILE` | `outputFile` | Full path to the output file. If defined, `PLAYWRIGHT_JSON_OUTPUT_DIR` and `PLAYWRIGHT_JSON_OUTPUT_NAME` will be ignored. | JSON report is printed to the stdout.
 
@@ -495,7 +495,7 @@ JUnit report supports following configuration options and environment variables:
 | Environment Variable Name | Reporter Config Option| Description | Default
 |---|---|---|---|
 | `PLAYWRIGHT_JUNIT_OUTPUT_DIR` | | Directory to save the output file. Ignored if output file is specified. | `cwd` or config directory.
-| | `onlyFailures` | Include only tests with unexpected outcomes, flaky tests (including successful retries), and interrupted tests. Retains every attempt regardless of `includeRetries`. See [Report only failures](#report-only-failures). | `false`
+| `PLAYWRIGHT_JUNIT_ONLY_FAILURES` | `onlyFailures` | Include only tests with unexpected outcomes, flaky tests (including successful retries), and interrupted tests. Retains every attempt regardless of `includeRetries`. See [Report only failures](#report-only-failures). | `false`
 | `PLAYWRIGHT_JUNIT_OUTPUT_NAME` | | Base file name for the output, relative to the output dir. | JUnit report is printed to the stdout.
 | `PLAYWRIGHT_JUNIT_OUTPUT_FILE` | `outputFile` | Full path to the output file. If defined, `PLAYWRIGHT_JUNIT_OUTPUT_DIR` and `PLAYWRIGHT_JUNIT_OUTPUT_NAME` will be ignored. | JUnit report is printed to the stdout.
 | `PLAYWRIGHT_JUNIT_STRIP_ANSI` | `stripANSIControlSequences` | Whether to remove ANSI control sequences from the text before writing it in the report. | By default output text is added as is.

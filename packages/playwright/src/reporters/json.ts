@@ -37,7 +37,7 @@ class JSONReporter implements ReporterV2 {
 
   constructor(options: JsonReporterOptions & CommonReporterOptions) {
     this._resolvedOutputFile = resolveOutputFile('JSON', options)?.outputFile;
-    this._testFilter = createTestFilter(options);
+    this._testFilter = createTestFilter(options, 'JSON');
   }
 
   version(): 'v2' {

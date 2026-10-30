@@ -165,7 +165,7 @@ class HtmlReporter implements ReporterV2 {
       noSnippets,
       noCopyPrompt,
       mergeFiles,
-    }, createTestFilter(this._options));
+    }, createTestFilter(this._options, 'HTML'));
     this._buildResult = await builder.build(this.config.metadata, projectSuites, result, this._topLevelErrors, this._machines);
   }
 
