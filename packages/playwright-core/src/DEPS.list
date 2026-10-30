@@ -30,6 +30,7 @@ node_modules/debug
 node_modules/diff
 node_modules/dotenv
 node_modules/enquirer
+node_modules/fflate
 node_modules/get-east-asian-width
 node_modules/get-stream
 node_modules/graceful-fs

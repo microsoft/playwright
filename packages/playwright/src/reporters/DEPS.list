@@ -6,6 +6,7 @@
 ../util.ts
 node_modules/colors/safe
 node_modules/get-east-asian-width
+node_modules/fflate
 node_modules/mime
 node_modules/open
 node_modules/yazl

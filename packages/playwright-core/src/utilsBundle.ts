@@ -29,6 +29,8 @@ export const diff = diffLibrary;
 import dotenvLibrary from 'dotenv';
 export const dotenv = dotenvLibrary;
 
+export { unzipSync } from 'fflate';
+
 export { getProxyForUrl } from 'proxy-from-env';
 
 export { HttpsProxyAgent } from 'https-proxy-agent';

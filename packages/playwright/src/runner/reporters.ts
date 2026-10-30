@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 import fs from 'fs';
+import path from 'path';
+import dotenv from 'dotenv';
 import { secretsKey } from '@isomorphic/secrets';
 import { calculateSha1 } from '@utils/crypto';
 
@@ -72,14 +74,14 @@ export async function createReporters(config: FullConfigInternal, mode: 'list' |
       reporters.push(wrapReporterAsV2(new reporterConstructor(options)));
     }
   }
-  const allSecretsRedactor = wrapReportersWithSecrets(reporters, descriptions);
+  const allSecretsRedactor = wrapReportersWithSecrets(reporters, descriptions, config.configDir);
   if (process.env.PW_TEST_REPORTER) {
     const name = process.env.PW_TEST_REPORTER;
     if (name in defaultReporters) {
-      reporters.push(new defaultReporters[name as commonConfig.BuiltInReporter](reportOptions));
+      reporters.push(new RedactingReporter(new defaultReporters[name as commonConfig.BuiltInReporter](reportOptions), new SecretsRedactor([])));
     } else {
       const reporterConstructor = await loadReporter(config, name);
-      reporters.push(wrapReporterAsV2(new reporterConstructor(reportOptions)));
+      reporters.push(new RedactingReporter(wrapReporterAsV2(new reporterConstructor(reportOptions)), new SecretsRedactor([])));
     }
   }
 
@@ -93,12 +95,12 @@ export async function createReporters(config: FullConfigInternal, mode: 'list' |
     else if (mode !== 'merge')
       reporter = !process.env.CI ? new LineReporter() : new DotReporter();
     if (reporter)
-      reporters.unshift(allSecretsRedactor ? new RedactingReporter(reporter, allSecretsRedactor) : reporter);
+      reporters.unshift(new RedactingReporter(reporter, allSecretsRedactor ?? new SecretsRedactor([])));
   }
   return reporters;
 }
 
-function wrapReportersWithSecrets(reporters: ReporterV2[], descriptions: ReporterDescription[]): SecretsRedactor | undefined {
+function wrapReportersWithSecrets(reporters: ReporterV2[], descriptions: ReporterDescription[], configDir: string): SecretsRedactor | undefined {
   const redactors = new Map<string, SecretsRedactor>();
   const redactorFor = (secrets: Secrets) => {
     const key = secretsKey(secrets);
@@ -111,13 +113,15 @@ function wrapReportersWithSecrets(reporters: ReporterV2[], descriptions: Reporte
   };
   let allSecrets: Secrets | undefined = reporters.length ? [] : undefined;
   for (let i = 0; i < reporters.length; i++) {
-    const secrets: Secrets | undefined = descriptions[i][1]?.secrets;
-    if (secrets) {
-      reporters[i] = new RedactingReporter(reporters[i], redactorFor(secrets));
+    const option: Secrets | string | undefined = descriptions[i][1]?.secrets;
+    const secrets = typeof option === 'string' ?
+      Object.entries(dotenv.parse(fs.readFileSync(path.resolve(configDir, option)))).map(([name, value]) => ({ name, value })) :
+      option;
+    reporters[i] = new RedactingReporter(reporters[i], redactorFor(secrets ?? []));
+    if (secrets)
       allSecrets = allSecrets ? [...allSecrets, ...secrets] : undefined;
-    } else {
+    else
       allSecrets = undefined;
-    }
   }
   return allSecrets ? redactorFor(allSecrets) : undefined;
 }
