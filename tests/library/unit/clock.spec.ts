@@ -1474,6 +1474,18 @@ it.describe('fastForward', () => {
     await new Promise(f => setTimeout(f, 1500));
     expect(stub.callCount).toBe(1);
   });
+
+  it('CK-220 fast-forwards by more than 2^31 ms', async ({ clock }) => {
+    const stub = createStub();
+    clock.setTimeout(() => {
+      stub(clock.Date.now());
+    }, 1000);
+    const fiftyDays = 50 * 24 * 60 * 60 * 1000;
+    await clock.fastForward(fiftyDays);
+    expect(clock.Date.now()).toBe(fiftyDays);
+    expect(stub.callCount).toBe(1);
+    expect(stub.calledWith(fiftyDays)).toBeTruthy();
+  });
 });
 
 it.describe('pauseAt', () => {

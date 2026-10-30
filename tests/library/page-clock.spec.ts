@@ -160,6 +160,8 @@ it.describe('runFor', () => {
       setInterval(window.stub, 10000);
     });
     await expect(page.clock.runFor('12:02:34:10')).rejects.toThrow();
+    await expect(page.clock.runFor(NaN)).rejects.toThrow('clock.runFor: Invalid ticks: NaN');
+    await expect(page.clock.fastForward(Infinity)).rejects.toThrow('clock.fastForward: Invalid ticks: Infinity');
     expect(calls).toEqual([]);
   });
 
