@@ -343,6 +343,46 @@ test('amount', async () => {
 });
 ```
 
+### Generic custom matchers
+
+TypeScript cannot carry a type parameter from the matcher implementation to the call site. If the matcher is generic over the received value, its type parameter becomes `unknown` when you call the matcher on `expect`.
+
+To get the type of the received value in the matcher arguments, declare the matcher signature in the `PlaywrightTest.Matchers` interface. Its second type parameter `T` is the type of the value passed to `expect`. Note that a generic matcher also needs an explicit `this` parameter type to access `this.utils` and other matcher state.
+
+```js title="fixtures.ts"
+import { expect as baseExpect } from '@playwright/test';
+import type { ExpectMatcherState } from '@playwright/test';
+
+export const expect = baseExpect.extend({
+  toSatisfy<T>(this: ExpectMatcherState, received: T, predicate: (value: T) => boolean) {
+    const pass = predicate(received);
+    return {
+      message: () => `expected ${this.utils.printReceived(received)} to satisfy the predicate`,
+      pass,
+    };
+  },
+});
+
+declare global {
+  namespace PlaywrightTest {
+    interface Matchers<R, T = unknown> {
+      toSatisfy(predicate: (value: T) => boolean): R;
+    }
+  }
+}
+```
+
+Now the `value` argument has the type of the received value.
+
+```js title="example.spec.ts"
+import { test, expect } from './fixtures';
+
+test('generic matcher', async () => {
+  expect('hello').toSatisfy(value => value.startsWith('h'));
+  expect(42).toSatisfy(value => value > 40);
+});
+```
+
 ### Compatibility with expect library
 
 :::note
