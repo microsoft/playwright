@@ -567,7 +567,7 @@ class FrameSession {
         promises.push(emulateLocale(this._client, options.locale));
       if (options.timezoneId)
         promises.push(emulateTimezone(this._client, options.timezoneId));
-      if (!browserOptions.headful)
+      if (!browserOptions.headful && !skipDefaultOverrides)
         promises.push(this._setDefaultFontFamilies(this._client));
       promises.push(this._updateGeolocation(true));
       if (!skipDefaultOverrides)

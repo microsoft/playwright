@@ -833,7 +833,9 @@ test('CD-033 should get title and URL of existing page', async ({ browserType, m
   }
 });
 
-test('CD-034 should skip default overrides with noDefaults', async ({ browserType, mode, server }, testInfo) => {
+test('CD-034 should skip default overrides with noDefaults', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43715' },
+}, async ({ browserType, mode, server }, testInfo) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/40158' });
   const port = 9339 + testInfo.workerIndex;
   const browserServer = await browserType.launch({

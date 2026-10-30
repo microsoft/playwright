@@ -233,8 +233,8 @@ Maximum time in milliseconds to wait for the connection to be established. Defau
 - `noDefaults` <[boolean]>
 
 When true, Playwright will not apply its default overrides to the existing default browser context.
-Specifically, [`option: Browser.newContext.acceptDownloads`] is left at the browser's setting, focus
-emulation is not enabled, and media emulation options (such as [`option: Browser.newContext.colorScheme`],
+Specifically, [`option: Browser.newContext.acceptDownloads`] and font families are left at the browser's
+settings, focus emulation is not enabled, and media emulation options (such as [`option: Browser.newContext.colorScheme`],
 [`option: Browser.newContext.reducedMotion`], [`option: Browser.newContext.forcedColors`], and
 [`option: Browser.newContext.contrast`]) are not applied. Useful when attaching to a user's daily-driver
 browser where these overrides would interfere with existing browser state. New contexts created via
