@@ -50,7 +50,7 @@ test('should clear cache for ct', async ({ runCLICommand }) => {
   expect(result.exitCode).toBe(0);
 });
 
-test('should automatically clean cached versions of a changed file', async ({ runInlineTest, writeFiles }) => {
+test('should automatically clean cached versions of a changed file', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43798' } }, async ({ runInlineTest, writeFiles }) => {
   const cacheDir = test.info().outputPath('playwright-test-cache');
   await runInlineTest({
     'a.spec.ts': `
@@ -58,7 +58,8 @@ test('should automatically clean cached versions of a changed file', async ({ ru
       test('example', () => {});
     `,
   }, undefined, {
-    PLAYWRIGHT_TRANSFORM_CACHE_DIR: cacheDir
+    PLAYWRIGHT_TRANSFORM_CACHE_DIR: undefined,
+    PWTEST_CACHE_DIR: cacheDir,
   });
 
   const cacheDirectories = await fs.promises.readdir(cacheDir);
@@ -84,7 +85,8 @@ test('should automatically clean cached versions of a changed file', async ({ ru
       test('modified test', () => {});
     `,
   }, undefined, {
-    PLAYWRIGHT_TRANSFORM_CACHE_DIR: cacheDir
+    PLAYWRIGHT_TRANSFORM_CACHE_DIR: cacheDir,
+    PWTEST_CACHE_DIR: test.info().outputPath('unused-cache'),
   });
 
   cachedFiles = await fs.promises.readdir(testCacheDirectory);
