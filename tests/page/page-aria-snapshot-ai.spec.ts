@@ -358,16 +358,37 @@ it('AR-059 should not nest cursor pointer hints', async ({ page }) => {
   `);
 });
 
-it('AR-060 should omit names that just repeat printed descendant nodes', async ({ page }) => {
+it('AR-060 should omit names that just repeat printed descendant nodes', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43809' } }, async ({ page }) => {
   await page.setContent(`
     <h3><a style="cursor: pointer" href="/issues/1">Clipboard API</a></h3>
+    <dialog open aria-labelledby="title">
+      <h2 id="title">Delete item?</h2>
+      <button>OK</button>
+    </dialog>
+    <nav aria-labelledby="nav-title"><h2 id="nav-title">Account</h2></nav>
+    <table>
+      <caption>Monthly totals</caption>
+      <tr><th scope="col"><button>Price</button></th></tr>
+    </table>
   `);
 
   const snapshot = await snapshotForAI(page);
   expect(snapshot).toContainYaml(`
-    - heading [level=3] [ref=e2]:
-      - link "Clipboard API" [ref=e3] [cursor=pointer]:
-        - /url: /issues/1
+    - generic [active] [ref=e1]:
+      - heading [level=3] [ref=e2]:
+        - link "Clipboard API" [ref=e3] [cursor=pointer]:
+          - /url: /issues/1
+      - dialog "Delete item?" [ref=e4]:
+        - heading "Delete item?" [level=2] [ref=e5]
+        - button "OK" [ref=e6]
+      - navigation "Account" [ref=e7]:
+        - heading "Account" [level=2] [ref=e8]
+      - table "Monthly totals" [ref=e9]:
+        - caption [ref=e10]: Monthly totals
+        - rowgroup [ref=e11]:
+          - row [ref=e12]:
+            - columnheader "Price" [ref=e13]:
+              - button "Price" [ref=e14]
   `);
 });
 
