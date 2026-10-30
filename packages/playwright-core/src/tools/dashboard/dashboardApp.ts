@@ -49,7 +49,7 @@ type DashboardServer = {
 
 async function startDashboardServer(provider: SessionProvider, options: DashboardOptions): Promise<DashboardServer> {
   const dashboardDir = libPath('vite', 'dashboard');
-  const httpServer = new HttpServer(dashboardDir);
+  const httpServer = new HttpServer({ staticRoot: dashboardDir, useRandomPathPrefix: true });
 
   const connections = new Set<DashboardConnection>();
   let connectionLanded = new ManualPromise<void>();
@@ -68,13 +68,9 @@ async function startDashboardServer(provider: SessionProvider, options: Dashboar
     return connection;
   });
 
-  const wsGuid = httpServer.wsGuid()!;
-  httpServer.routePath('/', (_, response) => {
-    response.statusCode = 302;
-    response.setHeader('Location', `/index.html?ws=${wsGuid}`);
-    response.end();
-    return true;
-  });
+  const redirectFromRoot = options.port !== undefined || options.host !== undefined;
+  if (redirectFromRoot)
+    httpServer.installRootRedirect('/');
 
   // HMR: watch builds serve the dashboard through an embedded Vite dev server
   // so edits to packages/dashboard/src/* reload live. Release builds always
@@ -113,7 +109,8 @@ async function startDashboardServer(provider: SessionProvider, options: Dashboar
       c.close?.();
     await httpServer.stop();
   };
-  return { url: httpServer.urlPrefix('human-readable'), reveal, triggerAnnotate, close };
+  const url = redirectFromRoot ? httpServer.rootUrl('human-readable') : httpServer.urlPrefix('human-readable') + '/';
+  return { url, reveal, triggerAnnotate, close };
 }
 
 function attachDashboardStaticServer(httpServer: HttpServer, dashboardDir: string) {

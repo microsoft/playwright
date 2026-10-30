@@ -48,7 +48,7 @@ const xtermDataSource: XtermDataSource = {
 
 const searchParams = new URLSearchParams(window.location.search);
 const testServerBaseUrl = new URL(searchParams.get('server') ?? '../', window.location.href);
-const wsURL = new URL(searchParams.get('ws')!, testServerBaseUrl);
+const wsURL = new URL('ws', testServerBaseUrl);
 wsURL.protocol = (wsURL.protocol === 'https:' ? 'wss:' : 'ws:');
 const queryParams = {
   args: searchParams.getAll('arg'),

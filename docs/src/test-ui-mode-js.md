@@ -128,5 +128,7 @@ npx playwright test --ui-port=8080 --ui-host=0.0.0.0
 ```
 
 :::note
-Be aware that when specifying the `--ui-host=0.0.0.0` flag, UI Mode with your traces, the passwords and secrets are accessible from other machines inside your network. In the case of GitHub Codespaces, the ports are only accessible from your account by default.
+Be aware that when specifying the `--ui-host` flag, UI Mode, with your traces, passwords and secrets, is accessible to anyone who can reach this address and port. With `--ui-host=0.0.0.0`, this includes other machines inside your network. In the case of GitHub Codespaces, the ports are only accessible from your account by default.
+
+When specifying the `--ui-port` flag, other users on your machine can connect to UI Mode on that port. They can run your tests and read your project files and traces.
 :::
