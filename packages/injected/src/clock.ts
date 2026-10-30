@@ -282,7 +282,7 @@ export class ClockController {
   async fastForward(ticks: number) {
     this._replayLogOnce();
     await this._runWithDisabledRealTimeSync(async () => {
-      await this._innerFastForwardTo(shiftTicks(this._now.ticks, ticks | 0));
+      await this._innerFastForwardTo(shiftTicks(this._now.ticks, Math.trunc(ticks)));
     });
   }
 

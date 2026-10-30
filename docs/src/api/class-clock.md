@@ -43,7 +43,7 @@ await page.Clock.FastForwardAsync("30:00");
 * since: v1.45
 - `ticks` <[long]|[string]>
 
-Time may be the number of milliseconds to advance the clock by or a human-readable string. Valid string formats are "08" for eight seconds, "01:00" for one minute and "02:34:10" for two hours, 34 minutes and ten seconds.
+Time may be a finite number of milliseconds to advance the clock by or a human-readable string. Valid string formats are "08" for eight seconds, "01:00" for one minute and "02:34:10" for two hours, 34 minutes and ten seconds.
 
 ## async method: Clock.install
 * since: v1.45
@@ -121,7 +121,7 @@ await page.Clock.RunForAsync("30:00");
 * since: v1.45
 - `ticks` <[long]|[string]>
 
-Time may be the number of milliseconds to advance the clock by or a human-readable string. Valid string formats are "08" for eight seconds, "01:00" for one minute and "02:34:10" for two hours, 34 minutes and ten seconds.
+Time may be a finite number of milliseconds to advance the clock by or a human-readable string. Valid string formats are "08" for eight seconds, "01:00" for one minute and "02:34:10" for two hours, 34 minutes and ten seconds.
 
 
 ## async method: Clock.pauseAt

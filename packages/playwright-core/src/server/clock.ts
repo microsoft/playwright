@@ -117,8 +117,11 @@ export class Clock {
  * to clock.tick()
  */
 function parseTicks(value: number | string): number {
-  if (typeof value === 'number')
+  if (typeof value === 'number') {
+    if (!Number.isFinite(value))
+      throw new Error(`Invalid ticks: ${value}`);
     return value;
+  }
   if (!value)
     return 0;
   const str = value;
