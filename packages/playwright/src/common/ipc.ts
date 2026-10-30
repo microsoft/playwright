@@ -35,7 +35,6 @@ export type ConfigCLIOverrides = {
   repeatEach?: number;
   retries?: number;
   reporter?: ReporterDescription[];
-  reporterOnlyFailures?: boolean;
   additionalReporters?: ReporterDescription[];
   shard?: { current: number, total: number };
   shuffle?: string;

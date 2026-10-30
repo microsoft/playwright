@@ -64,7 +64,9 @@ export async function createReporters(config: FullConfigInternal, mode: 'list' |
   const reportOptions = reporterCommandOptions(config, mode, runOptions);
   for (const r of descriptions) {
     const [name, arg] = commonConfig.stripReporterSecrets(r);
-    const options = resolveReporterOptions(reportOptions, { ...reportOptions, ...arg });
+    const options = { ...reportOptions, ...arg };
+    if (mode === 'list')
+      options.onlyFailures = false;
     if (name in defaultReporters) {
       reporters.push(new defaultReporters[name as commonConfig.BuiltInReporter](options));
     } else {
@@ -143,17 +145,7 @@ function reporterCommandOptions(config: FullConfigInternal, mode: 'list' | 'test
     configDir: config.configDir,
     _mode: mode,
     _commandHash: computeCommandHash(config, runOptions),
-    onlyFailures: mode !== 'list' && config.configCLIOverrides.reporterOnlyFailures,
   };
-}
-
-function resolveReporterOptions(commonOptions: CommonReporterOptions, options: CommonReporterOptions): CommonReporterOptions {
-  let onlyFailures = options.onlyFailures;
-  if (commonOptions._mode === 'list')
-    onlyFailures = false;
-  else if (commonOptions.onlyFailures)
-    onlyFailures = true;
-  return { ...options, onlyFailures };
 }
 
 function computeCommandHash(config: FullConfigInternal, runOptions?: TestRunOptions) {

@@ -44,10 +44,10 @@ class JUnitReporter implements ReporterV2 {
   private testFilter: TestFilter | undefined;
 
   constructor(options: JUnitReporterOptions & CommonReporterOptions) {
-    this.testFilter = createTestFilter(options);
+    this.testFilter = createTestFilter(options, 'JUNIT');
     this.stripANSIControlSequences = getAsBooleanFromENV('PLAYWRIGHT_JUNIT_STRIP_ANSI', !!options.stripANSIControlSequences);
     this.includeProjectInTestName = getAsBooleanFromENV('PLAYWRIGHT_JUNIT_INCLUDE_PROJECT_IN_TEST_NAME', !!options.includeProjectInTestName);
-    this.includeRetries = !!options.onlyFailures || getAsBooleanFromENV('PLAYWRIGHT_JUNIT_INCLUDE_RETRIES', !!options.includeRetries);
+    this.includeRetries = !!this.testFilter || getAsBooleanFromENV('PLAYWRIGHT_JUNIT_INCLUDE_RETRIES', !!options.includeRetries);
     this.omitTags = getAsBooleanFromENV('PLAYWRIGHT_JUNIT_OMIT_TAGS', !!options.omitTags);
     this.configDir = options.configDir;
     this.resolvedOutputFile = resolveOutputFile('JUNIT', options)?.outputFile;
