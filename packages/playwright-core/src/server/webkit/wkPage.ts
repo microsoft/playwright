@@ -822,16 +822,19 @@ export class WKPage implements PageDelegate {
        * We polyfill the subset that's used for feature detection, so that login flows that'd work in Safari don't crash with "PublicKeyCredential is not defined" in CI.
        * https://developer.mozilla.org/en-US/docs/Web/API/PublicKeyCredential
        */
-      window.PublicKeyCredential ??= {
-        async getClientCapabilities() {
+      window.PublicKeyCredential ??= class PublicKeyCredential {
+        constructor() {
+          throw new TypeError('Illegal constructor');
+        }
+        static async getClientCapabilities() {
           return {};
-        },
-        async isConditionalMediationAvailable() {
+        }
+        static async isConditionalMediationAvailable() {
           return false;
-        },
-        async isUserVerifyingPlatformAuthenticatorAvailable() {
+        }
+        static async isUserVerifyingPlatformAuthenticatorAvailable() {
           return false;
-        },
+        }
       } as any;
     }
     return `(${polyfill.toString()})();`;

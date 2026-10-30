@@ -476,15 +476,31 @@ it('CA-028 should not auto play audio', {
 });
 
 it('CA-029 should not crash on feature detection for PublicKeyCredential', {
-  annotation: {
+  annotation: [{
     type: 'issue',
     description: 'https://github.com/microsoft/playwright/issues/35433'
-  }
-}, async ({ page, server }) => {
+  }, {
+    type: 'issue',
+    description: 'https://github.com/microsoft/playwright/issues/43711'
+  }]
+}, async ({ page, server, context }) => {
   await page.goto(server.EMPTY_PAGE);
+  expect(await page.evaluate(() => typeof PublicKeyCredential)).toBe('function');
+  expect(await page.evaluate(() => PublicKeyCredential.name)).toBe('PublicKeyCredential');
+  expect(await page.evaluate(() => ({}) instanceof PublicKeyCredential)).toBe(false);
+  expect(await page.evaluate(() => {
+    try {
+      new PublicKeyCredential();
+      return false;
+    } catch (e) {
+      return e instanceof TypeError;
+    }
+  })).toBe(true);
   await page.evaluate(async () => {
     await PublicKeyCredential.getClientCapabilities();
     await PublicKeyCredential.isConditionalMediationAvailable();
     await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
   });
+  await context.credentials.install();
+  expect(await page.evaluate(() => typeof PublicKeyCredential)).toBe('function');
 });
