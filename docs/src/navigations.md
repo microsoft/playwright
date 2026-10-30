@@ -46,6 +46,12 @@ If the page does a client-side redirect before `load`, [`method: Page.goto`] wil
 wait for the redirected page to fire the `load` event.
 :::
 
+:::note
+In Firefox, a navigation triggered by the page can interrupt [`method: Page.goto`]
+with an `NS_BINDING_ABORTED` error. This is a
+[known Firefox limitation](https://github.com/microsoft/playwright/issues/20749).
+:::
+
 ## When is the page loaded?
 
 Modern pages perform numerous activities after the `load` event was fired. They
