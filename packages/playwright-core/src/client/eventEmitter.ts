@@ -84,14 +84,15 @@ export class EventEmitter implements EventEmitterType {
   private _callHandler(type: EventType, handler: Listener, args: any[]): void {
     let promise;
     try {
-      promise = Reflect.apply(handler, this, args);
+      const result = Reflect.apply(handler, this, args);
+      const then = result?.then;
+      if (typeof then !== 'function')
+        return;
+      promise = new Promise<void>((resolve, reject) => then.call(result, resolve, reject));
     } catch (error) {
       this._handleListenerError(type, error);
       return;
     }
-    if (!promise || typeof promise.then !== 'function')
-      return;
-    promise = Promise.resolve(promise);
     let set = this._pendingHandlers.get(type);
     if (!set) {
       set = new Set();
