@@ -190,7 +190,10 @@ test('empty secret value is ignored', async ({ startClient, server }) => {
   });
 });
 
-test('redacts url parameter values', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-mcp/issues/1791' } }, async ({ startClient, server }) => {
+test('redacts url parameter values', { annotation: [
+  { type: 'issue', description: 'https://github.com/microsoft/playwright-mcp/issues/1791' },
+  { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43799' },
+] }, async ({ startClient, server }) => {
   const { client } = await startClient({
     args: ['--redact-url-params=code,access_token'],
   });
@@ -213,4 +216,28 @@ test('redacts url parameter values', { annotation: { type: 'issue', description:
   })).toHaveResponse({
     result: `- 0: (current) [App](${server.PREFIX}/app?code=<redacted>&state=s1#access_token=<redacted>&token_type=bearer)`,
   });
+
+  const network = await client.callTool({
+    name: 'browser_network_requests',
+    arguments: { static: true },
+  });
+  expect(network).toHaveResponse({
+    result: expect.stringContaining(`[GET] ${server.PREFIX}/app?code=<redacted>&state=s1 => [200] OK`),
+  });
+
+  const index = Number(parseResponse(network).result.match(/^(\d+)\. \[GET\] .*\/app\?/m)![1]);
+  expect(await client.callTool({
+    name: 'browser_network_request',
+    arguments: { index },
+  })).toHaveResponse({
+    result: expect.stringContaining(`#${index} [GET] ${server.PREFIX}/app?code=<redacted>&state=s1`),
+  });
+
+  await client.callTool({
+    name: 'browser_network_requests',
+    arguments: { static: true, filename: 'network.log' },
+  });
+  const networkLog = await fs.promises.readFile(test.info().outputPath('network.log'), 'utf-8');
+  expect(networkLog).toContain(`[GET] ${server.PREFIX}/app?code=<redacted>&state=s1 => [200] OK`);
+  expect(networkLog).not.toContain('abc123');
 });
