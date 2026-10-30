@@ -181,7 +181,7 @@ index 941d5c2533f8ed087af1153a7af7863c96df885b..eb38e92af1d17efe2cb3295c30976381
  }
  
 diff --git a/docshell/base/nsDocShell.cpp b/docshell/base/nsDocShell.cpp
-index 5be2ef463856367597184671034c24117ed3b6d6..30a5dded874aeb39647cbbbbccf1d4a5d0e5ab1f 100644
+index 5be2ef463856367597184671034c24117ed3b6d6..a83c0fc3424a13cf127d5bd5ebcb7860eb3ba06a 100644
 --- a/docshell/base/nsDocShell.cpp
 +++ b/docshell/base/nsDocShell.cpp
 @@ -354,6 +354,9 @@ nsDocShell::nsDocShell(BrowsingContext* aBrowsingContext,
@@ -251,8 +251,8 @@ index 5be2ef463856367597184671034c24117ed3b6d6..30a5dded874aeb39647cbbbbccf1d4a5
 +  return NS_OK;
 +}
 +
-+bool nsDocShell::ShouldOverrideHasFocus() const {
-+  return mOverrideHasFocus;
++bool nsDocShell::ShouldOverrideHasFocus() {
++  return GetRootDocShell()->mOverrideHasFocus;
 +}
 +
 +// =============== Juggler End =======================
@@ -318,14 +318,14 @@ index 5be2ef463856367597184671034c24117ed3b6d6..30a5dded874aeb39647cbbbbccf1d4a5
                                           aTriggeringPrincipal);
    return result.isErr() ? result.unwrapErr() : NS_OK;
 diff --git a/docshell/base/nsDocShell.h b/docshell/base/nsDocShell.h
-index 27d9e920d135d8f94971cf303ef7ba3bfe4d512e..c298a90e271ffc26566fd78dce6e462fedb9f76c 100644
+index 27d9e920d135d8f94971cf303ef7ba3bfe4d512e..59d5b2c47bc850fa002f4310454042c0934372b8 100644
 --- a/docshell/base/nsDocShell.h
 +++ b/docshell/base/nsDocShell.h
 @@ -384,6 +384,10 @@ class nsDocShell final : public nsDocLoader,
    void SetWillChangeProcess() { mWillChangeProcess = true; }
    bool WillChangeProcess() { return mWillChangeProcess; }
  
-+  bool ShouldOverrideHasFocus() const;
++  bool ShouldOverrideHasFocus();
 +
 +  bool IsBypassCSPEnabled();
 +
@@ -370,7 +370,7 @@ index 011f9aef571fc0b1d5224fb2b321082af605509a..8bd2ddd6d4ecf0347abc21a02beab383
     * This attempts to save any applicable layout history state (like
     * scroll position) in the nsISHEntry. This is normally done
 diff --git a/dom/base/Document.cpp b/dom/base/Document.cpp
-index 360645185a5a3dd6cf1d107c88b114a6f05445ab..b3658c0fb3ef5f64c9a8f09d77a04c540076ec48 100644
+index 360645185a5a3dd6cf1d107c88b114a6f05445ab..0dcfc958627a64a171ee28f5d4ae206aee61c3a1 100644
 --- a/dom/base/Document.cpp
 +++ b/dom/base/Document.cpp
 @@ -3864,6 +3864,9 @@ void Document::SendToConsole(nsCOMArray<nsISecurityConsoleMessage>& aMessages) {
@@ -398,12 +398,14 @@ index 360645185a5a3dd6cf1d107c88b114a6f05445ab..b3658c0fb3ef5f64c9a8f09d77a04c54
    nsCOMPtr<nsIPrincipal> principal = NodePrincipal();
    if ((principal->IsSystemPrincipal() ||
         (mDocumentURI && mDocumentURI->SchemeIs("chrome"))) &&
-@@ -4991,6 +5002,10 @@ bool Document::HasFocus(ErrorResult& rv) const {
+@@ -4991,6 +5002,12 @@ bool Document::HasFocus(ErrorResult& rv) const {
      return false;
    }
  
 +  if (IsActive() && mDocumentContainer->ShouldOverrideHasFocus()) {
-+    return true;
++    // Emulate the window being active, but keep reporting which frame has focus.
++    return bc->IsTop() ||
++           fm->IsSameOrAncestor(bc, fm->GetFocusedBrowsingContext());
 +  }
 +
    if (!fm->IsInActiveWindow(bc)) {
@@ -473,7 +475,7 @@ index c640549a35fb49d1947ab62877b19ed6569d8cc5..52a6fc5f3c564cd2684b54db3e4f24cd
    mouseOrPointerEvent.pointerId = aMouseEventData.mIdentifier;
    mouseOrPointerEvent.mModifiers =
 diff --git a/dom/base/nsFocusManager.cpp b/dom/base/nsFocusManager.cpp
-index 722f715e4593cd7ecc700a482b016c52be789edf..4ca7733495d50e25516fc947014cb997e0aebb03 100644
+index 722f715e4593cd7ecc700a482b016c52be789edf..4947eaccd064be030fa5444879eaa84022d729cd 100644
 --- a/dom/base/nsFocusManager.cpp
 +++ b/dom/base/nsFocusManager.cpp
 @@ -1885,6 +1885,10 @@ Maybe<uint64_t> nsFocusManager::SetFocusInner(Element* aNewContent,
@@ -509,7 +511,20 @@ index 722f715e4593cd7ecc700a482b016c52be789edf..4ca7733495d50e25516fc947014cb997
    // Keep a ref to presShell since dispatching the DOM event may cause
    // the document to be destroyed.
    RefPtr<PresShell> presShell = docShell->GetPresShell();
-@@ -3259,7 +3271,9 @@ void nsFocusManager::RaiseWindow(nsPIDOMWindowOuter* aWindow,
+@@ -2670,7 +2682,11 @@ bool nsFocusManager::BlurImpl(BrowsingContext* aBrowsingContextToClear,
+     }
+ 
+     // check if a different window was focused
+-    result = (!GetFocusedBrowsingContext() && GetActiveBrowsingContext());
++    // Playwright's emulated active window may still be natively inactive.
++    result = !GetFocusedBrowsingContext() &&
++             (GetActiveBrowsingContext() ||
++              (XRE_IsContentProcess() &&
++               nsDocShell::Cast(docShell)->ShouldOverrideHasFocus()));
+   } else if (GetActiveBrowsingContext()) {
+     // Otherwise, the blur of the element without blurring the document
+     // occurred normally. Call UpdateCaret to redisplay the caret at the right
+@@ -3259,7 +3275,9 @@ void nsFocusManager::RaiseWindow(nsPIDOMWindowOuter* aWindow,
      }
    }
  
