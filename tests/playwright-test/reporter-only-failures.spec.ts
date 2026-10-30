@@ -69,14 +69,17 @@ const testFiles = {
   `,
 };
 
-test('--reporter-only-failures leaves terminal reporters unchanged', async ({ runInlineTest }) => {
+test('rejects --reporter-only-failures', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43794' } }, async ({ runInlineTest, mergeReports }, testInfo) => {
   const result = await runInlineTest({
     'a.test.ts': passingTest,
-  }, { 'reporter': 'list,line,dot', 'reporter-only-failures': true }, { PLAYWRIGHT_FORCE_TTY: '0' });
-  expect(result.exitCode).toBe(0);
-  expect(result.output.match(/Running 1 test using/g)).toHaveLength(3);
-  expect(result.output.match(/› passes/g)).toHaveLength(2);
-  expect(result.output).toContain('·');
+  }, { 'reporter-only-failures': true });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain("unknown option '--reporter-only-failures'");
+  const merged = await mergeReports(testInfo.outputPath('blob-report'), {}, {
+    additionalArgs: ['--reporter-only-failures'],
+  });
+  expect(merged.exitCode).toBe(1);
+  expect(merged.output).toContain("unknown option '--reporter-only-failures'");
 });
 
 test('failures reporter accounts for passing and failing test durations', async ({ runInlineTest }) => {
@@ -152,11 +155,11 @@ test('failures reporter avoids automatic terminal output', async ({ runInlineTes
     `,
     'a.test.ts': passingTest,
   };
-  const fallback = await runInlineTest(files, { 'reporter-only-failures': true }, { CI: undefined });
+  const fallback = await runInlineTest(files, {}, { CI: undefined });
   expect(fallback.exitCode).toBe(0);
   expect(fallback.output).toContain('Running 1 test using');
   expect(fallback.output).toContain('› passes');
-  const added = await runInlineTest(files, { 'reporter-only-failures': true, 'add-reporter': 'failures' }, { CI: undefined });
+  const added = await runInlineTest(files, { 'add-reporter': 'failures' }, { CI: undefined });
   expect(added.exitCode).toBe(0);
   expect(added.output).toMatch(/^  1 passed \([^)]+\)\n$/);
 });
@@ -188,7 +191,7 @@ test('onlyFailures can be configured independently for each reporter', async ({ 
 });
 
 for (const merge of [false, true]) {
-  test(`--reporter-only-failures filters final reports and preserves blobs when ${merge ? 'merging' : 'running'}`, async ({ runInlineTest, mergeReports }, testInfo) => {
+  test(`onlyFailures filters final reports and preserves blobs when ${merge ? 'merging' : 'running'}`, async ({ runInlineTest, mergeReports }, testInfo) => {
     const result = await runInlineTest({
       ...testFiles,
       'playwright.config.ts': `
@@ -196,9 +199,9 @@ for (const merge of [false, true]) {
           retries: 1,
           reporter: [
             ['failures'],
-            ['json', { outputFile: 'report.json' }],
-            ['junit', { outputFile: 'report.xml', includeRetries: false }],
-            ['html', { open: 'never' }],
+            ['json', { onlyFailures: true, outputFile: 'failures.json' }],
+            ['junit', { onlyFailures: true, outputFile: 'report.xml', includeRetries: false }],
+            ['html', { onlyFailures: true, open: 'never' }],
             ['blob', { outputDir: 'complete-blob-report' }],
             ['perfetto', { outputFile: 'perfetto.json' }],
             ['./integrity-reporter.ts', { onlyFailures: false }],
@@ -225,13 +228,13 @@ for (const merge of [false, true]) {
           }
         }
       `,
-    }, merge ? { reporter: 'blob', workers: 1 } : { 'reporter-only-failures': true, 'workers': 1 }, { PLAYWRIGHT_JUNIT_INCLUDE_RETRIES: '0' });
+    }, merge ? { reporter: 'blob', workers: 1 } : { workers: 1 }, { PLAYWRIGHT_JUNIT_INCLUDE_RETRIES: '0' });
     expect(result.exitCode).toBe(1);
     let output = result.output;
     if (merge) {
       const merged = await mergeReports(testInfo.outputPath('blob-report'), { PLAYWRIGHT_JUNIT_INCLUDE_RETRIES: '0' }, {
         cwd: testInfo.outputPath(),
-        additionalArgs: ['--config', testInfo.outputPath('playwright.config.ts'), '--reporter-only-failures'],
+        additionalArgs: ['--config', testInfo.outputPath('playwright.config.ts')],
       });
       expect(merged.exitCode).toBe(0);
       output = stripAnsi(merged.output);
@@ -250,7 +253,7 @@ for (const merge of [false, true]) {
     expect(output).not.toContain('passing.test.ts');
     expect(output).toContain('%%begin: 6');
     expect(output).toContain('%%end: 6');
-    expect(output).toContain('%%onlyFailures: true');
+    expect(output).toContain('%%onlyFailures: false');
     expect(fs.existsSync(testInfo.outputPath('passing-ran.txt'))).toBe(true);
 
     const titles = ['fails', 'flaky', 'unexpectedly passes'];
@@ -263,7 +266,7 @@ for (const merge of [false, true]) {
       expect(output).toContain(`flaky attempt ${retry}`);
       expect(output).toContain(`flaky stderr ${retry}`);
     }
-    const json: JSONReport = JSON.parse(fs.readFileSync(testInfo.outputPath('report.json'), 'utf8'));
+    const json: JSONReport = JSON.parse(fs.readFileSync(testInfo.outputPath('failures.json'), 'utf8'));
     const specs = jsonTestSpecs(json.suites);
     expect(specs.map(spec => spec.title).sort()).toEqual(titles);
     expect(json.stats).toMatchObject({ expected: 0, skipped: 0, unexpected: 2, flaky: 1 });
@@ -378,7 +381,7 @@ test('failures reporter prints timeout and successful retry details live without
   expect(runner.output).not.toContain('\u001B[2K');
 });
 
-test('--reporter-only-failures does not filter --list', async ({ runInlineTest }, testInfo) => {
+test('onlyFailures does not filter --list', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       export default {
@@ -386,7 +389,7 @@ test('--reporter-only-failures does not filter --list', async ({ runInlineTest }
       };
     `,
     'a.test.ts': passingTest,
-  }, { 'list': true, 'reporter-only-failures': true });
+  }, { 'list': true });
   expect(result.exitCode).toBe(0);
   expect(result.output).toContain('Listing tests:');
   expect(result.output).toContain('› passes');

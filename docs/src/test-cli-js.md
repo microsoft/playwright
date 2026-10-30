@@ -103,7 +103,6 @@ npx playwright test --ui
 | `--quiet` | Suppress stdio. |
 | `--repeat-each <N>` | Run each test `N` times (default: 1). |
 | `--reporter <reporter>` | Reporter to use, comma-separated, can be "dot", "line", "list", "failures", or others (default: "list" locally and "dot" on CI). You can also pass a path to a custom reporter file. |
-| `--reporter-only-failures` | Include only failed, flaky, and interrupted tests in JSON, JUnit, and HTML reports. |
 | `--retries <retries>` | Maximum retry count for flaky tests, zero for no retries (default: no retries). |
 | `--run-agents <mode>` | Run agents to generate the code for `page.perform`. Possible values are "missing", "all" and "none" (default: "none"). See [test-agents](./test-agents.md). |
 | `--shard <shard>` | Shard tests and execute only the selected shard, specified in the form "current/all", 1-based, e.g., "3/5". |
@@ -325,7 +324,6 @@ npx playwright merge-reports ./reports
 | :--- | :--- |
 | `-c, --config <file>` | Configuration file. Can be used to specify additional configuration for the output report |
 | `--reporter <reporter>` | Reporter to use, comma-separated, can be "list", "line", "dot", "failures", "json", "junit", "null", "github", "html", "blob", "perfetto" (default: "list" locally and "dot" on CI) |
-| `--reporter-only-failures` | Include only failed, flaky, and interrupted tests in JSON, JUnit, and HTML reports. |
 
 ### Clear Cache
 
