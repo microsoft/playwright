@@ -3043,6 +3043,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `GN-102` | `library/selector-generator.spec.ts` | selector generator › should generate noText: ignore aria-describedby pointing inside the element |
 | `GN-103` | `library/selector-generator.spec.ts` | selector generator › should prefer role with hasText to css with hasText |
 | `GN-104` | `library/selector-generator.spec.ts` | selector generator › should not use icon fonts aria name |
+| `GN-105` | `library/selector-generator.spec.ts` | selector generator › should not throw for slotted element when host shadow root has a twin |
 
 ### HA — HAR
 

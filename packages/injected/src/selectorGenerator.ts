@@ -425,7 +425,7 @@ function cssFallback(injectedScript: InjectedScript, targetElement: Element, opt
     }
     tokens.unshift(bestTokenForLevel);
   }
-  return makeStrict(uniqueCSSSelector()!);
+  return makeStrict(tokens.join(' > '));
 }
 
 function penalizeScoreForLength(groups: SelectorToken[][]) {
