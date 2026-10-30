@@ -148,6 +148,8 @@ export const deps: any = {
     ],
     lib2package: {
       'libavif.so.13': 'libavif13',
+      'libgraphene-1.0.so.0': 'libgraphene-1.0-0',
+      'libvulkan.so.1': 'libvulkan1',
       'libsoup-3.0.so.0': 'libsoup-3.0-0',
       'libasound.so.2': 'libasound2',
       'libatk-1.0.so.0': 'libatk1.0-0',
@@ -361,6 +363,8 @@ export const deps: any = {
     lib2package: {
       'libavif.so.16': 'libavif16',
       'libasound.so.2': 'libasound2t64',
+      'libgraphene-1.0.so.0': 'libgraphene-1.0-0',
+      'libvulkan.so.1': 'libvulkan1',
       'libatk-1.0.so.0': 'libatk1.0-0t64',
       'libatk-bridge-2.0.so.0': 'libatk-bridge2.0-0t64',
       'libatomic.so.1': 'libatomic1',
@@ -575,6 +579,8 @@ export const deps: any = {
     lib2package: {
       'libavif.so.16': 'libavif16',
       'libasound.so.2': 'libasound2t64',
+      'libgraphene-1.0.so.0': 'libgraphene-1.0-0',
+      'libvulkan.so.1': 'libvulkan1',
       'libatk-1.0.so.0': 'libatk1.0-0t64',
       'libatk-bridge-2.0.so.0': 'libatk-bridge2.0-0t64',
       'libatomic.so.1': 'libatomic1',
@@ -795,6 +801,8 @@ export const deps: any = {
     ],
     lib2package: {
       'libavif.so.15': 'libavif15',
+      'libgraphene-1.0.so.0': 'libgraphene-1.0-0',
+      'libvulkan.so.1': 'libvulkan1',
       'libsoup-3.0.so.0': 'libsoup-3.0-0',
       'libasound.so.2': 'libasound2',
       'libatk-1.0.so.0': 'libatk1.0-0',
@@ -951,6 +959,8 @@ export const deps: any = {
     ],
     lib2package: {
       'libicudata.so.74': 'libicu76',
+      'libgraphene-1.0.so.0': 'libgraphene-1.0-0',
+      'libvulkan.so.1': 'libvulkan1',
       'libicui18n.so.74': 'libicu76',
       'libicuuc.so.74': 'libicu76',
       'libevent-2.1.so.7': 'libevent-2.1-7t64',
