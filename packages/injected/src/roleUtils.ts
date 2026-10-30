@@ -137,7 +137,7 @@ const kImplicitRoleByTagName: { [tagName: string]: (e: Element) => AriaRole | nu
     // All browsers report it as a button, and it is rendered as a button, so we do "button".
     if (type === 'file')
       return 'button';
-    return inputTypeToRole[type] || 'textbox';
+    return inputTypeToRole[type] || null;
   },
   'INS': () => 'insertion',
   'LI': () => 'listitem',
@@ -1415,6 +1415,7 @@ const inputTypeToRole: Record<string, AriaRole> = {
   'checkbox': 'checkbox',
   'image': 'button',
   'number': 'spinbutton',
+  'password': 'textbox',
   'radio': 'radio',
   'range': 'slider',
   'reset': 'button',

@@ -264,6 +264,8 @@ Role locators include [buttons, checkboxes, headings, links, lists, tables, and 
 
 Note that role locators **do not replace** accessibility audits and conformance tests, but rather give early feedback about the ARIA guidelines.
 
+Inputs of type `date`, `datetime-local`, `time`, `month`, `week`, and `color` have no implicit ARIA role and do not match `getByRole('textbox')` when the browser supports that input type. Use [`method: Page.getByLabel`] to locate these inputs by their labels.
+
 :::note[When to use role locators]
 We recommend prioritizing role locators to locate elements, as it is the closest way to how users and assistive technology perceive the page.
 :::

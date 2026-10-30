@@ -290,13 +290,13 @@ module.exports = [
   {
     html: '<input id="target" type="time"/>',
     target: '#target',
-    role: 'textbox',
+    role: null,
   },
 
   {
     html: '<input id="target" type="date"/>',
     target: '#target',
-    role: 'textbox',
+    role: null,
   },
 
   {

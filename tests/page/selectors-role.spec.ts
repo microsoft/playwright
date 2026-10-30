@@ -16,7 +16,7 @@
 
 import { test, expect } from './pageTest';
 
-test('SE-050 should detect roles', async ({ page }) => {
+test('SE-050 should detect roles', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43786' } }, async ({ page }) => {
   await page.setContent(`
     <button>Hello</button>
     <select multiple="" size="2"></select>
@@ -47,6 +47,21 @@ test('SE-050 should detect roles', async ({ page }) => {
   ]);
   expect(await page.getByRole('menuitem').evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
   ]);
+
+  await page.setContent(`
+    <input type="date" aria-label="Start">
+    <input type="time" aria-label="When">
+    <input type="color" aria-label="Tint">
+    <input type="datetime-local">
+    <input type="month">
+    <input type="week">
+    <input type="text" aria-label="Name">
+  `);
+  // Unsupported input types fall back to text in some browsers.
+  const textInputs = await page.evaluate(() => [...document.querySelectorAll('input')].filter(input => input.type === 'text').map(input => input.outerHTML));
+  expect.soft(await page.getByRole('textbox').evaluateAll(inputs => inputs.map(input => input.outerHTML))).toEqual(textInputs);
+  expect.soft(await page.getByRole('textbox', { name: 'Start' }).count()).toBe(0);
+  expect.soft(await page.locator('input[type=date]').ariaSnapshot()).toBe('');
 });
 
 test('SE-051 should support selected', async ({ page }) => {
