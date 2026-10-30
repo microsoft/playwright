@@ -19,6 +19,7 @@ import path from 'path';
 
 import * as yazl from 'yazl';
 import * as yauzl from 'yauzl';
+import dotenv from 'dotenv';
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { escapeSecretsForJSON, normalizeSecrets, redactSecretsInBuffer } from '@isomorphic/secrets';
 import { monotonicTime } from '@isomorphic/time';
@@ -103,9 +104,12 @@ export class TestTracing {
     } else if (typeof value === 'string') {
       this._options = { ...defaultTraceOptions, mode: value === 'retry-with-trace' ? 'on-first-retry' : value as TraceMode };
     } else {
-      const { secrets, ...traceOptions } = value;
+      const { secrets: secretsOption, ...traceOptions } = value;
       const mode = traceOptions.mode || 'off';
       this._options = { ...defaultTraceOptions, ...traceOptions, mode: (mode as string) === 'retry-with-trace' ? 'on-first-retry' : mode };
+      const secrets = typeof secretsOption === 'string'
+        ? Object.entries(dotenv.parse(fs.readFileSync(path.resolve(this._testInfo._configInternal.configDir, secretsOption), 'utf8'))).map(([name, value]) => ({ name, value }))
+        : secretsOption;
       this._secrets = normalizeSecrets(secrets);
     }
 
