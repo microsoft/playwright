@@ -116,6 +116,7 @@ export class CRBrowser extends Browser {
   }
 
   async doCreateNewContext(options: types.BrowserContextOptions): Promise<BrowserContext> {
+    this._validateViewportMode(options);
     const proxy = options.proxyOverride || options.proxy;
     let proxyBypassList = undefined;
     if (proxy) {
@@ -134,6 +135,11 @@ export class CRBrowser extends Browser {
     await context.initialize();
     this._contexts.set(browserContextId, context);
     return context;
+  }
+
+  _validateViewportMode(options: types.BrowserContextOptions) {
+    if (options.viewportMode === 'maximized' && (this.isClank() || this.options.name === 'electron'))
+      throw new Error('"maximized" viewport is not supported for this browser');
   }
 
   contexts(): BrowserContext[] {
@@ -360,6 +366,7 @@ export class CRBrowserContext extends BrowserContext<CREventsMap> {
   }
 
   override async initialize() {
+    this._browser._validateViewportMode(this._options);
     assert(!Array.from(this._browser._crPages.values()).some(page => page._browserContext === this));
     const promises: Promise<any>[] = [super.initialize()];
     if (this._browser.options.name !== 'clank' && this._options.acceptDownloads !== 'internal-browser-default') {

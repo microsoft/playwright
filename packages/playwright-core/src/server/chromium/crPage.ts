@@ -47,7 +47,7 @@ import type * as types from '../types';
 import type * as channels from '../channels';
 
 
-export type WindowBounds = { top?: number, left?: number, width?: number, height?: number };
+export type WindowBounds = { top?: number, left?: number, width?: number, height?: number, windowState?: Protocol.Browser.WindowState };
 
 // Browsers disallow these WebUI hosts in off-the-record profiles and redirect them to the original
 // profile, which crashes when the profile was created over CDP. Edge allows most of them in InPrivate.
@@ -115,7 +115,7 @@ export class CRPage implements PageDelegate {
     this.updateRequestInterception();
     this._mainFrameSession = new FrameSession(this, client, targetId, null);
     this._sessions.set(targetId, this._mainFrameSession);
-    if (opener && !browserContext._options.noDefaultViewport) {
+    if (opener && browserContext._options.viewportMode !== 'none') {
       const features = opener._nextWindowOpenPopupFeatures.shift() || [];
       const viewportSize = helper.getViewportSizeFromWindowFeatures(features);
       if (viewportSize)
@@ -471,9 +471,10 @@ class FrameSession {
 
   async _initialize(hasUIWindow: boolean) {
     const browserOptions = this._crPage._browserContext._browser.options;
+    const contextOptions = this._crPage._browserContext._options;
     if (!this._page.isStorageStatePage && hasUIWindow &&
       !this._crPage._browserContext._browser.isClank() &&
-      !this._crPage._browserContext._options.noDefaultViewport) {
+      contextOptions.viewportMode !== 'none') {
       try {
         const { windowId } = await this._client.send('Browser.getWindowForTarget');
         this._windowId = windowId;
@@ -550,23 +551,22 @@ class FrameSession {
         promises.push(this.exposePlaywrightBinding());
       if (this._isMainFrame() && !skipDefaultOverrides)
         promises.push(this._client.send('Emulation.setFocusEmulationEnabled', { enabled: true }));
-      const options = this._crPage._browserContext._options;
-      if (options.bypassCSP)
+      if (contextOptions.bypassCSP)
         promises.push(this._client.send('Page.setBypassCSP', { enabled: true }));
-      if (options.ignoreHTTPSErrors || options.internalIgnoreHTTPSErrors)
+      if (contextOptions.ignoreHTTPSErrors || contextOptions.internalIgnoreHTTPSErrors)
         promises.push(this._client.send('Security.setIgnoreCertificateErrors', { ignore: true }));
       if (this._isMainFrame())
         promises.push(this._updateViewport());
-      if (options.hasTouch)
+      if (contextOptions.hasTouch)
         promises.push(this._client.send('Emulation.setTouchEmulationEnabled', { enabled: true }));
-      if (options.javaScriptEnabled === false)
+      if (contextOptions.javaScriptEnabled === false)
         promises.push(this._client.send('Emulation.setScriptExecutionDisabled', { value: true }));
-      if (options.userAgent || options.locale)
+      if (contextOptions.userAgent || contextOptions.locale)
         promises.push(this._updateUserAgent());
-      if (options.locale)
-        promises.push(emulateLocale(this._client, options.locale));
-      if (options.timezoneId)
-        promises.push(emulateTimezone(this._client, options.timezoneId));
+      if (contextOptions.locale)
+        promises.push(emulateLocale(this._client, contextOptions.locale));
+      if (contextOptions.timezoneId)
+        promises.push(emulateTimezone(this._client, contextOptions.timezoneId));
       if (!browserOptions.headful)
         promises.push(this._setDefaultFontFamilies(this._client));
       promises.push(this._updateGeolocation(true));
@@ -1014,8 +1014,16 @@ class FrameSession {
     assert(this._isMainFrame());
     const options = this._crPage._browserContext._options;
     const emulatedSize = this._page.emulatedSize();
-    if (!emulatedSize)
+    if (!emulatedSize) {
+      if (options.viewportMode === 'maximized') {
+        if (this._metricsOverride)
+          await this._client.send('Emulation.clearDeviceMetricsOverride');
+        this._metricsOverride = undefined;
+        if (!preserveWindowBoundaries && this._windowId)
+          await this.setWindowBounds({ windowState: 'maximized' });
+      }
       return;
+    }
     const viewportSize = emulatedSize.viewport;
     const screenSize = emulatedSize.screen;
     const isLandscape = screenSize.width > screenSize.height;
@@ -1035,6 +1043,8 @@ class FrameSession {
       return;
     const promises = [];
     if (!preserveWindowBoundaries && this._windowId) {
+      if (options.viewportMode === 'maximized')
+        await this.setWindowBounds({ windowState: 'normal' });
       let insets = { width: 0, height: 0 };
       if (this._crPage._browserContext._browser.options.headful) {
         // TODO: popup windows have their own insets.

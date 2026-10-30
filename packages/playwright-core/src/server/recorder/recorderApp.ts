@@ -205,7 +205,7 @@ export class RecorderApp {
       windowSize: { width: 600, height: 600 },
       windowPosition: { x: 1020, y: 10 },
       persistentContextOptions: {
-        noDefaultViewport: true,
+        viewportMode: 'none',
         headless: !!process.env.PWTEST_CLI_HEADLESS || (isUnderTest() && !headed),
         args: isUnderTest() ? ['--remote-debugging-port=0'] : undefined,
         handleSIGINT: params.handleSIGINT,

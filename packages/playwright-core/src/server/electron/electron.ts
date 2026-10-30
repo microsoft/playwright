@@ -293,7 +293,7 @@ export class Electron extends SdkObject {
       };
       const contextOptions: types.BrowserContextOptions = {
         ...options,
-        noDefaultViewport: true,
+        viewportMode: 'none',
       };
       const browserOptions: BrowserOptions = {
         name: 'electron',
