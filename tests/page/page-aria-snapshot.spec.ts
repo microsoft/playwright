@@ -872,7 +872,7 @@ it('AR-045 should not include hidden iframes', async ({ page }) => {
   `));
 });
 
-it('AR-046 should not include inert elements', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36938' } }, async ({ page }) => {
+it('AR-046 should include inert elements', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43792' } }, async ({ page }) => {
   await page.setContent(`
     <button>Hi</button>
     <button inert>Hello</button>
@@ -886,12 +886,15 @@ it('AR-046 should not include inert elements', { annotation: { type: 'issue', de
 
   await checkAndMatchSnapshot(page.locator('body'), `
     - button "Hi"
-    - paragraph: Visible text
-    - button
+    - button "Hello"
+    - button "Yay"
+    - paragraph: Some text
+    - paragraph: Visible inert text
+    - button "Save"
   `);
 });
 
-it('AR-047 should only include the modal dialog content', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36938' } }, async ({ page }) => {
+it('AR-047 should include content outside a modal dialog', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43792' } }, async ({ page }) => {
   await page.setContent(`
     <h1>Title</h1>
     <button>Outside</button>
@@ -906,9 +909,12 @@ it('AR-047 should only include the modal dialog content', { annotation: { type: 
   `);
 
   await checkAndMatchSnapshot(page.locator('body'), `
+    - heading "Title" [level=1]
+    - button "Outside"
     - dialog:
       - heading "Dialog" [level=2]
       - button "Inside"
+      - button "Inert inside"
   `);
 
   await page.locator('#dialog').evaluate((e: HTMLDialogElement) => e.close());

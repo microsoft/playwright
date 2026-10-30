@@ -1003,7 +1003,7 @@ it('AR-093 should not include hidden iframes', async ({ page }) => {
   expect(snapshot).not.toContain('None');
 });
 
-it('AR-094 should not generate refs for inert elements', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36938' } }, async ({ page }) => {
+it('AR-094 should not generate refs for inert elements', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43792' } }, async ({ page }) => {
   await page.setContent(`
     <button>with-ref</button>
     <button inert>no-ref</button>
@@ -1016,13 +1016,13 @@ it('AR-094 should not generate refs for inert elements', { annotation: { type: '
   expect(snapshot).toContainYaml(`
     - generic [active] [ref=e1]:
       - button "with-ref" [ref=e2]
-      - button: no-ref
+      - button "no-ref"
       - generic:
-        - button: no-ref
+        - button "no-ref"
   `);
 });
 
-it('AR-095 should not generate refs for elements outside of a modal dialog', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36938' } }, async ({ page }) => {
+it('AR-095 should generate refs for elements outside of a modal dialog', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43792' } }, async ({ page }) => {
   await page.setContent(`
     <button>Outside</button>
     <dialog id=dialog>
@@ -1035,9 +1035,9 @@ it('AR-095 should not generate refs for elements outside of a modal dialog', { a
 
   const snapshot = await snapshotForAI(page);
   expect(snapshot).toContainYaml(`
-    - generic:
-      - button: Outside
-      - dialog [ref=e1]:
-        - button "Inside" [active] [ref=e2]
+    - generic [ref=e1]:
+      - button "Outside" [ref=e2]
+      - dialog [ref=e3]:
+        - button "Inside" [active] [ref=e4]
   `);
 });

@@ -412,29 +412,6 @@ it('FI-034 should retry on inert element', { annotation: { type: 'issue', descri
   expect(await page.$eval('#outside', (i: HTMLInputElement) => i.value)).toBe('');
 });
 
-it('FI-035 should retry on element outside of a modal dialog', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42967' } }, async ({ page }) => {
-  await page.setContent(`
-    <input id=target>
-    <dialog id=dialog><input id=inside></dialog>
-    <script>
-      document.getElementById('dialog').showModal();
-    </script>
-  `);
-  let done = false;
-
-  await page.fill('#inside', 'inside value');
-  expect(await page.$eval('#inside', (i: HTMLInputElement) => i.value)).toBe('inside value');
-
-  const promise = page.fill('#target', 'some value').then(() => done = true);
-  await giveItAChanceToFill(page);
-  expect(done).toBe(false);
-  expect(await page.$eval('#target', (i: HTMLInputElement) => i.value)).toBe('');
-
-  await page.$eval('#dialog', (e: HTMLDialogElement) => e.close());
-  await promise;
-  expect(await page.$eval('#target', (i: HTMLInputElement) => i.value)).toBe('some value');
-});
-
 it('FI-036 should fail with a nice error on inert element', async ({ page }) => {
   await page.setContent(`<div inert><input></div>`);
   const error = await page.fill('input', 'some value', { timeout: 1000 }).catch(e => e);

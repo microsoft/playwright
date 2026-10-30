@@ -327,7 +327,7 @@ it('SO-029 input event.composed should be true and cross shadow dom boundary', a
   expect(await page.evaluate(() => window['firedBodyEvents'])).toEqual(['input:true']);
 });
 
-it('SO-030 should wait for select to be enabled', async ({ page }) => {
+it('SO-030 should wait for select to be enabled', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43792' } }, async ({ page }) => {
   await page.setContent(`
     <select disabled>
       <option>one</option>
@@ -351,6 +351,22 @@ it('SO-030 should wait for select to be enabled', async ({ page }) => {
   await selectPromise;
   expect(await page.evaluate(() => window['result'])).toEqual('two');
   await expect(page.locator('select')).toHaveValue('two');
+
+  await page.locator('body').evaluate(e => e.setAttribute('inert', ''));
+  const error = await page.getByRole('combobox').selectOption('one', { timeout: 1000 }).catch(e => e);
+  expect(error.message).toContain('element is inert');
+  await expect(page.locator('select')).toHaveValue('two');
+
+  let didSelect = false;
+  const inertSelectPromise = page.getByRole('combobox').selectOption('one').then(values => {
+    didSelect = true;
+    return values;
+  });
+  await giveItAChanceToResolve(page);
+  expect(didSelect).toBe(false);
+  await page.locator('body').evaluate(e => e.removeAttribute('inert'));
+  expect(await inertSelectPromise).toEqual(['one']);
+  await expect(page.locator('select')).toHaveValue('one');
 });
 
 it('SO-031 should wait for option to be enabled', async ({ page }) => {

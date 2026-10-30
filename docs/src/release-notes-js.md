@@ -6,6 +6,14 @@ toc_max_heading_level: 2
 
 import LiteYouTube from '@site/src/components/LiteYouTube';
 
+## Version 1.65
+
+### Breaking Changes ⚠️
+
+Click-like actions, [`method: Locator.fill`], [`method: Locator.clear`] and [`method: Locator.selectOption`] now wait for the target element and its ancestors to lose the `inert` attribute. Previously, these actions could complete without interacting with an inert element. See [actionability](./actionability.md#not-inert).
+
+Role locators and ARIA snapshots continue to include inert elements and content outside a modal `<dialog>`. Playwright does not determine inertness from open modal dialogs.
+
 ## Version 1.64
 
 ### 🧰 WebMCP
