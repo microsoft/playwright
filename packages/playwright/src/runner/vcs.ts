@@ -20,12 +20,12 @@ import path from 'path';
 import { cc } from '../common';
 
 export async function detectChangedTestFiles(baseCommit: string, configDir: string): Promise<Set<string>> {
-  function gitFileList(args: string[]) {
+  function gitFileList(args: string[], separator = '\n') {
     try {
       return childProcess.execFileSync(
           'git', args,
           { encoding: 'utf-8', stdio: 'pipe', cwd: configDir }
-      ).split('\n').filter(Boolean);
+      ).split(separator).filter(Boolean);
     } catch (_error) {
       const error = _error as childProcess.SpawnSyncReturns<string>;
 
@@ -49,10 +49,10 @@ export async function detectChangedTestFiles(baseCommit: string, configDir: stri
     }
   }
 
-  const untrackedFiles = gitFileList(['ls-files', '--others', '--exclude-standard']).map(file => path.join(configDir, file));
+  const untrackedFiles = gitFileList(['ls-files', '--others', '--exclude-standard', '-z'], '\0').map(file => path.join(configDir, file));
 
   const [gitRoot] = gitFileList(['rev-parse', '--show-toplevel']);
-  const trackedFilesWithChanges = gitFileList(['diff', baseCommit, '--name-only']).map(file => path.join(gitRoot, file));
+  const trackedFilesWithChanges = gitFileList(['diff', baseCommit, '--name-only', '-z'], '\0').map(file => path.join(gitRoot, file));
 
   return new Set(cc.affectedTestFiles([...untrackedFiles, ...trackedFilesWithChanges]));
 }

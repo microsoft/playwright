@@ -288,18 +288,38 @@ test('should run project dependencies of changed tests', {
   expect(result.output).toContain('setup test is executed');
 });
 
-test('should work with list mode', async ({ runInlineTest, git, writeFiles }) => {
+test('should work with list mode', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43661' },
+}, async ({ runInlineTest, git, writeFiles }) => {
   await writeFiles({
     'a.spec.ts': `
     import { test, expect } from '@playwright/test';
     test('fails', () => { expect(1).toBe(2); });
   `,
+    'cadastro-usuário.spec.ts': `
+      import { test } from '@playwright/test';
+      test('tracked', () => {});
+    `,
   });
 
   git(`add .`);
   git(`commit -m init`);
 
   const result = await runInlineTest({
+    'cadastro-usuário.spec.ts': `
+      import { test } from '@playwright/test';
+      test('modified', () => {});
+    `,
+    'ação.spec.ts': `
+      import { test } from '@playwright/test';
+      test('untracked', () => {});
+    `,
+    ...(process.platform === 'win32' ? {} : {
+      'quoted "ação"\t\n.spec.ts': `
+        import { test } from '@playwright/test';
+        test('quoted', () => {});
+      `,
+    }),
     'b.spec.ts': `
       import { test, expect } from '@playwright/test';
       test('fails', () => { expect(1).toBe(2); });
@@ -309,6 +329,9 @@ test('should work with list mode', async ({ runInlineTest, git, writeFiles }) =>
   expect(result.exitCode).toBe(0);
   expect(result.output).toContain('b.spec.ts');
   expect(result.output).not.toContain('a.spec.ts');
+  expect(result.output).toContain('cadastro-usuário.spec.ts');
+  expect(result.output).toContain('ação.spec.ts');
+  expect(result.output).toContain(`Total: ${process.platform === 'win32' ? 3 : 4} tests in ${process.platform === 'win32' ? 3 : 4} files`);
 });
 
 test('exits successfully if there are no changes', async ({ runInlineTest, git, writeFiles }) => {
