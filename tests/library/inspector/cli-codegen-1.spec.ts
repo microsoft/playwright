@@ -18,6 +18,107 @@ import { test, expect } from './inspectorTest';
 import type { ConsoleMessage } from 'playwright';
 
 test.describe('cli codegen', () => {
+  for (const inFrame of [false, true]) {
+    test(`CG-${inFrame ? '193' : '192'} should record drag and drop${inFrame ? ' in an iframe' : ''}`, { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/19892' } }, async ({ openRecorder }) => {
+      const { page, recorder } = await openRecorder();
+      await recorder.setContentAndWait(inFrame ? '<iframe style="height: 400px"></iframe>' : '');
+      const frame = inFrame ? page.frames()[1] : page.mainFrame();
+      await frame.setContent(`
+        <div draggable="true" data-testid="source" tabindex="0" style="width: 100px; height: 50px; border: 2px solid" ondragstart="event.dataTransfer?.setData('text/plain', 'source')">Drag me</div>
+        <div data-testid="target" style="margin-top: 100px; width: 200px; height: 100px; border: 3px solid" ondragover="event.preventDefault()"
+             ondrop="event.preventDefault(); if (event.dataTransfer) this.appendChild(document.querySelector('[draggable]'))">Drop here</div>
+        <button>Submit</button>
+      `);
+      const source = frame.getByTestId('source');
+      const target = frame.getByTestId('target');
+
+      // Ordinary recording must not guess that a mouse movement is a drag.
+      await source.dragTo(target);
+      await frame.getByRole('button').click();
+      const before = await recorder.waitForOutput('JavaScript', '.click()');
+      expect(before.get('JavaScript')!.text).not.toContain('.dragTo(');
+      await frame.evaluate(() => document.body.prepend(document.querySelector('[draggable]')!));
+
+      if (inFrame)
+        await recorder.recorderPage.getByRole('button', { name: 'Record drag', exact: true }).click();
+      else
+        await page.locator('x-pw-tool-item.record-drag').click();
+      await expect(page.locator('x-pw-tool-item.record-drag')).toHaveAttribute('aria-pressed', 'true');
+      if (inFrame) {
+        await source.focus();
+        await page.keyboard.press('F9');
+        await expect(page.locator('x-pw-tool-item.record-drag')).toHaveAttribute('aria-pressed', 'false');
+        await page.keyboard.press('F9');
+        await expect(page.locator('x-pw-tool-item.record-drag')).toHaveAttribute('aria-pressed', 'true');
+      }
+      await source.dispatchEvent('pointerdown');
+      await target.dispatchEvent('pointerup');
+      await source.dragTo(target, { sourcePosition: { x: 10, y: 12 }, targetPosition: { x: 20, y: 22 } });
+      await expect(target.getByTestId('source')).toBeVisible();
+      const sources = await recorder.waitForOutput('JavaScript', '.dragTo(');
+      await expect(page.locator('x-pw-tool-item.record-drag')).toHaveAttribute('aria-pressed', 'false');
+      const js = inFrame ? 'page.locator(\'iframe\').contentFrame()' : 'page';
+      const python = inFrame ? 'page.locator("iframe").content_frame' : 'page';
+      const java = inFrame ? 'page.locator("iframe").contentFrame()' : 'page';
+      const csharp = inFrame ? 'page.Locator("iframe").ContentFrame' : 'page';
+      expect.soft(sources.get('JavaScript')!.text.replace(/\s+/g, ' ')).toContain(`await ${js}.getByTestId('source').dragTo(${js}.getByTestId('target'), { sourcePosition: { x: 10, y: 12 }, targetPosition: { x: 20, y: 22 } });`);
+      expect.soft(sources.get('Python')!.text).toContain(`${python}.get_by_test_id("source").drag_to(${python}.get_by_test_id("target"), source_position={"x":10,"y":12}, target_position={"x":20,"y":22})`);
+      expect.soft(sources.get('Python Async')!.text).toContain(`await ${python}.get_by_test_id("source").drag_to(${python}.get_by_test_id("target"), source_position={"x":10,"y":12}, target_position={"x":20,"y":22})`);
+      expect.soft(sources.get('Java')!.text).toContain(`${java}.getByTestId("source").dragTo(${java}.getByTestId("target"), new Locator.DragToOptions().setSourcePosition(10, 12).setTargetPosition(20, 22));`);
+      expect.soft(sources.get('C#')!.text.replace(/\s+/g, ' ')).toContain(`await ${csharp}.GetByTestId("source").DragToAsync(${csharp}.GetByTestId("target"), new() { SourcePosition = new() { X = 10, Y = 12, }, TargetPosition = new() { X = 20, Y = 22, }, });`);
+      expect(sources.get('JavaScript')!.text.match(/\.dragTo\(/g)).toHaveLength(1);
+    });
+  }
+
+  test('CG-194 should arm and cancel mouse drags with a shortcut', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/19892' } }, async ({ openRecorder }) => {
+    const { page, recorder } = await openRecorder();
+    await recorder.setContentAndWait(`
+      <div data-testid="surface" style="width: 300px; height: 200px; border: 4px solid"
+           onpointerdown="this.setPointerCapture(event.pointerId)"
+           onpointerup="this.dataset.released = 'true'">Drag surface</div>
+      <div data-testid="target" style="margin-top: 20px; width: 100px; height: 100px">Target</div>
+      <button>Submit</button>
+    `);
+    const toggle = page.locator('x-pw-tool-item.record-drag');
+    const surface = page.getByTestId('surface');
+    await surface.hover({ position: { x: 20, y: 30 } });
+    await page.keyboard.press('F9');
+    await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+    await page.mouse.down();
+    await page.keyboard.press('Escape');
+    await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+    await page.mouse.up();
+    await page.getByRole('button', { name: 'Submit', exact: true }).click();
+    const before = await recorder.waitForOutput('JavaScript', '.click()');
+    expect(before.get('JavaScript')!.text).not.toContain('.dragTo(');
+    expect(before.get('JavaScript')!.text).not.toContain("getByTestId('surface').click");
+    expect(before.get('JavaScript')!.text).not.toContain("press('Escape')");
+
+    await recorder.recorderPage.keyboard.press('F9');
+    await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+    await surface.hover({ position: { x: 20, y: 30 } });
+    await page.mouse.down();
+    await surface.hover({ position: { x: 140, y: 90 } });
+    await page.mouse.up();
+    await expect(surface).toHaveAttribute('data-released', 'true');
+    const sources = await recorder.waitForOutput('JavaScript', '.dragTo(');
+    expect(sources.get('JavaScript')!.text.replace(/\s+/g, ' ')).toContain(`page.getByTestId('surface').dragTo(page.getByTestId('surface'), { sourcePosition: { x: 20, y: 30 }, targetPosition: { x: 140, y: 90 } });`);
+    await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+    expect(sources.get('JavaScript')!.text).not.toContain("press('F9')");
+
+    // Pointer capture retargets pointerup to the source, so resolve the destination by hit testing.
+    await page.keyboard.press('F9');
+    await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+    await surface.hover({ position: { x: 20, y: 30 } });
+    await page.mouse.down();
+    await page.getByTestId('target').hover({ position: { x: 40, y: 50 } });
+    await page.mouse.up();
+    const second = await recorder.waitForOutput('JavaScript', "dragTo(page.getByTestId('target')");
+    expect(second.get('JavaScript')!.text.replace(/\s+/g, ' ')).toContain(`page.getByTestId('surface').dragTo(page.getByTestId('target'), { sourcePosition: { x: 20, y: 30 }, targetPosition: { x: 40, y: 50 } });`);
+    expect(second.get('JavaScript')!.text).not.toContain("getByTestId('surface').click");
+    await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+  });
+
   test('CG-001 should click', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
 
@@ -1149,9 +1250,9 @@ await page.GetByRole(AriaRole.Button, new() { Name = "Submit" }).ClickAsync();`)
 
     expect(sources.get('JavaScript').text).toContain(`getByRole('button', { name: 'Foo' }).click()`);
 
-    await recorder.recorderPage.getByRole('button', { name: 'Record' }).click();
+    await recorder.recorderPage.getByRole('button', { name: /^(Start|Stop) Recording$/ }).click();
     await recorder.recorderPage.getByRole('button', { name: 'Clear' }).click();
-    await recorder.recorderPage.getByRole('button', { name: 'Record' }).click();
+    await recorder.recorderPage.getByRole('button', { name: /^(Start|Stop) Recording$/ }).click();
 
     await recorder.hoverOverElement('#bar');
     [sources] = await Promise.all([

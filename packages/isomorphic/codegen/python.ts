@@ -119,6 +119,8 @@ export class PythonLanguageGenerator implements LanguageGenerator {
         const optionsString = formatOptions(options, false);
         return `${subject}.${this._asLocator(action.selector)}.${method}(${optionsString})`;
       }
+      case 'dragTo':
+        return `${subject}.${this._asLocator(action.selector)}.drag_to(${subject}.${this._asLocator(action.targetSelector)}${formatOptions({ sourcePosition: action.sourcePosition, targetPosition: action.targetPosition }, true)})`;
       case 'hover':
         return `${subject}.${this._asLocator(action.selector)}.hover(${formatOptions({ position: action.position }, false)})`;
       case 'check':

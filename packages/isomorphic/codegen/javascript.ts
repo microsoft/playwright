@@ -109,6 +109,8 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
         const optionsString = formatOptions(options, false);
         return `await ${subject}.${this._asLocator(action.selector)}.${method}(${optionsString});`;
       }
+      case 'dragTo':
+        return `await ${subject}.${this._asLocator(action.selector)}.dragTo(${subject}.${this._asLocator(action.targetSelector)}, ${formatOptions({ sourcePosition: action.sourcePosition, targetPosition: action.targetPosition }, false)});`;
       case 'hover':
         return `await ${subject}.${this._asLocator(action.selector)}.hover(${formatOptions({ position: action.position }, false)});`;
       case 'check':

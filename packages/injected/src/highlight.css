@@ -281,6 +281,10 @@ x-pw-tool-item.pick-locator > x-div {
   clip-path: url(#icon-inspect);
 }
 
+x-pw-tool-item.record-drag > x-div {
+  clip-path: polygon(50% 0, 70% 20%, 55% 20%, 55% 45%, 80% 45%, 80% 30%, 100% 50%, 80% 70%, 80% 55%, 55% 55%, 55% 80%, 70% 80%, 50% 100%, 30% 80%, 45% 80%, 45% 55%, 20% 55%, 20% 70%, 0 50%, 20% 30%, 20% 45%, 45% 45%, 45% 20%, 30% 20%);
+}
+
 x-pw-tool-item.text > x-div {
   /* codicon: whole-word */
   clip-path: url(#icon-whole-word);

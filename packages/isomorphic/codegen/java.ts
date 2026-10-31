@@ -126,6 +126,8 @@ export class JavaLanguageGenerator implements LanguageGenerator {
         const optionsText = formatClickOptions(options);
         return `${subject}.${this._asLocator(action.selector)}.${method}(${optionsText});`;
       }
+      case 'dragTo':
+        return `${subject}.${this._asLocator(action.selector)}.dragTo(${subject}.${this._asLocator(action.targetSelector)}, new Locator.DragToOptions().setSourcePosition(${action.sourcePosition.x}, ${action.sourcePosition.y}).setTargetPosition(${action.targetPosition.x}, ${action.targetPosition.y}));`;
       case 'hover': {
         const optionsText = action.position ? `new Locator.HoverOptions().setPosition(${action.position.x}, ${action.position.y})` : '';
         return `${subject}.${this._asLocator(action.selector)}.hover(${optionsText});`;

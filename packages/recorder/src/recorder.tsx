@@ -118,6 +118,12 @@ export const Recorder: React.FC = ({}) => {
           else
             backend.pause();
           break;
+        case 'F9':
+          if (!event.repeat && (mode === 'recording' || mode === 'recording-drag')) {
+            event.preventDefault();
+            backend.setMode({ mode: mode === 'recording-drag' ? 'recording' : 'recording-drag' });
+          }
+          break;
         case 'F10':
           event.preventDefault();
           if (paused)
@@ -127,7 +133,7 @@ export const Recorder: React.FC = ({}) => {
     };
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [paused, backend]);
+  }, [paused, mode, backend]);
 
   const onEditorChange = React.useCallback((selector: string) => {
     if (mode === 'none' || mode === 'inspecting')
@@ -155,7 +161,7 @@ export const Recorder: React.FC = ({}) => {
       backend.highlightRequested({ ariaTemplate: fragment });
   }, [mode, backend]);
 
-  const isRecording = mode === 'recording' || mode === 'recording-inspecting' || mode === 'assertingText' || mode === 'assertingVisibility';
+  const isRecording = mode === 'recording' || mode === 'recording-drag' || mode === 'recording-inspecting' || mode === 'assertingText' || mode === 'assertingVisibility';
 
   return <div className='recorder'>
     <Toolbar>
@@ -169,6 +175,7 @@ export const Recorder: React.FC = ({}) => {
           'none': 'inspecting',
           'standby': 'inspecting',
           'recording': 'recording-inspecting',
+          'recording-drag': 'recording-inspecting',
           'recording-inspecting': 'recording',
           'assertingText': 'recording-inspecting',
           'assertingVisibility': 'recording-inspecting',
@@ -176,6 +183,9 @@ export const Recorder: React.FC = ({}) => {
           'assertingSnapshot': 'recording-inspecting',
         }[mode] as Mode;
         backend.setMode({ mode: newMode }).catch(() => { });
+      }}></ToolbarButton>
+      <ToolbarButton icon='move' ariaLabel='Record drag' title={mode === 'recording-drag' ? 'Drag ready (Escape to cancel)' : 'Record drag (F9)'} toggled={mode === 'recording-drag'} disabled={!isRecording} onClick={() => {
+        backend.setMode({ mode: mode === 'recording-drag' ? 'recording' : 'recording-drag' });
       }}></ToolbarButton>
       <ToolbarButton icon='eye' title='Assert visibility' toggled={mode === 'assertingVisibility'} disabled={mode === 'none' || mode === 'standby' || mode === 'inspecting'} onClick={() => {
         backend.setMode({ mode: mode === 'assertingVisibility' ? 'recording' : 'assertingVisibility' });

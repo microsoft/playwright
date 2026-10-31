@@ -193,7 +193,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
       });
 
       await this._context.exposeBinding(progress, '__pw_recorderSetMode', async ({ frame }, mode: Mode) => {
-        if (frame.parentFrame())
+        if (frame.parentFrame() && mode !== 'recording-drag' && this._mode !== 'recording-drag')
           return;
         await this.setMode(mode);
       });
@@ -465,7 +465,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
   }
 
   private _isRecording() {
-    return ['recording', 'assertingText', 'assertingVisibility', 'assertingValue', 'assertingSnapshot'].includes(this._mode);
+    return ['recording', 'recording-drag', 'assertingText', 'assertingVisibility', 'assertingValue', 'assertingSnapshot'].includes(this._mode);
   }
 
   private _readSource(fileName: string): string {
@@ -545,6 +545,8 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
       this._signalProcessor.signal(frame, { name: 'expect', selector: await buildFullSelectorForFrame(progress, frame, preconditionSelector) });
     if ('selector' in action)
       action.selector = await buildFullSelectorForFrame(progress, frame, action.selector);
+    if (action.name === 'dragTo')
+      action.targetSelector = await buildFullSelectorForFrame(progress, frame, action.targetSelector);
     const actionInContext: actions.ActionInContext = {
       pageGuid: frame._page.guid,
       action,

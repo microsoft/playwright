@@ -50,6 +50,8 @@ interface RecorderTool {
   onDblClick?(event: MouseEvent): void;
   onContextMenu?(event: MouseEvent): void;
   onDragStart?(event: DragEvent): void;
+  onDrop?(event: DragEvent): void;
+  onDragEnd?(event: DragEvent): void;
   onInput?(event: Event): void;
   onKeyDown?(event: KeyboardEvent): void;
   onKeyUp?(event: KeyboardEvent): void;
@@ -182,6 +184,98 @@ class InspectTool implements RecorderTool {
     this._hoveredElement = null;
     this._hoveredModel = null;
     this._recorder.updateHighlight(null, userGesture);
+  }
+}
+
+class RecordDragTool implements RecorderTool {
+  private _recorder: Recorder;
+  private _source: { selector: string, position: Point } | undefined;
+  private _completed = false;
+
+  constructor(recorder: Recorder) {
+    this._recorder = recorder;
+  }
+
+  cursor() {
+    return 'crosshair';
+  }
+
+  install() {
+    this._completed = false;
+  }
+
+  uninstall() {
+    this._source = undefined;
+  }
+
+  onPointerDown(event: PointerEvent) {
+    if (event.button !== 0 || this._completed)
+      return;
+    this._source = this._target(this._recorder.deepEventTarget(event), event);
+  }
+
+  onPointerUp(event: PointerEvent) {
+    if (event.button === 0)
+      this._finish(event);
+  }
+
+  onDrop(event: DragEvent) {
+    this._finish(event);
+  }
+
+  onDragEnd() {
+    this._cancel();
+  }
+
+  onKeyDown(event: KeyboardEvent) {
+    if (event.key === 'Escape') {
+      consumeEvent(event);
+      this._cancel();
+    }
+  }
+
+  private _cancel() {
+    this._source = undefined;
+    this._completed = true;
+    this._recorder._suppressClickAfterDrag();
+    this._recorder.setMode('recording');
+  }
+
+  private _finish(event: MouseEvent) {
+    const source = this._source;
+    if (!source || this._completed)
+      return;
+    let element = this._recorder.document.elementFromPoint(event.clientX, event.clientY);
+    while (element?.shadowRoot) {
+      const inner = element.shadowRoot.elementFromPoint(event.clientX, event.clientY);
+      if (!inner || inner === element)
+        break;
+      element = inner;
+    }
+    if (element && !this._recorder.overlay?.contains(element)) {
+      const target = this._target(element, event);
+      void this._recorder.recordAction({
+        name: 'dragTo',
+        selector: source.selector,
+        targetSelector: target.selector,
+        sourcePosition: source.position,
+        targetPosition: target.position,
+      });
+    }
+    this._cancel();
+  }
+
+  private _target(element: Element, event: MouseEvent): { selector: string, position: Point } {
+    const generated = this._recorder.injectedScript.generateSelector(element, { testIdAttributeName: this._recorder.state.testIdAttributeName });
+    const target = generated.elements[0] as HTMLElement;
+    const rect = target.getBoundingClientRect();
+    return {
+      selector: generated.selector,
+      position: {
+        x: Math.round(event.clientX - rect.left - target.clientLeft),
+        y: Math.round(event.clientY - rect.top - target.clientTop),
+      },
+    };
   }
 }
 
@@ -1066,6 +1160,7 @@ class Overlay {
   private _dragHandle: HTMLElement;
   private _recordToggle: HTMLElement;
   private _pickLocatorToggle: HTMLElement;
+  private _recordDragToggle: HTMLElement;
   private _assertVisibilityToggle: HTMLElement;
   private _assertTextToggle: HTMLElement;
   private _assertValuesToggle: HTMLElement;
@@ -1096,6 +1191,12 @@ class Overlay {
     this._pickLocatorToggle.classList.add('pick-locator');
     this._pickLocatorToggle.appendChild(this._recorder.document.createElement('x-div'));
     toolsListElement.appendChild(this._pickLocatorToggle);
+
+    this._recordDragToggle = document.createElement('x-pw-tool-item');
+    this._recordDragToggle.title = 'Record drag (F9)';
+    this._recordDragToggle.classList.add('record-drag');
+    this._recordDragToggle.appendChild(document.createElement('x-div'));
+    toolsListElement.appendChild(this._recordDragToggle);
 
     this._assertVisibilityToggle = this._recorder.document.createElement('x-pw-tool-item');
     this._assertVisibilityToggle.title = 'Assert visibility';
@@ -1144,6 +1245,7 @@ class Overlay {
           'none': 'inspecting',
           'standby': 'inspecting',
           'recording': 'recording-inspecting',
+          'recording-drag': 'recording-inspecting',
           'recording-inspecting': 'recording',
           'assertingText': 'recording-inspecting',
           'assertingVisibility': 'recording-inspecting',
@@ -1151,6 +1253,10 @@ class Overlay {
           'assertingSnapshot': 'recording-inspecting',
         };
         this._recorder.setMode(newMode[this._recorder.state.mode]);
+      }),
+      addEventListener(this._recordDragToggle, 'click', () => {
+        if (!this._recordDragToggle.classList.contains('disabled'))
+          this._recorder.setMode(this._recorder.state.mode === 'recording-drag' ? 'recording' : 'recording-drag');
       }),
       addEventListener(this._assertVisibilityToggle, 'click', () => {
         if (!this._assertVisibilityToggle.classList.contains('disabled'))
@@ -1182,10 +1288,14 @@ class Overlay {
   }
 
   setUIState(state: UIState) {
-    const isRecording = state.mode === 'recording' || state.mode === 'assertingText' || state.mode === 'assertingVisibility' || state.mode === 'assertingValue' || state.mode === 'assertingSnapshot' || state.mode === 'recording-inspecting';
+    const isRecording = state.mode === 'recording' || state.mode === 'recording-drag' || state.mode === 'assertingText' || state.mode === 'assertingVisibility' || state.mode === 'assertingValue' || state.mode === 'assertingSnapshot' || state.mode === 'recording-inspecting';
     this._recordToggle.classList.toggle('toggled', isRecording);
     this._recordToggle.title = isRecording ? 'Stop Recording' : 'Start Recording';
     this._pickLocatorToggle.classList.toggle('toggled', state.mode === 'inspecting' || state.mode === 'recording-inspecting');
+    this._recordDragToggle.classList.toggle('toggled', state.mode === 'recording-drag');
+    this._recordDragToggle.setAttribute('aria-pressed', String(state.mode === 'recording-drag'));
+    this._recordDragToggle.title = state.mode === 'recording-drag' ? 'Drag ready (Escape to cancel)' : 'Record drag (F9)';
+    this._recordDragToggle.classList.toggle('disabled', state.mode === 'none' || state.mode === 'standby' || state.mode === 'inspecting');
     this._assertVisibilityToggle.classList.toggle('toggled', state.mode === 'assertingVisibility');
     this._assertVisibilityToggle.classList.toggle('disabled', state.mode === 'none' || state.mode === 'standby' || state.mode === 'inspecting');
     this._assertTextToggle.classList.toggle('toggled', state.mode === 'assertingText');
@@ -1275,6 +1385,7 @@ export class Recorder {
   readonly injectedScript: InjectedScript;
   private _listeners: (() => void)[] = [];
   private _currentTool: RecorderTool;
+  private _ignoreClickAfterDrag = false;
   private _tools: Record<Mode, RecorderTool>;
   private _lastActionAutoexpectSnapshot: AriaSnapshot | undefined;
   readonly highlight: Highlight;
@@ -1298,6 +1409,7 @@ export class Recorder {
       'standby': new NoneTool(),
       'inspecting': new InspectTool(this, false),
       'recording': options?.recorderMode === 'api' ? new JsonRecordActionTool(this) : new RecordActionTool(this),
+      'recording-drag': new RecordDragTool(this),
       'recording-inspecting': new InspectTool(this, false),
       'assertingText': new TextAssertionTool(this, 'text'),
       'assertingVisibility': new InspectTool(this, true),
@@ -1313,6 +1425,7 @@ export class Recorder {
     this._stylesheet = new injectedScript.window.CSSStyleSheet();
     this._stylesheet.replaceSync(`
       body[data-pw-cursor=pointer] *, body[data-pw-cursor=pointer] *::after { cursor: pointer !important; }
+      body[data-pw-cursor=crosshair] *, body[data-pw-cursor=crosshair] *::after { cursor: crosshair !important; }
       body[data-pw-cursor=text] *, body[data-pw-cursor=text] *::after { cursor: text !important; }
     `);
     this.installListeners();
@@ -1330,6 +1443,8 @@ export class Recorder {
       addEventListener(this.document, 'dblclick', event => this._onDblClick(event as MouseEvent), true),
       addEventListener(this.document, 'contextmenu', event => this._onContextMenu(event as MouseEvent), true),
       addEventListener(this.document, 'dragstart', event => this._onDragStart(event as DragEvent), true),
+      addEventListener(this.document, 'drop', event => this._onDrop(event as DragEvent), true),
+      addEventListener(this.document, 'dragend', event => this._onDragEnd(event as DragEvent), true),
       addEventListener(this.document, 'input', event => this._onInput(event), true),
       addEventListener(this.document, 'keydown', event => this._onKeyDown(event as KeyboardEvent), true),
       addEventListener(this.document, 'keyup', event => this._onKeyUp(event as KeyboardEvent), true),
@@ -1397,6 +1512,10 @@ export class Recorder {
     this.updateHighlight(null, false);
   }
 
+  _suppressClickAfterDrag() {
+    this._ignoreClickAfterDrag = true;
+  }
+
   private _onClick(event: MouseEvent) {
     if (!event.isTrusted)
       return;
@@ -1404,7 +1523,8 @@ export class Recorder {
       return;
     if (this._ignoreOverlayEvent(event))
       return;
-    this._currentTool.onClick?.(event);
+    if (!this._ignoreClickAfterDrag)
+      this._currentTool.onClick?.(event);
   }
 
   private _onDblClick(event: MouseEvent) {
@@ -1435,11 +1555,24 @@ export class Recorder {
     this._currentTool.onDragStart?.(event);
   }
 
+  private _onDrop(event: DragEvent) {
+    if (!event.isTrusted || this._ignoreOverlayEvent(event))
+      return;
+    this._currentTool.onDrop?.(event);
+  }
+
+  private _onDragEnd(event: DragEvent) {
+    if (!event.isTrusted)
+      return;
+    this._currentTool.onDragEnd?.(event);
+  }
+
   private _onPointerDown(event: PointerEvent) {
     if (!event.isTrusted)
       return;
     if (this._ignoreOverlayEvent(event))
       return;
+    this._ignoreClickAfterDrag = false;
     this._currentTool.onPointerDown?.(event);
   }
 
@@ -1521,6 +1654,12 @@ export class Recorder {
       return;
     if (this._ignoreOverlayEvent(event))
       return;
+    if (event.key === 'F9' && (this.state.mode === 'recording' || this.state.mode === 'recording-drag')) {
+      consumeEvent(event);
+      if (!event.repeat)
+        this.setMode(this.state.mode === 'recording-drag' ? 'recording' : 'recording-drag');
+      return;
+    }
     this._currentTool.onKeyDown?.(event);
   }
 

@@ -19,6 +19,7 @@ type Point = { x: number, y: number };
 export type ActionName =
   'check' |
   'click' |
+  'dragTo' |
   'hover' |
   'closePage' |
   'fill' |
@@ -55,6 +56,13 @@ export type ClickAction = ActionWithSelector & {
 export type HoverAction = ActionWithSelector & {
   name: 'hover',
   position?: Point,
+};
+
+export type DragToAction = ActionWithSelector & {
+  name: 'dragTo',
+  targetSelector: string,
+  sourcePosition: Point,
+  targetPosition: Point,
 };
 
 export type CheckAction = ActionWithSelector & {
@@ -125,7 +133,7 @@ export type AssertSnapshotAction = ActionWithSelector & {
   ariaSnapshot: string,
 };
 
-export type Action = ClickAction | HoverAction | CheckAction | ClosesPageAction | OpenPageAction | UncheckAction | FillAction | NavigateAction | PressAction | SelectAction | SetInputFilesAction | AssertTextAction | AssertValueAction | AssertCheckedAction | AssertVisibleAction | AssertSnapshotAction;
+export type Action = ClickAction | DragToAction | HoverAction | CheckAction | ClosesPageAction | OpenPageAction | UncheckAction | FillAction | NavigateAction | PressAction | SelectAction | SetInputFilesAction | AssertTextAction | AssertValueAction | AssertCheckedAction | AssertVisibleAction | AssertSnapshotAction;
 export type AssertAction = AssertCheckedAction | AssertValueAction | AssertTextAction | AssertVisibleAction | AssertSnapshotAction;
 export type PerformableAction = ClickAction;
 

@@ -40,7 +40,7 @@ test.describe(() => {
     const submitButton = recorder.page.getByRole('button', { name: 'Submit' });
     const cancelButton = recorder.page.getByRole('button', { name: 'Cancel' });
 
-    await recorder.recorderPage.getByRole('button', { name: 'Record' }).click();
+    await recorder.recorderPage.getByRole('button', { name: /^(Start|Stop) Recording$/ }).click();
 
     await recorder.page.click('x-pw-tool-item.pick-locator');
     await submitButton.hover();

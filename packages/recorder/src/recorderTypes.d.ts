@@ -22,6 +22,7 @@ export type Point = { x: number; y: number };
 export type Mode =
   | 'inspecting'
   | 'recording'
+  | 'recording-drag'
   | 'none'
   | 'assertingText'
   | 'recording-inspecting'

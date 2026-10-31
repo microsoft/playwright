@@ -981,6 +981,9 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `CG-189` | `library/unit/codegen.spec.ts` | java › generatePlaywrightRequestCall with PATCH method and form data |
 | `CG-190` | `library/unit/codegen.spec.ts` | java › generatePlaywrightRequestCall with DELETE method and custom header |
 | `CG-191` | `library/unit/codegen.spec.ts` | java › escape sequences |
+| `CG-192` | `library/inspector/cli-codegen-1.spec.ts` | cli codegen › should record drag and drop |
+| `CG-193` | `library/inspector/cli-codegen-1.spec.ts` | cli codegen › should record drag and drop in an iframe |
+| `CG-194` | `library/inspector/cli-codegen-1.spec.ts` | cli codegen › should arm and cancel mouse drags with a shortcut |
 
 ### CH — Check
 
