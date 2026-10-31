@@ -168,8 +168,18 @@ const removeNamelessImages: DistillerPlugin = {
   },
 };
 
+// Names of containers and table headers identify the group, not just its printed content.
+const rolesWithIdentifyingNames = new Set<aria.AriaNode['role']>([
+  'alertdialog', 'dialog',
+  'banner', 'complementary', 'contentinfo', 'form', 'main', 'navigation', 'region', 'search',
+  'application', 'document', 'figure', 'group',
+  'grid', 'listbox', 'menu', 'menubar', 'radiogroup', 'tablist', 'tabpanel', 'toolbar', 'tree', 'treegrid',
+  'table', 'columnheader', 'rowheader',
+]);
+
 // The node's accessible name is derived from content; when every node that contributed to it is
-// represented in the output anyway, the name would just repeat that content and is dropped.
+// represented in the output anyway, the name would just repeat that content and is dropped,
+// unless it identifies a container or table header.
 // Single-pass bookkeeping over the shared `pendingContentRefs` set: entering a node clears its
 // own ref - it is now represented - except for leaf generics, which only exist to supply text
 // and are dropped by `removeNameRepeatingChild` once a kept name shows it. On exit, either every
@@ -193,7 +203,7 @@ const removeRedundantNames: DistillerPlugin = {
     const nameFromContentRefs = ctx.snapshot.info.get(node.ref)?.nameFromContentRefs;
     if (!nameFromContentRefs?.length)
       return;
-    if (nameFromContentRefs.every(ref => !ctx.pendingContentRefs.has(ref))) {
+    if (!rolesWithIdentifyingNames.has(node.role) && nameFromContentRefs.every(ref => !ctx.pendingContentRefs.has(ref))) {
       node.name = '';
     } else {
       for (const ref of nameFromContentRefs)

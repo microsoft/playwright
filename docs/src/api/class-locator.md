@@ -210,6 +210,7 @@ An AI-optimized snapshot, controlled by [`option: Locator.ariaSnapshot.mode`], i
 1. Includes element references `[ref=e2]`.
 2. Does not wait for an element matching the locator, and throws when no elements match.
 3. Includes snapshots of `<iframe>`s inside the target.
+4. Can omit names that repeat printed descendants, such as a heading containing a link. Names that identify dialogs, landmarks, groups, tables and table headers are retained.
 
 ### option: Locator.ariaSnapshot.mode
 * since: v1.59
