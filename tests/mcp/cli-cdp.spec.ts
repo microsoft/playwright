@@ -112,14 +112,27 @@ browser.isolated=false
   expect(inlineSnapshot).toContain(`- generic [active] [ref=e1]: Hello, world!`);
 });
 
-test('attach via cdp', async ({ cdpServer, cli, server }) => {
+test('attach via cdp', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-cli/issues/489' },
+}, async ({ cdpServer, cli, server }) => {
   const browserContext = await cdpServer.start();
   const [page] = browserContext.pages();
   await page.goto(server.HELLO_WORLD);
+  const backgroundPage = await browserContext.newPage();
+  await backgroundPage.goto(server.PREFIX + '/title.html');
+  await page.bringToFront();
+  await backgroundPage.reload();
 
-  await cli('attach', `--cdp=${cdpServer.endpoint}`);
+  const { output, exitCode } = await cli('attach', `--cdp=${cdpServer.endpoint}`);
+  expect(exitCode).toBe(0);
+  expect(output).toContain(`[Woof-Woof](${server.PREFIX}/title.html)`);
+  const pageIndex = output.match(/^- (\d+): .*\[Title\]/m)![1];
+  await cli('tab-select', pageIndex);
   const { inlineSnapshot } = await cli('snapshot');
   expect(inlineSnapshot).toContain(`- generic [active] [ref=e1]: Hello, world!`);
+
+  const { output: result } = await cli('run-code', 'async page => 1');
+  expect(result).toContain('### Result\n1');
 });
 
 test('tracing-start-stop over cdp', async ({ cdpServer, cli, server }, testInfo) => {
