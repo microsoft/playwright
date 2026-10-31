@@ -26,6 +26,7 @@ type Status =
   | { type: 'error'; versionMismatch: { extensionVersion: string; } };
 
 const SUPPORTED_PROTOCOL_VERSION = 2;
+const tabGroup = new URLSearchParams(window.location.search).get('tabGroup') !== 'false';
 
 // Client name comes from the URL and never changes for the lifetime of this page.
 const clientInfo = (() => {
@@ -142,6 +143,7 @@ const ConnectApp: React.FC = () => {
         type: 'connectToTab',
         tab,
         clientName: clientInfo,
+        tabGroup,
       });
 
       if (response?.success) {
@@ -185,7 +187,7 @@ const ConnectApp: React.FC = () => {
         {showTabList && (
           <div>
             <div className='tab-section-title'>
-              You can drag tabs into the Playwright group later to make them accessible to the client.
+              {tabGroup && <>You can drag tabs into the Playwright group later to make them accessible to the client. </>}
               Optionally, select a tab to allow and immediately switch to it:
             </div>
             <div>

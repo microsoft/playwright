@@ -78,6 +78,7 @@ export type CLIOptions = {
   snapshotBoxes?: boolean;
   snapshotMode?: 'full' | 'none';
   storageState?: string;
+  tabGroup?: boolean;
   testIdAttribute?: string;
   timeoutAction?: number;
   timeoutNavigation?: number;
@@ -373,6 +374,7 @@ function configFromCLIOptions(cliOptions: CLIOptions): Config & { configFile?: s
       remoteEndpoint: cliOptions.endpoint,
     },
     extension: cliOptions.extension,
+    tabGroup: cliOptions.tabGroup === false ? false : undefined,
     server: {
       port: cliOptions.port,
       host: cliOptions.host,
@@ -476,7 +478,11 @@ export function configFromEnv(env?: NodeJS.ProcessEnv): Config & { configFile?: 
   options.webmcp = envToBoolean(e.PLAYWRIGHT_MCP_WEBMCP);
   options.userDataDir = envToString(e.PLAYWRIGHT_MCP_USER_DATA_DIR);
   options.viewportSize = resolutionParser('--viewport-size', e.PLAYWRIGHT_MCP_VIEWPORT_SIZE);
-  return configFromCLIOptions(options);
+  const config = configFromCLIOptions(options);
+  const noTabGroup = envToBoolean(e.PLAYWRIGHT_MCP_NO_TAB_GROUP);
+  if (noTabGroup !== undefined)
+    config.tabGroup = !noTabGroup;
+  return config;
 }
 
 export async function loadConfig(configFile: string | undefined): Promise<Config> {
