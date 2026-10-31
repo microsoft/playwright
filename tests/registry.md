@@ -4023,7 +4023,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `NE-141` | `library/ignorehttpserrors.spec.ts` | should fail with WebSocket if not ignored |
 | `NE-142` | `library/ignorehttpserrors.spec.ts` | serviceWorker should intercept document request |
 | `NE-143` | `page/page-event-network.spec.ts` | should resolve responses after a same-process navigation |
-| `NE-144` | `page/page-event-network.spec.ts` | should report requestfinished for a no-store body streamed to the end |
+| `NE-144` | `page/page-event-request.spec.ts` | should finish no-store request when its body is streamed to the end |
 
 ### OO — OOPIF
 
