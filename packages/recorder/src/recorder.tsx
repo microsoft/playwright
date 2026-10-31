@@ -124,6 +124,10 @@ export const Recorder: React.FC = ({}) => {
             backend.setMode({ mode: mode === 'recording-drag' ? 'recording' : 'recording-drag' });
           }
           break;
+        case 'Escape':
+          if (mode === 'recording-drag')
+            backend.setMode({ mode: 'recording' });
+          break;
         case 'F10':
           event.preventDefault();
           if (paused)
@@ -184,7 +188,7 @@ export const Recorder: React.FC = ({}) => {
         }[mode] as Mode;
         backend.setMode({ mode: newMode }).catch(() => { });
       }}></ToolbarButton>
-      <ToolbarButton icon='move' ariaLabel='Record drag' title={mode === 'recording-drag' ? 'Drag ready (Escape to cancel)' : 'Record drag (F9)'} toggled={mode === 'recording-drag'} disabled={!isRecording} onClick={() => {
+      <ToolbarButton icon='move' ariaLabel='Drag and drop' title={mode === 'recording-drag' ? 'Drag ready (Escape to cancel)' : 'Drag and drop (F9)'} toggled={mode === 'recording-drag'} disabled={!isRecording} onClick={() => {
         backend.setMode({ mode: mode === 'recording-drag' ? 'recording' : 'recording-drag' });
       }}></ToolbarButton>
       <ToolbarButton icon='eye' title='Assert visibility' toggled={mode === 'assertingVisibility'} disabled={mode === 'none' || mode === 'standby' || mode === 'inspecting'} onClick={() => {

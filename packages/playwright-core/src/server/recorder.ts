@@ -193,7 +193,8 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
       });
 
       await this._context.exposeBinding(progress, '__pw_recorderSetMode', async ({ frame }, mode: Mode) => {
-        if (frame.parentFrame() && mode !== 'recording-drag' && this._mode !== 'recording-drag')
+        const togglesDrag = (mode === 'recording-drag' && this._mode === 'recording') || (mode === 'recording' && this._mode === 'recording-drag');
+        if (frame.parentFrame() && !togglesDrag)
           return;
         await this.setMode(mode);
       });

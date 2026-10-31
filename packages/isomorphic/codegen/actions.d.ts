@@ -61,8 +61,8 @@ export type HoverAction = ActionWithSelector & {
 export type DragToAction = ActionWithSelector & {
   name: 'dragTo',
   targetSelector: string,
-  sourcePosition: Point,
-  targetPosition: Point,
+  sourcePosition?: Point,
+  targetPosition?: Point,
 };
 
 export type CheckAction = ActionWithSelector & {
