@@ -587,7 +587,7 @@ it.describe('pause', () => {
     const recorderPage = await recorderPageGetter();
     await expect(recorderPage.getByRole('combobox', { name: 'Source chooser' })).toHaveValue(/pause\.spec\.ts/);
     await expect(recorderPage.locator('.source-line-paused')).toHaveText(/await page\.pause\(.*\)/);
-    await recorderPage.getByRole('button', { name: /^(Start|Stop) Recording$/ }).click();
+    await recorderPage.getByRole('button', { name: 'Record' }).click();
 
     const recorder = new Recorder(page, recorderPage);
     await recorder.hoverOverElement('body', { omitTooltip: true });
