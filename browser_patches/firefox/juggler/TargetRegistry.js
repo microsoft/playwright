@@ -28,6 +28,7 @@ let didCreateFirstPage = false;
 let globalNewPageChain = Promise.resolve();
 
 let globalContextCloseCounter = 0;
+let lastMousePointerId = 0;
 
 const HELPER_APP_DIALOG_CONTRACT_ID = '@mozilla.org/helperapplauncherdialog;1';
 
@@ -664,6 +665,8 @@ export class PageTarget {
     helper.decorateAsEventEmitter(this);
 
     this._targetId = helper.generateId();
+    // Pointer capture is keyed by pointer ID across tabs, but each page has its own mouse.
+    this._mousePointerId = ++lastMousePointerId;
     this._registry = registry;
     this._window = win;
     this._gBrowser = win.gBrowser;
