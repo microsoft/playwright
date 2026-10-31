@@ -361,7 +361,11 @@ export class Tab extends EventEmitter<TabEventsInterface> {
 
   async waitForLoadState(state: 'load', options?: { timeout?: number }): Promise<void> {
     await this._initializedPromise;
-    await this.page.waitForLoadState(state, options).catch(e => debug('pw:tools:error')(e));
+    await this.page.waitForLoadState(state, options).catch(e => {
+      if (this.page.isClosed())
+        throw e;
+      debug('pw:tools:error')(e);
+    });
   }
 
   async checkUrlAndNavigate(url: string): Promise<string> {

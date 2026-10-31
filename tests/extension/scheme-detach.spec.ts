@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import fs from 'fs/promises';
+import path from 'path';
 import { test, expect, extensionId, connectWithToken } from './extension-fixtures';
 
 import type { BrowserContext } from 'playwright';
@@ -96,5 +98,46 @@ test('recovers and can screenshot after the debugger is detached', {
   });
   expect(await client.callTool({ name: 'browser_take_screenshot', arguments: {} })).toHaveResponse({
     code: expect.stringContaining('page.screenshot'),
+  });
+});
+
+test('reports a foreign extension frame and recovers after the tab is lost', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43230' },
+}, async ({ browserWithExtension, startClient, server }, testInfo) => {
+  const injector = testInfo.outputPath('frame-injector');
+  await fs.mkdir(injector);
+  await fs.writeFile(path.join(injector, 'manifest.json'), JSON.stringify({
+    manifest_version: 3,
+    name: 'Frame injector',
+    version: '1.0',
+    content_scripts: [{ matches: ['http://*/*'], js: ['content.js'], run_at: 'document_idle' }],
+    web_accessible_resources: [{ resources: ['frame.html'], matches: ['<all_urls>'] }],
+  }));
+  await fs.writeFile(path.join(injector, 'content.js'), `
+    if (location.pathname === '/hello-world') {
+      const frame = document.createElement('iframe');
+      frame.src = chrome.runtime.getURL('frame.html');
+      document.documentElement.appendChild(frame);
+    }
+  `);
+  await fs.writeFile(path.join(injector, 'frame.html'), '<!DOCTYPE html><title>Foreign frame</title>');
+
+  const browserContext = await browserWithExtension.launch(undefined, [injector]);
+  const { client } = await connectWithToken(browserContext, startClient, browserWithExtension.userDataDir);
+  const getDetach = await watchDetach(browserContext);
+
+  const response = await client.callTool({ name: 'browser_navigate', arguments: { url: server.HELLO_WORLD } });
+  expect(response).toHaveResponse({
+    isError: true,
+    error: expect.stringMatching(/Chrome detached the debugger.*chrome-extension:\/\/.*\/frame\.html/),
+  });
+  expect(JSON.stringify(response)).not.toContain('TypeError');
+  await expect.poll(getDetach).toEqual(expect.arrayContaining([
+    expect.objectContaining({ reason: 'target_closed' }),
+  ]));
+
+  server.setContent('/recovered', '<body>Recovered</body>', 'text/html');
+  expect(await client.callTool({ name: 'browser_navigate', arguments: { url: server.PREFIX + '/recovered' } })).toHaveResponse({
+    snapshot: expect.stringContaining('Recovered'),
   });
 });
