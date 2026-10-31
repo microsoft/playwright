@@ -71,7 +71,7 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
           launchOptions = validator(launchOptions, '', validatorContext);
           return await playwright[this._browserName].launch(progress, launchOptions, toProtocolLogger(options.logger));
         }
-      });
+      }, launchOptions.timeout);
     } catch (e) {
       const log = helper.formatBrowserLogs(metadata.log);
       rewriteErrorMessage(e, `${e.message} Failed to launch browser.${log}`);
