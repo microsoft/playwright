@@ -66,6 +66,7 @@ const iconNames = [
   'close',
   'pass',
   'gist',
+  'move',
 ];
 
 (async () => {
