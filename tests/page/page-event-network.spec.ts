@@ -183,3 +183,47 @@ it('NE-143 should resolve responses after a same-process navigation', {
   // the partial body should not be available anymore.
   expect((await streamingTextPromise).message).toContain('navigated away');
 });
+
+it('NE-144 should report requestfinished for a no-store body streamed to the end', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42742' },
+}, async ({ page, server }) => {
+  const responseFromServerPromise = new Promise<ServerResponse>(resolve => {
+    server.setRoute('/data', (message, response) => {
+      response.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
+      response.write('{"ok":');
+      resolve(response);
+    });
+  });
+  await page.goto(server.EMPTY_PAGE);
+  const terminalPromise = new Promise<string>(resolve => {
+    page.on('requestfinished', request => request.url() === server.PREFIX + '/data' && resolve('requestfinished'));
+    page.on('requestfailed', request => request.url() === server.PREFIX + '/data' && resolve('requestfailed: ' + request.failure().errorText));
+  });
+  const requestPromise = page.waitForRequest(server.PREFIX + '/data');
+  await page.evaluate(() => {
+    (window as any).result = (async () => {
+      const response = await fetch('/data', { cache: 'no-store' });
+      const reader = response.body!.getReader();
+      const bytes: number[] = [];
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done)
+          break;
+        bytes.push(...value);
+        (window as any).bytesRead = bytes.length;
+      }
+      return JSON.parse(new TextDecoder().decode(new Uint8Array(bytes)));
+    })();
+  });
+  // Deliver the last data chunk and the end of the body separately, each after the page has read
+  // everything before it.
+  const responseFromServer = await responseFromServerPromise;
+  await page.waitForFunction(() => (window as any).bytesRead === 6);
+  responseFromServer.write('true}');
+  await page.waitForFunction(() => (window as any).bytesRead === 11);
+  responseFromServer.end();
+  expect(await page.evaluate(() => (window as any).result)).toEqual({ ok: true });
+  expect(await terminalPromise).toBe('requestfinished');
+  const response = await (await requestPromise).response();
+  expect(await response!.json()).toEqual({ ok: true });
+});
