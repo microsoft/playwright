@@ -96,7 +96,10 @@ test(`two clients connect at the same time, each in its own tab group`, {
 });
 
 test(`second client cannot pick a tab owned by the first one`, {
-  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41838' },
+  annotation: [
+    { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41838' },
+    { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43823' },
+  ],
 }, async ({ browserWithExtension, startClient, server }) => {
   server.setContent('/second', '<title>Second</title><body>Second page</body>', 'text/html');
 
@@ -125,6 +128,29 @@ test(`second client cannot pick a tab owned by the first one`, {
   await expect.poll(() => playwrightGroups(browserContext)).toEqual([
     { title: 'Playwright · test', color: 'green' },
     { title: 'Playwright · test (2)', color: 'blue' },
+  ]);
+
+  expect((await a.client.listTools()).tools.map(tool => tool.name)).toContain('browser_set_group_label');
+  expect(await a.client.callTool({
+    name: 'browser_set_group_label', arguments: { label: '  checkout flow  ' },
+  })).toHaveResponse({ result: 'Tab group renamed to "Playwright · checkout flow".' });
+  await expect.poll(() => playwrightGroups(browserContext)).toEqual([
+    { title: 'Playwright · checkout flow', color: 'green' },
+    { title: 'Playwright · test (2)', color: 'blue' },
+  ]);
+  expect(await b.client.callTool({
+    name: 'browser_set_group_label', arguments: { label: 'checkout flow' },
+  })).toHaveResponse({ result: 'Tab group renamed to "Playwright · checkout flow (2)".' });
+  await expect.poll(() => playwrightGroups(browserContext)).toEqual([
+    { title: 'Playwright · checkout flow', color: 'green' },
+    { title: 'Playwright · checkout flow (2)', color: 'blue' },
+  ]);
+  expect(await a.client.callTool({
+    name: 'browser_set_group_label', arguments: { label: '' },
+  })).toHaveResponse({ result: 'Tab group renamed to "Playwright · test".' });
+  await expect.poll(() => playwrightGroups(browserContext)).toEqual([
+    { title: 'Playwright · checkout flow (2)', color: 'blue' },
+    { title: 'Playwright · test', color: 'green' },
   ]);
 });
 

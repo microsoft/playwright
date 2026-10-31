@@ -23,10 +23,11 @@ import { findPlaywrightExtensionProfile, isExtensionInstalledInProfile, playwrig
 import { CDPRelayServer } from './cdpRelay';
 
 import type * as playwrightTypes from '../../..';
+import type { ExtensionSession } from '../backend/context';
 
 const debugLogger = debug('pw:mcp:relay');
 
-export async function createExtensionBrowser(channel: string, executablePath: string | undefined, customUserDataDir: string | undefined, profileDirName: string | undefined, clientName: string, tabGroup = true): Promise<playwrightTypes.Browser> {
+export async function createExtensionBrowser(channel: string, executablePath: string | undefined, customUserDataDir: string | undefined, profileDirName: string | undefined, clientName: string, tabGroup = true): Promise<{ browser: playwrightTypes.Browser, extensionSession: ExtensionSession }> {
   customUserDataDir ??= process.env.PWTEST_EXTENSION_USER_DATA_DIR;
   // Custom executablePath may target a browser in a different filesystem (e.g. Windows chrome.exe from WSL2), so the local profile path is not meaningful.
   const userDataDir = customUserDataDir ?? (executablePath ? undefined : defaultUserDataDirForChannel(channel));
@@ -42,7 +43,7 @@ export async function createExtensionBrowser(channel: string, executablePath: st
     await relay.establishExtensionConnection(clientName, tabGroup);
     const browser = await playwright.chromium.connectOverCDP(relay.cdpEndpoint(), { isLocal: true, timeout: 0, noDefaults: true });
     browser.on('disconnected', () => relay.stop());
-    return browser;
+    return { browser, extensionSession: relay };
   } catch (error) {
     relay.stop();
     throw error;

@@ -21,7 +21,7 @@ import debug from 'debug';
 import { Context } from './context';
 import { Response } from './response';
 import { SessionLog } from './sessionLog';
-import type { ContextConfig } from './context';
+import type { ContextConfig, ExtensionSession } from './context';
 import type { IdleTimer } from './idleTimer';
 import type * as playwright from '../../..';
 import type { Tool } from './tool';
@@ -33,6 +33,7 @@ const backendDebug = debug('pw:mcp:backend');
 export type BrowserBackendOptions = {
   dispose?: () => Promise<void>;
   idleTimer?: IdleTimer;
+  extensionSession?: ExtensionSession;
 };
 
 export class BrowserBackend extends EventEmitter<{ disconnected: [], dynamictoolschange: [] }> implements ServerBackend {
@@ -45,6 +46,7 @@ export class BrowserBackend extends EventEmitter<{ disconnected: [], dynamictool
   private _browserContext: playwright.BrowserContext;
   private _disposeCallback: (() => Promise<void>) | undefined;
   private _idleTimer: IdleTimer | undefined;
+  private _extensionSession: ExtensionSession | undefined;
 
   constructor(config: ContextConfig, browserContext: playwright.BrowserContext, tools: Tool[], options: BrowserBackendOptions = {}) {
     super();
@@ -53,6 +55,7 @@ export class BrowserBackend extends EventEmitter<{ disconnected: [], dynamictool
     this._browserContext = browserContext;
     this._disposeCallback = options.dispose;
     this._idleTimer = options.idleTimer;
+    this._extensionSession = options.extensionSession;
     const markDisconnected = () => {
       if (this._disconnected)
         return;
@@ -71,6 +74,7 @@ export class BrowserBackend extends EventEmitter<{ disconnected: [], dynamictool
       sessionLog: this._sessionLog,
       cwd: clientInfo.cwd,
       onWebMCPToolsChanged: () => this.emit('dynamictoolschange'),
+      extensionSession: this._extensionSession,
     });
   }
 
