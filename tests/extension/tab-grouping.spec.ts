@@ -105,6 +105,9 @@ test('connected tab is in green Playwright group, connect page is closed', {
   const snapshotPromise = ungroupedClient.callTool({ name: 'browser_snapshot', arguments: {} });
   await clickAllowAndSelect(await nextConnectPagePromise, 'Title');
   expect(await snapshotPromise).toHaveResponse({ inlineSnapshot: expect.stringContaining('Hello, world!') });
+  expect(await ungroupedClient.callTool({
+    name: 'browser_set_group_label', arguments: { label: 'checkout flow' },
+  })).toHaveResponse({ error: 'Error: Tab grouping is disabled for this connection.', isError: true });
 
   await ungroupedClient.callTool({ name: 'browser_tabs', arguments: { action: 'new', url: server.EMPTY_PAGE } });
   const controlledTabs = () => statusPage.evaluate(async () => {

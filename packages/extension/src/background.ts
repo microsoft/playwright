@@ -43,6 +43,7 @@ class PlaywrightExtension {
   private _connections = new Map<number, ConnectedTabGroup>();
   private _lastConnectionId = 0;
   private _pendingConnections = new PendingConnections();
+  private _groupLabelQueue: Promise<void> = Promise.resolve();
   // Service worker restarts lose all connection state, so any existing
   // Playwright groups are stale. Connections wait on this before reconciling.
   private _cleanupPromise: Promise<void>;
@@ -115,6 +116,16 @@ class PlaywrightExtension {
       const taken = [...this._connections.values()].flatMap(group => group.groupStyle ? [group.groupStyle] : []);
       const group = new ConnectedTabGroup(connection, tab, clientName, tabGroup ? uniqueGroupStyle(clientName, taken) : undefined, tabId => this._pendingConnections.has(tabId));
       group.onclose = () => this._connections.delete(id);
+      connection.onsetgrouplabel = label => {
+        const result = this._groupLabelQueue.then(() => {
+          if (this._connections.get(id) !== group)
+            throw new Error('Connection closed');
+          const taken = [...this._connections.values()].flatMap(other => other !== group && other.groupStyle ? [other.groupStyle] : []);
+          return group.setGroupLabel(label, taken);
+        });
+        this._groupLabelQueue = result.then(() => {}, error => debugLog('Failed to label tab group:', error));
+        return result;
+      };
       this._connections.set(id, group);
 
       await Promise.all([

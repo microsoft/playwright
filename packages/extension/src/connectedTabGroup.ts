@@ -34,13 +34,17 @@ export type GroupStyle = {
   color: GroupColor;
 };
 
-export function uniqueGroupStyle(clientName: string | undefined, taken: readonly GroupStyle[]): GroupStyle {
+function uniqueGroupTitle(name: string | undefined, taken: readonly GroupStyle[]): string {
   const titles = new Set(taken.map(style => style.title));
-  const base = PLAYWRIGHT_GROUP_TITLE_PREFIX + (clientName || 'unknown');
+  const base = PLAYWRIGHT_GROUP_TITLE_PREFIX + (name || 'unknown');
   let title = base;
   for (let i = 2; titles.has(title); i++)
     title = `${base} (${i})`;
+  return title;
+}
 
+export function uniqueGroupStyle(clientName: string | undefined, taken: readonly GroupStyle[]): GroupStyle {
+  const title = uniqueGroupTitle(clientName, taken);
   const colors = new Set(taken.map(style => style.color));
   const color = PLAYWRIGHT_GROUP_COLORS.find(candidate => !colors.has(candidate)) ?? PLAYWRIGHT_GROUP_COLORS[0];
   return { title, color };
@@ -103,6 +107,20 @@ export class ConnectedTabGroup {
 
   connectedTabIds(): number[] {
     return [...this._groupTabIds];
+  }
+
+  async setGroupLabel(label: string, taken: readonly GroupStyle[]): Promise<string> {
+    if (!this.groupStyle)
+      throw new Error('Tab grouping is disabled for this connection.');
+    const title = uniqueGroupTitle(label || this.clientName, taken);
+    this.groupStyle.title = title;
+    const groupId = this._groupId;
+    if (groupId !== null) {
+      await retryOnDrag(async () => {
+        await chrome.tabGroups.update(groupId, { title });
+      });
+    }
+    return title;
   }
 
   close(reason: string): void {

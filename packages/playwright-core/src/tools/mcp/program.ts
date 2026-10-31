@@ -169,6 +169,7 @@ export function decorateMCPCommand(command: Command) {
 
             return new BrowserBackend(config, browserContext, tools, {
               idleTimer: clientIdleTimer ?? info.idleTimer,
+              extensionSession: info.extensionSession,
               dispose: async () => {
                 clientIdleTimer?.dispose();
                 clientCount--;
