@@ -295,7 +295,11 @@ export class Response {
     if (this._includeSnapshot !== 'none' || tabHeaders.some(header => header.changed)) {
       if (tabHeaders.length !== 1)
         addSection('Open tabs', renderTabsMarkdown(tabHeaders));
-      addSection('Page', renderTabMarkdown(tabHeaders.find(h => h.current) ?? tabHeaders[0]));
+      const currentTab = tabHeaders.find(h => h.current) ?? tabHeaders[0];
+      if (currentTab)
+        addSection('Page', renderTabMarkdown(currentTab));
+      else if (this._includeSnapshot !== 'none' && !this._errors.length)
+        addSection('Error', ['No open tabs. The page was closed before a snapshot could be captured.']);
     }
 
     // Handle modal states.

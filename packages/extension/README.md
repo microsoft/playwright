@@ -93,4 +93,7 @@ If the extension is installed in several Chrome profiles, the connection is made
 
 The `PLAYWRIGHT_MCP_PROFILE_DIR_NAME` environment variable can be used instead of the option. The authentication token is specific to the profile, so use the one displayed in that profile.
 
+## Troubleshooting
+
+Chrome does not allow one extension to debug a page that contains a frame from another extension. If another extension injects a `chrome-extension://` frame, Chrome detaches the Playwright debugger and the tab is no longer available to the client. Disable the other extension on the sites you automate, set its **Site access** to **On click**, or use a profile without it. After changing site access, navigate again to reconnect.
 

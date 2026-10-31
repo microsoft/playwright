@@ -34,6 +34,7 @@
  */
 
 import { logUnhandledError } from './log';
+import { playwrightExtensionId } from '../utils/extension';
 
 import type { DebuggerSession, Debuggee, Tab } from './protocol';
 
@@ -56,6 +57,7 @@ type TabSession = {
   // Child CDP sessionIds (workers, oopifs, ...) belonging to this tab,
   // tracked via Target.attachedToTarget / Target.detachedFromTarget events.
   childSessions: Set<string>;
+  pendingExtensionFrames: Map<string, string>;
 };
 
 export class BrowserModel {
@@ -108,6 +110,16 @@ export class BrowserModel {
     const tabSession = this._tabSessions.get(source.tabId);
     if (!tabSession)
       return;
+    if (method === 'Page.frameRequestedNavigation') {
+      if (params.url?.startsWith('chrome-extension://') && !params.url.startsWith(`chrome-extension://${playwrightExtensionId}/`))
+        tabSession.pendingExtensionFrames.set(params.frameId, params.url);
+      else
+        tabSession.pendingExtensionFrames.delete(params.frameId);
+    }
+    if (method === 'Page.frameNavigated')
+      tabSession.pendingExtensionFrames.delete(params.frame.id);
+    if (method === 'Page.frameDetached')
+      tabSession.pendingExtensionFrames.delete(params.frameId);
     // Track child CDP sessions so we can route subsequent commands for
     // them to the correct tab. Target.attachedToTarget introduces a new
     // sessionId belonging to the same tab; Target.detachedFromTarget
@@ -123,9 +135,22 @@ export class BrowserModel {
     this._emit({ sessionId, method, params });
   }
 
-  onDebuggerDetach(source: Debuggee): void {
-    if (source.tabId !== undefined)
-      this._detachTab(source.tabId);
+  onDebuggerDetach(source: Debuggee, reason: string): void {
+    if (source.tabId === undefined)
+      return;
+    const tabSession = this._tabSessions.get(source.tabId);
+    const extensionFrame = tabSession?.pendingExtensionFrames.values().next().value;
+    if (tabSession && reason === 'target_closed' && extensionFrame) {
+      // Preserve the cause before Target.detachedFromTarget closes the Playwright page.
+      this._emit({
+        sessionId: tabSession.sessionId,
+        method: 'Inspector.detached',
+        params: {
+          reason: `Chrome detached the debugger while a frame was navigating to "${extensionFrame}". Chrome does not allow debugging pages containing frames from another extension. Disable that extension on this site or set its site access to "On click".`,
+        },
+      });
+    }
+    this._detachTab(source.tabId);
   }
 
   // ─── Playwright → model commands ──────────────────────────────────────
@@ -210,7 +235,7 @@ export class BrowserModel {
     ]);
     const targetInfo = result?.targetInfo;
     const sessionId = `pw-tab-${this._nextSessionId++}`;
-    const tabSession: TabSession = { tabId, sessionId, targetInfo, childSessions: new Set() };
+    const tabSession: TabSession = { tabId, sessionId, targetInfo, childSessions: new Set(), pendingExtensionFrames: new Map() };
     this._tabSessions.set(tabId, tabSession);
     this._emit({
       method: 'Target.attachedToTarget',
