@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import type { ServerResponse } from 'http';
 import { test as it, expect } from './pageTest';
 import { attachFrame } from '../config/utils';
 
@@ -293,6 +294,46 @@ it('NE-103 should fail 204 navigation request', {
   await page.setContent(`<a href="${server.PREFIX}/204">link</a>`);
   await page.click('a', { noWaitAfter: true });
   expect(await reqPromise).toBe('requestfailed');
+});
+
+it('NE-144 should finish no-store request when its body is streamed to the end', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42742' },
+}, async ({ page, server, browserName, browserMajorVersion }) => {
+  it.skip(browserName === 'chromium' && browserMajorVersion < 157, 'fixed in Chromium 157');
+  const serverResponsePromise = new Promise<ServerResponse>(resolve => {
+    server.setRoute('/stream', (req, res) => {
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
+      res.write('{"ok":');
+      resolve(res);
+    });
+  });
+  await page.goto(server.EMPTY_PAGE);
+  const reqPromise = Promise.race([
+    page.waitForEvent('requestfailed', r => r.url().endsWith('/stream')).then(r => 'requestfailed: ' + r.failure().errorText),
+    page.waitForEvent('requestfinished', r => r.url().endsWith('/stream')).then(() => 'requestfinished'),
+  ]);
+  const responsePromise = page.waitForResponse(server.PREFIX + '/stream');
+  await page.evaluate(() => {
+    window['bytesRead'] = 0;
+    window['body'] = fetch('/stream').then(async response => {
+      const reader = response.body.getReader();
+      const chunks = [];
+      for (let chunk = await reader.read(); !chunk.done; chunk = await reader.read()) {
+        chunks.push(chunk.value);
+        window['bytesRead'] += chunk.value.length;
+      }
+      return new Blob(chunks).text();
+    });
+  });
+  const serverResponse = await serverResponsePromise;
+  // Chromium reported the request as failed when the end of the body arrived separately from the last data.
+  await page.waitForFunction(() => window['bytesRead'] === 6);
+  serverResponse.write('true}');
+  await page.waitForFunction(() => window['bytesRead'] === 11);
+  serverResponse.end();
+  expect(await page.evaluate(() => window['body'])).toBe('{"ok":true}');
+  expect(await reqPromise).toBe('requestfinished');
+  expect(await (await responsePromise).text()).toBe('{"ok":true}');
 });
 
 it('NE-104 <picture> resource should have type image', async ({ page }) => {
