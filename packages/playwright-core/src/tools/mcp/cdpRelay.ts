@@ -128,9 +128,9 @@ export class CDPRelayServer {
     return `${this._wsHost}${this._extensionPath}`;
   }
 
-  async establishExtensionConnection(clientName: string) {
+  async establishExtensionConnection(clientName: string, tabGroup = true) {
     debugLogger('Establishing extension connection');
-    await this._openConnectPageInBrowser(clientName);
+    await this._openConnectPageInBrowser(clientName, tabGroup);
     debugLogger('Waiting for incoming extension connection');
     // Without a token the user has to approve the connection in the browser, which can take arbitrarily long.
     const deadline = this._token ? monotonicTime() + extensionConnectionTimeout : 0;
@@ -145,7 +145,7 @@ export class CDPRelayServer {
     debugLogger('Extension connection established');
   }
 
-  private async _openConnectPageInBrowser(clientName: string) {
+  private async _openConnectPageInBrowser(clientName: string, tabGroup: boolean) {
     const mcpRelayEndpoint = `${this._wsHost}${this._extensionPath}`;
     const url = new URL(`chrome-extension://${playwrightExtensionId}/connect.html`);
     url.searchParams.set('mcpRelayUrl', mcpRelayEndpoint);
@@ -156,6 +156,8 @@ export class CDPRelayServer {
     };
     url.searchParams.set('client', JSON.stringify(client));
     url.searchParams.set('protocolVersion', this._protocolVersion.toString());
+    if (!tabGroup)
+      url.searchParams.set('tabGroup', 'false');
     if (this._token)
       url.searchParams.set('token', this._token);
     const href = url.toString();

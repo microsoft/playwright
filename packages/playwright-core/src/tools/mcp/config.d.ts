@@ -109,6 +109,11 @@ export type Config = {
    */
   extension?: boolean;
 
+  /**
+   * Group controlled tabs when using the extension. Defaults to true.
+   */
+  tabGroup?: boolean;
+
   server?: {
     /**
      * The port to listen on for SSE or MCP transport.

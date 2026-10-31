@@ -342,22 +342,28 @@ test.describe('merge order', () => {
     expect(config.browser.isolated).toBe(true);
   });
 
-  test('env overrides config file', async ({}, testInfo) => {
+  test('env overrides config file', {
+    annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43038' },
+  }, async ({}, testInfo) => {
     const configFile = testInfo.outputPath('config.json');
-    await fs.promises.writeFile(configFile, JSON.stringify({ timeouts: { navigation: 1000 } }));
-    const config = await resolveCLIConfigForMCP({ config: configFile }, {
+    await fs.promises.writeFile(configFile, JSON.stringify({ timeouts: { navigation: 1000 }, tabGroup: true }));
+    const config = await resolveCLIConfigForMCP({ ...await parseCLIOptions([]), config: configFile }, {
       PLAYWRIGHT_MCP_TIMEOUT_NAVIGATION: '45000',
+      PLAYWRIGHT_MCP_NO_TAB_GROUP: '1',
     });
     expect(config.timeouts.navigation).toBe(45000);
+    expect(config.tabGroup).toBe(false);
   });
 
   test('cli overrides env', async () => {
-    const config = await resolveCLIConfigForMCP({ timeoutAction: 3000, browser: 'firefox' }, {
+    const config = await resolveCLIConfigForMCP({ ...await parseCLIOptions(['--no-tab-group']), timeoutAction: 3000, browser: 'firefox' }, {
       PLAYWRIGHT_MCP_TIMEOUT_ACTION: '9000',
       PLAYWRIGHT_MCP_BROWSER: 'webkit',
+      PLAYWRIGHT_MCP_NO_TAB_GROUP: '0',
     });
     expect(config.timeouts.action).toBe(3000);
     expect(config.browser.browserName).toBe('firefox');
+    expect(config.tabGroup).toBe(false);
   });
 
   test('file browser.cdpHeaders preserved when env unset', async ({}, testInfo) => {

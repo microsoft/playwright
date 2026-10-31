@@ -40,7 +40,9 @@ test('connect page is not in group before selection', async ({ startExtensionCli
   await navigatePromise;
 });
 
-test('connected tab is in green Playwright group, connect page is closed', async ({ browserWithExtension, startClient, server }) => {
+test('connected tab is in green Playwright group, connect page is closed', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43038' },
+}, async ({ browserWithExtension, startClient, server }) => {
   const browserContext = await browserWithExtension.launch();
 
   const page = await browserContext.newPage();
@@ -75,6 +77,54 @@ test('connected tab is in green Playwright group, connect page is closed', async
       return { color: g.color, title: g.title };
     });
   }).toEqual({ color: 'green', title: 'Playwright · test' });
+
+  await client.close();
+  await expect.poll(() => sw.evaluate(async () => {
+    const chrome = (globalThis as any).chrome;
+    const [tab] = await chrome.tabs.query({ title: 'Title' });
+    return tab.groupId;
+  })).toBe(-1);
+
+  // Opting out preserves the user's groups instead of moving controlled tabs.
+  const userGroupId = await sw.evaluate(async () => {
+    const chrome = (globalThis as any).chrome;
+    const [tab] = await chrome.tabs.query({ title: 'Title' });
+    const groupId = await chrome.tabs.group({ tabIds: [tab.id!] });
+    await chrome.tabGroups.update(groupId, { title: 'My tabs', color: 'blue' });
+    return groupId;
+  });
+  const statusPage = await browserContext.newPage();
+  await statusPage.goto(`chrome-extension://${extensionId}/status.html`);
+  const { client: ungroupedClient } = await startClient({
+    args: ['--extension', '--no-tab-group'],
+    env: { PWTEST_EXTENSION_USER_DATA_DIR: browserWithExtension.userDataDir },
+  });
+  const nextConnectPagePromise = browserContext.waitForEvent('page', page =>
+    page.url().startsWith(`chrome-extension://${extensionId}/connect.html`)
+  );
+  const snapshotPromise = ungroupedClient.callTool({ name: 'browser_snapshot', arguments: {} });
+  await clickAllowAndSelect(await nextConnectPagePromise, 'Title');
+  expect(await snapshotPromise).toHaveResponse({ inlineSnapshot: expect.stringContaining('Hello, world!') });
+
+  await ungroupedClient.callTool({ name: 'browser_tabs', arguments: { action: 'new', url: server.EMPTY_PAGE } });
+  const controlledTabs = () => statusPage.evaluate(async () => {
+    const chrome = (globalThis as any).chrome;
+    const { connections } = await chrome.runtime.sendMessage({ type: 'getConnectionStatus' });
+    return Promise.all(connections[0].connectedTabIds.map(async (tabId: number) => {
+      const tab = await chrome.tabs.get(tabId);
+      return { groupId: tab.groupId, badge: await chrome.action.getBadgeText({ tabId }) };
+    }));
+  });
+  await expect.poll(controlledTabs).toEqual([
+    { groupId: userGroupId, badge: '✓' },
+    { groupId: -1, badge: '✓' },
+  ]);
+  await ungroupedClient.close();
+  await expect.poll(() => sw.evaluate(async () => {
+    const chrome = (globalThis as any).chrome;
+    const [tab] = await chrome.tabs.query({ title: 'Title' });
+    return { groupId: tab.groupId, badge: await chrome.action.getBadgeText({ tabId: tab.id! }) };
+  })).toEqual({ groupId: userGroupId, badge: '' });
 });
 
 test('tab added to group gets auto-attached', async ({ browserWithExtension, startClient, server }) => {
