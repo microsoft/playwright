@@ -17,7 +17,7 @@
 import fs from 'fs';
 import url from 'url';
 
-import { addToCompilationCache, currentFileDepsCollector, serializeCompilationCache, startCollectingFileDeps, stopCollectingFileDeps } from './compilationCache';
+import { addToCompilationCache, currentFileDepsCollector, recordEsmImport, serializeCompilationCache, startCollectingFileDeps, stopCollectingFileDeps } from './compilationCache';
 import { PortTransport } from './portTransport';
 import { hasTransformedExtension, isStyleFile, resolveHook, setSingleTSConfig, setTransformConfig, shouldTransform, transformHook } from './transform';
 import { fileIsModule } from '../util';
@@ -39,8 +39,12 @@ async function resolve(originalSpecifier: string, context: { parentURL?: string 
   const result = await defaultResolve(specifier, context, defaultResolve);
   // Note: we collect dependencies here that will be sent to the main thread
   // (and optionally runner process) after the loading finishes.
-  if (result?.url && result.url.startsWith('file://'))
-    currentFileDepsCollector()?.add(url.fileURLToPath(result.url));
+  if (result?.url && result.url.startsWith('file://')) {
+    const resolvedFile = url.fileURLToPath(result.url);
+    currentFileDepsCollector()?.add(resolvedFile);
+    if (context.parentURL && context.parentURL.startsWith('file://'))
+      recordEsmImport(url.fileURLToPath(context.parentURL), resolvedFile);
+  }
 
   if (originalSpecifier.endsWith(esmPreflightExtension))
     result.url = result.url + esmPreflightExtension;
