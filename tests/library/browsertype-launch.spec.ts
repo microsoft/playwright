@@ -83,6 +83,10 @@ it('BT-012 should handle timeout', async ({ browserType, mode }) => {
   expect(error!.message).toContain(`browserType.launch: Timeout 5000ms exceeded.`);
   expect(error!.message).toContain(`<launching>`);
   expect(error!.message).toContain(`<launched> pid=`);
+
+  // https://github.com/microsoft/playwright/issues/43819
+  const serverError = await browserType.launchServer(options).catch(e => e);
+  expect(serverError!.message).toContain(`Timeout 5000ms exceeded.`);
 });
 
 it('BT-013 should handle exception and report launch log', async ({ browserType, mode }) => {
