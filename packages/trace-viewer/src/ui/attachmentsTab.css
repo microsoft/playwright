@@ -31,9 +31,25 @@
   line-height: 24px;
 }
 
-.attachments-section:not(:first-child) {
+.attachments-section:not(:first-child),
+.attachments-image-diff:not(:first-child) {
   border-top: 1px solid var(--vscode-panel-border);
   margin-top: 10px;
+}
+
+.attachments-image-diff-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: var(--vscode-editor-background);
+}
+
+.attachments-image-diff-header .toolbar-button {
+  font-weight: normal;
+  text-transform: none;
 }
 
 .attachment-item {

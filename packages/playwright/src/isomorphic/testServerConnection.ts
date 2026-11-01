@@ -219,6 +219,10 @@ export class TestServerConnection implements TestServerInterface, TestServerInte
     return await this._sendMessage('clearCache', params);
   }
 
+  async updateSnapshot(params: Parameters<TestServerInterface['updateSnapshot']>[0]): ReturnType<TestServerInterface['updateSnapshot']> {
+    return await this._sendMessage('updateSnapshot', params);
+  }
+
   async listFiles(params: Parameters<TestServerInterface['listFiles']>[0]): ReturnType<TestServerInterface['listFiles']> {
     return await this._sendMessage('listFiles', params);
   }

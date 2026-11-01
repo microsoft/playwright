@@ -15,6 +15,8 @@
  */
 
 import { artifactsFolderName } from '@testIsomorphic/folders';
+import { TeleTestResult } from '@testIsomorphic/teleReceiver';
+import type { TestServerInterface } from '@testIsomorphic/testServerInterface';
 import type { TreeItem } from '@testIsomorphic/testTree';
 import '@web/common.css';
 import '@web/third_party/vscode/codicon.css';
@@ -24,16 +26,18 @@ import type { ContextEntry } from '@isomorphic/trace/entries';
 import type { SourceLocation } from '@isomorphic/trace/traceModel';
 import { TraceModel } from '@isomorphic/trace/traceModel';
 import { Workbench } from './workbench';
+import type { UpdateSnapshot } from './attachmentsTab';
 
 export const TraceView: React.FC<{
   item: { treeItem?: TreeItem, testFile?: SourceLocation, testCase?: reporterTypes.TestCase },
   rootDir?: string,
   onOpenExternally?: (location: SourceLocation) => void,
+  onUpdateSnapshot?: TestServerInterface['updateSnapshot'],
   revealSource?: boolean,
   pathSeparator: string,
   onModelChange?: (model: TraceModel | undefined) => void,
-}> = ({ item, rootDir, onOpenExternally, revealSource, pathSeparator, onModelChange }) => {
-  const [model, setModel] = React.useState<{ model: TraceModel, isLive: boolean } | undefined>(undefined);
+}> = ({ item, rootDir, onOpenExternally, onUpdateSnapshot, revealSource, pathSeparator, onModelChange }) => {
+  const [model, setModel] = React.useState<{ model: TraceModel, isLive: boolean, result?: reporterTypes.TestResult } | undefined>(undefined);
   const [counter, setCounter] = React.useState(0);
 
   const { outputDir } = React.useMemo(() => {
@@ -54,7 +58,7 @@ export const TraceView: React.FC<{
     // Test finished.
     const attachment = result && result.duration >= 0 && result.attachments.find(a => a.name === 'trace');
     if (attachment && attachment.path) {
-      loadSingleTraceFile(attachment.path, result.startTime.getTime(), signal).then(model => setModel({ model, isLive: false })).catch(e => {
+      loadSingleTraceFile(attachment.path, result.startTime.getTime(), signal).then(model => setModel({ model, isLive: false, result })).catch(e => {
         if (!signal.aborted)
           throw e;
       });
@@ -96,6 +100,14 @@ export const TraceView: React.FC<{
     onModelChange?.(model?.model);
   }, [model, onModelChange]);
 
+  const testCase = item.testCase;
+  const result = testCase?.results[0];
+  const updateSnapshot: UpdateSnapshot | undefined = testCase && result instanceof TeleTestResult && model?.result === result && onUpdateSnapshot ? params => onUpdateSnapshot({
+    ...params,
+    testId: testCase.id,
+    resultId: result._id,
+  }) : undefined;
+
   return <Workbench
     model={model?.model}
     key='workbench'
@@ -106,6 +118,7 @@ export const TraceView: React.FC<{
     status={item.treeItem?.status}
     defaultAnnotations={item.testCase?.annotations ?? []}
     onOpenExternally={onOpenExternally}
+    onUpdateSnapshot={updateSnapshot}
     revealSource={revealSource}
   />;
 };

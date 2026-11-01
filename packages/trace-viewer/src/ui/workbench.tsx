@@ -32,6 +32,7 @@ import { Timeline } from './timeline';
 import { usePlayback, PlaybackScrubber } from './playbackControl';
 import { MetadataView } from './metadataView';
 import { AttachmentsTab } from './attachmentsTab';
+import type { UpdateSnapshot } from './attachmentsTab';
 import { AnnotationsTab } from './annotationsTab';
 import type { Boundaries } from './geometry';
 import { InspectorTab } from './inspectorTab';
@@ -61,6 +62,7 @@ export type WorkbenchProps = {
   defaultAnnotations?: TestAnnotation[];
   inert?: boolean;
   onOpenExternally?: (location: SourceLocation) => void;
+  onUpdateSnapshot?: UpdateSnapshot;
   revealSource?: boolean;
   testRunMetadata?: MetadataWithCommitInfo;
 };
@@ -286,7 +288,7 @@ const PartitionedWorkbench: React.FunctionComponent<WorkbenchProps & { partition
     id: 'attachments',
     title: 'Attachments',
     count: model?.visibleAttachments.length,
-    render: () => <AttachmentsTab revealedAttachmentCallId={revealedAttachmentCallId} />
+    render: () => <AttachmentsTab revealedAttachmentCallId={revealedAttachmentCallId} onUpdateSnapshot={props.onUpdateSnapshot} />
   };
 
   const tabs: TabbedPaneTabModel[] = [

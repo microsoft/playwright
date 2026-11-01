@@ -241,19 +241,23 @@ test('should show snapshots for steps', {
   await expect(snapshot).toHaveText('bar');
 });
 
-test('should show image diff', async ({ runUITest }) => {
+test('should show image diff', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43833' } }, async ({ runUITest, browserName }, testInfo) => {
+  const original = createImage(100, 1200, 255, 0, 0);
   const { page } = await runUITest({
     'playwright.config.js': `
       module.exports = {
+        use: { browserName: '${browserName}' },
         snapshotPathTemplate: '{arg}{ext}'
       };
     `,
-    'snapshot.png': createImage(100, 100, 255, 0, 0),
+    'snapshot.png': original,
+    'other.png': original,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('vrt test', async ({ page }) => {
-        await page.setViewportSize({ width: 100, height: 100 });
-        await expect(page).toHaveScreenshot('snapshot.png', { timeout: 2000 });
+        await page.setViewportSize({ width: 100, height: 1200 });
+        await expect.soft(page).toHaveScreenshot('snapshot.png', { timeout: 2000 });
+        await expect.soft(page).toHaveScreenshot('other.png', { timeout: 2000 });
       });
     `,
   });
@@ -262,10 +266,30 @@ test('should show image diff', async ({ runUITest }) => {
   await expect(page.getByTestId('workbench-run-status')).toContainText('Failed');
 
   await page.getByText(/Attachments/).click();
-  await expect(page.getByText('Diff', { exact: true })).toBeVisible();
-  await expect(page.getByText('Actual', { exact: true })).toBeVisible();
-  await expect(page.getByText('Expected', { exact: true })).toBeVisible();
-  await expect(page.getByTestId('test-result-image-mismatch').locator('img')).toBeVisible();
+  await expect(page.getByText('Diff', { exact: true }).first()).toBeVisible();
+  await expect(page.getByText('Actual', { exact: true }).first()).toBeVisible();
+  await expect(page.getByText('Expected', { exact: true }).first()).toBeVisible();
+  await expect(page.getByTestId('test-result-image-mismatch').first().locator('img')).toBeVisible();
+
+  const buttons = page.getByRole('button', { name: 'Update snapshot', exact: true });
+  await expect(buttons).toHaveCount(2);
+  const attachments = page.locator('.attachments-tab');
+  await attachments.evaluate(element => element.scrollTop = 200);
+  await expect.poll(() => attachments.evaluate(element => element.scrollTop)).toBe(200);
+  await expect.poll(async () => Math.abs((await page.locator('.attachments-image-diff-header').first().boundingBox())!.y - (await attachments.boundingBox())!.y)).toBeLessThan(2);
+  await expect(buttons.first()).toBeInViewport();
+
+  const actualURL = await page.getByRole('link', { name: 'snapshot-actual.png', exact: true }).getAttribute('href');
+  const actual = Buffer.from(await page.evaluate(async url => Array.from(new Uint8Array(await (await fetch(url)).arrayBuffer())), actualURL!));
+  await buttons.first().click();
+  await expect.poll(() => fs.readFileSync(testInfo.outputPath('snapshot.png')).equals(actual)).toBe(true);
+  expect(fs.readFileSync(testInfo.outputPath('other.png'))).toEqual(original);
+  await expect(page.getByTestId('workbench-run-status')).toContainText('Failed');
+
+  await page.getByText('vrt test', { exact: true }).dblclick();
+  await expect(page.getByTestId('workbench-run-status')).toContainText('Failed');
+  await expect(page.getByRole('link', { name: 'snapshot-diff.png', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'other-diff.png', exact: true })).toHaveCount(1);
 });
 
 test('should show screenshot', async ({ runUITest }) => {
@@ -289,6 +313,7 @@ test('should show screenshot', async ({ runUITest }) => {
   await page.getByText(/Attachments/).click();
   await expect(page.getByText('Screenshots', { exact: true })).toBeVisible();
   await expect(page.locator('.attachment-item img')).toHaveCount(1);
+  await expect(page.getByRole('button', { name: 'Update snapshot', exact: true })).toHaveCount(0);
 });
 
 test('should not fail on internal page logs', async ({ runUITest, server }) => {

@@ -15,6 +15,7 @@
  */
 
 import util from 'util';
+import fs from 'fs';
 import debug from 'debug';
 import open from 'open';
 
@@ -114,6 +115,7 @@ export class TestServerDispatcher implements TestServerInterface {
   readonly transport: Transport;
   private _serializer: string | undefined;
   private _closeOnDisconnect = false;
+  private _snapshotResults = new Map<string, { id: string, attachments: reporterTypes.TestResult['attachments'], finished: boolean }>();
   _testRunner: TestRunner;
   private _globalSetupReport: ReportEntry[] | undefined;
   readonly _dispatchEvent: TestServerInterfaceEventEmitters['dispatchEvent'];
@@ -134,8 +136,21 @@ export class TestServerDispatcher implements TestServerInterface {
     this._testRunner.on(TestRunnerEvent.TestPaused, params => this._dispatchEvent('testPaused', { errors: params.errors }));
   }
 
-  private async _wireReporter(messageSink: (message: any) => void) {
-    return await createReporterForTestServer(this._serializer, messageSink);
+  private async _wireReporter(messageSink: (message: ReportEntry) => void) {
+    return await createReporterForTestServer(this._serializer, (message: ReportEntry) => {
+      if (message.method === 'onTestBegin') {
+        this._snapshotResults.set(message.params.testId, { id: message.params.result.id, attachments: [], finished: false });
+      } else if (message.method === 'onAttach') {
+        const result = this._snapshotResults.get(message.params.testId);
+        if (result?.id === message.params.resultId)
+          result.attachments.push(...message.params.attachments);
+      } else if (message.method === 'onTestEnd') {
+        const result = this._snapshotResults.get(message.params.test.testId);
+        if (result?.id === message.params.result.id)
+          result.finished = true;
+      }
+      messageSink(message);
+    });
   }
 
   private async _collectingReporter(): Promise<{ reporter: ReporterV2, report: ReportEntry[] }> {
@@ -193,6 +208,21 @@ export class TestServerDispatcher implements TestServerInterface {
 
   async clearCache(params: Parameters<TestServerInterface['clearCache']>[0]): ReturnType<TestServerInterface['clearCache']> {
     await this._testRunner.clearCache();
+  }
+
+  async updateSnapshot(params: Parameters<TestServerInterface['updateSnapshot']>[0]): ReturnType<TestServerInterface['updateSnapshot']> {
+    const result = this._snapshotResults.get(params.testId);
+    if (!result?.finished || result.id !== params.resultId)
+      throw new Error('Cannot update a snapshot from an unfinished or outdated test result');
+    const name = params.actual.name.match(/^(.*)-actual\.png$/)?.[1];
+    if (!name || params.expected.name !== `${name}-expected.png` || params.actual.contentType !== 'image/png' || params.expected.contentType !== 'image/png')
+      throw new Error('Actual and expected attachments do not form an image snapshot pair');
+    // Resolve paths from the reporter, not from the client or archived trace resources.
+    const actual = result.attachments.filter(a => a.name === params.actual.name && a.contentType === params.actual.contentType);
+    const expected = result.attachments.filter(a => a.name === params.expected.name && a.contentType === params.expected.contentType);
+    if (actual.length !== 1 || expected.length !== 1 || !actual[0].path || !expected[0].path)
+      throw new Error('Snapshot attachments are missing or ambiguous for this test result');
+    await fs.promises.copyFile(actual[0].path, expected[0].path);
   }
 
   async listFiles(params: Parameters<TestServerInterface['listFiles']>[0]): ReturnType<TestServerInterface['listFiles']> {
