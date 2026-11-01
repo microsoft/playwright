@@ -97,6 +97,8 @@ The Network tab shows you all the network requests that were made during your te
 
 The "Attachments" tab allows you to explore attachments. If you're doing [visual regression testing](./test-snapshots.md), you'll be able to compare screenshots by examining the image diff, the actual image and the expected image. When you click on the expected image you can use the slider to slide one image over the other so you can easily see the differences in your screenshots.
 
+After a test finishes, click **Update snapshot** in an image diff's header to replace only that expected snapshot with the actual image, without running the test again. The header stays visible while you scroll through the comparison. Other snapshots and the recorded test result remain unchanged; run the test again to check the updated snapshot.
+
 <img src="https://github.com/microsoft/playwright/assets/13063165/bb83b406-84ed-4380-a96c-0e62d1388093" alt="ui mode with attachments" width="3606" height="2228" />
 
 ## Metadata

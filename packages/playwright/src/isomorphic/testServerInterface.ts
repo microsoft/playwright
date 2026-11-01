@@ -57,6 +57,13 @@ export interface TestServerInterface {
 
   clearCache(params: {}): Promise<void>;
 
+  updateSnapshot(params: {
+    testId: string;
+    resultId: string;
+    actual: { name: string, contentType: string };
+    expected: { name: string, contentType: string };
+  }): Promise<void>;
+
   listFiles(params: {
     projects?: string[];
   }): Promise<{
