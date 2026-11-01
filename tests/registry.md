@@ -610,6 +610,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `BT-101` | `library/browsertype-launch-selenium.spec.ts` | selenium grid 4.8.3 standalone chromium broken driver |
 | `BT-102` | `library/browsertype-launch-selenium.spec.ts` | selenium grid 3.141.59 standalone non-chromium |
 | `BT-103` | `library/browsertype-launch-selenium.spec.ts` | selenium grid 3.141.59 standalone chromium through run-driver |
+| `BT-104` | `library/browsertype-launch-server.spec.ts` | launch server › should handle timeout |
 
 ### BU — Before unload
 

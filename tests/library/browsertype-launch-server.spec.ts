@@ -30,6 +30,11 @@ it.describe('launch server', () => {
     await expect(browserType.launchServer({ channel: null })).rejects.toThrow(/channel: expected string, got object/);
   });
 
+  it('BT-104 should handle timeout', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43819' } }, async ({ browserType }) => {
+    const options = { timeout: 5000, __testHookBeforeCreateBrowser: () => new Promise(f => setTimeout(f, 6000)) };
+    await expect(browserType.launchServer(options).then(server => server.close())).rejects.toThrow('Timeout 5000ms exceeded.');
+  });
+
   it('BT-024 should work with host', async ({ browserType }) => {
     const host = '0.0.0.0';
     const browserServer = await browserType.launchServer({ host });

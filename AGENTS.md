@@ -92,7 +92,7 @@ npm run ctest-mcp snapshot                             # By file name part
 
 Keep tests minimal. Be mindful of the number of tests you add.
 
-- **Extend before you add**: before you write a new test, look for an existing test that covers the same feature or code path. If one exists, add the new edge case or assertion to it. Create a new test only when no existing test is a good fit, or when the new scenario needs a different setup.
+- **Extend before you add**: before you write a new test, look for an existing test that covers the same feature and the same API. If one exists, add the new edge case or assertion to it. Create a new test only when no existing test is a good fit, or when the new scenario needs a different setup.
 - **New features**: cover the mainstream scenario and the important edge cases only. Do not create matrices of tests for every scenario, option, or aspect.
 - **Regressions**: generalize the provided regression cases into meaningful tests, and stop there. Do not add more tests around them.
 
