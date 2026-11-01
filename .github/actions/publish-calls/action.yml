@@ -9,7 +9,9 @@ description: >
   none of them runs. The calls run in a fixed order: pull request, push, issue, comment, reply.
   calls.d.ts has the types of the file, and the agent reads it too: run-agent copies it to the
   guides. publish-calls.ts has the checks. The job checks out the repo of the run at the commit
-  that the patch of a pull-request or push call is against.
+  that the patch of a pull-request or push call is against. A pull request in another Playwright
+  repo needs a checkout of that repo in a subdirectory named after it, such as playwright/ for
+  microsoft/playwright.
 inputs:
   token:
     description: 'Token from the app, with write access to what the calls change'

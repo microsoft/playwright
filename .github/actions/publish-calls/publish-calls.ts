@@ -30,8 +30,9 @@ type Key = { [K in Kind]: KeysOf<K> }[Kind];
 
 // What the calls may change. The workflow can give the parts with a SCOPE_ input.
 type Scope = {
-  // The repo of the run, the one that is checked out. A pull request and a push go to it, and the
-  // issue and the pull request below are in it.
+  // The repo of the run, checked out in the work directory. A push goes to it, and the issue and
+  // the pull request below are in it. A pull request goes to it, or to another repo that is checked
+  // out in a subdirectory named after it.
   repository: string,
   // SCOPE_KINDS: the kinds of calls that this run makes. Empty allows every kind.
   kinds: Set<Kind>,
@@ -46,6 +47,9 @@ type Scope = {
 type Repo = { owner: string, repo: string };
 type GitHub = {
   rest: {
+    repos: {
+      get(params: Repo): Promise<{ data: { default_branch: string } }>,
+    },
     pulls: {
       create(params: Repo & { head: string, base: string, title: string, body: string, draft: boolean }): Promise<{ data: { number: number, html_url: string } }>,
       get(params: Repo & { pull_number: number }): Promise<{ data: { state: string, head: { ref: string, repo: { full_name: string } | null } } }>,
@@ -71,7 +75,7 @@ type Core = {
   setOutput(name: string, value: string | number): void,
   summary: { addRaw(text: string): { write(): Promise<unknown> } },
 };
-type Context = { repo: Repo, payload: { repository?: { default_branch?: string } } };
+type Context = { repo: Repo };
 
 // The order in which the calls run, whatever their order in the file: a comment links the pull
 // request and the issue that were opened before it, and a reply comes after the push it explains.
@@ -150,9 +154,11 @@ async function publish({ github, context, core }: { github: GitHub, context: Con
       switch (call.call) {
         case 'pull-request': {
           // The branch must be new, so that a mistake cannot push to main or to another branch.
-          const commit = commitPatch({ patch: call.patch, title: call.title, body: call.commitBody, branch: call.branch, lease: '' });
+          const cwd = checkoutOf(call.repo, repository);
+          const commit = commitPatch({ cwd, patch: call.patch, title: call.title, body: call.commitBody, branch: call.branch, lease: '' });
+          const { data: { default_branch: base } } = await github.rest.repos.get({ owner, repo });
           const { data: pr } = await github.rest.pulls.create({
-            owner, repo, head: call.branch, base: context.payload.repository?.default_branch ?? 'main', title: call.title,
+            owner, repo, head: call.branch, base, title: call.title,
             body: call.body, draft: true,
           });
           const labels = await knownLabels(github, core, call.repo, call.labels);
@@ -170,9 +176,10 @@ async function publish({ github, context, core }: { github: GitHub, context: Con
             throw new Error(`#${call.pullRequest} is not an open pull request from a branch of ${repository}`);
           // With onto, the patch is the whole branch against that commit. The push replaces the
           // branch only when it is still at the checkout.
+          const cwd = process.cwd();
           const commit = call.onto
-            ? rebaseAndCommitPatch({ patch: call.patch, title: call.title, body: call.commitBody, branch: pr.head.ref, onto: call.onto })
-            : commitPatch({ patch: call.patch, title: call.title, body: call.commitBody, branch: pr.head.ref });
+            ? rebaseAndCommitPatch({ cwd, patch: call.patch, title: call.title, body: call.commitBody, branch: pr.head.ref, onto: call.onto })
+            : commitPatch({ cwd, patch: call.patch, title: call.title, body: call.commitBody, branch: pr.head.ref });
           core.setOutput('commit', commit);
           summary.push(`- Pushed https://github.com/${repository}/commit/${commit}`);
           break;
@@ -366,9 +373,9 @@ function checkScope(call: Call, scope: Scope): void {
     throw new Error(`${call.call} is outside SCOPE_KINDS, ${[...kinds].join(' ')}`);
   switch (call.call) {
     case 'pull-request':
-      // The patch is pushed to the checkout, which is the repo of the run.
-      if (call.repo !== repository)
-        throw new Error(`a pull request can only be opened in ${repository}, the repo of the run`);
+      // The patch is committed in the checkout of the repo and pushed to its origin.
+      if (call.repo !== repository && !isCheckout(checkoutOf(call.repo, repository)))
+        throw new Error(`a pull request in ${call.repo} needs its checkout in ${call.repo.split('/')[1]}/, and there is none`);
       break;
     case 'push':
     case 'reply':
@@ -417,57 +424,72 @@ async function fileIssue(github: GitHub, core: Core, call: Checked<Issue>): Prom
 // Applies the patch to the checkout, commits it on the checkout as the app, and pushes it to the
 // branch. With lease set to '', the branch must not exist yet. Without a lease, the push fails when
 // the branch moved since the checkout.
-function commitPatch({ patch, title, body, branch, lease }: { patch: string, title: string, body?: string, branch: string, lease?: string }): string {
-  const parent = git('rev-parse', 'HEAD');
-  const commit = commitOn(parent, { patch, title, body, replayed: false });
-  git('push', ...(lease !== undefined ? [`--force-with-lease=refs/heads/${branch}:${lease}`] : []), 'origin', `${commit}:refs/heads/${branch}`);
+function commitPatch({ cwd, patch, title, body, branch, lease }: { cwd: string, patch: string, title: string, body?: string, branch: string, lease?: string }): string {
+  const parent = git(cwd, 'rev-parse', 'HEAD');
+  const commit = commitOn(cwd, parent, { patch, title, body, replayed: false });
+  git(cwd, 'push', ...(lease !== undefined ? [`--force-with-lease=refs/heads/${branch}:${lease}`] : []), 'origin', `${commit}:refs/heads/${branch}`);
   return commit;
 }
 
 // The patch is the whole branch against onto. Replays the commits of the branch on onto when they
 // replay cleanly, adds the patch as one commit, and replaces the branch when it is still at the
 // checkout. When the commits do not replay, the branch becomes one commit on onto.
-function rebaseAndCommitPatch({ patch, title, body, branch, onto }: { patch: string, title: string, body?: string, branch: string, onto: string }): string {
-  const head = git('rev-parse', 'HEAD');
-  git('fetch', '--no-tags', '--depth=500', 'origin', onto, head);
+function rebaseAndCommitPatch({ cwd, patch, title, body, branch, onto }: { cwd: string, patch: string, title: string, body?: string, branch: string, onto: string }): string {
+  const head = git(cwd, 'rev-parse', 'HEAD');
+  git(cwd, 'fetch', '--no-tags', '--depth=500', 'origin', onto, head);
   let parent = onto;
   let replayed = false;
   try {
-    git('merge-base', onto, head);
-    git('rebase', '--quiet', onto, head);
-    parent = git('rev-parse', 'HEAD');
+    git(cwd, 'merge-base', onto, head);
+    git(cwd, 'rebase', '--quiet', onto, head);
+    parent = git(cwd, 'rev-parse', 'HEAD');
     replayed = true;
   } catch {
     try {
-      git('rebase', '--abort');
+      git(cwd, 'rebase', '--abort');
     } catch {}
   }
-  git('checkout', '-q', '--detach', onto);
-  const commit = commitOn(parent, { patch, title, body, replayed });
-  git('push', `--force-with-lease=refs/heads/${branch}:${head}`, 'origin', `${commit}:refs/heads/${branch}`);
+  git(cwd, 'checkout', '-q', '--detach', onto);
+  const commit = commitOn(cwd, parent, { patch, title, body, replayed });
+  git(cwd, 'push', `--force-with-lease=refs/heads/${branch}:${head}`, 'origin', `${commit}:refs/heads/${branch}`);
   return commit;
 }
 
 // Applies the patch to the work tree and commits the result on parent. git apply runs no hooks and
 // no scripts from the patch.
-function commitOn(parent: string, { patch, title, body, replayed }: { patch: string, title: string, body?: string, replayed: boolean }): string {
-  git('config', 'user.name', BOT_NAME);
-  git('config', 'user.email', BOT_EMAIL);
-  git('apply', '--index', patch);
+function commitOn(cwd: string, parent: string, { patch, title, body, replayed }: { patch: string, title: string, body?: string, replayed: boolean }): string {
+  git(cwd, 'config', 'user.name', BOT_NAME);
+  git(cwd, 'config', 'user.email', BOT_EMAIL);
+  git(cwd, 'apply', '--index', patch);
   // Workflow and action changes would run with this repo's secrets in PR CI.
-  const workflowFiles = git('diff', '--cached', '--name-only', '--no-renames', '-z').split('\0').filter(file => file.startsWith('.github/'));
+  const workflowFiles = git(cwd, 'diff', '--cached', '--name-only', '--no-renames', '-z').split('\0').filter(file => file.startsWith('.github/'));
   if (workflowFiles.length)
     throw new Error(`the patch changes workflow files: ${workflowFiles.join(', ')}`);
-  const tree = git('write-tree');
-  const unchanged = tree === git('rev-parse', `${parent}^{tree}`);
+  const tree = git(cwd, 'write-tree');
+  const unchanged = tree === git(cwd, 'rev-parse', `${parent}^{tree}`);
   if (unchanged && !replayed)
     throw new Error('the patch changes nothing');
   // A rebase without a change adds no empty commit.
-  return unchanged ? parent : git('commit-tree', tree, '-p', parent, '-m', title, ...(body ? ['-m', body] : []));
+  return unchanged ? parent : git(cwd, 'commit-tree', tree, '-p', parent, '-m', title, ...(body ? ['-m', body] : []));
 }
 
-function git(...args: string[]): string {
-  return execFileSync('git', args, { encoding: 'utf8' }).trim();
+// The checkout that a pull request in repo goes to: the work directory for the repo of the run, or
+// the subdirectory named after the repo, such as playwright/ for microsoft/playwright.
+function checkoutOf(repo: string, repository: string): string {
+  return repo === repository ? process.cwd() : path.join(process.cwd(), repo.split('/')[1]);
+}
+
+// A directory that is the top of its own git checkout, not a directory inside another checkout.
+function isCheckout(dir: string): boolean {
+  try {
+    return fs.realpathSync(git(dir, 'rev-parse', '--show-toplevel')) === fs.realpathSync(dir);
+  } catch {
+    return false;
+  }
+}
+
+function git(cwd: string, ...args: string[]): string {
+  return execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
 }
 
 // The issue or pull request that a call changes, when it has one.

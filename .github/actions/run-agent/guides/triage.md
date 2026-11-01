@@ -78,7 +78,8 @@ calls: it opens the PR, posts the comment, and files a report. It posts your tex
 Make only these calls:
 
 - `comment`: on the issue of the run only, in the repo of the run;
-- `pull-request`: in the repo of the run;
+- `pull-request`: one, in the repo of the run, or in the repo where the skill says that the fix
+  goes;
 - `issue`: only where the skill of the repo says.
 
 A task without an issue makes a `pull-request` call only.

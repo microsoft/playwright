@@ -1,7 +1,8 @@
 # Triage and revision bots
 
-Five repos run the same two bots: `microsoft/playwright`, `playwright-python`, `playwright-java`,
-`playwright-dotnet` and `playwright-browsers`. The **Issue triage** workflow investigates one issue
+Seven repos run the same two bots: `microsoft/playwright`, `playwright-python`, `playwright-java`,
+`playwright-dotnet`, `playwright-browsers`, `playwright-cli` and `playwright-mcp`. The **Issue
+triage** workflow investigates one issue
 on a large runner and proposes a fix as a draft PR. The **PR revision** workflow addresses the
 maintainers' review comments on that PR. Both run the Copilot CLI unattended, through actions and
 guides that live in this repo. Each repo keeps its own workflow files, with the parts that only it
@@ -189,6 +190,7 @@ in the workflow itself.
 | `playwright-java` | download the driver, `mvn install`, install the browsers through the CLI | a shallow clone of `main`, to read the client that the repo ports |
 | `playwright-dotnet` | `build.sh --download-driver`, `dotnet build`, install the browsers through `playwright.ps1` | a shallow clone of `main` |
 | `playwright-browsers` | takes `browser` and `platform`; checks out `microsoft/playwright` at the last nightly as the workspace root with this repo nested in it, builds it and installs that browser; on Linux everything runs in the build container of the flavor through `EXEC`, on macOS and Windows the build dependencies are installed on the runner | the workspace root |
+| `playwright-cli`, `playwright-mcp` | `npm ci`, install the browsers, clone `microsoft/playwright` at `main` and build it | that clone, where the source of the CLI and of the MCP server is |
 
 ### The triage skill and the instructions file
 
@@ -213,6 +215,12 @@ the commit convention. The guide tells the agent to read it in full, and again b
   ports make no `issue` call.
 - `playwright-browsers`: an upstream bug is fixed in the patch, and the note and the PR carry the
   upstream bug to file. The `pull-request` call labels the PR with the platform and the browser.
+- `playwright-cli` and `playwright-mcp`: a fix in `microsoft/playwright`, where their source is. The
+  agent makes the fix in `$PLAYWRIGHT_DIR` and makes the `pull-request` call for
+  `microsoft/playwright`. The triage job reports that call, and the publish job then checks out
+  `microsoft/playwright` in `playwright/`, at the commit that the agent worked on: `publish-calls`
+  opens a PR in another repo from its checkout in the subdirectory named after it. The revision
+  workflow of `microsoft/playwright` revises that PR.
 
 ### Platforms in playwright-browsers
 
@@ -239,7 +247,7 @@ not available to it.
 |---|---|---|---|
 | `start` | workflow | `issues: write`, and `contents: read` in `playwright-browsers` for the checkout of the platform map | no |
 | `triage` | workflow | `copilot-requests: write`. `playwright-browsers` adds `contents`, `issues`, `pull-requests` and `actions` read, because the repo is private. | yes |
-| `publish` | app, limited to the repo of the run (and `playwright-browsers` in this repo) and to `contents`, `issues` and `pull-requests` write | none for the workflow token | no |
+| `publish` | app, limited to the repo of the run, `playwright-browsers` in this repo and `playwright` in `playwright-cli` and `playwright-mcp`, and to `contents`, `issues` and `pull-requests` write | none for the workflow token | no |
 
 What each measure protects:
 
@@ -297,7 +305,7 @@ What each measure protects:
 What a repo needs:
 
 - The six labels: `needs-triage`, `needs-triage-mac`, `needs-triage-win`, `needs-revision`,
-  `needs-revision-mac`, `needs-revision-win`. All five repos have them.
+  `needs-revision-mac`, `needs-revision-win`. All seven repos have them.
 - The Playwright automation app installed on the repo, with write access to contents, issues and
   pull requests. The variable with the app id, `PLAYWRIGHT_APP_CLIENT_ID` in this repo and
   `PLAYWRIGHT_APP_ID` in the others, and the secret `PLAYWRIGHT_PRIVATE_KEY`. For the browser bug of

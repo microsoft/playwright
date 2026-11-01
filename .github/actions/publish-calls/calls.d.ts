@@ -26,8 +26,9 @@
 // - Only the keys in the types below, with their types. Numbers are JSON numbers, not strings.
 // - `repo` is `owner/name` of a Playwright repo: microsoft/playwright or
 //   microsoft/playwright-<name>.
-// - A pull request and a push go only to the repo of the run. The branch of a new PR must not
-//   exist yet.
+// - A push goes only to the repo of the run. A pull request goes to the repo of the run, or to
+//   microsoft/playwright when the skill of the repo says so. The branch of a new PR must not exist
+//   yet.
 // - The workflow can allow only some kinds of calls, and one issue or one PR as the target. A call
 //   outside them is rejected.
 // - A path is relative to $OUTPUT_DIR, with `/` between the parts and without `..`. It names a
@@ -80,16 +81,17 @@ export type Text =
   /** A markdown file in $OUTPUT_DIR, such as "comment.md". */
   | { bodyFile: string };
 
-/** Opens your fix as a draft PR, in the repo of the run. The text is the description of the PR. */
+/** Opens your fix as a draft PR. The text is the description of the PR. */
 export type PullRequest = Text & {
   call: 'pull-request';
-  /** The repo of the run. */
+  /** The repo of the run, or the repo where the skill says that the fix goes. */
   repo: string;
   /** A new branch for the PR, such as "triage/<issue>/<run id>-<run attempt>". */
   branch: string;
   /** The title of the commit and of the PR. */
   title: string;
-  /** A patch file in $OUTPUT_DIR, against the commit of the checkout, such as "fix/fix.patch". */
+  /** A patch file in $OUTPUT_DIR, against the commit of the checkout of that repo, such as
+   * "fix/fix.patch". */
   patch: string;
   /** The body of the commit, such as "Fixes: <issue url>". */
   commitBody?: string;
