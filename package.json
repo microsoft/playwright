@@ -142,7 +142,7 @@
     "jpeg-js": "0.4.4",
     "json5": "2.2.3",
     "mime": "4.1.0",
-    "minimatch": "10.2.5",
+    "minimatch": "11.0.1",
     "open": "11.0.0",
     "pngjs": "7.0.0",
     "progress": "2.0.3",
