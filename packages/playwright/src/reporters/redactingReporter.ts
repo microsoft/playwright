@@ -14,29 +14,102 @@
  * limitations under the License.
  */
 
-import { normalizeSecrets, redactSecretsInBuffer, redactSecretsInText } from '@isomorphic/secrets';
+import fs from 'fs';
+import { unzipSync } from 'fflate';
+
+import { isTextualMimeType } from '@isomorphic/mimeType';
+import { truncateParam } from '@isomorphic/protocolFormatter';
+import { escapeSecretsForJSON, normalizeSecrets, redactSecretsInBuffer, redactSecretsInText } from '@isomorphic/secrets';
 
 import type { ReportConfigureParams, ReportEndParams, ReporterPreprocessParams, ReporterV2 } from './reporterV2';
 import type { FullConfig, FullResult, Suite, TestCase, TestError, TestResult, TestStep, WorkerInfo } from '../../types/testReporter';
 import type { Secrets } from '@isomorphic/secrets';
 
+type Attachment = TestResult['attachments'][0];
+
 export class SecretsRedactor {
   private _secrets: Secrets;
+  private _escapedSecrets: Secrets;
   private _views = new Map<object, any>();
   private _buffers = new Map<Buffer, Buffer>();
   private _handler: ProxyHandler<any>;
+  private _attachments = new Map<Attachment, Attachment>();
 
   constructor(secrets: Secrets) {
     this._secrets = normalizeSecrets(secrets);
+    this._escapedSecrets = escapeSecretsForJSON(this._secrets);
     this._handler = {
       get: (target, property, receiver) => {
         const value = Reflect.get(target, property, receiver);
+        const isResultOrStep = target.startTime instanceof Date && Array.isArray(target.steps);
+        const isStep = isResultOrStep && typeof target.category === 'string';
+        if (property === 'attachments' && this._secrets.length && isResultOrStep)
+          return this.redact(value.map((attachment: Attachment) => this._redactAttachment(attachment)));
+        // Keep the full values until secrets have been replaced.
+        if (isStep && property === 'subtitle' && typeof value === 'string')
+          return truncateParam(this.redact(value));
+        if (isStep && property === 'params' && value)
+          return Object.fromEntries(Object.entries(this.redact(value)).map(([key, value]) => [key, typeof value === 'string' ? truncateParam(value) : value]));
         // Methods run against the view, so everything they touch and return is redacted too.
         if (typeof value === 'function')
           return (...args: any[]) => this.redact(Reflect.apply(value, receiver, args));
         return this.redact(value);
       },
     };
+  }
+
+  private _redactAttachment(attachment: Attachment): Attachment {
+    let redacted = this._attachments.get(attachment);
+    if (redacted)
+      return redacted;
+    let body: Buffer | undefined;
+    try {
+      body = attachment.path ? fs.readFileSync(attachment.path) : attachment.body;
+    } catch {
+      redacted = { name: attachment.name, contentType: 'text/plain', body: Buffer.from('Attachment omitted because it could not be read.') };
+      this._attachments.set(attachment, redacted);
+      return redacted;
+    }
+    redacted = attachment;
+    if (body) {
+      if (isTextualMimeType(attachment.contentType)) {
+        const redactedBody = redactSecretsInBuffer(body, this._secrets);
+        if (redactedBody !== body || (attachment.path && this.redact(attachment.path) !== attachment.path))
+          redacted = { name: attachment.name, contentType: attachment.contentType, body: redactedBody };
+      } else {
+        let reason: string | undefined;
+        try {
+          if (this._containsSecret(body, attachment.contentType === 'application/zip' || attachment.path?.endsWith('.zip')))
+            reason = 'it contains a secret';
+        } catch {
+          reason = 'its contents could not be checked for secrets';
+        }
+        if (reason)
+          redacted = { name: attachment.name, contentType: 'text/plain', body: Buffer.from(`Attachment omitted because ${reason}.`) };
+        else if (attachment.path && this.redact(attachment.path) !== attachment.path)
+          redacted = { name: attachment.name, contentType: attachment.contentType, body };
+      }
+    }
+    this._attachments.set(attachment, redacted);
+    return redacted;
+  }
+
+  private _containsSecret(body: Buffer | Uint8Array, isZip = false): boolean {
+    const buffer = Buffer.isBuffer(body) ? body : Buffer.from(body);
+    if ([...this._secrets, ...this._escapedSecrets].some(({ value }) => buffer.includes(Buffer.from(value))))
+      return true;
+    if (isZip || (buffer.length >= 4 && buffer.readUInt32LE(0) === 0x04034b50)) {
+      const names = new Set<string>();
+      const entries = unzipSync(buffer, { filter: entry => {
+        if (names.has(entry.name))
+          throw new Error('Cannot check ZIP entries with duplicate names');
+        names.add(entry.name);
+        return true;
+      } });
+      return Object.entries(entries).some(([name, contents]) =>
+        this.redact(name) !== name || this._containsSecret(contents));
+    }
+    return false;
   }
 
   redact<T>(value: T): T {
@@ -58,6 +131,7 @@ export class SecretsRedactor {
     if (!view) {
       view = new Proxy(value, this._handler);
       this._views.set(value, view);
+      this._views.set(view, view);
     }
     return view;
   }

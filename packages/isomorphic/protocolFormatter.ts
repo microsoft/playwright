@@ -151,15 +151,13 @@ function renderParamEntry(params: Record<string, any>, entry: string, sdkLanguag
     return { key, value };
   if (format === 'selector')
     return { key, value: renderLocator(value, sdkLanguage) };
-  if (typeof value === 'string')
-    return { key, value: truncateParam(value) };
   return { key, value };
 }
 
 function renderLocator(selector: any, sdkLanguage?: Language): string | undefined {
   if (typeof selector !== 'string')
     return undefined;
-  return truncateParam(asLocatorDescription(sdkLanguage ?? 'javascript', selector));
+  return asLocatorDescription(sdkLanguage ?? 'javascript', selector);
 }
 
 export function truncateParam(value: string): string {

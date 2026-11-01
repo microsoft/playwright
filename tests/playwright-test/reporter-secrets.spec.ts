@@ -16,6 +16,7 @@
 
 import fs from 'fs';
 import path from 'path';
+import * as yazl from 'yazl';
 import { test, expect, stripAnsi } from './playwright-test-fixtures';
 import { utils } from '../../packages/playwright-core/lib/coreBundle';
 
@@ -38,13 +39,21 @@ class Reporter {
   onStepEnd(test, result, step) {
     if (step.category === 'test.step')
       this.log('step ' + step.title + (step.error ? ' error=' + step.error.message.split('\\n')[0] : ''));
+    if (step.params?.value) {
+      this.log('fill ' + step.title + ' / ' + step.subtitle + ' / ' + step.params.value);
+      this.log('fill-lengths ' + step.subtitle.length + ' ' + step.params.value.length);
+    }
   }
   onTestEnd(test, result) {
     this.log('secrets option ' + JSON.stringify(this.secrets));
     this.log('identity ' + (result === globalThis.__lastResult));
     globalThis.__lastResult = result;
-    for (const attachment of result.attachments.filter(a => a.body))
-      this.log('attachment ' + attachment.name + ' ' + attachment.body.toString());
+    for (const attachment of result.attachments) {
+      if (attachment.contentType === 'application/zip')
+        this.log('zip ' + attachment.name);
+      else
+        this.log('attachment ' + attachment.name + ' ' + (attachment.body || require('fs').readFileSync(attachment.path)).toString());
+    }
     this.log('title ' + test.title);
   }
   onEnd() {
@@ -62,29 +71,50 @@ module.exports = Reporter;
 
 const testJS = `
 import { test, expect } from '@playwright/test';
-test('fails ' + process.env.PASSWORD, async ({}, testInfo) => {
+import fs from 'fs';
+test('fails ' + process.env.PASSWORD, async ({ page }, testInfo) => {
   const password = process.env.PASSWORD;
   console.log('stdout ' + password);
   await testInfo.attach('note ' + password, { body: 'body ' + password });
+  const file = testInfo.outputPath('note.txt');
+  fs.writeFileSync(file, 'file ' + password);
+  await testInfo.attach('file', { path: file, contentType: 'text/plain' });
+  if (process.env.SECRET_ZIP) {
+    await testInfo.attach('binary', { body: Buffer.from('binary ' + password), contentType: 'application/octet-stream' });
+    await testInfo.attach('safe binary', { body: Buffer.from('safe binary'), contentType: 'application/octet-stream' });
+    const zip = testInfo.outputPath('archive.zip');
+    fs.writeFileSync(zip, Buffer.from(process.env.SECRET_ZIP, 'base64'));
+    await testInfo.attach('archive', { path: zip, contentType: 'application/zip' });
+  }
+  const longPassword = 'long-' + password.repeat(30);
+  await page.setContent('<input aria-label="' + longPassword + '">');
+  await page.getByLabel(longPassword).fill(longPassword);
   await test.step('step ' + password, async () => {
     expect(password).toBe('wrong ' + 'password123');
   });
 });
 `;
 
-test('should redact secrets for reporters with the option only', async ({ runInlineTest }) => {
+test('should redact secrets for reporters with the option only', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43795' } }, async ({ runInlineTest }) => {
+  const zip = new yazl.ZipFile();
+  zip.addBuffer(Buffer.from('compressed password123'), 'note.txt');
+  zip.end();
+  const chunks: Buffer[] = [];
+  for await (const chunk of zip.outputStream)
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
   const result = await runInlineTest({
     'reporter.ts': reporterJS,
     'playwright.config.ts': `
       module.exports = {
+        use: { browserName: ${JSON.stringify(process.env.PWTEST_BROWSER_NAME || 'chromium')}, trace: 'on' },
         reporter: [
-          ['./reporter.ts', { prefix: 'redacted', secrets: [{ name: 'PASSWORD', value: process.env.PASSWORD }, { name: 'EMPTY', value: '' }] }],
+          ['./reporter.ts', { prefix: 'redacted', secrets: [{ name: 'PASSWORD', value: process.env.PASSWORD }, { name: 'LONG_PASSWORD', value: 'long-' + process.env.PASSWORD.repeat(30) }, { name: 'EMPTY', value: '' }] }],
           ['./reporter.ts', { prefix: 'raw' }],
         ],
       };
     `,
     'a.spec.ts': testJS,
-  }, {}, { PASSWORD: 'password123' });
+  }, {}, { PASSWORD: 'password123', SECRET_ZIP: Buffer.concat(chunks).toString('base64') });
 
   expect(result.exitCode).toBe(1);
   expect(result.outputLines).toEqual(expect.arrayContaining([
@@ -92,6 +122,12 @@ test('should redact secrets for reporters with the option only', async ({ runInl
     'redacted step step <secret>PASSWORD</secret> error=Error: expect(received).toBe(expected) // Object.is equality',
     'redacted secrets option undefined',
     'redacted attachment note <secret>PASSWORD</secret> body <secret>PASSWORD</secret>',
+    'redacted attachment file file <secret>PASSWORD</secret>',
+    'redacted attachment binary Attachment omitted because it contains a secret.',
+    'redacted attachment safe binary safe binary',
+    'redacted attachment archive Attachment omitted because it contains a secret.',
+    'redacted attachment trace Attachment omitted because it contains a secret.',
+    `redacted fill Fill "<secret>LONG_PASSWORD</secret>" / getByLabel('<secret>LONG_PASSWORD</secret>') / <secret>LONG_PASSWORD</secret>`,
     'redacted title fails <secret>PASSWORD</secret>',
     'redacted error Error: expect(received).toBe(expected) // Object.is equality',
     'redacted snippet false',
@@ -99,6 +135,12 @@ test('should redact secrets for reporters with the option only', async ({ runInl
     'raw step step password123 error=Error: expect(received).toBe(expected) // Object.is equality',
     'raw secrets option undefined',
     'raw attachment note password123 body password123',
+    'raw attachment file file password123',
+    'raw attachment binary binary password123',
+    'raw attachment safe binary safe binary',
+    'raw zip archive',
+    'raw zip trace',
+    'raw fill-lengths 201 201',
     'raw title fails password123',
     'raw snippet true',
   ]));
@@ -113,10 +155,14 @@ test('should redact secrets for reporters with the option only', async ({ runInl
   expect(result.outputLines.filter(line => line.startsWith('redacted ')).join('\n')).not.toContain('password123');
 });
 
-test('should redact secrets in built-in reporters', async ({ runInlineTest }, testInfo) => {
+test('should redact secrets in built-in reporters', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43795' } }, async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = {
+        use: {
+          browserName: ${JSON.stringify(process.env.PWTEST_BROWSER_NAME || 'chromium')},
+          trace: { mode: 'on', secrets: [{ name: 'PASSWORD', value: process.env.PASSWORD }] },
+        },
         reporter: [
           ['list', { secrets: [{ name: 'PASSWORD', value: process.env.PASSWORD }] }],
           ['json', { secrets: [{ name: 'PASSWORD', value: process.env.PASSWORD }], outputFile: 'secrets-report.json' }],
@@ -156,14 +202,26 @@ test('should redact secrets in built-in reporters', async ({ runInlineTest }, te
   zipFile.close();
   expect(reportText).not.toContain('password123');
   expect(reportText).toContain('fails <secret>PASSWORD</secret>');
+  const trace = JSON.parse(json).suites[0].specs[0].tests[0].results[0].attachments.find(a => a.name === 'trace');
+  expect(trace.contentType).toBe('application/zip');
+  const tracePath = testInfo.outputPath('trace.zip');
+  fs.writeFileSync(tracePath, trace.body ? Buffer.from(trace.body, 'base64') : fs.readFileSync(trace.path));
+  const traceFile = new utils.ZipFile(tracePath);
+  for (const entry of await traceFile.entries())
+    expect((await traceFile.read(entry)).toString()).not.toContain('password123');
+  traceFile.close();
+  for (const file of fs.readdirSync(path.join(reportDir, 'data')))
+    expect(fs.readFileSync(path.join(reportDir, 'data', file)).toString()).not.toContain('password123');
 });
 
-test('should redact secrets in the convenience reporter when all reporters have secrets', async ({ runInlineTest }) => {
+test('should redact secrets in the convenience reporter when all reporters have secrets', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43795' } }, async ({ runInlineTest }) => {
   const result = await runInlineTest({
+    '.env.secrets': 'PASSWORD=password123\n',
     'playwright.config.ts': `
       module.exports = {
+        use: { browserName: ${JSON.stringify(process.env.PWTEST_BROWSER_NAME || 'chromium')} },
         reporter: [
-          ['json', { secrets: [{ name: 'PASSWORD', value: process.env.PASSWORD }], outputFile: 'secrets-report.json' }],
+          ['json', { secrets: '.env.secrets', outputFile: 'secrets-report.json' }],
           ['null', { secrets: [{ value: 'stdout' }] }],
         ],
       };
