@@ -1,0 +1,63 @@
+name: 'Publish the calls'
+description: >
+  Makes the calls that an agent left in calls.json in its output directory, from a job that has
+  write credentials and never runs the agent's code: open a draft pull request, push to the branch
+  of a pull request, file an issue, comment on an issue or a pull request, reply in a review thread.
+  Everything that is posted comes from the calls. To catch mistakes, every call is checked before
+  any of them runs: its shape, and its repo, which must be microsoft/playwright or
+  microsoft/playwright-<name>. A scope-* input limits the calls more. When one call fails a check,
+  none of them runs. The calls run in a fixed order: pull request, push, issue, comment, reply.
+  calls.d.ts has the types of the file, and the agent reads it too: run-agent copies it to the
+  guides. publish-calls.ts has the checks. The job checks out the repo of the run at the commit
+  that the patch of a pull-request or push call is against. A pull request in another Playwright
+  repo needs a checkout of that repo in a subdirectory named after it, such as playwright/ for
+  microsoft/playwright.
+inputs:
+  token:
+    description: 'Token from the app, with write access to what the calls change'
+    required: true
+  dir:
+    description: 'Directory the agent output was downloaded to, with calls.json and the files it names'
+    required: true
+  scope-kinds:
+    description: 'The kinds of calls this run may make, such as "pull-request comment"; empty allows every kind'
+    required: false
+    default: ''
+  scope-issue:
+    description: 'Number of the only issue in this repo that comments may target'
+    required: false
+    default: ''
+  scope-pull-request:
+    description: 'Number of the only pull request in this repo that the push, the replies and the comments may target'
+    required: false
+    default: ''
+outputs:
+  pull-request:
+    description: 'URL of the pull request, when one was opened'
+    value: ${{ steps.publish.outputs.pull-request }}
+  commit:
+    description: 'The pushed commit'
+    value: ${{ steps.publish.outputs.commit }}
+  issue:
+    description: 'URL of the issue that was filed or found'
+    value: ${{ steps.publish.outputs.issue }}
+  comment:
+    description: 'true when a comment was posted'
+    value: ${{ steps.publish.outputs.comment }}
+runs:
+  using: composite
+  steps:
+  - name: Check and make the calls
+    id: publish
+    uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+    env:
+      ACTION_PATH: ${{ github.action_path }}
+      DIR: ${{ inputs.dir }}
+      SCOPE_KINDS: ${{ inputs.scope-kinds }}
+      SCOPE_ISSUE: ${{ inputs.scope-issue }}
+      SCOPE_PULL_REQUEST: ${{ inputs.scope-pull-request }}
+    with:
+      github-token: ${{ inputs.token }}
+      script: |
+        const publish = require(require('path').join(process.env.ACTION_PATH, 'publish-calls.ts'));
+        await publish({ github, context, core });
