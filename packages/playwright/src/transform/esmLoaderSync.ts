@@ -17,7 +17,7 @@
 import fs from 'fs';
 import url from 'url';
 
-import { currentFileDepsCollector } from './compilationCache';
+import { currentFileDepsCollector, recordEsmImport } from './compilationCache';
 import { hasTransformedExtension, isStyleFile, resolveHook, shouldTransform, transformHook } from './transform';
 import { fileIsModule } from '../util';
 
@@ -36,8 +36,12 @@ export function resolve(specifier: string, context: { parentURL?: string, condit
     }
   }
   const result = nextResolve(specifier, context);
-  if (result?.url && result.url.startsWith('file://'))
-    currentFileDepsCollector()?.add(url.fileURLToPath(result.url));
+  if (result?.url && result.url.startsWith('file://')) {
+    const resolvedFile = url.fileURLToPath(result.url);
+    currentFileDepsCollector()?.add(resolvedFile);
+    if (context.parentURL && context.parentURL.startsWith('file://'))
+      recordEsmImport(url.fileURLToPath(context.parentURL), resolvedFile);
+  }
   return result;
 }
 

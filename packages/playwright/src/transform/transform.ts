@@ -468,6 +468,7 @@ function registerESMLoader() {
 }
 
 export async function startCollectingFileDeps() {
+  installTransformIfNeeded();
   cc.startCollectingFileDeps();
   if (loaderChannel)
     await loaderChannel.send('startCollectingFileDeps', {});

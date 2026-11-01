@@ -105,7 +105,9 @@ test('should diff based on base commit', async ({ runInlineTest, git, writeFiles
   expect(result.output).toContain('b.spec.ts');
 });
 
-test('should understand dependency structure', async ({ runInlineTest, git, writeFiles }) => {
+test('should understand dependency structure', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43824' },
+}, async ({ runInlineTest, git, writeFiles }) => {
   await writeFiles({
     'a.spec.ts': `
     import { test, expect } from '@playwright/test';
@@ -149,6 +151,22 @@ test('should understand dependency structure', async ({ runInlineTest, git, writ
   expect(result.output).toContain('a.spec.ts');
   expect(result.output).toContain('b.spec.ts');
   expect(result.output).not.toContain('c.spec.ts');
+
+  const packageJson = `{ "type": "module" }`;
+  await writeFiles({ 'package.json': packageJson });
+  git('add .');
+  git('commit -m esm');
+
+  const esmResult = await runInlineTest({
+    'package.json': packageJson,
+    'question.ts': `export const question = "changed";`,
+  }, { 'only-changed': true, 'list': true });
+
+  expect(esmResult.exitCode).toBe(0);
+  expect(esmResult.output).toContain('a.spec.ts');
+  expect(esmResult.output).toContain('b.spec.ts');
+  expect(esmResult.output).not.toContain('c.spec.ts');
+  expect(esmResult.output).toContain('Total: 2 tests in 2 files');
 });
 
 test('watch mode is not supported', async ({ runWatchTest }) => {
