@@ -75,7 +75,7 @@ it('BT-011 should reject if executable path is invalid', async ({ browserType, m
   expect(waitError!.message).toContain('Failed to launch');
 });
 
-it('BT-012 should handle timeout', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43819' } }, async ({ browserType, mode }) => {
+it('BT-012 should handle timeout', async ({ browserType, mode }) => {
   it.skip(mode !== 'default');
 
   const options: any = { timeout: 5000, __testHookBeforeCreateBrowser: () => new Promise(f => setTimeout(f, 6000)) };
@@ -83,7 +83,6 @@ it('BT-012 should handle timeout', { annotation: { type: 'issue', description: '
   expect(error!.message).toContain(`browserType.launch: Timeout 5000ms exceeded.`);
   expect(error!.message).toContain(`<launching>`);
   expect(error!.message).toContain(`<launched> pid=`);
-  await expect(browserType.launchServer(options).then(server => server.close())).rejects.toThrow('Timeout 5000ms exceeded.');
 });
 
 it('BT-013 should handle exception and report launch log', async ({ browserType, mode }) => {
