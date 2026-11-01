@@ -1,7 +1,8 @@
 # Copilot addresses the maintainers' review comments on a draft PR that the triage workflow opened,
-# without write credentials, on the PR rebased on main. A fresh job replaces the PR's branch with
-# the rebased commits and the new one using the app, so CI runs on it. bots.md next to this file
-# describes the system.
+# without write credentials, on the PR rebased on main. The agent leaves the calls to make on GitHub
+# in calls.json. A fresh job checks them and makes them using the app: it replaces the PR's branch
+# with the rebased commits and the new one, so CI runs on it, and replies in the review threads.
+# bots.md next to this file describes the system.
 name: PR revision
 
 on:
@@ -113,13 +114,13 @@ jobs:
 
           Pull request: https://github.com/microsoft/playwright/pull/${{ github.event.pull_request.number }}
         output-dir: ${{ env.OUTPUT_DIR }}
-        result-file: commit/commit.json
+        result-file: calls.json
         artifact-name: revision
 
   push:
     name: Push the revision
     needs: [prepare, revise]
-    # commit.json is written last, so a finished revision is pushed even when the job failed later.
+    # calls.json is written when the revision is done, so it is pushed even if the job failed later.
     if: ${{ !cancelled() && needs.revise.outputs.has_revision == 'true' }}
     runs-on: ubuntu-latest
     steps:
@@ -128,6 +129,8 @@ jobs:
       with:
         client-id: ${{ vars.PLAYWRIGHT_APP_CLIENT_ID }}
         private-key: ${{ secrets.PLAYWRIGHT_PRIVATE_KEY }}
+        permission-contents: write
+        permission-pull-requests: write
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         ref: ${{ needs.prepare.outputs.head }}
@@ -136,13 +139,9 @@ jobs:
       with:
         name: revision
         path: ${{ runner.temp }}/revision
-    # Never execute code or scripts from the proposed changes in the app job.
-    - name: Validate and push
-      uses: microsoft/playwright/.github/actions/publish-patch@main
+    # Never execute code or scripts from the artifact in the app job. The calls are data.
+    - name: Check and make the calls
+      uses: microsoft/playwright/.github/actions/publish-calls@main
       with:
         token: ${{ steps.app-token.outputs.token }}
-        dir: ${{ runner.temp }}/revision/commit
-        patch: revision.patch
-        metadata: commit.json
-        branch: ${{ needs.prepare.outputs.branch }}
-        onto: ${{ needs.prepare.outputs.base }}
+        dir: ${{ runner.temp }}/revision

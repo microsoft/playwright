@@ -6,8 +6,9 @@ description: >
   is there, writes the agent's summary.md into the run summary and uploads the output directory as
   an artifact, also when the session failed or ran out of budget. The Copilot CLI has to be
   installed already. The action also copies the shared guides in guides/, the parts of the triage
-  and revision skills that are the same for every Playwright repo, to $AGENT_GUIDES_DIR on the
-  runner, and tells the agent where they are at the end of the prompt.
+  and revision skills that are the same for every Playwright repo, and calls.d.ts, the types of the
+  calls.json that the agent leaves for publish-calls, to $AGENT_GUIDES_DIR on the runner, and tells
+  the agent where they are at the end of the prompt.
 inputs:
   prompt:
     description: 'The prompt'
@@ -16,7 +17,7 @@ inputs:
     description: 'Directory the agent writes its results to; uploaded as the artifact'
     required: true
   result-file:
-    description: 'Path in the output directory the agent writes last when it has a result, such as fix/proposal.json'
+    description: 'Path in the output directory the agent writes when it has a result, such as calls.json'
     required: true
   artifact-name:
     description: 'Name of the uploaded artifact'
@@ -63,7 +64,7 @@ runs:
       dir="${RUNNER_TEMP//\\//}/agent-guides"
       rm -rf "$dir"
       mkdir -p "$dir"
-      cp "${ACTION_PATH//\\//}"/guides/*.md "$dir"
+      cp "${ACTION_PATH//\\//}"/guides/*.md "${ACTION_PATH//\\//}"/../publish-calls/calls.d.ts "$dir"
       echo "AGENT_GUIDES_DIR=$dir" >> "$GITHUB_ENV"
   - name: Run the Copilot CLI
     id: agent
@@ -81,7 +82,7 @@ runs:
       MAX_AI_CREDITS: ${{ inputs.max-ai-credits }}
     run: |
       mkdir -p "$OUTPUT_DIR"
-      guides=$(cd "$AGENT_GUIDES_DIR" && ls *.md | tr '\n' ' ')
+      guides=$(cd "$AGENT_GUIDES_DIR" && ls | tr '\n' ' ')
       PROMPT="$PROMPT
 
       The shared guides of the Playwright bots are in $AGENT_GUIDES_DIR: $guides."
