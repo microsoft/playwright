@@ -26,6 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      issues: read
       pull-requests: write
     env:
       PLATFORM: ${{ fromJSON('{"needs-revision":"linux","needs-revision-mac":"mac","needs-revision-win":"windows"}')[github.event.label.name] }}
