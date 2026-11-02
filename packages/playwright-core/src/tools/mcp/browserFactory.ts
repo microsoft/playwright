@@ -36,6 +36,7 @@ import type { ClientInfo } from '../utils/mcp/server';
 import type { Playwright } from '../../client/playwright';
 import type * as playwrightTypes from '../../..';
 import type { BrowserInfo } from '../../serverRegistry';
+import type { ExtensionSession } from '../backend/context';
 
 export type BrowserWithInfo = {
   browser: playwrightTypes.Browser,
@@ -43,6 +44,7 @@ export type BrowserWithInfo = {
   endpoint: string,
   ownership: 'attached' | 'own',
   idleTimer?: IdleTimer,
+  extensionSession?: ExtensionSession,
 };
 
 export type BindOptions = {
@@ -67,6 +69,7 @@ async function createBrowser(config: FullConfig, clientInfo: ClientInfo, cliOpti
     return await createRemoteBrowser(config);
 
   let browser: playwrightTypes.Browser;
+  let extensionSession: ExtensionSession | undefined;
   let ownership: 'attached' | 'own' = 'own';
   if (config.browser.cdpEndpoint) {
     browser = await createCDPBrowser(config, clientInfo);
@@ -76,7 +79,7 @@ async function createBrowser(config: FullConfig, clientInfo: ClientInfo, cliOpti
     ownership = 'own';
   } else if (config.extension) {
     const { channel, executablePath, profileDirName } = resolveExtensionOptions(cliOptions);
-    browser = await createExtensionBrowser(channel, executablePath, config.browser.userDataDir, profileDirName, clientInfo.clientName, config.tabGroup);
+    ({ browser, extensionSession } = await createExtensionBrowser(channel, executablePath, config.browser.userDataDir, profileDirName, clientInfo.clientName, config.tabGroup));
     ownership = 'attached';
   } else {
     browser = await createPersistentBrowser(config, clientInfo);
@@ -85,7 +88,7 @@ async function createBrowser(config: FullConfig, clientInfo: ClientInfo, cliOpti
 
   try {
     const { endpoint } = await browser.bind(bindOptions.title, { workspaceDir: bindOptions.workspaceDir });
-    return { browser, browserInfo: browserInfo(browser, config), endpoint, ownership };
+    return { browser, browserInfo: browserInfo(browser, config), endpoint, ownership, extensionSession };
   } catch (error) {
     await browser.close().catch(() => {});
     throw error;

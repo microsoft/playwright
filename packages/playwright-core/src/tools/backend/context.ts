@@ -73,6 +73,11 @@ export type ContextConfig = {
     initPage?: string[];
   };
   skillMode?: boolean;
+  extension?: boolean;
+};
+
+export type ExtensionSession = {
+  setGroupLabel(label: string): Promise<{ title: string }>;
 };
 
 type ContextOptions = {
@@ -80,6 +85,7 @@ type ContextOptions = {
   sessionLog?: SessionLog;
   cwd: string;
   onWebMCPToolsChanged?: () => void;
+  extensionSession?: ExtensionSession;
 };
 
 export type RouteEntry = {

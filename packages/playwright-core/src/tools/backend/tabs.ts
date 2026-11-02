@@ -66,6 +66,30 @@ const browserTabs = defineTool({
   },
 });
 
+const browserSetGroupLabel = defineTool({
+  capability: 'core-tabs',
+  extensionOnly: true,
+
+  schema: {
+    name: 'browser_set_group_label',
+    title: 'Label the tab group',
+    description: 'Label this connection\'s browser tab group so the user can identify its task. Only available in extension mode. An empty label restores the client name; duplicate titles get a numeric suffix.',
+    inputSchema: z.object({
+      label: z.string().trim().max(50).regex(/^[^\x00-\x1f\x7f]*$/).describe('Task label, up to 50 characters without control characters. Use an empty string to reset.'),
+    }),
+    type: 'action',
+  },
+
+  handle: async (context, params, response) => {
+    const session = context.options.extensionSession;
+    if (!session)
+      throw new Error('Tab group labels are only available when connected via the Playwright Extension.');
+    const { title } = await session.setGroupLabel(params.label);
+    response.addTextResult(`Tab group renamed to "${title}".`);
+  },
+});
+
 export default [
   browserTabs,
+  browserSetGroupLabel,
 ];

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-// The protocol version defined in this file. Bumped whenever the
-// commands/events change. Sent to the extension, which rejects clients
+// The protocol version defined in this file. Bumped for incompatible
+// command/event changes. Sent to the extension, which rejects clients
 // requesting a version it does not support.
 export const VERSION = 2;
 
@@ -70,6 +70,11 @@ export type ExtensionCommandV2 = {
   'chrome.tabs.remove': {
     params: [tabIds: number | number[]];
     result: void;
+  };
+  // Optional: older v2 extensions return "Unknown method".
+  'extension.setGroupLabel': {
+    params: [label: string];
+    result: { title: string };
   };
 };
 

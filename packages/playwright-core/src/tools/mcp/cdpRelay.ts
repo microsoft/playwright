@@ -128,6 +128,18 @@ export class CDPRelayServer {
     return `${this._wsHost}${this._extensionPath}`;
   }
 
+  async setGroupLabel(label: string): Promise<{ title: string }> {
+    if (!this._extensionConnection)
+      throw new Error('Extension not connected');
+    try {
+      return await this._extensionConnection.send('extension.setGroupLabel', [label]);
+    } catch (error) {
+      if (error instanceof Error && error.message === 'Unknown method: extension.setGroupLabel')
+        throw new Error('The installed Playwright Extension does not support tab group labels. Please update the extension.');
+      throw error;
+    }
+  }
+
   async establishExtensionConnection(clientName: string, tabGroup = true) {
     debugLogger('Establishing extension connection');
     await this._openConnectPageInBrowser(clientName, tabGroup);

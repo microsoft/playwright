@@ -72,6 +72,7 @@ export class RelayConnection {
   onclose?: () => void;
   ontabattached?: (tabId: number) => void;
   ontabdetached?: (tabId: number) => void;
+  onsetgrouplabel?: (label: string) => Promise<string>;
 
   get attachedTabs(): ReadonlySet<number> {
     return this._attachedTabs;
@@ -277,6 +278,17 @@ export class RelayConnection {
   }
 
   private async _handleCommand(message: ProtocolCommand): Promise<any> {
+    if (message.method === 'extension.setGroupLabel') {
+      const rawLabel: unknown = message.params?.[0];
+      if (typeof rawLabel !== 'string')
+        throw new Error('Tab group label must be a string');
+      const label = rawLabel.trim();
+      if (label.length > 50 || /[\x00-\x1f\x7f]/.test(label))
+        throw new Error('Tab group label must be at most 50 characters without control characters');
+      if (!this.onsetgrouplabel)
+        throw new Error('No tab group for this connection');
+      return { title: await this.onsetgrouplabel(label) };
+    }
     if (!ALLOWED_CHROME_COMMANDS.has(message.method))
       throw new Error(`Unknown method: ${message.method}`);
     const args = (message.params ?? []) as any[];
