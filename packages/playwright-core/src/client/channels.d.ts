@@ -4049,7 +4049,9 @@ export interface PageChannel extends PageEventTarget, Channel {
 export type PageBindingCallEvent = {
   binding: BindingCallChannel,
 };
-export type PageCloseEvent = {};
+export type PageCloseEvent = {
+  reason?: string,
+};
 export type PageCrashEvent = {};
 export type PageDownloadEvent = {
   url: string,

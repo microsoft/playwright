@@ -2301,7 +2301,9 @@ scheme.PageInitializer = tObject({
 scheme.PageBindingCallEvent = tObject({
   binding: tChannel(['BindingCall']),
 });
-scheme.PageCloseEvent = tOptional(tObject({}));
+scheme.PageCloseEvent = tObject({
+  reason: tOptional(tString),
+});
 scheme.PageCrashEvent = tOptional(tObject({}));
 scheme.PageDownloadEvent = tObject({
   url: tString,

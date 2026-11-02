@@ -441,6 +441,10 @@ class FrameSession {
 
   private _addRendererListeners() {
     this._eventListeners.push(...[
+      eventsHelper.addEventListener(this._client, 'Inspector.detached', event => {
+        if (this._isMainFrame())
+          this._page._closeReason = event.reason;
+      }),
       eventsHelper.addEventListener(this._client, 'Log.entryAdded', event => this._onLogEntryAdded(event)),
       eventsHelper.addEventListener(this._client, 'Page.fileChooserOpened', event => this._onFileChooserOpened(event)),
       eventsHelper.addEventListener(this._client, 'Page.frameAttached', event => this._onFrameAttached(event.frameId, event.parentFrameId)),

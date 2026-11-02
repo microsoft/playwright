@@ -109,7 +109,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     };
 
     this.addObjectListener(Page.Events.Close, () => {
-      this._dispatchEvent('close');
+      this._dispatchEvent('close', { reason: page.closeReason() });
       this._dispose();
     });
     this.addObjectListener(Page.Events.Crash, () => this._dispatchEvent('crash'));

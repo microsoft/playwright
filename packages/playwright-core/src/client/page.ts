@@ -156,7 +156,10 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     this.screencast = new Screencast(this);
 
     this._channel.on('bindingCall', ({ binding }) => this._onBinding(BindingCall.from(binding)));
-    this._channel.on('close', () => this._onClose());
+    this._channel.on('close', ({ reason }) => {
+      this._closeReason ??= reason;
+      this._onClose();
+    });
     this._channel.on('crash', () => this._onCrash());
     this._channel.on('download', ({ url, suggestedFilename, artifact }) => {
       const artifactObject = Artifact.from(artifact);

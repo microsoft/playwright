@@ -728,6 +728,8 @@ Page:
         binding: BindingCall
 
     close:
+      parameters:
+        reason: string?
 
     crash:
 
@@ -785,4 +787,3 @@ Page:
     worker:
       parameters:
         worker: Worker
-
