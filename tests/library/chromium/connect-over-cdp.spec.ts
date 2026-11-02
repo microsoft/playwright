@@ -17,6 +17,7 @@
 
 import { playwrightTest as test, expect } from '../../config/browserTest';
 import http from 'http';
+import { spawn } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { getUserAgent, server as coreServer } from '../../../packages/playwright-core/lib/coreBundle';
@@ -919,6 +920,73 @@ test('CD-036 should connect over CDP using a ConnectionTransport', async ({ brow
     await cdpBrowser.close();
   } finally {
     await browserServer.close();
+  }
+});
+
+test('CD-054 should connect to an existing page that activated a prerender', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43842' },
+}, async ({ browserType, createUserDataDir, headless, server }) => {
+  // Chromium does not prerender in a tab with a DevTools session attached, so the tab
+  // must prerender and activate before anything connects to it. Launch the browser
+  // without Playwright and open the tab through the http endpoint.
+  server.setRoute('/prerender-a.html', (req, res) => {
+    res.setHeader('Content-Type', 'text/html');
+    res.end(`
+      <script type="speculationrules">{"prerender":[{"source":"list","urls":["/prerender-b.html"]}]}</script>
+      <a id="go" href="/prerender-b.html">go</a>
+      <script>setTimeout(() => go.click(), 1000)</script>
+    `);
+  });
+  server.setRoute('/prerender-b.html', (req, res) => {
+    res.setHeader('Content-Type', 'text/html');
+    res.end('<title>Page B</title><button onclick="alert(\'hi\')">button</button>');
+  });
+
+  const userDataDir = await createUserDataDir();
+  const browserProcess = spawn(browserType.executablePath(), [
+    ...(headless ? ['--headless=new'] : []),
+    '--remote-debugging-port=0',
+    '--user-data-dir=' + userDataDir,
+    '--no-first-run',
+    '--no-default-browser-check',
+    '--no-sandbox',
+  ], { stdio: 'ignore' });
+  const killBrowser = () => browserProcess.kill('SIGKILL');
+  process.on('exit', killBrowser);
+  try {
+    // Chromium writes the port it listens on into the user data dir.
+    const activePortFile = path.join(userDataDir, 'DevToolsActivePort');
+    await expect.poll(() => fs.existsSync(activePortFile)).toBe(true);
+    const endpointURL = `http://127.0.0.1:${fs.readFileSync(activePortFile, 'utf8').split('\n')[0]}/`;
+    await expect.poll(() => fetch(endpointURL + 'json/version').then(() => true, () => false)).toBe(true);
+    const { id: targetId } = await (await fetch(endpointURL + 'json/new?' + server.PREFIX + '/prerender-a.html', { method: 'PUT' })).json();
+    // Wait for the tab to activate the prerendered page.
+    await expect.poll(async () => {
+      const targets = await (await fetch(endpointURL + 'json/list')).json();
+      return targets.find(t => t.id === targetId)?.url;
+    }).toBe(server.PREFIX + '/prerender-b.html');
+
+    const cdpBrowser = await browserType.connectOverCDP(endpointURL);
+    const page = cdpBrowser.contexts()[0].pages().find(p => p.url() === server.PREFIX + '/prerender-b.html');
+    expect(page).toBeTruthy();
+    expect(await page.title()).toBe('Page B');
+    // Make sure the page was actually prerendered, otherwise this test is not testing anything.
+    expect(await page.evaluate(() => (performance.getEntriesByType('navigation')[0] as any).activationStart)).toBeGreaterThan(0);
+    expect(await page.locator('button').boundingBox()).toBeTruthy();
+    const dialogPromise = page.waitForEvent('dialog');
+    const clickPromise = page.locator('button').click();
+    const dialog = await dialogPromise;
+    expect(dialog.message()).toBe('hi');
+    await dialog.dismiss();
+    await clickPromise;
+    await cdpBrowser.close();
+  } finally {
+    process.off('exit', killBrowser);
+    if (browserProcess.exitCode === null) {
+      const exited = new Promise(resolve => browserProcess.once('exit', resolve));
+      killBrowser();
+      await exited;
+    }
   }
 });
 

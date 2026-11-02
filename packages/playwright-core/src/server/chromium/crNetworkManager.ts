@@ -311,8 +311,8 @@ export class CRNetworkManager {
     if (!frame && this._page && requestPausedEvent && requestPausedEvent.frameId)
       frame = this._page.frameManager.frame(requestPausedEvent.frameId);
 
-    // Check if it's main resource request interception (targetId === main frame id).
-    if (!frame && this._page && requestWillBeSentEvent.frameId === (this._page?.delegate as CRPage)._targetId) {
+    // Check if it's main resource request interception.
+    if (!frame && this._page && requestWillBeSentEvent.frameId && (this._page.delegate as CRPage).isMainFrame(requestWillBeSentEvent.frameId)) {
       // Main resource request for the page is being intercepted so the Frame is not created
       // yet. Precreate it here for the purposes of request interception. It will be updated
       // later as soon as the request continues and we receive frame tree from the page.
