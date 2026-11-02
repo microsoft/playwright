@@ -50,7 +50,7 @@ const screenshot = defineTabTool({
   schema: {
     name: 'browser_take_screenshot',
     title: 'Take a screenshot',
-    description: `Take a screenshot of the current page. You can't perform actions based on the screenshot, use browser_snapshot for actions.`,
+    description: 'Take a screenshot of the current page. Use browser_snapshot for actions by default. With the vision capability enabled, use screenshot coordinates with the coordinate-based mouse tools for elements not exposed in the accessibility snapshot.',
     inputSchema: screenshotSchema,
     type: 'readOnly',
   },

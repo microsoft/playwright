@@ -56,7 +56,7 @@ test('test capabilities (pdf)', async ({ startClient }) => {
   expect(toolNames).toContain('browser_pdf_save');
 });
 
-test('test capabilities (vision)', async ({ startClient }) => {
+test('test capabilities (vision)', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-mcp/issues/1816' } }, async ({ startClient }) => {
   const { client } = await startClient({
     args: ['--caps=vision'],
   });
@@ -65,6 +65,9 @@ test('test capabilities (vision)', async ({ startClient }) => {
   expect(toolNames).toContain('browser_mouse_move_xy');
   expect(toolNames).toContain('browser_mouse_click_xy');
   expect(toolNames).toContain('browser_mouse_drag_xy');
+  expect(tools.find(t => t.name === 'browser_take_screenshot')).toMatchObject({
+    description: 'Take a screenshot of the current page. Use browser_snapshot for actions by default. With the vision capability enabled, use screenshot coordinates with the coordinate-based mouse tools for elements not exposed in the accessibility snapshot.',
+  });
 });
 
 test('support for legacy --vision option', async ({ startClient }) => {
