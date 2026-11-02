@@ -50,6 +50,35 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       expect(result.exitCode).toBe(0);
     });
 
+    test('should report each suite\'s own start timestamp', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('one', async ({}) => {
+            await new Promise(f => setTimeout(f, 1500));
+            expect(1).toBe(1);
+          });
+        `,
+        'b.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('two', async ({}) => {
+            expect(1).toBe(1);
+          });
+        `,
+      }, { reporter: 'junit', workers: 1 });
+      const xml = parseXML(result.output);
+      const suites = xml['testsuites']['testsuite'];
+      const suiteA = suites.find(s => s['$']['name'] === 'a.test.js');
+      const suiteB = suites.find(s => s['$']['name'] === 'b.test.js');
+      const timestampA = suiteA['$']['timestamp'];
+      const timestampB = suiteB['$']['timestamp'];
+      // Each <testsuite> should carry its own start time rather than a shared
+      // reporter-start instant. b.test.js starts after a.test.js's ~1.5s test.
+      expect(timestampA).not.toBe(timestampB);
+      expect(new Date(timestampB).getTime()).toBeGreaterThan(new Date(timestampA).getTime());
+      expect(result.exitCode).toBe(0);
+    });
+
     test('should render unexpected', async ({ runInlineTest }) => {
       const result = await runInlineTest({
         'a.test.js': `
