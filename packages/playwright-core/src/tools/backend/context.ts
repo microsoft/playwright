@@ -43,6 +43,7 @@ export type ContextConfig = {
   capabilities?: ToolCapability[];
   codegen?: 'typescript' | 'python' | 'java' | 'csharp' | 'none';
   console?: { level?: 'error' | 'warning' | 'info' | 'debug' };
+  extension?: boolean;
   imageResponses?: 'allow' | 'omit' | 'only';
   filePaths?: 'relative' | 'absolute';
   network?: {
