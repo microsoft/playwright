@@ -110,6 +110,7 @@ class JUnitReporter implements ReporterV2 {
     let failures = 0;
     let errors = 0;
     let duration = 0;
+    let startTime: Date | undefined;
     const children: XMLEntry[] = [];
     const testCaseNamePrefix = projectName && this.includeProjectInTestName ? `[${projectName}] ` : '';
 
@@ -117,8 +118,11 @@ class JUnitReporter implements ReporterV2 {
       ++tests;
       if (test.outcome() === 'skipped')
         ++skipped;
-      for (const result of test.results)
+      for (const result of test.results) {
         duration += result.duration;
+        if (!startTime || result.startTime < startTime)
+          startTime = result.startTime;
+      }
       const classification = await this._addTestCase(suite.title, testCaseNamePrefix, test, children);
       if (classification === 'error')
         ++errors;
@@ -135,7 +139,7 @@ class JUnitReporter implements ReporterV2 {
       name: 'testsuite',
       attributes: {
         name: suite.title,
-        timestamp: this.timestamp.toISOString(),
+        timestamp: (startTime ?? this.timestamp).toISOString(),
         hostname: projectName,
         tests,
         failures,
