@@ -109,8 +109,6 @@ export class FrameExecutionContext extends js.ExecutionContext {
         shouldPrependErrorPrefix: this.delegate.shouldPrependErrorPrefix(),
         isUtilityWorld: this.world === 'utility',
         customEngines,
-        skipInertCheck: !!process.env.PLAYWRIGHT_SKIP_INERT_CHECK,
-        skipDialogCheck: !!process.env.PLAYWRIGHT_SKIP_DIALOG_CHECK,
       };
       const globalsSnapshot = this.frame._page.delegate.noUtilityWorld?.() ? js.mainWorldGlobalsSnapshotSource : '';
       const source = `
@@ -372,10 +370,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         continue;
       }
       if (typeof result === 'object' && 'missingState' in result) {
-        if (result.missingState === 'non-inert')
-          progress.log('  element is inert');
-        else
-          progress.log(`  element is not ${result.missingState}`);
+        progress.log(`  element is not ${result.missingState}`);
         continue;
       }
       return result;
@@ -432,7 +427,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       await progress.race((options as any).__testHookBeforeStable());
 
     if (!force) {
-      const elementStates: ElementState[] = action.waitForEnabled ? ['visible', 'enabled', 'stable', 'non-inert'] : ['visible', 'stable'];
+      const elementStates: ElementState[] = action.waitForEnabled ? ['visible', 'enabled', 'stable'] : ['visible', 'stable'];
       progress.log(`  waiting for element to be ${action.waitForEnabled ? 'visible, enabled and stable' : 'visible and stable'}`);
       const result = await progress.race(this.evaluateInUtility(async ([injected, node, { elementStates, frameVisible }]) => {
         return await injected.checkElementStates(node, elementStates, frameVisible);
@@ -636,7 +631,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         progress.log('  waiting for element to be visible, enabled and editable');
       const result = await progress.race(this.evaluateInUtility(async ([injected, node, { value, force, frameVisible }]) => {
         if (!force) {
-          const checkResult = await injected.checkElementStates(node, ['visible', 'enabled', 'editable', 'non-inert'], frameVisible);
+          const checkResult = await injected.checkElementStates(node, ['visible', 'enabled', 'editable'], frameVisible);
           if (checkResult)
             return checkResult;
         }
