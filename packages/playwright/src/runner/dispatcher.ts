@@ -34,7 +34,7 @@ import type { TestError, TestResult, TestStep } from '../../types/testReporter';
 
 export type EnvByProjectId = Map<string, Record<string, string | undefined>>;
 
-const exclusiveLock = 'exclusive';
+const exclusiveLock = '-exclusive-';
 
 export class Dispatcher {
   // Worker slot is claimed when it has jobDispatcher assigned.
