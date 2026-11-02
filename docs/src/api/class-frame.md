@@ -1076,6 +1076,8 @@ Attribute name to get the value for.
 
 ### option: Frame.getByAltText.exact = %%-locator-get-by-text-exact-%%
 
+### option: Frame.getByAltText.omitHidden = %%-locator-option-omit-hidden-%%
+
 ## method: Frame.getByLabel
 * since: v1.27
 - returns: <[Locator]>
@@ -1086,6 +1088,8 @@ Attribute name to get the value for.
 
 ### option: Frame.getByLabel.exact = %%-locator-get-by-text-exact-%%
 
+### option: Frame.getByLabel.omitHidden = %%-locator-option-omit-hidden-%%
+
 ## method: Frame.getByPlaceholder
 * since: v1.27
 - returns: <[Locator]>
@@ -1095,6 +1099,8 @@ Attribute name to get the value for.
 ### param: Frame.getByPlaceholder.text = %%-locator-get-by-text-text-%%
 
 ### option: Frame.getByPlaceholder.exact = %%-locator-get-by-text-exact-%%
+
+### option: Frame.getByPlaceholder.omitHidden = %%-locator-option-omit-hidden-%%
 
 ## method: Frame.getByRole
 * since: v1.27
@@ -1112,6 +1118,8 @@ Attribute name to get the value for.
 
 ### option: Frame.getByRole.description = %%-locator-get-by-role-option-description-%%
 
+### option: Frame.getByRole.omitHidden = %%-locator-option-omit-hidden-%%
+
 ## method: Frame.getByTestId
 * since: v1.27
 - returns: <[Locator]>
@@ -1120,6 +1128,8 @@ Attribute name to get the value for.
 
 ### param: Frame.getByTestId.testId = %%-locator-get-by-test-id-test-id-%%
 * since: v1.27
+
+### option: Frame.getByTestId.omitHidden = %%-locator-option-omit-hidden-%%
 
 ## method: Frame.getByText
 * since: v1.27
@@ -1131,6 +1141,8 @@ Attribute name to get the value for.
 
 ### option: Frame.getByText.exact = %%-locator-get-by-text-exact-%%
 
+### option: Frame.getByText.omitHidden = %%-locator-option-omit-hidden-%%
+
 ## method: Frame.getByTitle
 * since: v1.27
 - returns: <[Locator]>
@@ -1140,6 +1152,8 @@ Attribute name to get the value for.
 ### param: Frame.getByTitle.text = %%-locator-get-by-text-text-%%
 
 ### option: Frame.getByTitle.exact = %%-locator-get-by-text-exact-%%
+
+### option: Frame.getByTitle.omitHidden = %%-locator-option-omit-hidden-%%
 
 ## async method: Frame.goto
 * since: v1.8
@@ -1447,6 +1461,8 @@ Returns whether the element is [visible](../actionability.md#visible). [`param: 
 
 ### option: Frame.locator.-inline- = %%-locator-options-list-v1.14-%%
 * since: v1.14
+
+### option: Frame.locator.omitHidden = %%-locator-option-omit-hidden-%%
 
 ### option: Frame.locator.hasNot = %%-locator-option-has-not-%%
 * since: v1.33

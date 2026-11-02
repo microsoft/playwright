@@ -4828,6 +4828,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `SM-012` | `library/browsercontext-strict.spec.ts` | strict context mode › should fail page.textContent in strict mode |
 | `SM-013` | `library/browsercontext-strict.spec.ts` | strict context mode › should fail page.click in strict mode |
 | `SM-014` | `library/browsercontext-strict.spec.ts` | strict context mode › should opt out of strict mode |
+| `SM-015` | `library/browsercontext-strict.spec.ts` | locator visibility › should ignore hidden matches only when resolving locators |
 
 ### SO — Select option
 

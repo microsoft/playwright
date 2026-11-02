@@ -149,6 +149,7 @@ const longhandTypes: Record<string, LonghandType> = {
   'browser.contextOptions.serviceWorkers': 'string',
   'browser.contextOptions.storageState': 'string',
   'browser.contextOptions.strictSelectors': 'boolean',
+  'browser.contextOptions.locatorOmitHidden': 'boolean',
   'browser.contextOptions.timezoneId': 'string',
   'browser.contextOptions.userAgent': 'string',
   'browser.contextOptions.viewport': 'size',

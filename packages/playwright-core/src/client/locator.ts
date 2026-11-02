@@ -45,42 +45,50 @@ export type LocatorOptions = {
   has?: Locator;
   hasNot?: Locator;
   visible?: boolean;
+  omitHidden?: boolean;
 };
 
 export class Locator implements api.Locator {
   _frame: Frame;
-  _selector: string;
+  _selectorWithoutVisibility: string;
+  _omitHidden: boolean | undefined;
   _apiName = 'Locator';
 
   constructor(frame: Frame, selector: string, options?: LocatorOptions) {
     this._frame = frame;
-    this._selector = selector;
+    this._selectorWithoutVisibility = selector;
+    this._omitHidden = options?.omitHidden;
 
     if (options?.hasText)
-      this._selector += ` >> internal:has-text=${escapeForTextSelector(options.hasText, false)}`;
+      this._selectorWithoutVisibility += ` >> internal:has-text=${escapeForTextSelector(options.hasText, false)}`;
 
     if (options?.hasNotText)
-      this._selector += ` >> internal:has-not-text=${escapeForTextSelector(options.hasNotText, false)}`;
+      this._selectorWithoutVisibility += ` >> internal:has-not-text=${escapeForTextSelector(options.hasNotText, false)}`;
 
     if (options?.has) {
       const locator = options.has;
       if (locator._frame !== frame)
         throw new Error(`Inner "has" locator must belong to the same frame.`);
-      this._selector += ` >> internal:has=` + JSON.stringify(locator._selector);
+      this._selectorWithoutVisibility += ` >> internal:has=` + JSON.stringify(locator._selector);
     }
 
     if (options?.hasNot) {
       const locator = options.hasNot;
       if (locator._frame !== frame)
         throw new Error(`Inner "hasNot" locator must belong to the same frame.`);
-      this._selector += ` >> internal:has-not=` + JSON.stringify(locator._selector);
+      this._selectorWithoutVisibility += ` >> internal:has-not=` + JSON.stringify(locator._selector);
     }
 
     if (options?.visible !== undefined)
-      this._selector += ` >> visible=${options.visible ? 'true' : 'false'}`;
+      this._selectorWithoutVisibility += ` >> visible=${options.visible ? 'true' : 'false'}`;
 
     if (inspect.custom)
       (this as any)[inspect.custom] = () => this._inspect();
+  }
+
+  get _selector(): string {
+    const omitHidden = this._omitHidden ?? this._frame?.page().context()._options.locatorOmitHidden;
+    return omitHidden ? this._selectorWithoutVisibility + ' >> visible=true' : this._selectorWithoutVisibility;
   }
 
   async _wrapApiCall<R>(func: () => Promise<R>, options?: ApiCallOptions): Promise<R> {
@@ -182,54 +190,54 @@ export class Locator implements api.Locator {
 
   locator(selectorOrLocator: string | Locator, options?: Omit<LocatorOptions, 'visible'>): Locator {
     if (isString(selectorOrLocator))
-      return new Locator(this._frame, this._selector + ' >> ' + selectorOrLocator, options);
+      return new Locator(this._frame, this._selectorWithoutVisibility + ' >> ' + selectorOrLocator, options);
     if (selectorOrLocator._frame !== this._frame)
       throw new Error(`Locators must belong to the same frame.`);
-    return new Locator(this._frame, this._selector + ' >> internal:chain=' + JSON.stringify(selectorOrLocator._selector), options);
+    return new Locator(this._frame, this._selectorWithoutVisibility + ' >> internal:chain=' + JSON.stringify(selectorOrLocator._selectorWithoutVisibility), { omitHidden: selectorOrLocator._omitHidden, ...options });
   }
 
   within(locator: Locator): Locator {
     return locator.locator(this);
   }
 
-  getByTestId(testId: string | RegExp): Locator {
-    return this.locator(getByTestIdSelector(testIdAttributeName(), testId));
+  getByTestId(testId: string | RegExp, options?: { omitHidden?: boolean }): Locator {
+    return this.locator(getByTestIdSelector(testIdAttributeName(), testId), options);
   }
 
-  getByAltText(text: string | RegExp, options?: { exact?: boolean }): Locator {
-    return this.locator(getByAltTextSelector(text, options));
+  getByAltText(text: string | RegExp, options?: { exact?: boolean, omitHidden?: boolean }): Locator {
+    return this.locator(getByAltTextSelector(text, options), options);
   }
 
-  getByLabel(text: string | RegExp, options?: { exact?: boolean }): Locator {
-    return this.locator(getByLabelSelector(text, options));
+  getByLabel(text: string | RegExp, options?: { exact?: boolean, omitHidden?: boolean }): Locator {
+    return this.locator(getByLabelSelector(text, options), options);
   }
 
-  getByPlaceholder(text: string | RegExp, options?: { exact?: boolean }): Locator {
-    return this.locator(getByPlaceholderSelector(text, options));
+  getByPlaceholder(text: string | RegExp, options?: { exact?: boolean, omitHidden?: boolean }): Locator {
+    return this.locator(getByPlaceholderSelector(text, options), options);
   }
 
-  getByText(text: string | RegExp, options?: { exact?: boolean }): Locator {
-    return this.locator(getByTextSelector(text, options));
+  getByText(text: string | RegExp, options?: { exact?: boolean, omitHidden?: boolean }): Locator {
+    return this.locator(getByTextSelector(text, options), options);
   }
 
-  getByTitle(text: string | RegExp, options?: { exact?: boolean }): Locator {
-    return this.locator(getByTitleSelector(text, options));
+  getByTitle(text: string | RegExp, options?: { exact?: boolean, omitHidden?: boolean }): Locator {
+    return this.locator(getByTitleSelector(text, options), options);
   }
 
   getByRole(role: string, options: ByRoleOptions = {}): Locator {
-    return this.locator(getByRoleSelector(role, options));
+    return this.locator(getByRoleSelector(role, options), { omitHidden: options.omitHidden });
   }
 
   frameLocator(selector: string): FrameLocator {
-    return new FrameLocator(this._frame, this._selector + ' >> ' + selector);
+    return new FrameLocator(this._frame, this._selectorWithoutVisibility + ' >> ' + selector);
   }
 
   filter(options?: LocatorOptions): Locator {
-    return new Locator(this._frame, this._selector, options);
+    return new Locator(this._frame, this._selectorWithoutVisibility, { omitHidden: this._omitHidden, ...options });
   }
 
   visible(): Locator {
-    return new Locator(this._frame, this._selector, { visible: true });
+    return this.filter({ visible: true });
   }
 
   async elementHandle(options?: TimeoutOptions): Promise<ElementHandle<SVGElement | HTMLElement>> {
@@ -241,11 +249,11 @@ export class Locator implements api.Locator {
   }
 
   contentFrame() {
-    return new FrameLocator(this._frame, this._selector);
+    return new FrameLocator(this._frame, this._selectorWithoutVisibility, this._omitHidden);
   }
 
   describe(description: string) {
-    return new Locator(this._frame, this._selector + ' >> internal:describe=' + JSON.stringify(description));
+    return new Locator(this._frame, this._selectorWithoutVisibility + ' >> internal:describe=' + JSON.stringify(description), { omitHidden: this._omitHidden });
   }
 
   description(): string | null {
@@ -253,27 +261,27 @@ export class Locator implements api.Locator {
   }
 
   first(): Locator {
-    return new Locator(this._frame, this._selector + ' >> nth=0');
+    return this.nth(0);
   }
 
   last(): Locator {
-    return new Locator(this._frame, this._selector + ` >> nth=-1`);
+    return this.nth(-1);
   }
 
   nth(index: number): Locator {
-    return new Locator(this._frame, this._selector + ` >> nth=${index}`);
+    return new Locator(this._frame, this._selectorWithoutVisibility + ` >> nth=${index}`, { omitHidden: this._omitHidden });
   }
 
   and(locator: Locator): Locator {
     if (locator._frame !== this._frame)
       throw new Error(`Locators must belong to the same frame.`);
-    return new Locator(this._frame, this._selector + ` >> internal:and=` + JSON.stringify(locator._selector));
+    return new Locator(this._frame, this._selectorWithoutVisibility + ` >> internal:and=` + JSON.stringify(locator._selectorWithoutVisibility), { omitHidden: this._omitHidden });
   }
 
   or(locator: Locator): Locator {
     if (locator._frame !== this._frame)
       throw new Error(`Locators must belong to the same frame.`);
-    return new Locator(this._frame, this._selector + ` >> internal:or=` + JSON.stringify(locator._selector));
+    return new Locator(this._frame, this._selectorWithoutVisibility + ` >> internal:or=` + JSON.stringify(locator._selectorWithoutVisibility), { omitHidden: this._omitHidden });
   }
 
   async focus(options?: TimeoutOptions): Promise<void> {
@@ -290,7 +298,7 @@ export class Locator implements api.Locator {
 
   async normalize(): Promise<Locator> {
     const { resolvedSelector } = await this._frame._channel.resolveSelector({ selector: this._selector }, kNoTimeout);
-    return new Locator(this._frame, resolvedSelector);
+    return new Locator(this._frame, resolvedSelector, { omitHidden: this._omitHidden });
   }
 
   async getAttribute(name: string, options?: TimeoutOptions): Promise<string | null> {
@@ -403,7 +411,7 @@ export class Locator implements api.Locator {
   }
 
   async all(): Promise<Locator[]> {
-    return new Array(await this.count()).fill(0).map((e, i) => this.nth(i));
+    return new Array(await this.count()).fill(0).map((e, i) => new Locator(this._frame, this._selector + ` >> nth=${i}`, { omitHidden: false }));
   }
 
   async allInnerTexts(): Promise<string[]> {
@@ -450,10 +458,12 @@ export class Locator implements api.Locator {
 export class FrameLocator implements api.FrameLocator {
   private _frame: Frame;
   private _frameSelector: string;
+  private _omitHidden: boolean | undefined;
 
-  constructor(frame: Frame, selector: string) {
+  constructor(frame: Frame, selector: string, omitHidden?: boolean) {
     this._frame = frame;
     this._frameSelector = selector;
+    this._omitHidden = omitHidden;
   }
 
   private _childSelector(selector: string): string {
@@ -467,39 +477,39 @@ export class FrameLocator implements api.FrameLocator {
       return new Locator(this._frame, this._childSelector(selectorOrLocator), options);
     if (selectorOrLocator._frame !== this._frame)
       throw new Error(`Locators must belong to the same frame.`);
-    return new Locator(this._frame, this._childSelector(selectorOrLocator._selector), options);
+    return new Locator(this._frame, this._childSelector(selectorOrLocator._selectorWithoutVisibility), { omitHidden: selectorOrLocator._omitHidden, ...options });
   }
 
-  getByTestId(testId: string | RegExp): Locator {
-    return this.locator(getByTestIdSelector(testIdAttributeName(), testId));
+  getByTestId(testId: string | RegExp, options?: { omitHidden?: boolean }): Locator {
+    return this.locator(getByTestIdSelector(testIdAttributeName(), testId), options);
   }
 
-  getByAltText(text: string | RegExp, options?: { exact?: boolean }): Locator {
-    return this.locator(getByAltTextSelector(text, options));
+  getByAltText(text: string | RegExp, options?: { exact?: boolean, omitHidden?: boolean }): Locator {
+    return this.locator(getByAltTextSelector(text, options), options);
   }
 
-  getByLabel(text: string | RegExp, options?: { exact?: boolean }): Locator {
-    return this.locator(getByLabelSelector(text, options));
+  getByLabel(text: string | RegExp, options?: { exact?: boolean, omitHidden?: boolean }): Locator {
+    return this.locator(getByLabelSelector(text, options), options);
   }
 
-  getByPlaceholder(text: string | RegExp, options?: { exact?: boolean }): Locator {
-    return this.locator(getByPlaceholderSelector(text, options));
+  getByPlaceholder(text: string | RegExp, options?: { exact?: boolean, omitHidden?: boolean }): Locator {
+    return this.locator(getByPlaceholderSelector(text, options), options);
   }
 
-  getByText(text: string | RegExp, options?: { exact?: boolean }): Locator {
-    return this.locator(getByTextSelector(text, options));
+  getByText(text: string | RegExp, options?: { exact?: boolean, omitHidden?: boolean }): Locator {
+    return this.locator(getByTextSelector(text, options), options);
   }
 
-  getByTitle(text: string | RegExp, options?: { exact?: boolean }): Locator {
-    return this.locator(getByTitleSelector(text, options));
+  getByTitle(text: string | RegExp, options?: { exact?: boolean, omitHidden?: boolean }): Locator {
+    return this.locator(getByTitleSelector(text, options), options);
   }
 
   getByRole(role: string, options: ByRoleOptions = {}): Locator {
-    return this.locator(getByRoleSelector(role, options));
+    return this.locator(getByRoleSelector(role, options), { omitHidden: options.omitHidden });
   }
 
   owner() {
-    return new Locator(this._frame, this._frameSelector);
+    return new Locator(this._frame, this._frameSelector, { omitHidden: this._omitHidden });
   }
 
   frameLocator(selector: string): FrameLocator {
@@ -513,15 +523,15 @@ export class FrameLocator implements api.FrameLocator {
   }
 
   first(): FrameLocator {
-    return new FrameLocator(this._frame, this._nthSelector('0'));
+    return new FrameLocator(this._frame, this._nthSelector('0'), this._omitHidden);
   }
 
   last(): FrameLocator {
-    return new FrameLocator(this._frame, this._nthSelector('-1'));
+    return new FrameLocator(this._frame, this._nthSelector('-1'), this._omitHidden);
   }
 
   nth(index: number): FrameLocator {
-    return new FrameLocator(this._frame, this._nthSelector(String(index)));
+    return new FrameLocator(this._frame, this._nthSelector(String(index)), this._omitHidden);
   }
 }
 

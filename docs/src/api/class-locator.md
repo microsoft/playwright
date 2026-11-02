@@ -1424,6 +1424,8 @@ await rowLocator
 ### option: Locator.filter.visible = %%-locator-option-visible-%%
 * since: v1.51
 
+### option: Locator.filter.omitHidden = %%-locator-option-omit-hidden-%%
+
 ## method: Locator.first
 * since: v1.14
 - returns: <[Locator]>
@@ -1514,6 +1516,8 @@ Attribute name to get the value for.
 
 ### option: Locator.getByAltText.exact = %%-locator-get-by-text-exact-%%
 
+### option: Locator.getByAltText.omitHidden = %%-locator-option-omit-hidden-%%
+
 ## method: Locator.getByLabel
 * since: v1.27
 - returns: <[Locator]>
@@ -1524,6 +1528,8 @@ Attribute name to get the value for.
 
 ### option: Locator.getByLabel.exact = %%-locator-get-by-text-exact-%%
 
+### option: Locator.getByLabel.omitHidden = %%-locator-option-omit-hidden-%%
+
 ## method: Locator.getByPlaceholder
 * since: v1.27
 - returns: <[Locator]>
@@ -1533,6 +1539,8 @@ Attribute name to get the value for.
 ### param: Locator.getByPlaceholder.text = %%-locator-get-by-text-text-%%
 
 ### option: Locator.getByPlaceholder.exact = %%-locator-get-by-text-exact-%%
+
+### option: Locator.getByPlaceholder.omitHidden = %%-locator-option-omit-hidden-%%
 
 ## method: Locator.getByRole
 * since: v1.27
@@ -1550,6 +1558,8 @@ Attribute name to get the value for.
 
 ### option: Locator.getByRole.description = %%-locator-get-by-role-option-description-%%
 
+### option: Locator.getByRole.omitHidden = %%-locator-option-omit-hidden-%%
+
 ## method: Locator.getByTestId
 * since: v1.27
 - returns: <[Locator]>
@@ -1558,6 +1568,8 @@ Attribute name to get the value for.
 
 ### param: Locator.getByTestId.testId = %%-locator-get-by-test-id-test-id-%%
 * since: v1.27
+
+### option: Locator.getByTestId.omitHidden = %%-locator-option-omit-hidden-%%
 
 ## method: Locator.getByText
 * since: v1.27
@@ -1569,6 +1581,8 @@ Attribute name to get the value for.
 
 ### option: Locator.getByText.exact = %%-locator-get-by-text-exact-%%
 
+### option: Locator.getByText.omitHidden = %%-locator-option-omit-hidden-%%
+
 ## method: Locator.getByTitle
 * since: v1.27
 - returns: <[Locator]>
@@ -1578,6 +1592,8 @@ Attribute name to get the value for.
 ### param: Locator.getByTitle.text = %%-locator-get-by-text-text-%%
 
 ### option: Locator.getByTitle.exact = %%-locator-get-by-text-exact-%%
+
+### option: Locator.getByTitle.omitHidden = %%-locator-option-omit-hidden-%%
 
 ## async method: Locator.hideHighlight
 * since: v1.60
@@ -2023,6 +2039,8 @@ var banana = page.GetByRole(AriaRole.Listitem).Last;
 
 ### option: Locator.locator.-inline- = %%-locator-options-list-v1.14-%%
 * since: v1.14
+
+### option: Locator.locator.omitHidden = %%-locator-option-omit-hidden-%%
 
 ### option: Locator.locator.hasNot = %%-locator-option-has-not-%%
 * since: v1.33

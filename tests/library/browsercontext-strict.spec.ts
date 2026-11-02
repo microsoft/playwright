@@ -21,6 +21,70 @@ it('SM-011 should not fail page.textContent in non-strict mode', async ({ page }
   expect(await page.textContent('span', { strict: false })).toBe('span1');
 });
 
+it.describe('locator visibility', () => {
+  it.use({
+    contextOptions: async ({ contextOptions }, use) => {
+      await use({ ...contextOptions, locatorOmitHidden: true });
+    }
+  });
+
+  it('SM-015 should ignore hidden matches only when resolving locators', {
+    annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43855' },
+  }, async ({ page }) => {
+    await page.setContent(`
+      <div hidden><button data-testid="save" title="Save">Save</button></div>
+      <div style="width: 0; height: 0"><button data-testid="save" title="Save">Save</button></div>
+    `);
+    const save = page.getByTestId('save');
+    expect(await save.count()).toBe(1);
+    await expect(save).toHaveCount(1);
+    await save.click();
+    const normalized = await save.normalize();
+    expect(await save.evaluateAll(elements => elements.length)).toBe(1);
+    const all = await save.all();
+    expect(all).toHaveLength(1);
+    await all[0].click();
+    expect(await page.getByText('Save', { exact: true }).count()).toBe(1);
+    expect(await page.getByTitle('Save').count()).toBe(1);
+    expect(await page.locator('div').getByTestId('save').count()).toBe(1);
+    expect(await page.locator('div').locator(save).count()).toBe(1);
+    expect(await save.first().count()).toBe(0);
+    expect(await save.last().count()).toBe(1);
+
+    const unfiltered = page.getByTestId('save', { omitHidden: false });
+    expect(await unfiltered.count()).toBe(2);
+    await expect(unfiltered.first().describe('cached button').filter({ hasText: 'Save' })).toBeAttached();
+    expect(await unfiltered.and(page.locator('button', { omitHidden: false })).count()).toBe(2);
+    expect(await unfiltered.or(page.locator('missing')).count()).toBe(2);
+    expect(await unfiltered.visible().count()).toBe(1);
+    expect(await page.locator('button', { omitHidden: false }).count()).toBe(2);
+    expect(await page.getByRole('button', { includeHidden: true }).count()).toBe(1);
+    expect(await page.getByRole('button', { includeHidden: true, omitHidden: false }).count()).toBe(2);
+    expect(await page.locator('div').getByRole('button', { includeHidden: true, omitHidden: false }).count()).toBe(2);
+    expect(await page.locator('div', { omitHidden: false }).getByTestId('save').count()).toBe(1);
+    expect(await page.locator('div', { omitHidden: false }).filter({ has: save }).count()).toBe(1);
+
+    await page.locator('button', { omitHidden: false }).evaluateAll(elements => elements.forEach(element => element.setAttribute('hidden', '')));
+    await expect(save).toBeHidden();
+    expect(await normalized.count()).toBe(0);
+    await save.waitFor({ state: 'hidden' });
+    await expect(unfiltered.last()).toBeAttached();
+    await unfiltered.last().waitFor({ state: 'attached' });
+
+    await page.setContent(`<iframe srcdoc='<button hidden data-testid="save">Save</button><button data-testid="save">Save</button>'></iframe>`);
+    const frame = page.frameLocator('iframe');
+    await expect(frame.getByTestId('save')).toHaveCount(1);
+    await expect(frame.getByTestId('save', { omitHidden: false })).toHaveCount(2);
+    await expect(frame.getByRole('button', { includeHidden: true, omitHidden: false })).toHaveCount(2);
+    await expect(page.frames()[1].getByTestId('save')).toHaveCount(1);
+    await expect(page.frames()[1].getByTestId('save', { omitHidden: false })).toHaveCount(2);
+    await expect(page.frames()[1].getByRole('button', { includeHidden: true, omitHidden: false })).toHaveCount(2);
+    await page.locator('iframe').evaluate(element => element.setAttribute('hidden', ''));
+    expect(await frame.owner().count()).toBe(0);
+    expect(await page.locator('iframe', { omitHidden: false }).contentFrame().owner().count()).toBe(1);
+  });
+});
+
 it.describe('strict context mode', () => {
   it.use({
     contextOptions: async ({ contextOptions }, use) => {

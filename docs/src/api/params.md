@@ -935,6 +935,27 @@ on selectors that imply single target DOM element will throw when more than one 
 This option does not affect any Locator APIs (Locators are always strict). Defaults to `false`.
 See [Locator] to learn more about the strict mode.
 
+## context-option-locator-omit-hidden
+* since: v1.65
+* langs: js
+- `locatorOmitHidden` <[boolean]>
+
+Whether locators omit hidden elements by default. Defaults to `false`. If set to `true`, each
+locator is resolved as if [`method: Locator.visible`] were appended: only the final matched element
+is checked for [visibility](../actionability.md#visible), not its intermediate ancestors.
+This affects actions, assertions, counts and element evaluation, but not selector-based methods
+such as [`method: Page.querySelector`].
+
+Pass `omitHidden: false` when creating a locator to opt out. The override is preserved by
+`filter()`, `first()`, `last()`, `nth()`, `and()`, `or()` and `describe()`. Creating a descendant
+locator uses the context default again, unless an override is supplied for that descendant.
+Explicit visibility filters are never removed. Role locators still apply their accessibility
+matching rules; use `getByRole(..., { includeHidden: true, omitHidden: false })` to include hidden
+elements when this context option is enabled.
+
+With `true`, hidden elements are treated as missing by `toBeHidden()` and `waitFor({ state: 'hidden' })`.
+To check attachment of a hidden element, create the locator with `omitHidden: false`.
+
 ## context-option-service-worker-policy
 - `serviceWorkers` "ServiceWorkerPolicy" <"allow"|"block">
 
@@ -1167,6 +1188,7 @@ between the same pixel in compared images, between zero (strict) and one (lax), 
 - %%-context-option-recordvideo-dir-%%
 - %%-context-option-recordvideo-size-%%
 - %%-context-option-strict-%%
+- %%-context-option-locator-omit-hidden-%%
 - %%-context-option-service-worker-policy-%%
 
 ## browser-option-args
@@ -1332,6 +1354,16 @@ Only matches visible or invisible elements. Prefer the [`method: Locator.visible
 ## locator-options-list-v1.14
 - %%-locator-option-has-text-%%
 - %%-locator-option-has-%%
+
+## locator-option-omit-hidden
+* since: v1.65
+* langs: js
+- `omitHidden` <[boolean]>
+
+Whether to omit hidden elements, overriding the context's `locatorOmitHidden` option, which defaults
+to `false`. Setting this to `true` applies [`method: Locator.visible`] when the locator is resolved.
+Setting it to `false` disables the automatic visibility filter, but does not remove explicit filters
+or change role locators' accessibility matching rules.
 
 ## screenshot-option-animations
 - `animations` "ScreenshotAnimations" <"disabled"|"allow">
