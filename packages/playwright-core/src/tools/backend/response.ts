@@ -295,7 +295,15 @@ export class Response {
     if (this._includeSnapshot !== 'none' || tabHeaders.some(header => header.changed)) {
       if (tabHeaders.length !== 1)
         addSection('Open tabs', renderTabsMarkdown(tabHeaders));
-      addSection('Page', renderTabMarkdown(tabHeaders.find(h => h.current) ?? tabHeaders[0]));
+      const currentTab = tabHeaders.find(h => h.current) ?? tabHeaders[0];
+      if (currentTab) {
+        addSection('Page', renderTabMarkdown(currentTab));
+      } else if (this._includeSnapshot !== 'none' && !this._errors.length) {
+        const error = ['No open tabs. The page was closed before a snapshot could be captured.'];
+        if (this._context.config.extension)
+          error.push(`Chrome may have detached the debugger because the page contains a frame that extensions are not allowed to debug, for example a frame added by another extension. If so, set that extension's site access to "On click" and navigate again.`);
+        addSection('Error', error);
+      }
     }
 
     // Handle modal states.

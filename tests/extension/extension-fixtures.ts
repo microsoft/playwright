@@ -28,7 +28,7 @@ import type { StartClient } from '../mcp/fixtures';
 
 export type BrowserWithExtension = {
   userDataDir: string;
-  launch: (mode?: 'disable-extension') => Promise<BrowserContext>;
+  launch: (mode?: 'disable-extension', additionalExtensions?: string[]) => Promise<BrowserContext>;
 };
 
 export type CliResult = {
@@ -65,7 +65,8 @@ export const test = base.extend<TestFixtures>({
     await fs.mkdir(path.join(userDataDir, 'Default', 'Extensions', extensionId), { recursive: true });
     await use({
       userDataDir,
-      launch: async (mode?: 'disable-extension') => {
+      launch: async (mode?: 'disable-extension', additionalExtensions: string[] = []) => {
+        const extensions = [pathToExtension, ...additionalExtensions].join(',');
         browserContext = await chromium.launchPersistentContext(userDataDir, {
           channel: mcpBrowser,
           // Opening the browser singleton only works in headed.
@@ -73,8 +74,8 @@ export const test = base.extend<TestFixtures>({
           // Automation disables singleton browser process behavior, which is necessary for the extension.
           ignoreDefaultArgs: ['--enable-automation'],
           args: mode === 'disable-extension' ? [] : [
-            `--disable-extensions-except=${pathToExtension}`,
-            `--load-extension=${pathToExtension}`,
+            `--disable-extensions-except=${extensions}`,
+            `--load-extension=${extensions}`,
           ],
         });
 
