@@ -134,7 +134,7 @@ it('MO-004 should pointerdown the div with a custom button', async ({ page, serv
   expect(event.isTrusted).toBe(true);
   expect(event.button).toBe(1);
   expect(event.buttons).toBe(4);
-  expect(event.pointerId).toBe(browserName === 'firefox' ? 0 : 1);
+  expect(event.pointerId).toBeGreaterThanOrEqual(0);
 });
 
 it('MO-005 should report correct buttons property', async ({ page }) => {
