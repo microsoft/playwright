@@ -185,8 +185,6 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `AR-043` | `page/page-aria-snapshot.spec.ts` | should snapshot with box from locator |
 | `AR-044` | `page/page-aria-snapshot.spec.ts` | should not include box when option is omitted |
 | `AR-045` | `page/page-aria-snapshot.spec.ts` | should not include hidden iframes |
-| `AR-046` | `page/page-aria-snapshot.spec.ts` | should not include inert elements |
-| `AR-047` | `page/page-aria-snapshot.spec.ts` | should only include the modal dialog content |
 | `AR-048` | `page/page-aria-snapshot-ai.spec.ts` | should generate refs |
 | `AR-049` | `page/page-aria-snapshot-ai.spec.ts` | should list iframes |
 | `AR-050` | `page/page-aria-snapshot-ai.spec.ts` | should snapshot a locator inside an iframe |
@@ -233,8 +231,6 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `AR-091` | `page/page-aria-snapshot-ai.spec.ts` | should annotate aria-hidden elements |
 | `AR-092` | `page/page-aria-snapshot-ai.spec.ts` | should only annotate the top element in a hidden subtree |
 | `AR-093` | `page/page-aria-snapshot-ai.spec.ts` | should not include hidden iframes |
-| `AR-094` | `page/page-aria-snapshot-ai.spec.ts` | should not generate refs for inert elements |
-| `AR-095` | `page/page-aria-snapshot-ai.spec.ts` | should not generate refs for elements outside of a modal dialog |
 | `AR-096` | `page/page-aria-snapshot-json.spec.ts` | should snapshot roles, names and text |
 | `AR-097` | `page/page-aria-snapshot-json.spec.ts` | should snapshot flags as properties |
 | `AR-098` | `page/page-aria-snapshot-json.spec.ts` | should snapshot link url and textbox value |
@@ -1282,8 +1278,6 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `CL-047` | `page/page-click.spec.ts` | trial run should not double click |
 | `CL-048` | `page/page-click.spec.ts` | should fail when obscured and not waiting for hit target |
 | `CL-049` | `page/page-click.spec.ts` | should wait for button to be enabled |
-| `CL-050` | `page/page-click.spec.ts` | should wait for element to become non-inert |
-| `CL-051` | `page/page-click.spec.ts` | should wait for modal dialog to close |
 | `CL-052` | `page/page-click.spec.ts` | should wait for input to be enabled |
 | `CL-053` | `page/page-click.spec.ts` | should wait for select to be enabled |
 | `CL-054` | `page/page-click.spec.ts` | should click disabled div |
@@ -1344,8 +1338,6 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `CL-109` | `page/page-click-during-navigation.spec.ts` | should not fail with internal error upon navigation |
 | `CL-110` | `page/page-click-timeout-1.spec.ts` | should avoid side effects after timeout |
 | `CL-111` | `page/page-click-timeout-1.spec.ts` | should timeout waiting for button to be enabled |
-| `CL-112` | `page/page-click-timeout-1.spec.ts` | should timeout waiting for inert element to become non-inert |
-| `CL-113` | `page/page-click-timeout-1.spec.ts` | should timeout waiting for element outside of a modal dialog |
 | `CL-114` | `page/page-click-timeout-2.spec.ts` | should timeout waiting for display:none to be gone |
 | `CL-115` | `page/page-click-timeout-2.spec.ts` | should timeout waiting for visibility:hidden to be gone |
 | `CL-116` | `page/page-click-timeout-3.spec.ts` | should fail when element jumps during hit testing |
@@ -2863,9 +2855,6 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `FI-031` | `page/page-fill.spec.ts` | should not throw when fill causes navigation |
 | `FI-032` | `page/page-fill.spec.ts` | fill back to back |
 | `FI-033` | `page/page-fill.spec.ts` | should fill contenteditable with focus handler that collapses selection |
-| `FI-034` | `page/page-fill.spec.ts` | should retry on inert element |
-| `FI-035` | `page/page-fill.spec.ts` | should retry on element outside of a modal dialog |
-| `FI-036` | `page/page-fill.spec.ts` | should fail with a nice error on inert element |
 
 ### FO — Focus
 
@@ -4664,11 +4653,6 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `SE-063` | `page/selectors-role.spec.ts` | hidden with shadow dom slots |
 | `SE-064` | `page/selectors-role.spec.ts` | should support output accessible name |
 | `SE-065` | `page/selectors-role.spec.ts` | should not match scope by default |
-| `SE-066` | `page/selectors-role.spec.ts` | should not match inert elements, unless explicitly asked for |
-| `SE-067` | `page/selectors-role.spec.ts` | should not match elements outside of a modal dialog |
-| `SE-068` | `page/selectors-role.spec.ts` | should match the topmost modal dialog |
-| `SE-069` | `page/selectors-role.spec.ts` | should respect PLAYWRIGHT\_SKIP\_INERT\_CHECK |
-| `SE-070` | `page/selectors-role.spec.ts` | should respect PLAYWRIGHT\_SKIP\_DIALOG\_CHECK |
 | `SE-071` | `page/selectors-get-by.spec.ts` | getByTestId should work |
 | `SE-072` | `page/selectors-get-by.spec.ts` | getByTestId with custom testId should work |
 | `SE-073` | `page/selectors-get-by.spec.ts` | getByTestId with comma-separated testIdAttributes should match any |
