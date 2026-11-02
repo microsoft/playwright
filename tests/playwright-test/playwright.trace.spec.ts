@@ -618,20 +618,27 @@ test('should include attachments by default', async ({ runInlineTest, server }, 
   expect([...resources.keys()]).toContain(trace.model.actions[1].attachments[0].file);
 });
 
-test('should redact secrets', async ({ runInlineTest, server }, testInfo) => {
+test('should redact secrets', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43796' } }, async ({ runInlineTest, server }, testInfo) => {
   server.setRoute('/secret', (req, res) => {
     res.setHeader('Content-Type', 'application/json');
     res.end(JSON.stringify({ password: req.headers['x-secret'] }));
   });
   const result = await runInlineTest({
-    'playwright.config.ts': `
-      export default { use: { trace: { mode: 'on', secrets: [{ name: 'PASSWORD', value: process.env.PASSWORD }, { name: 'QUOTED', value: process.env.QUOTED }] } } };
+    'config/playwright.config.ts': `
+      export default { testDir: '..', use: { trace: { mode: 'on', secrets: './.env' } } };
     `,
+    'config/.env': `# Secrets for trace redaction
+PASSWORD=password123
+QUOTED='say "hi"'
+EMPTY=
+PW_TEST_FILE_ONLY_SECRET=not-in-environment
+`,
     'a.spec.ts': `
       import { test, expect } from '@playwright/test';
       const password = process.env.PASSWORD;
 
       test('with page', async ({ page }, testInfo) => {
+        expect(process.env.PW_TEST_FILE_ONLY_SECRET).toBeUndefined();
         await page.goto('${server.EMPTY_PAGE}');
         await page.setContent('<input>');
         await page.locator('input').fill(password);
@@ -648,12 +655,16 @@ test('should redact secrets', async ({ runInlineTest, server }, testInfo) => {
           expect(password).toBe('wrong ' + 'password123');
         });
       });
-
+    `,
+    'b.spec.ts': `
+      import { test } from '@playwright/test';
+      const password = process.env.PASSWORD;
+      test.use({ trace: { mode: 'on', secrets: [{ name: 'PASSWORD', value: password }] } });
       test('without page', async ({}, testInfo) => {
         await testInfo.attach('note ' + password, { body: 'body ' + password });
       });
     `,
-  }, { workers: 1 }, { PASSWORD: 'password123', QUOTED: 'say "hi"' });
+  }, { workers: 1, config: 'config/playwright.config.ts' }, { PASSWORD: 'password123', QUOTED: 'say "hi"' });
 
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(1);
@@ -684,7 +695,7 @@ test('should redact secrets', async ({ runInlineTest, server }, testInfo) => {
   const sourceFile = [...resources.keys()].find(name => name.startsWith('src/'))!;
   expect(resources.get(sourceFile)!.toString()).toContain(`'wrong ' + '<secret>PASSWORD</secret>'`);
 
-  const single = await parseTraceRaw(testInfo.outputPath('test-results', 'a-without-page', 'trace.zip'));
+  const single = await parseTraceRaw(testInfo.outputPath('test-results', 'b-without-page', 'trace.zip'));
   for (const [name, buffer] of single.resources)
     expect(buffer.includes('password123'), `${name} contains the secret`).toBe(false);
   expect(single.actions).toContain(`Attach "note <secret>PASSWORD</secret>"`);

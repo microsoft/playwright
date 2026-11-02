@@ -6,5 +6,6 @@
 ../util.ts
 ../matchers/**
 node_modules/colors/safe
+node_modules/dotenv
 node_modules/yauzl
 node_modules/yazl
