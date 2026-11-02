@@ -16,7 +16,7 @@
 
 import { test, expect } from './fixtures';
 
-test('browser_evaluate', async ({ client, server }) => {
+test('browser_evaluate', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43752' } }, async ({ client, server }) => {
   expect(await client.callTool({
     name: 'browser_navigate',
     arguments: { url: server.HELLO_WORLD },
@@ -32,6 +32,24 @@ test('browser_evaluate', async ({ client, server }) => {
   })).toHaveResponse({
     result: `"Title"`,
     code: `await page.evaluate('() => document.title');`,
+  });
+
+  server.setRoute('/sandboxed', (req, res) => {
+    res.writeHead(200, {
+      'Content-Type': 'text/plain',
+      'Content-Security-Policy': `default-src 'none'; style-src 'unsafe-inline'; sandbox`,
+    });
+    res.end('Hello, sandbox');
+  });
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX + '/sandboxed' },
+  });
+  expect(await client.callTool({
+    name: 'browser_evaluate',
+    arguments: { function: '() => document.body.textContent' },
+  })).toHaveResponse({
+    result: `"Hello, sandbox"`,
   });
 });
 
