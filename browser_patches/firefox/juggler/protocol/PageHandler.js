@@ -498,7 +498,7 @@ export class PageHandler {
           x + boundingBox.left,
           y + boundingBox.top,
           {
-            identifier: win.windowUtils.DEFAULT_MOUSE_POINTER_ID,
+            identifier: this._pageTarget._mousePointerId,
             button,
             buttons,
             clickCount,
@@ -537,7 +537,7 @@ export class PageHandler {
           0 /* x */,
           0 /* y */,
           {
-            identifier: win.windowUtils.DEFAULT_MOUSE_POINTER_ID,
+            identifier: this._pageTarget._mousePointerId,
             button,
             clickCount,
             modifiers,
