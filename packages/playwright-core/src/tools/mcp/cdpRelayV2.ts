@@ -39,9 +39,11 @@ export class ExtensionProtocolV2 {
   // Resolved by `extension.initialized`. Purely a handshake signal for the
   // relay — the model itself is oblivious to this phase.
   private _ready = new ManualPromise<void>();
+  private _background: boolean;
 
-  constructor(sendCommand: SendCommand) {
+  constructor(sendCommand: SendCommand, background = false) {
     this._model = new BrowserModel(sendCommand);
+    this._background = background;
     void this._ready.catch(logUnhandledError);
   }
 
@@ -103,7 +105,12 @@ export class ExtensionProtocolV2 {
         return { result: {} };
       }
       case 'Target.createTarget':
-        return { result: await this._model.createTarget(params?.url) };
+        return { result: await this._model.createTarget(params?.url, !this._background) };
+      case 'Page.bringToFront':
+      case 'Target.activateTarget':
+        if (this._background)
+          return { result: {} };
+        return undefined;
       case 'Target.closeTarget':
         return { result: await this._model.closeTarget(params?.targetId) };
       case 'Target.getTargetInfo':

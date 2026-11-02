@@ -494,6 +494,49 @@ test(`bypass connection dialog with token`, async ({ browserWithExtension, start
   await expect(page.locator('.client-info')).toContainText(`Connected to "${clientName}"`);
 });
 
+test(`--background does not activate controlled tabs`, {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42973' },
+}, async ({ browserWithExtension, startClient, server }) => {
+  const browserContext = await browserWithExtension.launch();
+  const token = await readExtensionToken(browserContext);
+  const userPage = await browserContext.newPage();
+  await userPage.goto(server.EMPTY_PAGE);
+  await userPage.bringToFront();
+  const [sw] = browserContext.serviceWorkers();
+  const activeTabUrls = () => sw.evaluate(async () => {
+    const chrome = (globalThis as any).chrome;
+    const tabs = await chrome.tabs.query({ active: true });
+    return tabs.map((tab: any) => tab.url);
+  });
+
+  const { client } = await startClient({
+    args: [`--extension`, `--background`],
+    env: {
+      PLAYWRIGHT_MCP_EXTENSION_TOKEN: token,
+      PWTEST_EXTENSION_USER_DATA_DIR: browserWithExtension.userDataDir,
+    },
+  });
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  })).toHaveResponse({
+    snapshot: expect.stringContaining(`Hello, world!`),
+  });
+  expect(await activeTabUrls()).toEqual([server.EMPTY_PAGE]);
+
+  await client.callTool({
+    name: 'browser_tabs',
+    arguments: { action: 'new', url: server.PREFIX + '/title.html' },
+  });
+  expect(await client.callTool({
+    name: 'browser_tabs',
+    arguments: { action: 'select', index: 0 },
+  })).toHaveResponse({
+    result: expect.stringContaining(`- 0: (current)`),
+  });
+  expect(await activeTabUrls()).toEqual([server.EMPTY_PAGE]);
+});
+
 test(`does not expose the token in the connect page url`, {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-mcp/issues/1791' },
 }, async ({ browserWithExtension, startClient }) => {
