@@ -2898,7 +2898,7 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
    * });
    * ```
    *
-   * The built-in `exclusive` lock runs the test only when no other tests are running.
+   * The built-in `-exclusive-` lock runs the test only when no other tests are running.
    *
    * Learn more about [test locks](https://playwright.dev/docs/test-parallel#test-locks).
    * @param title Test title.
@@ -2997,7 +2997,7 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
    * });
    * ```
    *
-   * The built-in `exclusive` lock runs the test only when no other tests are running.
+   * The built-in `-exclusive-` lock runs the test only when no other tests are running.
    *
    * Learn more about [test locks](https://playwright.dev/docs/test-parallel#test-locks).
    * @param title Test title.
