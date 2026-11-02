@@ -161,7 +161,9 @@ it('LO-151 should support filter(visible)', async ({ page }) => {
   await expect(page.locator('.item').filter({ visible: false }).getByText('data1')).toHaveText('Hidden data1');
 });
 
-it('LO-152 should support visible()', async ({ page }) => {
+it('LO-152 should support visible()', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43855' },
+}, async ({ page }) => {
   await page.setContent(`<div>
     <div class="item" style="display: none">Hidden data0</div>
     <div class="item">visible data1</div>
@@ -175,6 +177,8 @@ it('LO-152 should support visible()', async ({ page }) => {
   await expect(locator).toHaveText('visible data2');
   await expect(page.locator('.item').visible().getByText('data3')).toHaveText('visible data3');
   await expect(page.locator('.item').visible()).toHaveCount(3);
+  await expect(page.locator('.item')).toHaveCount(6);
+  await expect(page.locator('.item', { includeHidden: false })).toHaveCount(3);
 });
 
 it('LO-153 locator.count should work with deleted Map in main world', async ({ page }) => {

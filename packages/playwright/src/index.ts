@@ -275,6 +275,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
   isMobile: [({ contextOptions }, use) => use(contextOptions.isMobile ?? false), { option: true, box: true }],
   javaScriptEnabled: [({ contextOptions }, use) => use(contextOptions.javaScriptEnabled ?? true), { option: true, box: true }],
   locale: [({ contextOptions }, use) => use(contextOptions.locale ?? 'en-US'), { option: true, box: true }],
+  locatorIncludeHidden: [({ contextOptions }, use) => use(contextOptions.locatorIncludeHidden ?? true), { option: true, box: true }],
   offline: [({ contextOptions }, use) => use(contextOptions.offline ?? false), { option: true, box: true }],
   permissions: [({ contextOptions }, use) => use(contextOptions.permissions), { option: true, box: true }],
   proxy: [({ contextOptions }, use) => use(contextOptions.proxy), { option: true, box: true }],
@@ -308,6 +309,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
     isMobile,
     javaScriptEnabled,
     locale,
+    locatorIncludeHidden,
     offline,
     permissions,
     proxy,
@@ -350,6 +352,8 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
       options.javaScriptEnabled = javaScriptEnabled;
     if (locale !== undefined)
       options.locale = locale;
+    if (locatorIncludeHidden !== undefined)
+      options.locatorIncludeHidden = locatorIncludeHidden;
     if (offline !== undefined)
       options.offline = offline;
     if (permissions !== undefined)

@@ -2324,6 +2324,8 @@ Attribute name to get the value for.
 
 ### option: Page.getByAltText.exact = %%-locator-get-by-text-exact-%%
 
+### option: Page.getByAltText.includeHidden = %%-locator-option-include-hidden-%%
+
 ## method: Page.getByLabel
 * since: v1.27
 - returns: <[Locator]>
@@ -2334,6 +2336,8 @@ Attribute name to get the value for.
 
 ### option: Page.getByLabel.exact = %%-locator-get-by-text-exact-%%
 
+### option: Page.getByLabel.includeHidden = %%-locator-option-include-hidden-%%
+
 ## method: Page.getByPlaceholder
 * since: v1.27
 - returns: <[Locator]>
@@ -2343,6 +2347,8 @@ Attribute name to get the value for.
 ### param: Page.getByPlaceholder.text = %%-locator-get-by-text-text-%%
 
 ### option: Page.getByPlaceholder.exact = %%-locator-get-by-text-exact-%%
+
+### option: Page.getByPlaceholder.includeHidden = %%-locator-option-include-hidden-%%
 
 ## method: Page.getByRef
 * since: v1.64
@@ -2387,6 +2393,8 @@ await page.GetByRef("e2").ClickAsync();
 
 Aria ref of the element, for example `e2` or `f1e3`.
 
+### option: Page.getByRef.includeHidden = %%-locator-option-include-hidden-%%
+
 ## method: Page.getByRole
 * since: v1.27
 - returns: <[Locator]>
@@ -2412,6 +2420,8 @@ Aria ref of the element, for example `e2` or `f1e3`.
 ### param: Page.getByTestId.testId = %%-locator-get-by-test-id-test-id-%%
 * since: v1.27
 
+### option: Page.getByTestId.includeHidden = %%-locator-option-include-hidden-%%
+
 ## method: Page.getByText
 * since: v1.27
 - returns: <[Locator]>
@@ -2422,6 +2432,8 @@ Aria ref of the element, for example `e2` or `f1e3`.
 
 ### option: Page.getByText.exact = %%-locator-get-by-text-exact-%%
 
+### option: Page.getByText.includeHidden = %%-locator-option-include-hidden-%%
+
 ## method: Page.getByTitle
 * since: v1.27
 - returns: <[Locator]>
@@ -2431,6 +2443,8 @@ Aria ref of the element, for example `e2` or `f1e3`.
 ### param: Page.getByTitle.text = %%-locator-get-by-text-text-%%
 
 ### option: Page.getByTitle.exact = %%-locator-get-by-text-exact-%%
+
+### option: Page.getByTitle.includeHidden = %%-locator-option-include-hidden-%%
 
 ## async method: Page.goBack
 * since: v1.8
@@ -2921,6 +2935,8 @@ Controls which errors are returned:
 
 ### option: Page.locator.-inline- = %%-locator-options-list-v1.14-%%
 * since: v1.14
+
+### option: Page.locator.includeHidden = %%-locator-option-include-hidden-%%
 
 ### option: Page.locator.hasNot = %%-locator-option-has-not-%%
 * since: v1.33

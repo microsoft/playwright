@@ -451,6 +451,21 @@ export default defineConfig({
 });
 ```
 
+## property: TestOptions.locatorIncludeHidden = %%-context-option-locator-include-hidden-%%
+* since: v1.65
+
+**Usage**
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  use: {
+    locatorIncludeHidden: false,
+  },
+});
+```
+
 ## property: TestOptions.navigationTimeout
 * since: v1.10
 - type: <[int]>
