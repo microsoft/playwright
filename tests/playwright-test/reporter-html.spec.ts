@@ -1005,6 +1005,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await showReport();
       await page.getByRole('link', { name: 'has steps' }).click();
       await expect(page.locator('.step-title-container', { hasText: 'Add to cart' })).toHaveAttribute('aria-label', 'Add to cart SKU 42');
+      await expect(page.locator('.step-title-text', { hasText: 'Add to cart' })).toHaveAttribute('title', 'Add to cart SKU 42');
       await expect(page.locator('.step-subtitle')).toHaveText('SKU 42');
     });
 

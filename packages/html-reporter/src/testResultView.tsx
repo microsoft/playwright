@@ -283,9 +283,10 @@ const StepTreeItem: React.FC<{
     }
   }
 
-  return <TreeItem title={<div aria-label={step.subtitle ? `${step.title} ${step.subtitle}` : step.title} className='step-title-container'>
+  const fullTitle = step.subtitle ? `${step.title} ${step.subtitle}` : step.title;
+  return <TreeItem title={<div aria-label={fullTitle} className='step-title-container'>
     {statusIcon(step.error || step.duration === -1 ? 'failed' : (step.skipped ? 'skipped' : 'passed'))}
-    <span className='step-title-text'>
+    <span className='step-title-text' title={fullTitle}>
       {title}
       {step.subtitle && <span className='step-subtitle'> {subtitle}</span>}
       {step.count > 1 && <> ✕ <span className='test-result-counter'>{step.count}</span></>}
