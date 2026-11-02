@@ -68,6 +68,7 @@ export class CDPRelayServer {
   private _executablePath?: string;
   private _customUserDataDir?: string;
   private _profileDirectory?: string;
+  private _background: boolean;
   private _cdpPath: string;
   private _extensionPath: string;
   private _cdpConnection: WebSocket | null = null;
@@ -77,11 +78,12 @@ export class CDPRelayServer {
   private _handler: ExtensionProtocolV2;
   private _extensionConnectionPromise = new ManualPromise<void>();
 
-  constructor(browserChannel: string, executablePath?: string, customUserDataDir?: string, profileDirectory?: string) {
+  constructor(browserChannel: string, executablePath?: string, customUserDataDir?: string, profileDirectory?: string, background = false) {
     this._browserChannel = browserChannel;
     this._executablePath = executablePath;
     this._customUserDataDir = customUserDataDir;
     this._profileDirectory = profileDirectory;
+    this._background = background;
     this._protocolVersion = parseInt(process.env.PWTEST_EXTENSION_PROTOCOL ?? protocol.VERSION.toString(), 10);
     this._token = process.env.PLAYWRIGHT_MCP_EXTENSION_TOKEN;
 
@@ -90,7 +92,7 @@ export class CDPRelayServer {
         throw new Error('Extension not connected');
       return this._extensionConnection.send(method as keyof ExtensionCommandV2, params);
     };
-    this._handler = new ExtensionProtocolV2(sendCommand);
+    this._handler = new ExtensionProtocolV2(sendCommand, background);
 
     const uuid = crypto.randomUUID();
     this._cdpPath = `/cdp/${uuid}`;
@@ -158,6 +160,8 @@ export class CDPRelayServer {
     url.searchParams.set('protocolVersion', this._protocolVersion.toString());
     if (!tabGroup)
       url.searchParams.set('tabGroup', 'false');
+    if (this._background)
+      url.searchParams.set('background', 'true');
     if (this._token)
       url.searchParams.set('token', this._token);
     const href = url.toString();
@@ -181,6 +185,9 @@ export class CDPRelayServer {
       args.push(`--profile-directory=${this._profileDirectory}`);
     if (os.platform() === 'linux' && channel === 'chromium')
       args.push('--no-sandbox');
+    // Without a token, the user must see the connect page to approve the connection.
+    if (this._background && this._token)
+      args.push('--open-in-background');
     args.push(href);
     spawn(executablePath, args, {
       windowsHide: true,

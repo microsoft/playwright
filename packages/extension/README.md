@@ -73,6 +73,10 @@ By default, you'll need to approve each connection when the MCP server tries to 
 
 This token is unique to your browser profile and provides secure authentication between the MCP server and the extension. Once configured, you won't need to manually approve connections each time.
 
+#### Working in the Background
+
+By default, the connected tab becomes active and the browser window is focused. To keep the browser behind the app you are working in, pass `--background` alongside `--extension`, or set `PLAYWRIGHT_MCP_BACKGROUND=1`. In this mode, the extension does not activate the connected tab or focus its window, tabs that the client opens are created in the background, and `bringToFront` does nothing. Together with the authentication token, the connect page is also opened in the background (Chrome 158 or later). Note that Chrome throttles timers and animation frames in background tabs.
+
 ### Selecting a Chrome Profile
 
 If the extension is installed in several Chrome profiles, the connection is made to the one you used last. To always connect to a specific profile, pass the name of its directory, the last component of "Profile Path" at `chrome://version`, via `--profile-dir-name`:

@@ -79,6 +79,7 @@ export type CLIOptions = {
   snapshotMode?: 'full' | 'none';
   storageState?: string;
   tabGroup?: boolean;
+  background?: boolean;
   testIdAttribute?: string;
   timeoutAction?: number;
   timeoutNavigation?: number;
@@ -375,6 +376,7 @@ function configFromCLIOptions(cliOptions: CLIOptions): Config & { configFile?: s
     },
     extension: cliOptions.extension,
     tabGroup: cliOptions.tabGroup === false ? false : undefined,
+    background: cliOptions.background,
     server: {
       port: cliOptions.port,
       host: cliOptions.host,
@@ -427,6 +429,7 @@ export function configFromEnv(env?: NodeJS.ProcessEnv): Config & { configFile?: 
   options.allowedHosts = commaSeparatedList(e.PLAYWRIGHT_MCP_ALLOWED_HOSTS);
   options.allowedOrigins = semicolonSeparatedList(e.PLAYWRIGHT_MCP_ALLOWED_ORIGINS);
   options.allowUnrestrictedFileAccess = envToBoolean(e.PLAYWRIGHT_MCP_ALLOW_UNRESTRICTED_FILE_ACCESS);
+  options.background = envToBoolean(e.PLAYWRIGHT_MCP_BACKGROUND);
   options.blockedOrigins = semicolonSeparatedList(e.PLAYWRIGHT_MCP_BLOCKED_ORIGINS);
   options.blockServiceWorkers = envToBoolean(e.PLAYWRIGHT_MCP_BLOCK_SERVICE_WORKERS);
   options.browser = envToString(e.PLAYWRIGHT_MCP_BROWSER);
