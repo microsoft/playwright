@@ -111,6 +111,10 @@ export default defineConfig({
 
 Tests start already authenticated because we specified `storageState` in the config.
 
+:::note
+If your application stores authentication tokens in IndexedDB, such as Firebase Authentication, enable [`option: BrowserContext.storageState.indexedDB`] when saving the state: `await page.context().storageState({ path: authFile, indexedDB: true })`. IndexedDB is not included in the snapshot by default.
+:::
+
 ```js title="tests/example.spec.ts"
 import { test } from '@playwright/test';
 
@@ -275,7 +279,7 @@ Web apps use cookie-based or token-based authentication, where authenticated sta
 
 Cookies, local storage, IndexedDB and virtual WebAuthn credentials (passkeys) can be used across different browsers. They depend on your application's authentication model which may require some combination of cookies, local storage, IndexedDB or passkeys.
 
-The following code snippet retrieves state from an authenticated context and creates a new context with that state.
+The following code snippet retrieves state from an authenticated context and creates a new context with that state. If your application stores authentication tokens in IndexedDB, such as Firebase Authentication, enable [`option: BrowserContext.storageState.indexedDB`] when saving the state. IndexedDB is not included in the snapshot by default.
 
 ```java
 // Save storage state into the file.
