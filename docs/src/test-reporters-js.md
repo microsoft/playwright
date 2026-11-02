@@ -464,6 +464,8 @@ JSON report supports following configuration options and environment variables:
 
 JUnit reporter produces a JUnit-style xml report.
 
+Each test file is reported as a `<testsuite>` whose `timestamp` is the earliest start time of its test results. Suites without results use the reporter's start time.
+
 Most likely you want to write the report to an xml file. When running with `--reporter=junit`, use `PLAYWRIGHT_JUNIT_OUTPUT_NAME` environment variable:
 
 ```bash tab=bash-bash

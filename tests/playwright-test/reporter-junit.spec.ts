@@ -23,7 +23,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
   test.describe(`${useIntermediateMergeReport ? 'merged' : 'created'}`, () => {
     test.use({ useIntermediateMergeReport });
 
-    test('should render expected', async ({ runInlineTest }) => {
+    test('should render expected', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43844' } }, async ({ runInlineTest }) => {
       const result = await runInlineTest({
         'a.test.js': `
           import { test, expect } from '@playwright/test';
@@ -37,7 +37,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
             expect(1).toBe(1);
           });
         `,
-      }, { reporter: 'junit' });
+      }, { reporter: 'junit', workers: 1 });
       const xml = parseXML(result.output);
       expect(xml['testsuites']['$']['tests']).toBe('2');
       expect(xml['testsuites']['$']['failures']).toBe('0');
@@ -47,6 +47,8 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       expect(xml['testsuites']['testsuite'][0]['$']['failures']).toBe('0');
       expect(xml['testsuites']['testsuite'][0]['$']['skipped']).toBe('0');
       expect(xml['testsuites']['testsuite'][1]['$']['name']).toBe('b.test.js');
+      for (let i = 0; i < 2; ++i)
+        expect(xml['testsuites']['testsuite'][i]['$']['timestamp']).toBe(result.report.suites[i].specs[0].tests[0].results[0].startTime);
       expect(result.exitCode).toBe(0);
     });
 
