@@ -75,7 +75,7 @@ This token is unique to your browser profile and provides secure authentication 
 
 #### Working in the Background
 
-By default, the connected tab becomes active and the browser window is focused. To keep the browser behind the app you are working in, pass `--background` alongside `--extension`, or set `PLAYWRIGHT_MCP_BACKGROUND=1`. In this mode, the extension does not activate the connected tab or focus its window, tabs that the client opens are created in the background, and `bringToFront` does nothing. Together with the authentication token, the connect page is also opened in the background (Chrome 158 or later). Note that Chrome throttles timers and animation frames in background tabs.
+By default, the connected tab becomes active and the browser window is focused. To keep the browser behind the app you are working in, pass `--background` alongside `--extension`, or set `PLAYWRIGHT_MCP_BACKGROUND=1`. In this mode, the extension does not activate the connected tab or focus its window, and tabs that the client opens are created in the background. Together with the authentication token, the connect page is also opened in the background (Chrome 158.0.8127.2 or later). This works only when the browser is already running; if it is not, the browser starts with a new focused window. Note that Chrome throttles timers and animation frames in background tabs.
 
 ### Selecting a Chrome Profile
 
