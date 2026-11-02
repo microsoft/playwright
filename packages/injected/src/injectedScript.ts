@@ -22,7 +22,7 @@ import { parseAttributeSelector, parseSelector, stringifySelector, visitAllSelec
 import { cacheNormalizedWhitespaces, normalizeWhiteSpace, trimStringWithEllipsis } from '@isomorphic/stringUtils';
 
 import { generateAriaTree, getAllElementsMatchingExpectAriaTemplate, matchesExpectAriaTemplate, renderAriaTreeAsJSON, findNewElement } from './ariaSnapshot';
-import { beginDOMCaches, enclosingShadowRootOrDocument, endDOMCaches, isElementVisible, isInsideScope, parentElementOrShadowHost, setGlobalOptions } from './domUtils';
+import { beginDOMCaches, enclosingShadowRootOrDocument, endDOMCaches, isElementInert, isElementVisible, isInsideScope, parentElementOrShadowHost, setGlobalOptions } from './domUtils';
 import { Highlight } from './highlight';
 import { kLayoutSelectorNames, layoutSelectorScore } from './layoutSelectorUtils';
 import { createRoleEngine } from './roleSelectorEngine';
@@ -59,7 +59,7 @@ export type FrameExpectParams = {
   isNot: boolean,
 };
 
-export type ElementState = 'visible' | 'hidden' | 'enabled' | 'disabled' | 'editable' | 'checked' | 'unchecked' | 'indeterminate' | 'stable';
+export type ElementState = 'visible' | 'hidden' | 'enabled' | 'disabled' | 'editable' | 'checked' | 'unchecked' | 'indeterminate' | 'stable' | 'non-inert';
 export type ElementStateWithoutStable = Exclude<ElementState, 'stable'>;
 export type ElementStateQueryResult = { matches: boolean, received?: string | 'error:notconnected', isRadio?: boolean };
 export type ExpectReceived = { value?: any, ariaSnapshot?: string };
@@ -801,6 +801,14 @@ export class InjectedScript {
       return {
         matches: state === 'disabled' ? disabled : !disabled,
         received: disabled ? 'disabled' : 'enabled'
+      };
+    }
+
+    if (state === 'non-inert') {
+      const inert = isElementInert(element);
+      return {
+        matches: !inert,
+        received: inert ? 'inert' : 'non-inert'
       };
     }
 

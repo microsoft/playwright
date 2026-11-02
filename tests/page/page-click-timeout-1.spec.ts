@@ -35,3 +35,12 @@ it('CL-111 should timeout waiting for button to be enabled', async ({ page }) =>
   expect(error.message).toContain('element is not enabled');
   expect(error.message).toContain('retrying click action');
 });
+
+it('CL-112 should timeout waiting for inert element to become non-inert', async ({ page }) => {
+  await page.setContent('<div inert><button onclick="javascript:window.__CLICKED=true;">Click target</button></div>');
+  const error = await page.click('text=Click target', { timeout: 3000 }).catch(e => e);
+  expect(await page.evaluate('window.__CLICKED')).toBe(undefined);
+  expect(error.message).toContain('page.click: Timeout 3000ms exceeded.');
+  expect(error.message).toContain('element is inert');
+  expect(error.message).toContain('retrying click action');
+});

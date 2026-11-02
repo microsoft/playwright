@@ -675,6 +675,18 @@ it('CL-049 should wait for button to be enabled', async ({ page }) => {
   expect(await page.evaluate('__CLICKED')).toBe(true);
 });
 
+it('CL-050 should wait for element to become non-inert', async ({ page }) => {
+  await page.setContent('<div inert id=container><button onclick="window.__CLICKED=true;"><span>Click target</span></button></div>');
+  let done = false;
+  const clickPromise = page.click('text=Click target').then(() => done = true);
+  await giveItAChanceToClick(page);
+  expect(await page.evaluate('window.__CLICKED')).toBe(undefined);
+  expect(done).toBe(false);
+  await page.evaluate(() => document.getElementById('container').removeAttribute('inert'));
+  await clickPromise;
+  expect(await page.evaluate('__CLICKED')).toBe(true);
+});
+
 it('CL-052 should wait for input to be enabled', async ({ page }) => {
   await page.setContent('<input onclick="window.__CLICKED=true;" disabled>');
   let done = false;

@@ -46,6 +46,17 @@ export function parentElementOrShadowHost(element: Element): Element | undefined
     return (element.parentNode as ShadowRoot).host;
 }
 
+// https://html.spec.whatwg.org/multipage/interaction.html#inert-subtrees
+// Inert elements cannot be focused, clicked or otherwise interacted with.
+export function isElementInert(element: Element): boolean {
+  // Inert applies to all flat tree descendants, so we look up the hierarchy.
+  for (let e: Element | undefined = element; e; e = parentElementOrShadowHost(e)) {
+    if (e.hasAttribute('inert'))
+      return true;
+  }
+  return false;
+}
+
 export function enclosingShadowRootOrDocument(element: Element): Document | ShadowRoot | undefined {
   let node: Node = element;
   while (node.parentNode)
