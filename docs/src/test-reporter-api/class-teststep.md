@@ -65,9 +65,9 @@ await test.step('checkout', async () => {
 }, { params: { orderId: 42 } });
 ```
 
-To keep the reports small, Playwright API calls only report a curated set of arguments per call, and long string values
-are truncated. Unbounded arguments such as the page content, evaluated expressions or request bodies are never
-reported.
+To keep the reports small, Playwright API calls only report a curated set of arguments per call, and very long string
+values are replaced with a `<value too long>` placeholder. Unbounded arguments such as the page content, evaluated
+expressions or request bodies are never reported.
 
 ## property: TestStep.startTime
 * since: v1.10

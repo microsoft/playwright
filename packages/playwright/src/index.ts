@@ -18,7 +18,7 @@ import fs from 'fs';
 import path from 'path';
 
 import * as playwrightLibrary from 'playwright-core';
-import { getActionGroup, renderParamsForCall, renderSubtitleForCall, renderTitleForCall, truncateParam } from '@isomorphic/protocolFormatter';
+import { getActionGroup, renderParamsForCall, renderSubtitleForCall, renderTitleForCall } from '@isomorphic/protocolFormatter';
 import { escapeHTML } from '@isomorphic/stringUtils';
 import { jsonStringifyForceASCII } from '@utils/ascii';
 import { createGuid } from '@utils/crypto';
@@ -932,8 +932,7 @@ function renderTitle(type: string, method: string, params: Record<string, string
 }
 
 function renderSubtitle(type: string, method: string, params: Record<string, string> | undefined) {
-  const subtitle = renderSubtitleForCall({ type, method, params });
-  return subtitle === undefined ? undefined : truncateParam(subtitle);
+  return renderSubtitleForCall({ type, method, params });
 }
 
 function tracing() {

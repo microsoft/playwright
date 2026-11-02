@@ -28,8 +28,12 @@ export type CallMetainfo = {
   subtitle?: string;
 };
 
+const kMaxValueLength = 10_000;
+const kValueTooLong = '<value too long>';
+
 export function formatProtocolParam(params: Record<string, any> | undefined, alternatives: string, sdkLanguage?: Language): string | undefined {
-  return _formatProtocolParam(params, alternatives, sdkLanguage)?.replaceAll('\n', '\\n');
+  const value = _formatProtocolParam(params, alternatives, sdkLanguage);
+  return value === undefined ? undefined : replaceTooLongValue(value).replaceAll('\n', '\\n');
 }
 
 function _formatProtocolParam(params: Record<string, any> | undefined, alternatives: string, sdkLanguage?: Language): string | undefined {
@@ -110,8 +114,6 @@ export function getActionGroup(metadata: { type: string, method: string }) {
   return getMetainfo(metadata)?.group as undefined | ActionGroup;
 }
 
-const kMaxParamLength = 200;
-
 // Curated per-call parameters, defined by the "renderParams" lists in protocol.yml. Only the
 // arguments that say what the call actually did are reported, and only when they are
 // bounded in size: page content, evaluated expressions, request bodies and the like are
@@ -152,16 +154,16 @@ function renderParamEntry(params: Record<string, any>, entry: string, sdkLanguag
   if (format === 'selector')
     return { key, value: renderLocator(value, sdkLanguage) };
   if (typeof value === 'string')
-    return { key, value: truncateParam(value) };
+    return { key, value: replaceTooLongValue(value) };
   return { key, value };
 }
 
 function renderLocator(selector: any, sdkLanguage?: Language): string | undefined {
   if (typeof selector !== 'string')
     return undefined;
-  return truncateParam(asLocatorDescription(sdkLanguage ?? 'javascript', selector));
+  return replaceTooLongValue(asLocatorDescription(sdkLanguage ?? 'javascript', selector));
 }
 
-export function truncateParam(value: string): string {
-  return value.length > kMaxParamLength ? value.substring(0, kMaxParamLength) + '…' : value;
+function replaceTooLongValue(value: string): string {
+  return value.length > kMaxValueLength ? kValueTooLong : value;
 }

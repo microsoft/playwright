@@ -1983,14 +1983,14 @@ test('should report input step params', async ({ runInlineTest }) => {
   ]);
 });
 
-test('should truncate long step params', async ({ runInlineTest }) => {
+test('should replace too long step params', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': `
       import type { Reporter, TestCase, TestResult, TestStep } from '@playwright/test/reporter';
       export default class MyReporter implements Reporter {
         onStepEnd(test: TestCase, result: TestResult, step: TestStep) {
           if (step.params?.value)
-            console.log('%%' + step.params.value);
+            console.log('%%' + step.title + ' | ' + step.params.value);
         }
       }
     `,
@@ -2002,10 +2002,14 @@ test('should truncate long step params', async ({ runInlineTest }) => {
       test('pass', async ({ page }) => {
         await page.setContent('<input id=i>');
         await page.locator('#i').fill('x'.repeat(1000));
+        await page.locator('#i').fill('y'.repeat(20000));
       });
     `
   }, { reporter: '' });
 
   expect(result.exitCode).toBe(0);
-  expect(result.outputLines).toEqual(['x'.repeat(200) + '\u2026']);
+  expect(result.outputLines).toEqual([
+    'Fill "' + 'x'.repeat(1000) + '" | ' + 'x'.repeat(1000),
+    'Fill "<value too long>" | <value too long>',
+  ]);
 });
