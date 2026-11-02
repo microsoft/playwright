@@ -8014,20 +8014,20 @@ export interface PlaywrightTestOptions {
    */
   locale: string | undefined;
   /**
-   * Whether locators match hidden elements by default. Defaults to `true`. If set to `false`, each locator is resolved
+   * Whether locators omit hidden elements by default. Defaults to `false`. If set to `true`, each locator is resolved
    * as if [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible) were appended: only the
    * final matched element is checked for [visibility](https://playwright.dev/docs/actionability#visible), not its intermediate ancestors.
    * This affects actions, assertions, counts and element evaluation, but not selector-based methods such as
    * [page.$(selector[, options])](https://playwright.dev/docs/api/class-page#page-query-selector).
    *
-   * Pass `includeHidden: true` when creating a locator to opt out. The override is preserved by `filter()`, `first()`,
+   * Pass `omitHidden: false` when creating a locator to opt out. The override is preserved by `filter()`, `first()`,
    * `last()`, `nth()`, `and()`, `or()` and `describe()`. Creating a descendant locator uses the context default again,
    * unless an override is supplied for that descendant. Explicit visibility filters are never removed. Role locators
-   * still apply their accessibility matching rules; `getByRole(..., { includeHidden: true })` also disables the
-   * automatic visibility filter.
+   * still apply their accessibility matching rules; use `getByRole(..., { includeHidden: true, omitHidden: false })` to
+   * include hidden elements when this context option is enabled.
    *
-   * With `false`, hidden elements are treated as missing by `toBeHidden()` and `waitFor({ state: 'hidden' })`. To check
-   * attachment of a hidden element, create the locator with `includeHidden: true`.
+   * With `true`, hidden elements are treated as missing by `toBeHidden()` and `waitFor({ state: 'hidden' })`. To check
+   * attachment of a hidden element, create the locator with `omitHidden: false`.
    *
    * **Usage**
    *
@@ -8037,13 +8037,13 @@ export interface PlaywrightTestOptions {
    *
    * export default defineConfig({
    *   use: {
-   *     locatorIncludeHidden: false,
+   *     locatorOmitHidden: true,
    *   },
    * });
    * ```
    *
    */
-  locatorIncludeHidden: boolean;
+  locatorOmitHidden: boolean;
   /**
    * Whether to emulate network being offline. Defaults to `false`. Learn more about
    * [network emulation](https://playwright.dev/docs/emulation#offline).

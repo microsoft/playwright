@@ -160,7 +160,7 @@ in that iframe.
 
 ### option: FrameLocator.getByAltText.exact = %%-locator-get-by-text-exact-%%
 
-### option: FrameLocator.getByAltText.includeHidden = %%-locator-option-include-hidden-%%
+### option: FrameLocator.getByAltText.omitHidden = %%-locator-option-omit-hidden-%%
 
 ## method: FrameLocator.getByLabel
 * since: v1.27
@@ -172,7 +172,7 @@ in that iframe.
 
 ### option: FrameLocator.getByLabel.exact = %%-locator-get-by-text-exact-%%
 
-### option: FrameLocator.getByLabel.includeHidden = %%-locator-option-include-hidden-%%
+### option: FrameLocator.getByLabel.omitHidden = %%-locator-option-omit-hidden-%%
 
 ## method: FrameLocator.getByPlaceholder
 * since: v1.27
@@ -184,7 +184,7 @@ in that iframe.
 
 ### option: FrameLocator.getByPlaceholder.exact = %%-locator-get-by-text-exact-%%
 
-### option: FrameLocator.getByPlaceholder.includeHidden = %%-locator-option-include-hidden-%%
+### option: FrameLocator.getByPlaceholder.omitHidden = %%-locator-option-omit-hidden-%%
 
 ## method: FrameLocator.getByRole
 * since: v1.27
@@ -202,6 +202,8 @@ in that iframe.
 
 ### option: FrameLocator.getByRole.description = %%-locator-get-by-role-option-description-%%
 
+### option: FrameLocator.getByRole.omitHidden = %%-locator-option-omit-hidden-%%
+
 ## method: FrameLocator.getByTestId
 * since: v1.27
 - returns: <[Locator]>
@@ -211,7 +213,7 @@ in that iframe.
 ### param: FrameLocator.getByTestId.testId = %%-locator-get-by-test-id-test-id-%%
 * since: v1.27
 
-### option: FrameLocator.getByTestId.includeHidden = %%-locator-option-include-hidden-%%
+### option: FrameLocator.getByTestId.omitHidden = %%-locator-option-omit-hidden-%%
 
 ## method: FrameLocator.getByText
 * since: v1.27
@@ -223,7 +225,7 @@ in that iframe.
 
 ### option: FrameLocator.getByText.exact = %%-locator-get-by-text-exact-%%
 
-### option: FrameLocator.getByText.includeHidden = %%-locator-option-include-hidden-%%
+### option: FrameLocator.getByText.omitHidden = %%-locator-option-omit-hidden-%%
 
 ## method: FrameLocator.getByTitle
 * since: v1.27
@@ -235,7 +237,7 @@ in that iframe.
 
 ### option: FrameLocator.getByTitle.exact = %%-locator-get-by-text-exact-%%
 
-### option: FrameLocator.getByTitle.includeHidden = %%-locator-option-include-hidden-%%
+### option: FrameLocator.getByTitle.omitHidden = %%-locator-option-omit-hidden-%%
 
 ## method: FrameLocator.last
 * deprecated: Use [`method: Locator.last`] followed by [`method: Locator.contentFrame`] instead.
@@ -256,7 +258,7 @@ Returns locator to the last matching frame.
 ### option: FrameLocator.locator.-inline- = %%-locator-options-list-v1.14-%%
 * since: v1.17
 
-### option: FrameLocator.locator.includeHidden = %%-locator-option-include-hidden-%%
+### option: FrameLocator.locator.omitHidden = %%-locator-option-omit-hidden-%%
 
 ### option: FrameLocator.locator.hasNot = %%-locator-option-has-not-%%
 * since: v1.33

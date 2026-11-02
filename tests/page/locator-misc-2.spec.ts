@@ -178,7 +178,9 @@ it('LO-152 should support visible()', {
   await expect(page.locator('.item').visible().getByText('data3')).toHaveText('visible data3');
   await expect(page.locator('.item').visible()).toHaveCount(3);
   await expect(page.locator('.item')).toHaveCount(6);
-  await expect(page.locator('.item', { includeHidden: false })).toHaveCount(3);
+  await expect(page.locator('.item', { omitHidden: false })).toHaveCount(6);
+  await expect(page.locator('.item', { omitHidden: true })).toHaveCount(3);
+  await expect(page.locator('.item', { omitHidden: true }).filter({ omitHidden: false })).toHaveCount(6);
 });
 
 it('LO-153 locator.count should work with deleted Map in main world', async ({ page }) => {

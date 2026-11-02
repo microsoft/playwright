@@ -72,7 +72,7 @@ Electron:
               properties:
                 $mixin: ShowActionsOptions
         strictSelectors: boolean?
-        locatorIncludeHidden: boolean?
+        locatorOmitHidden: boolean?
         timezoneId: string?
         tracesDir: string?
         artifactsDir: string?

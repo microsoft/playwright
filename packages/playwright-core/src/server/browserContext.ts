@@ -849,7 +849,7 @@ const defaultNewContextParamValues: channels.BrowserNewContextForReuseParams = {
   hasTouch: false,
   acceptDownloads: 'accept',
   strictSelectors: false,
-  locatorIncludeHidden: true,
+  locatorOmitHidden: false,
   serviceWorkers: 'allow',
   locale: 'en-US',
 };

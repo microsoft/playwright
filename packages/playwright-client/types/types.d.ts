@@ -3096,11 +3096,12 @@ export interface Page {
     exact?: boolean;
 
     /**
-     * Whether to include hidden elements, overriding the context's `locatorIncludeHidden` option. Setting this to `false`
-     * applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible) when the locator is
-     * resolved. Setting it to `true` disables the automatic visibility filter, but does not remove explicit filters.
+     * Whether to omit hidden elements, overriding the context's `locatorOmitHidden` option, which defaults to `false`.
+     * Setting this to `true` applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible)
+     * when the locator is resolved. Setting it to `false` disables the automatic visibility filter, but does not remove
+     * explicit filters or change role locators' accessibility matching rules.
      */
-    includeHidden?: boolean;
+    omitHidden?: boolean;
   }): Locator;
 
   /**
@@ -3133,11 +3134,12 @@ export interface Page {
     exact?: boolean;
 
     /**
-     * Whether to include hidden elements, overriding the context's `locatorIncludeHidden` option. Setting this to `false`
-     * applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible) when the locator is
-     * resolved. Setting it to `true` disables the automatic visibility filter, but does not remove explicit filters.
+     * Whether to omit hidden elements, overriding the context's `locatorOmitHidden` option, which defaults to `false`.
+     * Setting this to `true` applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible)
+     * when the locator is resolved. Setting it to `false` disables the automatic visibility filter, but does not remove
+     * explicit filters or change role locators' accessibility matching rules.
      */
-    includeHidden?: boolean;
+    omitHidden?: boolean;
   }): Locator;
 
   /**
@@ -3170,11 +3172,12 @@ export interface Page {
     exact?: boolean;
 
     /**
-     * Whether to include hidden elements, overriding the context's `locatorIncludeHidden` option. Setting this to `false`
-     * applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible) when the locator is
-     * resolved. Setting it to `true` disables the automatic visibility filter, but does not remove explicit filters.
+     * Whether to omit hidden elements, overriding the context's `locatorOmitHidden` option, which defaults to `false`.
+     * Setting this to `true` applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible)
+     * when the locator is resolved. Setting it to `false` disables the automatic visibility filter, but does not remove
+     * explicit filters or change role locators' accessibility matching rules.
      */
-    includeHidden?: boolean;
+    omitHidden?: boolean;
   }): Locator;
 
   /**
@@ -3197,11 +3200,12 @@ export interface Page {
    */
   getByRef(ref: string, options?: {
     /**
-     * Whether to include hidden elements, overriding the context's `locatorIncludeHidden` option. Setting this to `false`
-     * applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible) when the locator is
-     * resolved. Setting it to `true` disables the automatic visibility filter, but does not remove explicit filters.
+     * Whether to omit hidden elements, overriding the context's `locatorOmitHidden` option, which defaults to `false`.
+     * Setting this to `true` applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible)
+     * when the locator is resolved. Setting it to `false` disables the automatic visibility filter, but does not remove
+     * explicit filters or change role locators' accessibility matching rules.
      */
-    includeHidden?: boolean;
+    omitHidden?: boolean;
   }): Locator;
 
   /**
@@ -3311,6 +3315,14 @@ export interface Page {
     name?: string|RegExp;
 
     /**
+     * Whether to omit hidden elements, overriding the context's `locatorOmitHidden` option, which defaults to `false`.
+     * Setting this to `true` applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible)
+     * when the locator is resolved. Setting it to `false` disables the automatic visibility filter, but does not remove
+     * explicit filters or change role locators' accessibility matching rules.
+     */
+    omitHidden?: boolean;
+
+    /**
      * An attribute that is usually set by `aria-pressed`.
      *
      * Learn more about [`aria-pressed`](https://www.w3.org/TR/wai-aria-1.2/#aria-pressed).
@@ -3364,11 +3376,12 @@ export interface Page {
    */
   getByTestId(testId: string|RegExp, options?: {
     /**
-     * Whether to include hidden elements, overriding the context's `locatorIncludeHidden` option. Setting this to `false`
-     * applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible) when the locator is
-     * resolved. Setting it to `true` disables the automatic visibility filter, but does not remove explicit filters.
+     * Whether to omit hidden elements, overriding the context's `locatorOmitHidden` option, which defaults to `false`.
+     * Setting this to `true` applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible)
+     * when the locator is resolved. Setting it to `false` disables the automatic visibility filter, but does not remove
+     * explicit filters or change role locators' accessibility matching rules.
      */
-    includeHidden?: boolean;
+    omitHidden?: boolean;
   }): Locator;
 
   /**
@@ -3423,11 +3436,12 @@ export interface Page {
     exact?: boolean;
 
     /**
-     * Whether to include hidden elements, overriding the context's `locatorIncludeHidden` option. Setting this to `false`
-     * applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible) when the locator is
-     * resolved. Setting it to `true` disables the automatic visibility filter, but does not remove explicit filters.
+     * Whether to omit hidden elements, overriding the context's `locatorOmitHidden` option, which defaults to `false`.
+     * Setting this to `true` applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible)
+     * when the locator is resolved. Setting it to `false` disables the automatic visibility filter, but does not remove
+     * explicit filters or change role locators' accessibility matching rules.
      */
-    includeHidden?: boolean;
+    omitHidden?: boolean;
   }): Locator;
 
   /**
@@ -3458,11 +3472,12 @@ export interface Page {
     exact?: boolean;
 
     /**
-     * Whether to include hidden elements, overriding the context's `locatorIncludeHidden` option. Setting this to `false`
-     * applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible) when the locator is
-     * resolved. Setting it to `true` disables the automatic visibility filter, but does not remove explicit filters.
+     * Whether to omit hidden elements, overriding the context's `locatorOmitHidden` option, which defaults to `false`.
+     * Setting this to `true` applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible)
+     * when the locator is resolved. Setting it to `false` disables the automatic visibility filter, but does not remove
+     * explicit filters or change role locators' accessibility matching rules.
      */
-    includeHidden?: boolean;
+    omitHidden?: boolean;
   }): Locator;
 
   /**
@@ -4093,11 +4108,12 @@ export interface Page {
     hasText?: string|RegExp;
 
     /**
-     * Whether to include hidden elements, overriding the context's `locatorIncludeHidden` option. Setting this to `false`
-     * applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible) when the locator is
-     * resolved. Setting it to `true` disables the automatic visibility filter, but does not remove explicit filters.
+     * Whether to omit hidden elements, overriding the context's `locatorOmitHidden` option, which defaults to `false`.
+     * Setting this to `true` applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible)
+     * when the locator is resolved. Setting it to `false` disables the automatic visibility filter, but does not remove
+     * explicit filters or change role locators' accessibility matching rules.
      */
-    includeHidden?: boolean;
+    omitHidden?: boolean;
   }): Locator;
 
   /**
@@ -7537,11 +7553,12 @@ export interface Frame {
     exact?: boolean;
 
     /**
-     * Whether to include hidden elements, overriding the context's `locatorIncludeHidden` option. Setting this to `false`
-     * applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible) when the locator is
-     * resolved. Setting it to `true` disables the automatic visibility filter, but does not remove explicit filters.
+     * Whether to omit hidden elements, overriding the context's `locatorOmitHidden` option, which defaults to `false`.
+     * Setting this to `true` applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible)
+     * when the locator is resolved. Setting it to `false` disables the automatic visibility filter, but does not remove
+     * explicit filters or change role locators' accessibility matching rules.
      */
-    includeHidden?: boolean;
+    omitHidden?: boolean;
   }): Locator;
 
   /**
@@ -7574,11 +7591,12 @@ export interface Frame {
     exact?: boolean;
 
     /**
-     * Whether to include hidden elements, overriding the context's `locatorIncludeHidden` option. Setting this to `false`
-     * applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible) when the locator is
-     * resolved. Setting it to `true` disables the automatic visibility filter, but does not remove explicit filters.
+     * Whether to omit hidden elements, overriding the context's `locatorOmitHidden` option, which defaults to `false`.
+     * Setting this to `true` applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible)
+     * when the locator is resolved. Setting it to `false` disables the automatic visibility filter, but does not remove
+     * explicit filters or change role locators' accessibility matching rules.
      */
-    includeHidden?: boolean;
+    omitHidden?: boolean;
   }): Locator;
 
   /**
@@ -7611,11 +7629,12 @@ export interface Frame {
     exact?: boolean;
 
     /**
-     * Whether to include hidden elements, overriding the context's `locatorIncludeHidden` option. Setting this to `false`
-     * applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible) when the locator is
-     * resolved. Setting it to `true` disables the automatic visibility filter, but does not remove explicit filters.
+     * Whether to omit hidden elements, overriding the context's `locatorOmitHidden` option, which defaults to `false`.
+     * Setting this to `true` applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible)
+     * when the locator is resolved. Setting it to `false` disables the automatic visibility filter, but does not remove
+     * explicit filters or change role locators' accessibility matching rules.
      */
-    includeHidden?: boolean;
+    omitHidden?: boolean;
   }): Locator;
 
   /**
@@ -7725,6 +7744,14 @@ export interface Frame {
     name?: string|RegExp;
 
     /**
+     * Whether to omit hidden elements, overriding the context's `locatorOmitHidden` option, which defaults to `false`.
+     * Setting this to `true` applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible)
+     * when the locator is resolved. Setting it to `false` disables the automatic visibility filter, but does not remove
+     * explicit filters or change role locators' accessibility matching rules.
+     */
+    omitHidden?: boolean;
+
+    /**
      * An attribute that is usually set by `aria-pressed`.
      *
      * Learn more about [`aria-pressed`](https://www.w3.org/TR/wai-aria-1.2/#aria-pressed).
@@ -7778,11 +7805,12 @@ export interface Frame {
    */
   getByTestId(testId: string|RegExp, options?: {
     /**
-     * Whether to include hidden elements, overriding the context's `locatorIncludeHidden` option. Setting this to `false`
-     * applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible) when the locator is
-     * resolved. Setting it to `true` disables the automatic visibility filter, but does not remove explicit filters.
+     * Whether to omit hidden elements, overriding the context's `locatorOmitHidden` option, which defaults to `false`.
+     * Setting this to `true` applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible)
+     * when the locator is resolved. Setting it to `false` disables the automatic visibility filter, but does not remove
+     * explicit filters or change role locators' accessibility matching rules.
      */
-    includeHidden?: boolean;
+    omitHidden?: boolean;
   }): Locator;
 
   /**
@@ -7837,11 +7865,12 @@ export interface Frame {
     exact?: boolean;
 
     /**
-     * Whether to include hidden elements, overriding the context's `locatorIncludeHidden` option. Setting this to `false`
-     * applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible) when the locator is
-     * resolved. Setting it to `true` disables the automatic visibility filter, but does not remove explicit filters.
+     * Whether to omit hidden elements, overriding the context's `locatorOmitHidden` option, which defaults to `false`.
+     * Setting this to `true` applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible)
+     * when the locator is resolved. Setting it to `false` disables the automatic visibility filter, but does not remove
+     * explicit filters or change role locators' accessibility matching rules.
      */
-    includeHidden?: boolean;
+    omitHidden?: boolean;
   }): Locator;
 
   /**
@@ -7872,11 +7901,12 @@ export interface Frame {
     exact?: boolean;
 
     /**
-     * Whether to include hidden elements, overriding the context's `locatorIncludeHidden` option. Setting this to `false`
-     * applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible) when the locator is
-     * resolved. Setting it to `true` disables the automatic visibility filter, but does not remove explicit filters.
+     * Whether to omit hidden elements, overriding the context's `locatorOmitHidden` option, which defaults to `false`.
+     * Setting this to `true` applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible)
+     * when the locator is resolved. Setting it to `false` disables the automatic visibility filter, but does not remove
+     * explicit filters or change role locators' accessibility matching rules.
      */
-    includeHidden?: boolean;
+    omitHidden?: boolean;
   }): Locator;
 
   /**
@@ -8402,11 +8432,12 @@ export interface Frame {
     hasText?: string|RegExp;
 
     /**
-     * Whether to include hidden elements, overriding the context's `locatorIncludeHidden` option. Setting this to `false`
-     * applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible) when the locator is
-     * resolved. Setting it to `true` disables the automatic visibility filter, but does not remove explicit filters.
+     * Whether to omit hidden elements, overriding the context's `locatorOmitHidden` option, which defaults to `false`.
+     * Setting this to `true` applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible)
+     * when the locator is resolved. Setting it to `false` disables the automatic visibility filter, but does not remove
+     * explicit filters or change role locators' accessibility matching rules.
      */
-    includeHidden?: boolean;
+    omitHidden?: boolean;
   }): Locator;
 
   /**
@@ -11631,22 +11662,22 @@ export interface Browser {
     locale?: string;
 
     /**
-     * Whether locators match hidden elements by default. Defaults to `true`. If set to `false`, each locator is resolved
+     * Whether locators omit hidden elements by default. Defaults to `false`. If set to `true`, each locator is resolved
      * as if [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible) were appended: only the
      * final matched element is checked for [visibility](https://playwright.dev/docs/actionability#visible), not its intermediate ancestors.
      * This affects actions, assertions, counts and element evaluation, but not selector-based methods such as
      * [page.$(selector[, options])](https://playwright.dev/docs/api/class-page#page-query-selector).
      *
-     * Pass `includeHidden: true` when creating a locator to opt out. The override is preserved by `filter()`, `first()`,
+     * Pass `omitHidden: false` when creating a locator to opt out. The override is preserved by `filter()`, `first()`,
      * `last()`, `nth()`, `and()`, `or()` and `describe()`. Creating a descendant locator uses the context default again,
      * unless an override is supplied for that descendant. Explicit visibility filters are never removed. Role locators
-     * still apply their accessibility matching rules; `getByRole(..., { includeHidden: true })` also disables the
-     * automatic visibility filter.
+     * still apply their accessibility matching rules; use `getByRole(..., { includeHidden: true, omitHidden: false })` to
+     * include hidden elements when this context option is enabled.
      *
-     * With `false`, hidden elements are treated as missing by `toBeHidden()` and `waitFor({ state: 'hidden' })`. To check
-     * attachment of a hidden element, create the locator with `includeHidden: true`.
+     * With `true`, hidden elements are treated as missing by `toBeHidden()` and `waitFor({ state: 'hidden' })`. To check
+     * attachment of a hidden element, create the locator with `omitHidden: false`.
      */
-    locatorIncludeHidden?: boolean;
+    locatorOmitHidden?: boolean;
 
     /**
      * Logger sink for Playwright logging.
@@ -15766,11 +15797,12 @@ export interface Locator {
     hasText?: string|RegExp;
 
     /**
-     * Whether to include hidden elements, overriding the context's `locatorIncludeHidden` option. Setting this to `false`
-     * applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible) when the locator is
-     * resolved. Setting it to `true` disables the automatic visibility filter, but does not remove explicit filters.
+     * Whether to omit hidden elements, overriding the context's `locatorOmitHidden` option, which defaults to `false`.
+     * Setting this to `true` applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible)
+     * when the locator is resolved. Setting it to `false` disables the automatic visibility filter, but does not remove
+     * explicit filters or change role locators' accessibility matching rules.
      */
-    includeHidden?: boolean;
+    omitHidden?: boolean;
 
     /**
      * Only matches visible or invisible elements. Prefer the
@@ -15882,11 +15914,12 @@ export interface Locator {
     exact?: boolean;
 
     /**
-     * Whether to include hidden elements, overriding the context's `locatorIncludeHidden` option. Setting this to `false`
-     * applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible) when the locator is
-     * resolved. Setting it to `true` disables the automatic visibility filter, but does not remove explicit filters.
+     * Whether to omit hidden elements, overriding the context's `locatorOmitHidden` option, which defaults to `false`.
+     * Setting this to `true` applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible)
+     * when the locator is resolved. Setting it to `false` disables the automatic visibility filter, but does not remove
+     * explicit filters or change role locators' accessibility matching rules.
      */
-    includeHidden?: boolean;
+    omitHidden?: boolean;
   }): Locator;
 
   /**
@@ -15919,11 +15952,12 @@ export interface Locator {
     exact?: boolean;
 
     /**
-     * Whether to include hidden elements, overriding the context's `locatorIncludeHidden` option. Setting this to `false`
-     * applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible) when the locator is
-     * resolved. Setting it to `true` disables the automatic visibility filter, but does not remove explicit filters.
+     * Whether to omit hidden elements, overriding the context's `locatorOmitHidden` option, which defaults to `false`.
+     * Setting this to `true` applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible)
+     * when the locator is resolved. Setting it to `false` disables the automatic visibility filter, but does not remove
+     * explicit filters or change role locators' accessibility matching rules.
      */
-    includeHidden?: boolean;
+    omitHidden?: boolean;
   }): Locator;
 
   /**
@@ -15956,11 +15990,12 @@ export interface Locator {
     exact?: boolean;
 
     /**
-     * Whether to include hidden elements, overriding the context's `locatorIncludeHidden` option. Setting this to `false`
-     * applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible) when the locator is
-     * resolved. Setting it to `true` disables the automatic visibility filter, but does not remove explicit filters.
+     * Whether to omit hidden elements, overriding the context's `locatorOmitHidden` option, which defaults to `false`.
+     * Setting this to `true` applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible)
+     * when the locator is resolved. Setting it to `false` disables the automatic visibility filter, but does not remove
+     * explicit filters or change role locators' accessibility matching rules.
      */
-    includeHidden?: boolean;
+    omitHidden?: boolean;
   }): Locator;
 
   /**
@@ -16070,6 +16105,14 @@ export interface Locator {
     name?: string|RegExp;
 
     /**
+     * Whether to omit hidden elements, overriding the context's `locatorOmitHidden` option, which defaults to `false`.
+     * Setting this to `true` applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible)
+     * when the locator is resolved. Setting it to `false` disables the automatic visibility filter, but does not remove
+     * explicit filters or change role locators' accessibility matching rules.
+     */
+    omitHidden?: boolean;
+
+    /**
      * An attribute that is usually set by `aria-pressed`.
      *
      * Learn more about [`aria-pressed`](https://www.w3.org/TR/wai-aria-1.2/#aria-pressed).
@@ -16123,11 +16166,12 @@ export interface Locator {
    */
   getByTestId(testId: string|RegExp, options?: {
     /**
-     * Whether to include hidden elements, overriding the context's `locatorIncludeHidden` option. Setting this to `false`
-     * applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible) when the locator is
-     * resolved. Setting it to `true` disables the automatic visibility filter, but does not remove explicit filters.
+     * Whether to omit hidden elements, overriding the context's `locatorOmitHidden` option, which defaults to `false`.
+     * Setting this to `true` applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible)
+     * when the locator is resolved. Setting it to `false` disables the automatic visibility filter, but does not remove
+     * explicit filters or change role locators' accessibility matching rules.
      */
-    includeHidden?: boolean;
+    omitHidden?: boolean;
   }): Locator;
 
   /**
@@ -16182,11 +16226,12 @@ export interface Locator {
     exact?: boolean;
 
     /**
-     * Whether to include hidden elements, overriding the context's `locatorIncludeHidden` option. Setting this to `false`
-     * applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible) when the locator is
-     * resolved. Setting it to `true` disables the automatic visibility filter, but does not remove explicit filters.
+     * Whether to omit hidden elements, overriding the context's `locatorOmitHidden` option, which defaults to `false`.
+     * Setting this to `true` applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible)
+     * when the locator is resolved. Setting it to `false` disables the automatic visibility filter, but does not remove
+     * explicit filters or change role locators' accessibility matching rules.
      */
-    includeHidden?: boolean;
+    omitHidden?: boolean;
   }): Locator;
 
   /**
@@ -16217,11 +16262,12 @@ export interface Locator {
     exact?: boolean;
 
     /**
-     * Whether to include hidden elements, overriding the context's `locatorIncludeHidden` option. Setting this to `false`
-     * applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible) when the locator is
-     * resolved. Setting it to `true` disables the automatic visibility filter, but does not remove explicit filters.
+     * Whether to omit hidden elements, overriding the context's `locatorOmitHidden` option, which defaults to `false`.
+     * Setting this to `true` applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible)
+     * when the locator is resolved. Setting it to `false` disables the automatic visibility filter, but does not remove
+     * explicit filters or change role locators' accessibility matching rules.
      */
-    includeHidden?: boolean;
+    omitHidden?: boolean;
   }): Locator;
 
   /**
@@ -16673,11 +16719,12 @@ export interface Locator {
     hasText?: string|RegExp;
 
     /**
-     * Whether to include hidden elements, overriding the context's `locatorIncludeHidden` option. Setting this to `false`
-     * applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible) when the locator is
-     * resolved. Setting it to `true` disables the automatic visibility filter, but does not remove explicit filters.
+     * Whether to omit hidden elements, overriding the context's `locatorOmitHidden` option, which defaults to `false`.
+     * Setting this to `true` applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible)
+     * when the locator is resolved. Setting it to `false` disables the automatic visibility filter, but does not remove
+     * explicit filters or change role locators' accessibility matching rules.
      */
-    includeHidden?: boolean;
+    omitHidden?: boolean;
   }): Locator;
 
   /**
@@ -18120,22 +18167,22 @@ export interface BrowserType<Unused = {}> {
     locale?: string;
 
     /**
-     * Whether locators match hidden elements by default. Defaults to `true`. If set to `false`, each locator is resolved
+     * Whether locators omit hidden elements by default. Defaults to `false`. If set to `true`, each locator is resolved
      * as if [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible) were appended: only the
      * final matched element is checked for [visibility](https://playwright.dev/docs/actionability#visible), not its intermediate ancestors.
      * This affects actions, assertions, counts and element evaluation, but not selector-based methods such as
      * [page.$(selector[, options])](https://playwright.dev/docs/api/class-page#page-query-selector).
      *
-     * Pass `includeHidden: true` when creating a locator to opt out. The override is preserved by `filter()`, `first()`,
+     * Pass `omitHidden: false` when creating a locator to opt out. The override is preserved by `filter()`, `first()`,
      * `last()`, `nth()`, `and()`, `or()` and `describe()`. Creating a descendant locator uses the context default again,
      * unless an override is supplied for that descendant. Explicit visibility filters are never removed. Role locators
-     * still apply their accessibility matching rules; `getByRole(..., { includeHidden: true })` also disables the
-     * automatic visibility filter.
+     * still apply their accessibility matching rules; use `getByRole(..., { includeHidden: true, omitHidden: false })` to
+     * include hidden elements when this context option is enabled.
      *
-     * With `false`, hidden elements are treated as missing by `toBeHidden()` and `waitFor({ state: 'hidden' })`. To check
-     * attachment of a hidden element, create the locator with `includeHidden: true`.
+     * With `true`, hidden elements are treated as missing by `toBeHidden()` and `waitFor({ state: 'hidden' })`. To check
+     * attachment of a hidden element, create the locator with `omitHidden: false`.
      */
-    locatorIncludeHidden?: boolean;
+    locatorOmitHidden?: boolean;
 
     /**
      * Logger sink for Playwright logging.
@@ -22006,11 +22053,12 @@ export interface FrameLocator {
     exact?: boolean;
 
     /**
-     * Whether to include hidden elements, overriding the context's `locatorIncludeHidden` option. Setting this to `false`
-     * applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible) when the locator is
-     * resolved. Setting it to `true` disables the automatic visibility filter, but does not remove explicit filters.
+     * Whether to omit hidden elements, overriding the context's `locatorOmitHidden` option, which defaults to `false`.
+     * Setting this to `true` applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible)
+     * when the locator is resolved. Setting it to `false` disables the automatic visibility filter, but does not remove
+     * explicit filters or change role locators' accessibility matching rules.
      */
-    includeHidden?: boolean;
+    omitHidden?: boolean;
   }): Locator;
 
   /**
@@ -22043,11 +22091,12 @@ export interface FrameLocator {
     exact?: boolean;
 
     /**
-     * Whether to include hidden elements, overriding the context's `locatorIncludeHidden` option. Setting this to `false`
-     * applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible) when the locator is
-     * resolved. Setting it to `true` disables the automatic visibility filter, but does not remove explicit filters.
+     * Whether to omit hidden elements, overriding the context's `locatorOmitHidden` option, which defaults to `false`.
+     * Setting this to `true` applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible)
+     * when the locator is resolved. Setting it to `false` disables the automatic visibility filter, but does not remove
+     * explicit filters or change role locators' accessibility matching rules.
      */
-    includeHidden?: boolean;
+    omitHidden?: boolean;
   }): Locator;
 
   /**
@@ -22080,11 +22129,12 @@ export interface FrameLocator {
     exact?: boolean;
 
     /**
-     * Whether to include hidden elements, overriding the context's `locatorIncludeHidden` option. Setting this to `false`
-     * applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible) when the locator is
-     * resolved. Setting it to `true` disables the automatic visibility filter, but does not remove explicit filters.
+     * Whether to omit hidden elements, overriding the context's `locatorOmitHidden` option, which defaults to `false`.
+     * Setting this to `true` applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible)
+     * when the locator is resolved. Setting it to `false` disables the automatic visibility filter, but does not remove
+     * explicit filters or change role locators' accessibility matching rules.
      */
-    includeHidden?: boolean;
+    omitHidden?: boolean;
   }): Locator;
 
   /**
@@ -22196,6 +22246,14 @@ export interface FrameLocator {
     name?: string|RegExp;
 
     /**
+     * Whether to omit hidden elements, overriding the context's `locatorOmitHidden` option, which defaults to `false`.
+     * Setting this to `true` applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible)
+     * when the locator is resolved. Setting it to `false` disables the automatic visibility filter, but does not remove
+     * explicit filters or change role locators' accessibility matching rules.
+     */
+    omitHidden?: boolean;
+
+    /**
      * An attribute that is usually set by `aria-pressed`.
      *
      * Learn more about [`aria-pressed`](https://www.w3.org/TR/wai-aria-1.2/#aria-pressed).
@@ -22249,11 +22307,12 @@ export interface FrameLocator {
    */
   getByTestId(testId: string|RegExp, options?: {
     /**
-     * Whether to include hidden elements, overriding the context's `locatorIncludeHidden` option. Setting this to `false`
-     * applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible) when the locator is
-     * resolved. Setting it to `true` disables the automatic visibility filter, but does not remove explicit filters.
+     * Whether to omit hidden elements, overriding the context's `locatorOmitHidden` option, which defaults to `false`.
+     * Setting this to `true` applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible)
+     * when the locator is resolved. Setting it to `false` disables the automatic visibility filter, but does not remove
+     * explicit filters or change role locators' accessibility matching rules.
      */
-    includeHidden?: boolean;
+    omitHidden?: boolean;
   }): Locator;
 
   /**
@@ -22308,11 +22367,12 @@ export interface FrameLocator {
     exact?: boolean;
 
     /**
-     * Whether to include hidden elements, overriding the context's `locatorIncludeHidden` option. Setting this to `false`
-     * applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible) when the locator is
-     * resolved. Setting it to `true` disables the automatic visibility filter, but does not remove explicit filters.
+     * Whether to omit hidden elements, overriding the context's `locatorOmitHidden` option, which defaults to `false`.
+     * Setting this to `true` applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible)
+     * when the locator is resolved. Setting it to `false` disables the automatic visibility filter, but does not remove
+     * explicit filters or change role locators' accessibility matching rules.
      */
-    includeHidden?: boolean;
+    omitHidden?: boolean;
   }): Locator;
 
   /**
@@ -22343,11 +22403,12 @@ export interface FrameLocator {
     exact?: boolean;
 
     /**
-     * Whether to include hidden elements, overriding the context's `locatorIncludeHidden` option. Setting this to `false`
-     * applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible) when the locator is
-     * resolved. Setting it to `true` disables the automatic visibility filter, but does not remove explicit filters.
+     * Whether to omit hidden elements, overriding the context's `locatorOmitHidden` option, which defaults to `false`.
+     * Setting this to `true` applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible)
+     * when the locator is resolved. Setting it to `false` disables the automatic visibility filter, but does not remove
+     * explicit filters or change role locators' accessibility matching rules.
      */
-    includeHidden?: boolean;
+    omitHidden?: boolean;
   }): Locator;
 
   /**
@@ -22404,11 +22465,12 @@ export interface FrameLocator {
     hasText?: string|RegExp;
 
     /**
-     * Whether to include hidden elements, overriding the context's `locatorIncludeHidden` option. Setting this to `false`
-     * applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible) when the locator is
-     * resolved. Setting it to `true` disables the automatic visibility filter, but does not remove explicit filters.
+     * Whether to omit hidden elements, overriding the context's `locatorOmitHidden` option, which defaults to `false`.
+     * Setting this to `true` applies [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible)
+     * when the locator is resolved. Setting it to `false` disables the automatic visibility filter, but does not remove
+     * explicit filters or change role locators' accessibility matching rules.
      */
-    includeHidden?: boolean;
+    omitHidden?: boolean;
   }): Locator;
 
   /**
@@ -25417,22 +25479,22 @@ export interface AndroidDevice {
     locale?: string;
 
     /**
-     * Whether locators match hidden elements by default. Defaults to `true`. If set to `false`, each locator is resolved
+     * Whether locators omit hidden elements by default. Defaults to `false`. If set to `true`, each locator is resolved
      * as if [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible) were appended: only the
      * final matched element is checked for [visibility](https://playwright.dev/docs/actionability#visible), not its intermediate ancestors.
      * This affects actions, assertions, counts and element evaluation, but not selector-based methods such as
      * [page.$(selector[, options])](https://playwright.dev/docs/api/class-page#page-query-selector).
      *
-     * Pass `includeHidden: true` when creating a locator to opt out. The override is preserved by `filter()`, `first()`,
+     * Pass `omitHidden: false` when creating a locator to opt out. The override is preserved by `filter()`, `first()`,
      * `last()`, `nth()`, `and()`, `or()` and `describe()`. Creating a descendant locator uses the context default again,
      * unless an override is supplied for that descendant. Explicit visibility filters are never removed. Role locators
-     * still apply their accessibility matching rules; `getByRole(..., { includeHidden: true })` also disables the
-     * automatic visibility filter.
+     * still apply their accessibility matching rules; use `getByRole(..., { includeHidden: true, omitHidden: false })` to
+     * include hidden elements when this context option is enabled.
      *
-     * With `false`, hidden elements are treated as missing by `toBeHidden()` and `waitFor({ state: 'hidden' })`. To check
-     * attachment of a hidden element, create the locator with `includeHidden: true`.
+     * With `true`, hidden elements are treated as missing by `toBeHidden()` and `waitFor({ state: 'hidden' })`. To check
+     * attachment of a hidden element, create the locator with `omitHidden: false`.
      */
-    locatorIncludeHidden?: boolean;
+    locatorOmitHidden?: boolean;
 
     /**
      * Logger sink for Playwright logging.
@@ -26678,22 +26740,22 @@ export interface BrowserContextOptions {
   locale?: string;
 
   /**
-   * Whether locators match hidden elements by default. Defaults to `true`. If set to `false`, each locator is resolved
+   * Whether locators omit hidden elements by default. Defaults to `false`. If set to `true`, each locator is resolved
    * as if [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible) were appended: only the
    * final matched element is checked for [visibility](https://playwright.dev/docs/actionability#visible), not its intermediate ancestors.
    * This affects actions, assertions, counts and element evaluation, but not selector-based methods such as
    * [page.$(selector[, options])](https://playwright.dev/docs/api/class-page#page-query-selector).
    *
-   * Pass `includeHidden: true` when creating a locator to opt out. The override is preserved by `filter()`, `first()`,
+   * Pass `omitHidden: false` when creating a locator to opt out. The override is preserved by `filter()`, `first()`,
    * `last()`, `nth()`, `and()`, `or()` and `describe()`. Creating a descendant locator uses the context default again,
    * unless an override is supplied for that descendant. Explicit visibility filters are never removed. Role locators
-   * still apply their accessibility matching rules; `getByRole(..., { includeHidden: true })` also disables the
-   * automatic visibility filter.
+   * still apply their accessibility matching rules; use `getByRole(..., { includeHidden: true, omitHidden: false })` to
+   * include hidden elements when this context option is enabled.
    *
-   * With `false`, hidden elements are treated as missing by `toBeHidden()` and `waitFor({ state: 'hidden' })`. To check
-   * attachment of a hidden element, create the locator with `includeHidden: true`.
+   * With `true`, hidden elements are treated as missing by `toBeHidden()` and `waitFor({ state: 'hidden' })`. To check
+   * attachment of a hidden element, create the locator with `omitHidden: false`.
    */
-  locatorIncludeHidden?: boolean;
+  locatorOmitHidden?: boolean;
 
   /**
    * Logger sink for Playwright logging.

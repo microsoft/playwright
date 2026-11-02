@@ -24,7 +24,7 @@ it('SM-011 should not fail page.textContent in non-strict mode', async ({ page }
 it.describe('locator visibility', () => {
   it.use({
     contextOptions: async ({ contextOptions }, use) => {
-      await use({ ...contextOptions, locatorIncludeHidden: false });
+      await use({ ...contextOptions, locatorOmitHidden: true });
     }
   });
 
@@ -51,18 +51,20 @@ it.describe('locator visibility', () => {
     expect(await save.first().count()).toBe(0);
     expect(await save.last().count()).toBe(1);
 
-    const unfiltered = page.getByTestId('save', { includeHidden: true });
+    const unfiltered = page.getByTestId('save', { omitHidden: false });
     expect(await unfiltered.count()).toBe(2);
     await expect(unfiltered.first().describe('cached button').filter({ hasText: 'Save' })).toBeAttached();
-    expect(await unfiltered.and(page.locator('button', { includeHidden: true })).count()).toBe(2);
+    expect(await unfiltered.and(page.locator('button', { omitHidden: false })).count()).toBe(2);
     expect(await unfiltered.or(page.locator('missing')).count()).toBe(2);
     expect(await unfiltered.visible().count()).toBe(1);
-    expect(await page.locator('button', { includeHidden: true }).count()).toBe(2);
-    expect(await page.getByRole('button', { includeHidden: true }).count()).toBe(2);
-    expect(await page.locator('div', { includeHidden: true }).getByTestId('save').count()).toBe(1);
-    expect(await page.locator('div', { includeHidden: true }).filter({ has: save }).count()).toBe(1);
+    expect(await page.locator('button', { omitHidden: false }).count()).toBe(2);
+    expect(await page.getByRole('button', { includeHidden: true }).count()).toBe(1);
+    expect(await page.getByRole('button', { includeHidden: true, omitHidden: false }).count()).toBe(2);
+    expect(await page.locator('div').getByRole('button', { includeHidden: true, omitHidden: false }).count()).toBe(2);
+    expect(await page.locator('div', { omitHidden: false }).getByTestId('save').count()).toBe(1);
+    expect(await page.locator('div', { omitHidden: false }).filter({ has: save }).count()).toBe(1);
 
-    await page.locator('button', { includeHidden: true }).evaluateAll(elements => elements.forEach(element => element.setAttribute('hidden', '')));
+    await page.locator('button', { omitHidden: false }).evaluateAll(elements => elements.forEach(element => element.setAttribute('hidden', '')));
     await expect(save).toBeHidden();
     expect(await normalized.count()).toBe(0);
     await save.waitFor({ state: 'hidden' });
@@ -72,12 +74,14 @@ it.describe('locator visibility', () => {
     await page.setContent(`<iframe srcdoc='<button hidden data-testid="save">Save</button><button data-testid="save">Save</button>'></iframe>`);
     const frame = page.frameLocator('iframe');
     await expect(frame.getByTestId('save')).toHaveCount(1);
-    await expect(frame.getByTestId('save', { includeHidden: true })).toHaveCount(2);
+    await expect(frame.getByTestId('save', { omitHidden: false })).toHaveCount(2);
+    await expect(frame.getByRole('button', { includeHidden: true, omitHidden: false })).toHaveCount(2);
     await expect(page.frames()[1].getByTestId('save')).toHaveCount(1);
-    await expect(page.frames()[1].getByTestId('save', { includeHidden: true })).toHaveCount(2);
+    await expect(page.frames()[1].getByTestId('save', { omitHidden: false })).toHaveCount(2);
+    await expect(page.frames()[1].getByRole('button', { includeHidden: true, omitHidden: false })).toHaveCount(2);
     await page.locator('iframe').evaluate(element => element.setAttribute('hidden', ''));
     expect(await frame.owner().count()).toBe(0);
-    expect(await page.locator('iframe', { includeHidden: true }).contentFrame().owner().count()).toBe(1);
+    expect(await page.locator('iframe', { omitHidden: false }).contentFrame().owner().count()).toBe(1);
   });
 });
 

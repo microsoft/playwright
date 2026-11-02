@@ -451,7 +451,7 @@ export default defineConfig({
 });
 ```
 
-## property: TestOptions.locatorIncludeHidden = %%-context-option-locator-include-hidden-%%
+## property: TestOptions.locatorOmitHidden = %%-context-option-locator-omit-hidden-%%
 * since: v1.65
 
 **Usage**
@@ -461,7 +461,7 @@ import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
   use: {
-    locatorIncludeHidden: false,
+    locatorOmitHidden: true,
   },
 });
 ```

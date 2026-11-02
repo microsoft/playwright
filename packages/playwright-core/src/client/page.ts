@@ -769,31 +769,31 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return this.mainFrame().locator(selector, options);
   }
 
-  getByTestId(testId: string | RegExp, options?: { includeHidden?: boolean }): Locator {
+  getByTestId(testId: string | RegExp, options?: { omitHidden?: boolean }): Locator {
     return this.mainFrame().getByTestId(testId, options);
   }
 
-  getByAltText(text: string | RegExp, options?: { exact?: boolean, includeHidden?: boolean }): Locator {
+  getByAltText(text: string | RegExp, options?: { exact?: boolean, omitHidden?: boolean }): Locator {
     return this.mainFrame().getByAltText(text, options);
   }
 
-  getByLabel(text: string | RegExp, options?: { exact?: boolean, includeHidden?: boolean }): Locator {
+  getByLabel(text: string | RegExp, options?: { exact?: boolean, omitHidden?: boolean }): Locator {
     return this.mainFrame().getByLabel(text, options);
   }
 
-  getByPlaceholder(text: string | RegExp, options?: { exact?: boolean, includeHidden?: boolean }): Locator {
+  getByPlaceholder(text: string | RegExp, options?: { exact?: boolean, omitHidden?: boolean }): Locator {
     return this.mainFrame().getByPlaceholder(text, options);
   }
 
-  getByRef(ref: string, options?: { includeHidden?: boolean }): Locator {
+  getByRef(ref: string, options?: { omitHidden?: boolean }): Locator {
     return this.locator(`aria-ref=${ref}`, options);
   }
 
-  getByText(text: string | RegExp, options?: { exact?: boolean, includeHidden?: boolean }): Locator {
+  getByText(text: string | RegExp, options?: { exact?: boolean, omitHidden?: boolean }): Locator {
     return this.mainFrame().getByText(text, options);
   }
 
-  getByTitle(text: string | RegExp, options?: { exact?: boolean, includeHidden?: boolean }): Locator {
+  getByTitle(text: string | RegExp, options?: { exact?: boolean, omitHidden?: boolean }): Locator {
     return this.mainFrame().getByTitle(text, options);
   }
 
