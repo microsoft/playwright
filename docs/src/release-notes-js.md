@@ -6,6 +6,114 @@ toc_max_heading_level: 2
 
 import LiteYouTube from '@site/src/components/LiteYouTube';
 
+## Version 1.65
+
+### 🥟 Run tests with Bun
+
+The test runner now runs under [Bun](https://bun.com). Bun transpiles your TypeScript test files itself, so Playwright does not use Babel or its compilation cache. Pass the `--bun` flag, because without it `bunx playwright test` runs on Node.js:
+
+```bash
+bunx --bun playwright test
+```
+
+Our CI runs the test runner tests under Bun 1.4.3 on Linux. Some features work differently under Bun:
+
+- There is no watch mode. UI mode does not run tests again when files change, and `--only-changed` does not follow imports.
+- Bun loads modules itself, so `--tsconfig` and the JSX options in `tsconfig.json` have no effect, and custom ESM loaders are not supported.
+- Stack traces do not include async frames, and API names do not include the class name: `click` instead of `locator.click`. This changes some step locations, step titles and error messages.
+- Console output of a test does not get into the trace and UI mode.
+
+### 🚨 Reports with only failures
+
+New [`failures`](./test-reporters.md#failures-reporter) reporter prints failures and successful retries as they occur, followed by a summary, without progress output.
+
+New `onlyFailures` option of the HTML, JSON and JUnit reporters [keeps only](./test-reporters.md#report-only-failures) tests with unexpected outcomes, flaky tests and interrupted tests:
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  reporter: [
+    ['failures'],
+    ['html', { onlyFailures: true }],
+  ],
+});
+```
+
+### 🎯 Test runner
+
+- New built-in `-exclusive-` [test lock](./test-parallel.md#test-locks) runs a test only when no other tests are running. All other tests continue to run in parallel with each other:
+
+  ```js
+  test('restart the server', { lock: '-exclusive-' }, async () => {
+    // No other test runs while this one is running.
+  });
+  ```
+
+- [`method: Test.skip`], [`method: Test.fixme`], [`method: Test.fail`] and [`method: Test.slow`] now accept only a description. It is recorded in the test annotation:
+
+  ```js
+  test('upload a file', async ({ page }) => {
+    test.skip('Not implemented yet');
+  });
+  ```
+
+- New `PLAYWRIGHT_TRANSFORM_CACHE_DIR` environment variable sets the directory for transpiled test files, for example on a Linux machine shared with other users.
+
+### New APIs
+
+- New options [`option: CDPSession.send.timeout`] and [`option: CDPSession.send.signal`] in [`method: CDPSession.send`].
+- New [`method: TestRun.mode`] returns the execution mode of a suite during [`method: Reporter.preprocess`].
+
+### Breaking Changes ⚠️
+
+- TypeScript class fields now follow [`useDefineForClassFields`](./test-typescript.md#tsconfig-class-fields) from your `tsconfig.json`, the same as `tsc`. It is enabled for `ES2022` and later targets, and when `target` is not specified. A field initializer that reads a constructor parameter property now fails, because the initializer runs first:
+
+  ```js
+  class LoginPage {
+    // TypeError: Cannot read properties of undefined (reading 'getByRole')
+    readonly submit = this.page.getByRole('button', { name: 'Submit' });
+
+    constructor(private readonly page: Page) {}
+  }
+  ```
+
+  Move the initialization to the constructor, or set `"useDefineForClassFields": false` in your `tsconfig.json`.
+
+- Actions such as [`method: Locator.click`], [`method: Locator.check`], [`method: Locator.tap`], [`method: Locator.fill`], [`method: Locator.clear`] and [`method: Locator.selectOption`] now wait for the element to be [not inert](./actionability.md#not-inert). An action on an element with the `inert` attribute, or inside such an element, now times out if the element stays inert.
+
+- A sharded run now fails with "No tests found" when no tests match across all shards. Pass `--pass-with-no-tests` to allow this. An empty shard still passes when other shards have tests.
+
+- Cookie matching now follows RFC 6265. With a URL, [`method: BrowserContext.cookies`] and [`method: APIRequestContext.cookies`] no longer return host-only cookies for subdomains or `Path=/api` cookies for `/apiv2`, and a `Path=/foo/` cookie does not match `/foo`. [APIRequestContext] sends a cookie without a name as `Cookie: x` instead of `Cookie: =x`, and stores `Set-Cookie: token` as a cookie without a name.
+
+- Proxy credentials are no longer sent to websites. The credentials in the [`option: BrowserType.launch.proxy`] option now answer only proxy challenges. To authenticate on a website, use [`option: Browser.newContext.httpCredentials`].
+
+- Text that the browser does not render, such as text that is not assigned to a slot or text directly inside a closed `<details>`, is no longer part of accessible names and aria snapshots. This can change the results of [`method: Page.getByRole`] with a name, [`method: Locator.ariaSnapshot`] and [`method: LocatorAssertions.toMatchAriaSnapshot`].
+
+- String and `URLSearchParams` values of the `params` option in [APIRequestContext] requests are now appended to the query that the URL already has, instead of replacing it.
+
+- `.css`, `.less` and `.scss` imports in test files now load as empty modules instead of being removed, so the imported file must exist.
+
+- The blob reporter again deletes the content of its output directory before it writes the report. Playwright 1.64 kept reports with other names.
+
+- Test locations of imported calls such as `test(` in CommonJS output now point to the start of the callee, for example `a.spec.ts:3:7` instead of `a.spec.ts:3:11`. This is the same as in ESM.
+
+### Announcements
+
+* ⚠️ Playwright no longer tests on Node.js 20. Use Node.js 22, 24 or 26, as listed in the [system requirements](./intro.md#system-requirements).
+* 🐳 [Docker images](./docker.md) now include Node.js 26 instead of Node.js 24, and the latest patch of Chromium on the same branch.
+
+### Browser Versions
+
+- Chromium 158.0.8127.2
+- Mozilla Firefox 159.0
+- WebKit 27.2
+
+This version was also tested against the following stable channels:
+
+- Google Chrome 157
+- Microsoft Edge 156
+
 ## Version 1.64
 
 ### 🧰 WebMCP
