@@ -89,44 +89,48 @@ async function isPortOpen(port: number): Promise<boolean> {
 }
 
 // Keep in sync with packages/utils/chromiumChannels.ts.
+// Chromium resolves the Linux config dir from $CHROME_CONFIG_HOME, then $XDG_CONFIG_HOME, then ~/.config.
+// See https://chromium.googlesource.com/chromium/src/+/main/docs/user_data_dir.md
+const linuxConfigHome = process.env.CHROME_CONFIG_HOME || process.env.XDG_CONFIG_HOME || path.join(os.homedir(), '.config');
+
 const channelToUserDataDir = new Map<string, Record<string, string>>([
   ['chrome', {
-    'linux': path.join(os.homedir(), '.config', 'google-chrome'),
+    'linux': path.join(linuxConfigHome, 'google-chrome'),
     'darwin': path.join(os.homedir(), 'Library', 'Application Support', 'Google', 'Chrome'),
     'win32': path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local'), 'Google', 'Chrome', 'User Data'),
   }],
   ['chrome-beta', {
-    'linux': path.join(os.homedir(), '.config', 'google-chrome-beta'),
+    'linux': path.join(linuxConfigHome, 'google-chrome-beta'),
     'darwin': path.join(os.homedir(), 'Library', 'Application Support', 'Google', 'Chrome Beta'),
     'win32': path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local'), 'Google', 'Chrome Beta', 'User Data'),
   }],
   ['chrome-dev', {
-    'linux': path.join(os.homedir(), '.config', 'google-chrome-unstable'),
+    'linux': path.join(linuxConfigHome, 'google-chrome-unstable'),
     'darwin': path.join(os.homedir(), 'Library', 'Application Support', 'Google', 'Chrome Dev'),
     'win32': path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local'), 'Google', 'Chrome Dev', 'User Data'),
   }],
   ['chrome-canary', {
-    'linux': path.join(os.homedir(), '.config', 'google-chrome-canary'),
+    'linux': path.join(linuxConfigHome, 'google-chrome-canary'),
     'darwin': path.join(os.homedir(), 'Library', 'Application Support', 'Google', 'Chrome Canary'),
     'win32': path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local'), 'Google', 'Chrome SxS', 'User Data'),
   }],
   ['msedge', {
-    'linux': path.join(os.homedir(), '.config', 'microsoft-edge'),
+    'linux': path.join(linuxConfigHome, 'microsoft-edge'),
     'darwin': path.join(os.homedir(), 'Library', 'Application Support', 'Microsoft Edge'),
     'win32': path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local'), 'Microsoft', 'Edge', 'User Data'),
   }],
   ['msedge-beta', {
-    'linux': path.join(os.homedir(), '.config', 'microsoft-edge-beta'),
+    'linux': path.join(linuxConfigHome, 'microsoft-edge-beta'),
     'darwin': path.join(os.homedir(), 'Library', 'Application Support', 'Microsoft Edge Beta'),
     'win32': path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local'), 'Microsoft', 'Edge Beta', 'User Data'),
   }],
   ['msedge-dev', {
-    'linux': path.join(os.homedir(), '.config', 'microsoft-edge-dev'),
+    'linux': path.join(linuxConfigHome, 'microsoft-edge-dev'),
     'darwin': path.join(os.homedir(), 'Library', 'Application Support', 'Microsoft Edge Dev'),
     'win32': path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local'), 'Microsoft', 'Edge Dev', 'User Data'),
   }],
   ['msedge-canary', {
-    'linux': path.join(os.homedir(), '.config', 'microsoft-edge-canary'),
+    'linux': path.join(linuxConfigHome, 'microsoft-edge-canary'),
     'darwin': path.join(os.homedir(), 'Library', 'Application Support', 'Microsoft Edge Canary'),
     'win32': path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local'), 'Microsoft', 'Edge SxS', 'User Data'),
   }],

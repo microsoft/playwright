@@ -17,6 +17,8 @@
 
 import { playwrightTest as test, expect } from '../../config/browserTest';
 import http from 'http';
+import { execFile } from 'child_process';
+import { promisify } from 'util';
 import fs from 'fs';
 import path from 'path';
 import { getUserAgent, server as coreServer } from '../../../packages/playwright-core/lib/coreBundle';
@@ -959,5 +961,35 @@ test.fixme('CD-053 should connect when another client inspects a terminated shar
     await cdpBrowser.close();
   } finally {
     await browser.close();
+  }
+});
+
+test('CD-054 should find DevToolsActivePort of a channel in the Linux config home', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43880' },
+}, async ({ browserType, platform }, testInfo) => {
+  test.skip(platform !== 'linux', 'CHROME_CONFIG_HOME and XDG_CONFIG_HOME only change the default user data dir on Linux');
+
+  const configHome = testInfo.outputPath('config');
+  const context = await browserType.launchPersistentContext(path.join(configHome, 'google-chrome'), {
+    args: ['--remote-debugging-port=0'],
+  });
+  try {
+    // The channel user data dirs are resolved when the module is loaded, so use a fresh process.
+    const script = `
+      const { chromium } = require(${JSON.stringify(path.join(__dirname, '../../../packages/playwright-core'))});
+      chromium.connectOverCDP('chrome').then(async browser => {
+        console.log('contexts:' + browser.contexts().length);
+        await browser.close();
+      });
+    `;
+    const connect = async (env: NodeJS.ProcessEnv) => {
+      const { stdout } = await promisify(execFile)(process.execPath, ['-e', script], { env: { ...process.env, ...env } });
+      return stdout;
+    };
+    expect(await connect({ XDG_CONFIG_HOME: configHome, CHROME_CONFIG_HOME: '' })).toContain('contexts:1');
+    // CHROME_CONFIG_HOME takes precedence over XDG_CONFIG_HOME.
+    expect(await connect({ XDG_CONFIG_HOME: testInfo.outputPath('elsewhere'), CHROME_CONFIG_HOME: configHome })).toContain('contexts:1');
+  } finally {
+    await context.close();
   }
 });
