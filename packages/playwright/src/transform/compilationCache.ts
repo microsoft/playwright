@@ -17,8 +17,10 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+import url from 'url';
 
 import sourceMapSupport from 'source-map-support';
+import { MultiMap } from '@isomorphic/multimap';
 import { calculateSha1 } from '@utils/crypto';
 
 import { isWorkerProcess } from '../globals';
@@ -208,14 +210,35 @@ function clearOldCacheEntries(cacheFolderName: string, filePathHash: string) {
 // Since ESM and CJS collect dependencies differently,
 // we go via the global state to collect them.
 let depsCollector: Set<string> | undefined;
+// Retain import and require edges even outside collection, for later test files that reuse cached modules.
+const importGraph = new MultiMap<string, string>();
+
+export function recordResolvedFile(resolvedUrl: string | undefined, parentUrl: string | undefined) {
+  if (isWorkerProcess() || !resolvedUrl?.startsWith('file://'))
+    return;
+  const child = url.fileURLToPath(resolvedUrl);
+  depsCollector?.add(child);
+  if (!parentUrl?.startsWith('file://'))
+    return;
+  const parent = url.fileURLToPath(parentUrl);
+  if (!belongsToNodeModules(parent) && !importGraph.hasValue(parent, child))
+    importGraph.set(parent, child);
+}
 
 export function startCollectingFileDeps() {
   depsCollector = new Set();
 }
 
-export function stopCollectingFileDeps(filename: string) {
+export function stopCollectingFileDeps(filename: string, additionalDeps: string[] = []) {
   if (!depsCollector)
     return;
+  for (const dep of additionalDeps)
+    depsCollector.add(dep);
+  // Sets visit entries added during iteration, so this collects the whole transitive closure.
+  for (const dep of depsCollector) {
+    for (const child of importGraph.get(dep))
+      depsCollector.add(child);
+  }
   depsCollector.delete(filename);
   for (const dep of depsCollector) {
     if (belongsToNodeModules(dep))
