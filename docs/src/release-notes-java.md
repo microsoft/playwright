@@ -6,6 +6,43 @@ toc_max_heading_level: 2
 
 import LiteYouTube from '@site/src/components/LiteYouTube';
 
+## Version 1.65
+
+### 🧾 Locator code in Java
+
+A locator from [`method: Locator.normalize`] now converts to a string as Java code. Use it with [`method: Page.getByRef`] to turn an element that an agent picks from a [`method: Page.ariaSnapshot`] in the `"ai"` mode into code for your test:
+
+```java
+Locator normalized = page.getByRef("e2").normalize();
+System.out.println(normalized.toString());
+// getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Submit"))
+```
+
+### New APIs
+
+- New option [`option: CDPSession.send.timeout`] in [`method: CDPSession.send`].
+
+### Breaking Changes ⚠️
+
+- Actions such as [`method: Locator.click`], [`method: Locator.check`], [`method: Locator.tap`], [`method: Locator.fill`], [`method: Locator.clear`] and [`method: Locator.selectOption`] now wait for the element to be [not inert](./actionability.md#not-inert). An action on an element with the `inert` attribute, or inside such an element, now times out if the element stays inert.
+
+- Cookie matching now follows RFC 6265. With a URL, [`method: BrowserContext.cookies`] and [`method: APIRequestContext.cookies`] no longer return host-only cookies for subdomains or `Path=/api` cookies for `/apiv2`, and a `Path=/foo/` cookie does not match `/foo`. [APIRequestContext] sends a cookie without a name as `Cookie: x` instead of `Cookie: =x`, and stores `Set-Cookie: token` as a cookie without a name.
+
+- Proxy credentials are no longer sent to websites. The credentials in the [`option: BrowserType.launch.proxy`] option now answer only proxy challenges. To authenticate on a website, use [`option: Browser.newContext.httpCredentials`].
+
+- Text that the browser does not render, such as text that is not assigned to a slot or text directly inside a closed `<details>`, is no longer part of accessible names and aria snapshots. This can change the results of [`method: Page.getByRole`] with a name, [`method: Locator.ariaSnapshot`] and [`method: LocatorAssertions.toMatchAriaSnapshot`].
+
+### Browser Versions
+
+- Chromium 158.0.8127.2
+- Mozilla Firefox 159.0
+- WebKit 27.2
+
+This version was also tested against the following stable channels:
+
+- Google Chrome 157
+- Microsoft Edge 156
+
 ## Version 1.64
 
 ### 🧰 WebMCP
