@@ -242,8 +242,8 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   async _onRoute(route: network.Route) {
     route._context = this;
     const page = route.request()._safePage();
-    const routeHandlers = this._routes.slice();
-    for (const routeHandler of routeHandlers) {
+    const routeHandlers = this._routes;
+    for (const routeHandler of routeHandlers.slice()) {
       // If the page or the context was closed we stall all requests right away.
       if (page?._closeWasCalled || this.isClosed())
         return;
@@ -255,7 +255,8 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
       if (routeHandler.willExpire())
         this._routes.splice(index, 1);
       const handled = await routeHandler.handle(route);
-      if (!this._routes.length)
+      // unrouteAll() replaces _routes and updates interception after waiting for handlers.
+      if (routeHandlers === this._routes && !this._routes.length)
         this._disableInterception().catch(() => {});
       if (handled)
         return;

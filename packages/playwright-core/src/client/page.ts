@@ -211,8 +211,8 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
 
   private async _onRoute(route: Route) {
     route._context = this.context();
-    const routeHandlers = this._routes.slice();
-    for (const routeHandler of routeHandlers) {
+    const routeHandlers = this._routes;
+    for (const routeHandler of routeHandlers.slice()) {
       // If the page was closed we stall all requests right away.
       if (this._closeWasCalled || this._browserContext.isClosed())
         return;
@@ -224,7 +224,8 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
       if (routeHandler.willExpire())
         this._routes.splice(index, 1);
       const handled = await routeHandler.handle(route);
-      if (!this._routes.length)
+      // unrouteAll() replaces _routes and updates interception after waiting for handlers.
+      if (routeHandlers === this._routes && !this._routes.length)
         this._disableInterception().catch(() => {});
       if (handled)
         return;
