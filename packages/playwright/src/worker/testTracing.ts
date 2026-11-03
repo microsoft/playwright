@@ -19,9 +19,7 @@ import path from 'path';
 
 import * as yazl from 'yazl';
 import * as yauzl from 'yauzl';
-import dotenv from 'dotenv';
 import { ManualPromise } from '@isomorphic/manualPromise';
-import { escapeSecretsForJSON, normalizeSecrets, redactSecretsInBuffer } from '@isomorphic/secrets';
 import { monotonicTime } from '@isomorphic/time';
 import { calculateSha1, createGuid } from '@utils/crypto';
 import { SerializedFS } from '@utils/serializedFS';
@@ -31,7 +29,6 @@ import { filteredStackTrace } from '@utils/stackTrace';
 import type { TestStepCategory, TestInfoImpl } from './testInfo';
 import type { PlaywrightWorkerOptions, TestInfo, TestInfoError, TraceMode } from '../../types/test';
 import type { StackFrame } from '@utils/stackTrace';
-import type { Secrets } from '@isomorphic/secrets';
 import type * as trace from '@isomorphic/trace/trace';
 import type EventEmitter from 'events';
 
@@ -46,7 +43,6 @@ type TraceOptions = { screenshots: boolean, snapshots: boolean | { dom?: boolean
 export class TestTracing {
   private _testInfo: TestInfoImpl;
   private _options: TraceOptions | undefined;
-  private _secrets: Secrets = [];
   private _liveTraceFile: { file: string, fs: SerializedFS } | undefined;
   private _traceEvents: trace.TraceEvent[] = [];
   private _temporaryTraceFiles: string[] = [];
@@ -104,13 +100,8 @@ export class TestTracing {
     } else if (typeof value === 'string') {
       this._options = { ...defaultTraceOptions, mode: value === 'retry-with-trace' ? 'on-first-retry' : value as TraceMode };
     } else {
-      const { secrets: secretsOption, ...traceOptions } = value;
-      const mode = traceOptions.mode || 'off';
-      this._options = { ...defaultTraceOptions, ...traceOptions, mode: (mode as string) === 'retry-with-trace' ? 'on-first-retry' : mode };
-      const secrets = typeof secretsOption === 'string'
-        ? Object.entries(dotenv.parse(fs.readFileSync(path.resolve(this._testInfo._configInternal.configDir, secretsOption), 'utf8'))).map(([name, value]) => ({ name, value }))
-        : secretsOption;
-      this._secrets = normalizeSecrets(secrets);
+      const mode = value.mode || 'off';
+      this._options = { ...defaultTraceOptions, ...value, mode: (mode as string) === 'retry-with-trace' ? 'on-first-retry' : mode };
     }
 
     if (!this._shouldCaptureTrace()) {
@@ -252,7 +243,7 @@ export class TestTracing {
     });
 
     const tracePath = this._testInfo.outputPath('trace.zip');
-    await mergeTraceFiles(tracePath, this._temporaryTraceFiles, this._secrets);
+    await mergeTraceFiles(tracePath, this._temporaryTraceFiles);
     this._testInfo.attachments.push({ name: 'trace', path: tracePath, contentType: 'application/zip' });
   }
 
@@ -274,9 +265,6 @@ export class TestTracing {
   }
 
   appendStdioToTrace(type: 'stdout' | 'stderr', chunk: string | Buffer) {
-    // base64-encoded chunks must be redacted before writing.
-    if (typeof chunk !== 'string')
-      chunk = redactSecretsInBuffer(chunk, this._secrets);
     this._appendTraceEvent({
       type,
       timestamp: monotonicTime(),
@@ -353,13 +341,12 @@ function generatePreview(value: any, visited = new Set<any>()): string {
   return String(value);
 }
 
-async function mergeTraceFiles(fileName: string, temporaryTraceFiles: string[], secrets: Secrets) {
+async function mergeTraceFiles(fileName: string, temporaryTraceFiles: string[]) {
   temporaryTraceFiles = temporaryTraceFiles.filter(file => fs.existsSync(file));
-  if (temporaryTraceFiles.length === 1 && !secrets.length) {
+  if (temporaryTraceFiles.length === 1) {
     await fs.promises.rename(temporaryTraceFiles[0], fileName);
     return;
   }
-  const escapedSecrets = escapeSecretsForJSON(secrets);
 
   const mergePromise = new ManualPromise();
   const zipFile = new yazl.ZipFile();
@@ -395,17 +382,9 @@ async function mergeTraceFiles(fileName: string, temporaryTraceFiles: string[], 
             promise.reject(err);
             return;
           }
-          if (!secrets.length) {
-            zipFile.addReadStream(readStream!, entryName);
-            if (--pendingEntries === 0)
-              promise.resolve();
-            return;
-          }
-          readStreamToBuffer(readStream!).then(buffer => {
-            zipFile.addBuffer(redactSecretsInTraceEntry(buffer, secrets, escapedSecrets), entryName);
-            if (--pendingEntries === 0)
-              promise.resolve();
-          }).catch(error => promise.reject(error));
+          zipFile.addReadStream(readStream!, entryName);
+          if (--pendingEntries === 0)
+            promise.resolve();
         });
       });
     });
@@ -420,16 +399,4 @@ async function mergeTraceFiles(fileName: string, temporaryTraceFiles: string[], 
     }).on('error', error => mergePromise.reject(error));
   });
   await mergePromise;
-}
-
-async function readStreamToBuffer(stream: NodeJS.ReadableStream): Promise<Buffer> {
-  const chunks: Buffer[] = [];
-  for await (const chunk of stream)
-    chunks.push(chunk as Buffer);
-  return Buffer.concat(chunks);
-}
-
-function redactSecretsInTraceEntry(buffer: Buffer, secrets: Secrets, escapedSecrets: Secrets): Buffer {
-  buffer = redactSecretsInBuffer(buffer, escapedSecrets);
-  return redactSecretsInBuffer(buffer, secrets);
 }

@@ -39,7 +39,7 @@ export async function mergeReports(reportDir: string | undefined, opts: { [key: 
     throw new Error(`"${dir}" is not a directory`);
   let reporterDescriptions: ReporterDescription[] | undefined = resolveReporterOption(opts.reporter);
   if (!reporterDescriptions && configFile)
-    reporterDescriptions = config.reporterDescriptions;
+    reporterDescriptions = config.config.reporter;
   if (!reporterDescriptions)
     reporterDescriptions = [[commonConfig.defaultReporter]];
   const rootDirOverride = configFile ? config.config.rootDir : undefined;

@@ -721,9 +721,6 @@ export default defineConfig({
     - `aria` ?<[boolean]> Capture aria snapshot of the page on every action. Optional.
     - `screen` ?<[boolean]> Capture a screenshot of the page on every action. Optional.
   - `sources` ?<[boolean]> Whether to include source files for trace actions. Defaults to true. Optional.
-  - `secrets` ?<[string]|[Array]<[Object]>> Sensitive values to hide in the trace, or a path to a file in `.env` format. Relative paths are resolved relative to the configuration file directory. File keys are used as secret names. The file is not loaded into `process.env`. Optional.
-    - `name` ?<[string]> Name of the secret. The trace shows `<secret>NAME</secret>` in place of the value, or `<secret/>` when the name is not set. Optional.
-    - `value` <[string]> Sensitive text to hide.
 
 Whether to record trace for each test. Defaults to `'off'`. The initial run of a test is the "first run"; subsequent runs caused by [retries](../test-retries.md) are "retries".
 * `'off'`: Do not record trace.
@@ -751,18 +748,6 @@ export default defineConfig({
 ```
 
 Learn more about [recording trace](../test-use-options.md#recording-options).
-
-To hide sensitive values in a trace, pass a list of name/value pairs or a path to a file in `.env` format:
-
-```js title="playwright.config.ts"
-import { defineConfig } from '@playwright/test';
-
-export default defineConfig({
-  use: {
-    trace: { mode: 'on-first-retry', secrets: './.env' },
-  },
-});
-```
 
 ## property: TestOptions.userAgent = %%-context-option-useragent-%%
 * since: v1.10
