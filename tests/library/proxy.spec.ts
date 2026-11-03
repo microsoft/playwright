@@ -26,7 +26,9 @@ it('PR-001 should throw for bad server value', async ({ browserType }) => {
   expect(error.message).toContain('proxy.server: expected string, got number');
 });
 
-it('PR-002 should use proxy @smoke', async ({ browserType, server, mode }) => {
+it('PR-002 should use proxy @smoke', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43871' },
+}, async ({ browserType, server, mode }) => {
   server.setRoute('/target.html', async (req, res) => {
     res.end('<html><title>Served by the proxy</title></html>');
   });
@@ -34,8 +36,16 @@ it('PR-002 should use proxy @smoke', async ({ browserType, server, mode }) => {
     proxy: { server: server.HOST }
   });
   const page = await browser.newPage();
-  await page.goto('http://non-existent.test/target.html');
+  const url = 'http://staging.example.org/target.html';
+  const requests: string[] = [];
+  page.on('request', request => {
+    if (request.isNavigationRequest())
+      requests.push(request.url());
+  });
+  await page.goto(url);
   expect(await page.title()).toBe('Served by the proxy');
+  expect(page.url()).toBe(url);
+  expect(requests).toEqual([url]);
   await browser.close();
 });
 

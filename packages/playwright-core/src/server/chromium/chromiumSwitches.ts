@@ -21,6 +21,10 @@ const disabledFeatures = [
   // See https://github.com/microsoft/playwright/issues/14047
   'AvoidUnnecessaryBeforeUnloadCheckSync',
   'DestroyProfileOnBrowserClose',
+  // Keep HTTP navigations and routes on HTTP, including with HTTPS-First balanced mode.
+  // See https://github.com/microsoft/playwright/issues/43871
+  'HttpsUpgrades',
+  'HttpsFirstBalancedModeAutoEnable',
   // Hides the Lens feature in the URL address bar. Its not working in unofficial builds.
   'LensOverlay',
   // See https://github.com/microsoft/playwright/pull/8162
