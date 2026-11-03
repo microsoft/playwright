@@ -389,3 +389,34 @@ it('FI-033 should fill contenteditable with focus handler that collapses selecti
   await page.fill('div[contenteditable]', 'some value');
   expect(await page.locator('div[contenteditable]').textContent()).toBe('some value');
 });
+
+it('FI-034 should retry on inert element', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42967' },
+}, async ({ page }) => {
+  await page.setContent(`
+    <div inert id=container>
+      <input id=target>
+    </div>
+    <input id=outside>
+  `);
+  await page.focus('#outside');
+  let done = false;
+
+  const promise = page.fill('#target', 'some value').then(() => done = true);
+  await giveItAChanceToFill(page);
+  expect(done).toBe(false);
+  expect(await page.$eval('#target', (i: HTMLInputElement) => i.value)).toBe('');
+  expect(await page.$eval('#outside', (i: HTMLInputElement) => i.value)).toBe('');
+
+  await page.$eval('#container', e => e.removeAttribute('inert'));
+  await promise;
+  expect(await page.$eval('#target', (i: HTMLInputElement) => i.value)).toBe('some value');
+  expect(await page.$eval('#outside', (i: HTMLInputElement) => i.value)).toBe('');
+});
+
+it('FI-036 should fail with a nice error on inert element', async ({ page }) => {
+  await page.setContent(`<div inert><input></div>`);
+  const error = await page.fill('input', 'some value', { timeout: 1000 }).catch(e => e);
+  expect(error.message).toContain('Timeout 1000ms exceeded');
+  expect(error.message).toContain('element is inert');
+});

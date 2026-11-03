@@ -306,6 +306,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `AR-168` | `library/role-utils.spec.ts` | should resolve css content property for an element |
 | `AR-169` | `library/role-utils.spec.ts` | should ignore invalid aria-labelledby |
 | `AR-170` | `library/role-utils.spec.ts` | should support search element |
+| `AR-171` | `page/page-aria-snapshot.spec.ts` | should include inert elements and elements outside of a modal dialog |
 
 ### AT — Add script and style tags
 
@@ -1278,6 +1279,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `CL-047` | `page/page-click.spec.ts` | trial run should not double click |
 | `CL-048` | `page/page-click.spec.ts` | should fail when obscured and not waiting for hit target |
 | `CL-049` | `page/page-click.spec.ts` | should wait for button to be enabled |
+| `CL-050` | `page/page-click.spec.ts` | should wait for element to become non-inert |
 | `CL-052` | `page/page-click.spec.ts` | should wait for input to be enabled |
 | `CL-053` | `page/page-click.spec.ts` | should wait for select to be enabled |
 | `CL-054` | `page/page-click.spec.ts` | should click disabled div |
@@ -1338,6 +1340,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `CL-109` | `page/page-click-during-navigation.spec.ts` | should not fail with internal error upon navigation |
 | `CL-110` | `page/page-click-timeout-1.spec.ts` | should avoid side effects after timeout |
 | `CL-111` | `page/page-click-timeout-1.spec.ts` | should timeout waiting for button to be enabled |
+| `CL-112` | `page/page-click-timeout-1.spec.ts` | should timeout waiting for inert element to become non-inert |
 | `CL-114` | `page/page-click-timeout-2.spec.ts` | should timeout waiting for display:none to be gone |
 | `CL-115` | `page/page-click-timeout-2.spec.ts` | should timeout waiting for visibility:hidden to be gone |
 | `CL-116` | `page/page-click-timeout-3.spec.ts` | should fail when element jumps during hit testing |
@@ -2855,6 +2858,8 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `FI-031` | `page/page-fill.spec.ts` | should not throw when fill causes navigation |
 | `FI-032` | `page/page-fill.spec.ts` | fill back to back |
 | `FI-033` | `page/page-fill.spec.ts` | should fill contenteditable with focus handler that collapses selection |
+| `FI-034` | `page/page-fill.spec.ts` | should retry on inert element |
+| `FI-036` | `page/page-fill.spec.ts` | should fail with a nice error on inert element |
 
 ### FO — Focus
 
@@ -4867,6 +4872,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `SO-031` | `page/page-select-option.spec.ts` | should wait for option to be enabled |
 | `SO-032` | `page/page-select-option.spec.ts` | should wait for optgroup to be enabled |
 | `SO-033` | `page/page-select-option.spec.ts` | should wait for select to be swapped |
+| `SO-034` | `page/page-select-option.spec.ts` | should wait for select to become non-inert |
 
 ### SQ — Sequence
 

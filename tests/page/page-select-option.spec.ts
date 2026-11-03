@@ -451,3 +451,31 @@ it('SO-033 should wait for select to be swapped', async ({ page }) => {
   await expect(page.locator('select')).toHaveValue('two');
   expect(await page.evaluate(() => window['result'])).toEqual('two');
 });
+
+it('SO-034 should wait for select to become non-inert', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42967' },
+}, async ({ page }) => {
+  await page.setContent(`
+    <div inert id=container>
+      <select>
+        <option>one</option>
+        <option>two</option>
+      </select>
+    </div>
+  `);
+
+  let done = false;
+  const selectPromise = page.locator('select').selectOption('two').then(() => done = true);
+  await giveItAChanceToResolve(page);
+  expect(done).toBe(false);
+  await expect(page.locator('select')).toHaveValue('one');
+
+  await page.evaluate(() => document.getElementById('container').removeAttribute('inert'));
+  await selectPromise;
+  await expect(page.locator('select')).toHaveValue('two');
+
+  await page.evaluate(() => document.getElementById('container').setAttribute('inert', ''));
+  const error = await page.locator('select').selectOption('one', { timeout: 1000 }).catch(e => e);
+  expect(error.message).toContain('Timeout 1000ms exceeded');
+  expect(error.message).toContain('element is inert');
+});

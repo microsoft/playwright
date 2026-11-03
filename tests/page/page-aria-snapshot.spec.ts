@@ -871,3 +871,27 @@ it('AR-045 should not include hidden iframes', async ({ page }) => {
     - iframe
   `));
 });
+
+it('AR-171 should include inert elements and elements outside of a modal dialog', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36938' } }, async ({ page }) => {
+  await page.setContent(`
+    <button>Hi</button>
+    <button inert>Hello</button>
+    <div inert>
+      <button>Yay</button>
+    </div>
+    <dialog id=dialog>
+      <button>Inside</button>
+    </dialog>
+    <script>
+      document.getElementById('dialog').showModal();
+    </script>
+  `);
+
+  await checkAndMatchSnapshot(page.locator('body'), `
+    - button "Hi"
+    - button "Hello"
+    - button "Yay"
+    - dialog:
+      - button "Inside"
+  `);
+});
