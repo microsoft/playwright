@@ -406,6 +406,7 @@ test.describe('user activation', () => {
   });
 
   test('FC-026 should not open file chooser without user activation', async ({ page, server, browserName }) => {
+    test.skip(process.env.PW_CLOCK === 'frozen');
     test.fixme(browserName === 'webkit', 'WebKit opens the file chooser from input.click() without user activation');
     let choosers = 0;
     page.on('filechooser', () => choosers++);

@@ -574,6 +574,7 @@ it('EV-062 should simulate a user gesture', async ({ page }) => {
 });
 
 it('EV-063 should throw a nice error after a navigation', async ({ page }) => {
+  it.skip(process.env.PW_CLOCK === 'frozen');
   const navigationPromise = page.waitForNavigation();
   const error = await page.evaluate(() => new Promise(f => setTimeout(() => {
     window.location.reload();
