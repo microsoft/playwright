@@ -7999,37 +7999,6 @@ export interface PlaywrightTestOptions {
    */
   locale: string | undefined;
   /**
-   * Whether locators omit hidden elements by default. Defaults to `false`. If set to `true`, each locator is resolved
-   * as if [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible) were appended: only the
-   * final matched element is checked for [visibility](https://playwright.dev/docs/actionability#visible), not its intermediate ancestors.
-   * This affects actions, assertions, counts and element evaluation, but not selector-based methods such as
-   * [page.$(selector[, options])](https://playwright.dev/docs/api/class-page#page-query-selector).
-   *
-   * Pass `omitHidden: false` when creating a locator to opt out. The override is preserved by `filter()`, `first()`,
-   * `last()`, `nth()`, `and()`, `or()` and `describe()`. Creating a descendant locator uses the context default again,
-   * unless an override is supplied for that descendant. Explicit visibility filters are never removed. Role locators
-   * still apply their accessibility matching rules; use `getByRole(..., { includeHidden: true, omitHidden: false })` to
-   * include hidden elements when this context option is enabled.
-   *
-   * With `true`, hidden elements are treated as missing by `toBeHidden()` and `waitFor({ state: 'hidden' })`. To check
-   * attachment of a hidden element, create the locator with `omitHidden: false`.
-   *
-   * **Usage**
-   *
-   * ```js
-   * // playwright.config.ts
-   * import { defineConfig } from '@playwright/test';
-   *
-   * export default defineConfig({
-   *   use: {
-   *     locatorOmitHidden: true,
-   *   },
-   * });
-   * ```
-   *
-   */
-  locatorOmitHidden: boolean;
-  /**
    * Whether to emulate network being offline. Defaults to `false`. Learn more about
    * [network emulation](https://playwright.dev/docs/emulation#offline).
    *
@@ -8348,9 +8317,8 @@ export interface PlaywrightTestOptions {
   serviceWorkers: ServiceWorkerPolicy;
   /**
    * Custom attribute to be used in
-   * [page.getByTestId(testId[, options])](https://playwright.dev/docs/api/class-page#page-get-by-test-id).
-   * `data-testid` is used by default. To match elements with any of several attributes, pass them as a comma-separated
-   * list.
+   * [page.getByTestId(testId)](https://playwright.dev/docs/api/class-page#page-get-by-test-id). `data-testid` is used
+   * by default. To match elements with any of several attributes, pass them as a comma-separated list.
    *
    * **Usage**
    *
