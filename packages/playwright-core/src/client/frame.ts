@@ -367,32 +367,32 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
     return new Locator(this, selector, options);
   }
 
-  getByTestId(testId: string | RegExp, options?: { omitHidden?: boolean }): Locator {
-    return this.locator(getByTestIdSelector(testIdAttributeName(), testId), options);
+  getByTestId(testId: string | RegExp): Locator {
+    return this.locator(getByTestIdSelector(testIdAttributeName(), testId));
   }
 
-  getByAltText(text: string | RegExp, options?: { exact?: boolean, omitHidden?: boolean }): Locator {
-    return this.locator(getByAltTextSelector(text, options), options);
+  getByAltText(text: string | RegExp, options?: { exact?: boolean }): Locator {
+    return this.locator(getByAltTextSelector(text, options));
   }
 
-  getByLabel(text: string | RegExp, options?: { exact?: boolean, omitHidden?: boolean }): Locator {
-    return this.locator(getByLabelSelector(text, options), options);
+  getByLabel(text: string | RegExp, options?: { exact?: boolean }): Locator {
+    return this.locator(getByLabelSelector(text, options));
   }
 
-  getByPlaceholder(text: string | RegExp, options?: { exact?: boolean, omitHidden?: boolean }): Locator {
-    return this.locator(getByPlaceholderSelector(text, options), options);
+  getByPlaceholder(text: string | RegExp, options?: { exact?: boolean }): Locator {
+    return this.locator(getByPlaceholderSelector(text, options));
   }
 
-  getByText(text: string | RegExp, options?: { exact?: boolean, omitHidden?: boolean }): Locator {
-    return this.locator(getByTextSelector(text, options), options);
+  getByText(text: string | RegExp, options?: { exact?: boolean }): Locator {
+    return this.locator(getByTextSelector(text, options));
   }
 
-  getByTitle(text: string | RegExp, options?: { exact?: boolean, omitHidden?: boolean }): Locator {
-    return this.locator(getByTitleSelector(text, options), options);
+  getByTitle(text: string | RegExp, options?: { exact?: boolean }): Locator {
+    return this.locator(getByTitleSelector(text, options));
   }
 
   getByRole(role: string, options: ByRoleOptions = {}): Locator {
-    return this.locator(getByRoleSelector(role, options), { omitHidden: options.omitHidden });
+    return this.locator(getByRoleSelector(role, options));
   }
 
   frameLocator(selector?: string): FrameLocator {

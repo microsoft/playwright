@@ -68,9 +68,7 @@ test('should override launchOptions', async ({ runInlineTest }) => {
   expect(result.passed).toBe(1);
 });
 
-test('should respect contextOptions', {
-  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43855' },
-}, async ({ runInlineTest }) => {
+test('should respect contextOptions', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       export default {
@@ -86,7 +84,6 @@ test('should respect contextOptions', {
             isMobile: true,
             javaScriptEnabled: true,
             locale: 'fr-FR',
-            locatorOmitHidden: true,
             offline: true,
             permissions: ['geolocation'],
             timezoneId: 'TIMEZONE',
@@ -98,7 +95,7 @@ test('should respect contextOptions', {
     `,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
-      test('pass', async ({ acceptDownloads, bypassCSP, colorScheme, deviceScaleFactor, extraHTTPHeaders, hasTouch, ignoreHTTPSErrors, isMobile, javaScriptEnabled, locale, locatorOmitHidden, offline, permissions, timezoneId, userAgent, viewport }) => {
+      test('pass', async ({ acceptDownloads, bypassCSP, colorScheme, deviceScaleFactor, extraHTTPHeaders, hasTouch, ignoreHTTPSErrors, isMobile, javaScriptEnabled, locale, offline, permissions, timezoneId, userAgent, viewport }) => {
         expect.soft(acceptDownloads).toBe(false);
         expect.soft(bypassCSP).toBe(true);
         expect.soft(colorScheme).toBe('dark');
@@ -109,7 +106,6 @@ test('should respect contextOptions', {
         expect.soft(isMobile).toBe(true);
         expect.soft(javaScriptEnabled).toBe(true);
         expect.soft(locale).toBe('fr-FR');
-        expect.soft(locatorOmitHidden).toBe(true);
         expect.soft(offline).toBe(true);
         expect.soft(permissions).toEqual(['geolocation']);
         expect.soft(timezoneId).toBe('TIMEZONE');
@@ -140,7 +136,6 @@ test('should override contextOptions', async ({ runInlineTest }) => {
         isMobile: true,
         javaScriptEnabled: true,
         locale: 'fr-FR',
-        locatorOmitHidden: true,
         offline: true,
         permissions: ['geolocation'],
         reducedMotion: 'reduce',
@@ -160,7 +155,6 @@ test('should override contextOptions', async ({ runInlineTest }) => {
             isMobile: false,
             javaScriptEnabled: false,
             locale: 'en-US',
-            locatorOmitHidden: false,
             offline: false,
             permissions: [],
             reducedMotion: 'no-preference',
@@ -173,7 +167,7 @@ test('should override contextOptions', async ({ runInlineTest }) => {
     `,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
-      test('pass', async ({ acceptDownloads, bypassCSP, colorScheme, contrast, deviceScaleFactor, extraHTTPHeaders, forcedColors, hasTouch, ignoreHTTPSErrors, isMobile, javaScriptEnabled, locale, locatorOmitHidden, offline, permissions, reducedMotion, timezoneId, userAgent, viewport }) => {
+      test('pass', async ({ acceptDownloads, bypassCSP, colorScheme, contrast, deviceScaleFactor, extraHTTPHeaders, forcedColors, hasTouch, ignoreHTTPSErrors, isMobile, javaScriptEnabled, locale, offline, permissions, reducedMotion, timezoneId, userAgent, viewport }) => {
         expect.soft(acceptDownloads).toBe(false);
         expect.soft(bypassCSP).toBe(true);
         expect.soft(colorScheme).toBe('dark');
@@ -186,7 +180,6 @@ test('should override contextOptions', async ({ runInlineTest }) => {
         expect.soft(isMobile).toBe(true);
         expect.soft(javaScriptEnabled).toBe(true);
         expect.soft(locale).toBe('fr-FR');
-        expect.soft(locatorOmitHidden).toBe(true);
         expect.soft(offline).toBe(true);
         expect.soft(permissions).toEqual(['geolocation']);
         expect.soft(reducedMotion).toBe('reduce');
@@ -207,16 +200,14 @@ test('should respect testIdAttribute', async ({ runInlineTest }) => {
       export default {
         use: {
           testIdAttribute: 'data-pw',
-          locatorOmitHidden: true,
         }
       };
     `,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('pass', async ({ page }) => {
-        await page.setContent('<div hidden data-pw="myid">Hi</div><div data-pw="myid">Hi</div>');
+        await page.setContent('<div data-pw="myid">Hi</div>');
         await expect(page.getByTestId('myid')).toHaveCount(1);
-        await expect(page.getByTestId('myid', { omitHidden: false })).toHaveCount(2);
       });
     `,
   }, { workers: 1 });

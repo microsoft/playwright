@@ -72,7 +72,6 @@ Electron:
               properties:
                 $mixin: ShowActionsOptions
         strictSelectors: boolean?
-        locatorOmitHidden: boolean?
         timezoneId: string?
         tracesDir: string?
         artifactsDir: string?
@@ -132,4 +131,5 @@ ElectronApplication:
     console:
       parameters:
         $mixin: ConsoleMessage
+
 

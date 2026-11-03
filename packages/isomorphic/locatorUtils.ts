@@ -25,7 +25,6 @@ export type ByRoleOptions = {
   includeHidden?: boolean;
   level?: number;
   name?: string | RegExp;
-  omitHidden?: boolean;
   pressed?: boolean | 'mixed';
   selected?: boolean;
 };
