@@ -88,6 +88,9 @@ export type PullRequest = Text & {
   repo: string;
   /** A new branch for the PR, such as "triage/<issue>/<run id>-<run attempt>". */
   branch: string;
+  /** The branch that the PR goes to. Leave it out for the default branch of the repo. The checkout
+   * of that repo must be on this branch, because the patch is against it. */
+  base?: string;
   /** The title of the commit and of the PR. */
   title: string;
   /** A patch file in $OUTPUT_DIR, against the commit of the checkout of that repo, such as

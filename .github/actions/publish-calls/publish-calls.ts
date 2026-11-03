@@ -83,7 +83,7 @@ const KINDS: Kind[] = ['pull-request', 'push', 'issue', 'comment', 'reply'];
 
 // The keys of each kind. A kind with text takes exactly one of body and bodyFile.
 const SCHEMA: { [K in Kind]: { required: KeysOf<K>[], optional: KeysOf<K>[], text: boolean } } = {
-  'pull-request': { required: ['repo', 'branch', 'title', 'patch'], optional: ['commitBody', 'labels'], text: true },
+  'pull-request': { required: ['repo', 'branch', 'title', 'patch'], optional: ['base', 'commitBody', 'labels'], text: true },
   'push': { required: ['repo', 'pullRequest', 'title', 'patch'], optional: ['commitBody', 'onto'], text: false },
   'issue': { required: ['repo', 'title'], optional: ['labels', 'filedFor'], text: true },
   'comment': { required: ['repo', 'issue'], optional: [], text: true },
@@ -156,7 +156,7 @@ async function publish({ github, context, core }: { github: GitHub, context: Con
           // The branch must be new, so that a mistake cannot push to main or to another branch.
           const cwd = checkoutOf(call.repo, repository);
           const commit = commitPatch({ cwd, patch: call.patch, title: call.title, body: call.commitBody, branch: call.branch, lease: '' });
-          const { data: { default_branch: base } } = await github.rest.repos.get({ owner, repo });
+          const base = call.base ?? (await github.rest.repos.get({ owner, repo })).data.default_branch;
           const { data: pr } = await github.rest.pulls.create({
             owner, repo, head: call.branch, base, title: call.title,
             body: call.body, draft: true,
@@ -315,9 +315,10 @@ function check(key: Key, value: unknown, dir: string): string | number | string[
         throw new Error(`title must be one line of 1 to ${MAX_TITLE} characters`);
       return value.trim();
     }
+    case 'base':
     case 'branch': {
       if (typeof value !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._/-]{0,199}$/.test(value) || value.includes('..') || value.endsWith('/') || value.endsWith('.lock'))
-        throw new Error(`branch must be a branch name, such as triage/123/456-1, got ${JSON.stringify(value)}`);
+        throw new Error(`${key} must be a branch name, such as triage/123/456-1, got ${JSON.stringify(value)}`);
       return value;
     }
     case 'onto': {
