@@ -59,6 +59,17 @@ world`);
   await scriptPromise;
 });
 
+it('IN-006 should resume from console', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43875' } }, async ({ page, mode }) => {
+  it.skip(mode !== 'default');
+
+  const scriptPromise = (async () => {
+    // @ts-ignore
+    await page.pause({ __testHookKeepTestTimeout: true });
+  })();
+  await page.waitForFunction(() => (window as any).playwright && (window as any).playwright.resume() !== false);
+  await scriptPromise;
+});
+
 it.describe('pause', () => {
   it.afterEach(async ({ recorderPageGetter }, testInfo) => {
     if (testInfo.status === 'skipped')
@@ -89,17 +100,6 @@ it.describe('pause', () => {
     const recorderPage = await recorderPageGetter();
     await expect(recorderPage.getByRole('button', { name: 'Resume' })).toBeEnabled();
     await recorderPage.keyboard.press('F8');
-    await scriptPromise;
-  });
-
-  it('IN-006 should resume from console', async ({ page, mode }) => {
-    it.skip(mode !== 'default');
-
-    const scriptPromise = (async () => {
-      // @ts-ignore
-      await page.pause({ __testHookKeepTestTimeout: true });
-    })();
-    await page.waitForFunction(() => (window as any).playwright && (window as any).playwright.resume() !== false);
     await scriptPromise;
   });
 
