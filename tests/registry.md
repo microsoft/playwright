@@ -3254,7 +3254,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `IN-003` | `library/inspector/pause.spec.ts` | should collapse log entries to a single line |
 | `IN-004` | `library/inspector/pause.spec.ts` | pause › should pause and resume the script |
 | `IN-005` | `library/inspector/pause.spec.ts` | pause › should pause and resume the script with keyboard shortcut |
-| `IN-006` | `library/inspector/pause.spec.ts` | pause › should resume from console |
+| `IN-006` | `library/inspector/pause.spec.ts` | should resume from console |
 | `IN-007` | `library/inspector/pause.spec.ts` | pause › should pause after a navigation |
 | `IN-008` | `library/inspector/pause.spec.ts` | pause › should show source |
 | `IN-009` | `library/inspector/pause.spec.ts` | pause › should pause on next pause |
