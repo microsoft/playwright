@@ -3,6 +3,4 @@
 # and local environment files out of the build context.
 **/.git
 **/.npmrc
-**/.netrc
 **/.env*
-**/node_modules
