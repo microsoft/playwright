@@ -45,6 +45,7 @@ extends:
         timeoutInMinutes: 360
         steps:
         - checkout: self
+          persistCredentials: false
           fetchDepth: 0
           displayName: "Checkout code"
 

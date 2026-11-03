@@ -38,6 +38,7 @@ extends:
             artifact: esrp-build
         steps:
         - checkout: self
+          persistCredentials: false
           displayName: "Checkout code"
 
         - task: Bash@3
