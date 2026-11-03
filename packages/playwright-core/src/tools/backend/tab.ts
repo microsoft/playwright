@@ -619,12 +619,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   }
 
   async waitForTimeout(time: number) {
-    if (this._javaScriptBlocked()) {
-      await new Promise(f => setTimeout(f, time));
-      return;
-    }
-
-    await this.page.evaluate(ms => new Promise(f => setTimeout(f, ms)), time).catch(() => {});
+    await new Promise(f => setTimeout(f, time));
   }
 }
 
