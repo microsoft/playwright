@@ -1,0 +1,8 @@
+# This directory is the Docker build context (see build.sh), and the images only
+# need playwright-core.tar.gz from it. Keep VCS metadata, registry credentials
+# and local environment files out of the build context.
+**/.git
+**/.npmrc
+**/.netrc
+**/.env*
+**/node_modules
