@@ -105,7 +105,9 @@ test('should diff based on base commit', async ({ runInlineTest, git, writeFiles
   expect(result.output).toContain('b.spec.ts');
 });
 
-test('should understand dependency structure', async ({ runInlineTest, git, writeFiles }) => {
+test('should understand dependency structure', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43824' },
+}, async ({ runInlineTest, git, writeFiles }) => {
   await writeFiles({
     'a.spec.ts': `
     import { test, expect } from '@playwright/test';
@@ -149,6 +151,43 @@ test('should understand dependency structure', async ({ runInlineTest, git, writ
   expect(result.output).toContain('a.spec.ts');
   expect(result.output).toContain('b.spec.ts');
   expect(result.output).not.toContain('c.spec.ts');
+
+  await writeFiles({
+    'utils.ts': `
+      export * from './answer';
+      export * from './question';
+      export const ready = import('./leaf.mjs');
+    `,
+    'leaf.mjs': `export const value = 'original';`,
+  });
+  git('add .');
+  git('commit -m mixed');
+  const mixedResult = await runInlineTest({
+    'leaf.mjs': `export const value = 'changed';`,
+  }, { 'only-changed': true, 'list': true }, { PLAYWRIGHT_FORCE_ASYNC_LOADER: '1' });
+  expect(mixedResult.exitCode).toBe(0);
+  expect(mixedResult.output).toContain('a.spec.ts');
+  expect(mixedResult.output).toContain('b.spec.ts');
+  expect(mixedResult.output).not.toContain('c.spec.ts');
+  expect(mixedResult.output).toContain('Total: 2 tests in 2 files');
+
+  const packageJson = `{ "type": "module" }`;
+  await writeFiles({ 'package.json': packageJson });
+  git('add .');
+  git('commit -m esm');
+
+  for (const env of [{}, { PLAYWRIGHT_FORCE_ASYNC_LOADER: '1' }]) {
+    const esmResult = await runInlineTest({
+      'package.json': packageJson,
+      'question.ts': `export const question = "changed";`,
+    }, { 'only-changed': true, 'list': true }, env);
+
+    expect(esmResult.exitCode).toBe(0);
+    expect(esmResult.output).toContain('a.spec.ts');
+    expect(esmResult.output).toContain('b.spec.ts');
+    expect(esmResult.output).not.toContain('c.spec.ts');
+    expect(esmResult.output).toContain('Total: 2 tests in 2 files');
+  }
 });
 
 test('watch mode is not supported', async ({ runWatchTest }) => {

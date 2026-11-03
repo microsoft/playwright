@@ -18,7 +18,7 @@ import path from 'path';
 
 import { isWorkerProcess, setCurrentlyLoadingFileSuite } from '../globals';
 import { Suite } from './test';
-import { requireOrImport, startCollectingFileDeps, stopCollectingFileDeps } from '../transform/transform';
+import { installTransformIfNeeded, requireOrImport, startCollectingFileDeps, stopCollectingFileDeps } from '../transform/transform';
 import { serializeError } from '../util';
 
 import type { Location, TestError } from '../../types/testReporter';
@@ -39,9 +39,10 @@ export async function loadTestFile(file: string, config: FullConfigInternal, tes
   suite._tags = [...config.config.tags];
 
   setCurrentlyLoadingFileSuite(suite);
-  if (!isWorkerProcess())
-    await startCollectingFileDeps();
   try {
+    installTransformIfNeeded();
+    if (!isWorkerProcess())
+      await startCollectingFileDeps();
     await requireOrImport(file);
     cachedFileSuites.set(file, suite);
   } catch (e) {

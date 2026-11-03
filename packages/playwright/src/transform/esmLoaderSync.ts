@@ -17,7 +17,7 @@
 import fs from 'fs';
 import url from 'url';
 
-import { currentFileDepsCollector } from './compilationCache';
+import { recordResolvedFile } from './compilationCache';
 import { hasTransformedExtension, isStyleFile, resolveHook, shouldTransform, transformHook } from './transform';
 import { fileIsModule } from '../util';
 
@@ -36,8 +36,7 @@ export function resolve(specifier: string, context: { parentURL?: string, condit
     }
   }
   const result = nextResolve(specifier, context);
-  if (result?.url && result.url.startsWith('file://'))
-    currentFileDepsCollector()?.add(url.fileURLToPath(result.url));
+  recordResolvedFile(result?.url, context.parentURL);
   return result;
 }
 

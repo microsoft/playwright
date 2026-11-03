@@ -323,7 +323,7 @@ export async function requireOrImport(file: string) {
 
 let transformInstalled = false;
 
-function installTransformIfNeeded() {
+export function installTransformIfNeeded() {
   if (transformInstalled)
     return;
   transformInstalled = true;
@@ -476,7 +476,7 @@ export async function startCollectingFileDeps() {
 export async function stopCollectingFileDeps(file: string) {
   cc.stopCollectingFileDeps(file);
   if (loaderChannel)
-    await loaderChannel.send('stopCollectingFileDeps', { file });
+    await loaderChannel.send('stopCollectingFileDeps', { file, dependencies: [...cc.dependenciesForTestFile(file)] });
 }
 
 export async function incorporateCompilationCache() {

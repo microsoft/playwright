@@ -17,7 +17,7 @@
 import fs from 'fs';
 import url from 'url';
 
-import { addToCompilationCache, currentFileDepsCollector, serializeCompilationCache, startCollectingFileDeps, stopCollectingFileDeps } from './compilationCache';
+import { addToCompilationCache, recordResolvedFile, serializeCompilationCache, startCollectingFileDeps, stopCollectingFileDeps } from './compilationCache';
 import { PortTransport } from './portTransport';
 import { hasTransformedExtension, isStyleFile, resolveHook, setSingleTSConfig, setTransformConfig, shouldTransform, transformHook } from './transform';
 import { fileIsModule } from '../util';
@@ -39,8 +39,7 @@ async function resolve(originalSpecifier: string, context: { parentURL?: string 
   const result = await defaultResolve(specifier, context, defaultResolve);
   // Note: we collect dependencies here that will be sent to the main thread
   // (and optionally runner process) after the loading finishes.
-  if (result?.url && result.url.startsWith('file://'))
-    currentFileDepsCollector()?.add(url.fileURLToPath(result.url));
+  recordResolvedFile(result?.url, context.parentURL);
 
   if (originalSpecifier.endsWith(esmPreflightExtension))
     result.url = result.url + esmPreflightExtension;
@@ -135,7 +134,7 @@ function createTransport(port: MessagePort) {
     }
 
     if (method === 'stopCollectingFileDeps') {
-      stopCollectingFileDeps(params.file);
+      stopCollectingFileDeps(params.file, params.dependencies);
       return;
     }
   });

@@ -2,6 +2,7 @@
 ../util.ts
 ../globals.ts
 ../package.ts
+@isomorphic/multimap.ts
 @utils/**
 
 node_modules/json5
