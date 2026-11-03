@@ -753,6 +753,31 @@ it.describe('runFor', () => {
     expect(stub.callCount).toBe(2);
     expect(gotTime).toBeGreaterThan(1010);
   });
+
+  it('CK-221 should wait for an in-progress timer after replay pauses the clock', {
+    annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43869' },
+  }, async ({ clock }) => {
+    const times: number[] = [];
+    let pausePromise: Promise<number> | undefined;
+    const replayed = new Promise<void>(resolve => {
+      for (let i = 0; i < 6; i++) {
+        clock.setTimeout(() => {
+          if (i === 1) {
+            void clock.log('pauseAt', Date.now(), 1000);
+            clock.now();
+            pausePromise = clock.pauseAt(9000);
+            resolve();
+          }
+          times.push(clock.Date.now());
+        }, 0);
+      }
+    });
+    clock.resume();
+    await replayed;
+    await pausePromise;
+    expect(times.slice(1)).toEqual([1000, 1000, 1000, 1000, 1000]);
+    expect(clock.Date.now()).toBe(9000);
+  });
 });
 
 it.describe('clearTimeout', () => {

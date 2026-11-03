@@ -535,17 +535,27 @@ it.describe('while on pause', () => {
   });
 
   it('CK-045 should stay paused on the next page when an init script reads the time', {
-    annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43214' },
+    annotation: [
+      { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43214' },
+      { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43869' },
+    ],
   }, async ({ page, server }) => {
+    server.setRoute('/timer.html', (req, res) => {
+      res.setHeader('Content-Type', 'text/html');
+      res.end(`<script>setTimeout(() => document.documentElement.dataset.fired = 'true', 0);</script>`);
+    });
     await page.clock.install({ time: 0 });
     await page.clock.pauseAt(1000);
     await page.addInitScript(() => Date.now());
     await page.goto(server.EMPTY_PAGE);
     await page.clock.runFor(1000);
-    await page.goto(server.PREFIX + '/title.html');
+    await page.goto(server.PREFIX + '/timer.html');
     expect(await page.evaluate(() => Date.now())).toBe(2000);
     await page.waitForTimeout(500);
     expect(await page.evaluate(() => Date.now())).toBe(2000);
+    expect(await page.evaluate(() => document.documentElement.dataset.fired)).toBeUndefined();
+    await page.clock.runFor(0);
+    expect(await page.evaluate(() => document.documentElement.dataset.fired)).toBe('true');
   });
 
   it('CK-046 should not advance performance.now() before the first clock call on a new page', {
@@ -555,6 +565,22 @@ it.describe('while on pause', () => {
     await page.goto(server.EMPTY_PAGE);
     await page.waitForTimeout(500);
     expect(await page.evaluate(() => [performance.now(), Date.now()])).toEqual([0, 1000]);
+  });
+
+  it('CK-220 should keep timers scheduled during load pending when paused', {
+    annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43869' },
+  }, async ({ page, server }) => {
+    server.setRoute('/timer.html', (req, res) => {
+      res.setHeader('Content-Type', 'text/html');
+      res.end(`<script>setTimeout(() => document.documentElement.dataset.fired = 'true', 0);</script>`);
+    });
+    await page.clock.install({ time: 0 });
+    await page.clock.pauseAt(1000);
+    await page.goto(server.PREFIX + '/timer.html');
+    await page.waitForTimeout(500);
+    expect(await page.evaluate(() => document.documentElement.dataset.fired)).toBeUndefined();
+    await page.clock.runFor(0);
+    expect(await page.evaluate(() => document.documentElement.dataset.fired)).toBe('true');
   });
 });
 

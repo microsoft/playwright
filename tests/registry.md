@@ -1225,6 +1225,8 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `CK-217` | `library/unit/clock.spec.ts` | Intl API › Creates a RelativeTimeFormat like normal |
 | `CK-218` | `library/unit/clock.spec.ts` | works with slow setTimeout in busy embedder |
 | `CK-219` | `library/unit/clock.spec.ts` | works with slow setTimeout in busy embedder when not paused |
+| `CK-220` | `library/page-clock.spec.ts` | while on pause › should keep timers scheduled during load pending when paused |
+| `CK-221` | `library/unit/clock.spec.ts` | runFor › should wait for an in-progress timer after replay pauses the clock |
 
 ### CL — Click
 

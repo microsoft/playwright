@@ -251,6 +251,8 @@ export class ClockController {
         // eslint-disable-next-line no-console
         realTimeTimer.promise = this._runTo(this._now.ticks).catch(e => console.error(e));
         void realTimeTimer.promise.then(() => {
+          if (this._currentRealTimeTimer !== realTimeTimer)
+            return;
           this._currentRealTimeTimer = undefined;
           if (this._realTime)
             this._updateRealTimeTimer();
@@ -477,6 +479,10 @@ export class ClockController {
       this._innerResume();
     } else {
       this._realTime = undefined;
+      if (!this._currentRealTimeTimer?.promise) {
+        this._currentRealTimeTimer?.cancel();
+        this._currentRealTimeTimer = undefined;
+      }
     }
 
     this._log.length = 0;
