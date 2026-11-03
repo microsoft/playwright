@@ -17,17 +17,16 @@
 import type { APIRequestContext, Browser, BrowserContext, BrowserContextOptions, Page, LaunchOptions, ViewportSize, Geolocation, HTTPCredentials, Locator, APIResponse, PageScreenshotOptions } from 'playwright-core';
 export * from 'playwright-core';
 
-export type ReporterSecretsOptions = { secrets?: { name?: string, value: string }[] };
-export type BlobReporterOptions = ReporterSecretsOptions & { outputDir?: string, fileName?: string };
-export type DotReporterOptions = ReporterSecretsOptions & { omitTags?: boolean };
-export type FailuresReporterOptions = ReporterSecretsOptions & { omitTags?: boolean };
-export type LineReporterOptions = ReporterSecretsOptions & { omitTags?: boolean };
-export type ListReporterOptions = ReporterSecretsOptions & { printSteps?: boolean, printFailuresInline?: boolean, omitTags?: boolean };
-export type GitHubReporterOptions = ReporterSecretsOptions & { omitTags?: boolean };
-export type JUnitReporterOptions = ReporterSecretsOptions & { outputFile?: string, stripANSIControlSequences?: boolean, includeProjectInTestName?: boolean, includeRetries?: boolean, omitTags?: boolean, onlyFailures?: boolean };
-export type JsonReporterOptions = ReporterSecretsOptions & { outputFile?: string, onlyFailures?: boolean };
-export type PerfettoReporterOptions = ReporterSecretsOptions & { outputFile?: string };
-export type HtmlReporterOptions = ReporterSecretsOptions & {
+export type BlobReporterOptions = { outputDir?: string, fileName?: string };
+export type DotReporterOptions = { omitTags?: boolean };
+export type FailuresReporterOptions = { omitTags?: boolean };
+export type LineReporterOptions = { omitTags?: boolean };
+export type ListReporterOptions = { printSteps?: boolean, printFailuresInline?: boolean, omitTags?: boolean };
+export type GitHubReporterOptions = { omitTags?: boolean };
+export type JUnitReporterOptions = { outputFile?: string, stripANSIControlSequences?: boolean, includeProjectInTestName?: boolean, includeRetries?: boolean, omitTags?: boolean, onlyFailures?: boolean };
+export type JsonReporterOptions = { outputFile?: string, onlyFailures?: boolean };
+export type PerfettoReporterOptions = { outputFile?: string };
+export type HtmlReporterOptions = {
   onlyFailures?: boolean;
   outputFolder?: string;
   open?: 'always' | 'never' | 'on-failure';
@@ -52,7 +51,7 @@ export type ReporterDescription = Readonly<
   ['json'] | ['json', JsonReporterOptions] |
   ['perfetto'] | ['perfetto', PerfettoReporterOptions] |
   ['html'] | ['html', HtmlReporterOptions] |
-  ['null'] | ['null', ReporterSecretsOptions] |
+  ['null'] |
   [string] | [string, any]
 >;
 
@@ -280,7 +279,7 @@ export interface PlaywrightWorkerOptions {
   connectOptions: ConnectOptions | undefined;
   reuseContext: boolean;
   screenshot: ScreenshotMode | { mode: ScreenshotMode } & Pick<PageScreenshotOptions, 'fullPage' | 'omitBackground'>;
-  trace: TraceMode | /** deprecated */ 'retry-with-trace' | { mode: TraceMode, snapshots?: boolean | { dom?: boolean, aria?: boolean, screen?: boolean }, screenshots?: boolean, sources?: boolean, attachments?: boolean, secrets?: string | { name?: string, value: string }[] };
+  trace: TraceMode | /** deprecated */ 'retry-with-trace' | { mode: TraceMode, snapshots?: boolean | { dom?: boolean, aria?: boolean, screen?: boolean }, screenshots?: boolean, sources?: boolean, attachments?: boolean };
   video: VideoMode | /** deprecated */ 'retry-with-video' | { mode: VideoMode, size?: ViewportSize, fps?: number, show?: { actions?: { duration?: number, position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right', /** @deprecated Use `style.title` instead. */ fontSize?: number, cursor?: 'none' | 'pointer', style?: { point?: string, highlight?: string, title?: string } }, test?: { level?: 'file' | 'title' | 'step', position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right', fontSize?: number } } };
 }
 

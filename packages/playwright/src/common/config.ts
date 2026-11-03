@@ -49,7 +49,6 @@ export class FullConfigInternal {
   readonly singleTSConfigPath?: string;
   readonly captureGitInfo: Config['captureGitInfo'];
   readonly retryStrategy: 'immediate' | 'isolated';
-  readonly reporterDescriptions: ReporterDescription[];  // Includes secrets, unlike FullConfig.reporter
   defineConfigWasUsed = false;
 
   globalSetups: string[] = [];
@@ -78,8 +77,6 @@ export class FullConfigInternal {
     // so that plugins such as gitCommitInfoPlugin can populate metadata once.
     userConfig.metadata = userConfig.metadata || {};
 
-    this.reporterDescriptions = [...takeFirst(configCLIOverrides.reporter, resolveReporters(userConfig.reporter, configDir), [[defaultReporter]]), ...(configCLIOverrides.additionalReporters ?? [])];
-
     const globalTags = Array.isArray(userConfig.tag) ? userConfig.tag : (userConfig.tag ? [userConfig.tag] : []);
     for (const tag of globalTags) {
       if (tag[0] !== '@')
@@ -104,7 +101,7 @@ export class FullConfigInternal {
       projects: [],
       filteredProjects: [],
       quiet: takeFirst(configCLIOverrides.quiet, userConfig.quiet, false),
-      reporter: this.reporterDescriptions.map(description => stripReporterSecrets(description)),
+      reporter: [...takeFirst(configCLIOverrides.reporter, resolveReporters(userConfig.reporter, configDir), [[defaultReporter]]), ...(configCLIOverrides.additionalReporters ?? [])],
       reportSlowTests: takeFirst(userConfig.reportSlowTests, { max: 5, threshold: 300_000 /* 5 minutes */ }),
       shard: takeFirst(configCLIOverrides.shard, userConfig.shard, null),
       tags: globalTags,
@@ -221,15 +218,6 @@ function pathResolve(baseDir: string, relative: string | undefined): string | un
   if (!relative)
     return undefined;
   return path.resolve(baseDir, relative);
-}
-
-export function stripReporterSecrets(description: ReporterDescription): ReporterDescription {
-  const [name, options] = description;
-  if (!options || typeof options !== 'object' || !('secrets' in options))
-    return description;
-  const rest = { ...options };
-  delete rest.secrets;
-  return [name, rest];
 }
 
 function resolveReporters(reporters: Config['reporter'], rootDir: string): ReporterDescription[] | undefined {
