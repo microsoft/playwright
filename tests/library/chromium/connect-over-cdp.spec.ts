@@ -25,18 +25,47 @@ import { suppressCertificateWarning } from '../../config/utils';
 const { WebSocketTransport, nullProgress } = coreServer;
 type Frame = coreServer.Frame;
 
-test('CD-001 should connect to an existing cdp session', async ({ browserType, mode }, testInfo) => {
-  const port = 9339 + testInfo.workerIndex;
-  const browserServer = await browserType.launch({
-    args: ['--remote-debugging-port=' + port]
+test('CD-001 should connect to an existing cdp session', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43880' },
+}, async ({ browserType, createUserDataDir, childProcess }, testInfo) => {
+  const configHome = await createUserDataDir();
+  const userDataDir = path.join(configHome, 'google-chrome');
+  const browserServer = await browserType.launchPersistentContext(userDataDir, {
+    args: ['--remote-debugging-port=0']
   });
   try {
+    const [port] = (await fs.promises.readFile(path.join(userDataDir, 'DevToolsActivePort'), 'utf-8')).split('\n');
     const cdpBrowser = await browserType.connectOverCDP({
       endpointURL: `http://127.0.0.1:${port}/`,
     });
     const contexts = cdpBrowser.contexts();
     expect(contexts.length).toBe(1);
     await cdpBrowser.close();
+
+    if (process.platform === 'linux') {
+      for (const env of [
+        { CHROME_USER_DATA_DIR: '', CHROME_CONFIG_HOME: '', XDG_CONFIG_HOME: configHome },
+        { CHROME_USER_DATA_DIR: '', CHROME_CONFIG_HOME: configHome, XDG_CONFIG_HOME: testInfo.outputPath('unused-config') },
+        { CHROME_USER_DATA_DIR: userDataDir, CHROME_CONFIG_HOME: testInfo.outputPath('unused-config'), XDG_CONFIG_HOME: testInfo.outputPath('unused-xdg-config') },
+      ]) {
+        const child = childProcess({
+          command: [process.execPath, '-e', `
+            const { chromium } = require(${JSON.stringify(require.resolve('playwright-core'))});
+            (async () => {
+              const browser = await chromium.connectOverCDP('chrome');
+              console.log('contexts: ' + browser.contexts().length);
+              await browser.close();
+            })().catch(error => {
+              console.error(error);
+              process.exitCode = 1;
+            });
+          `],
+          env,
+        });
+        await child.cleanExit();
+        expect(child.stdout).toContain('contexts: 1');
+      }
+    }
   } finally {
     await browserServer.close();
   }
