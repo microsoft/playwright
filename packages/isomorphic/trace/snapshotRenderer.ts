@@ -138,6 +138,10 @@ export class SnapshotRenderer {
         const hasUnsafeHttpEquiv = isMeta && attrs.some(a => a[0].toLowerCase() === 'http-equiv' && !kAllowedMetaHttpEquivs.has(a[1].trim().toLowerCase()));
         for (const [attr, value] of attrs) {
           let attrName = attr;
+          // Reject names that would emit extra attributes (space, =, <, >, /, quotes).
+          // For example, a crafted trace could use " onerror" to bypass the "on" check below.
+          if (!attr || /[\s=<>\/"']/.test(attr))
+            continue;
           // Strip event handler attributes. The capture side already empties these,
           // but a crafted trace file could include live handlers (e.g. onerror, onclick).
           // escapeHTMLAttribute does not help because payloads like "alert(1)" contain

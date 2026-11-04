@@ -164,6 +164,16 @@ test('TV-132 snapshot renderer drops unsafe tag names that smuggle attributes', 
   expect(html).toContain('safe');
 });
 
+test('TV-137 snapshot renderer drops unsafe attribute names that smuggle attributes', () => {
+  const renderer = new SnapshotRenderer(new LRUCache(1_000_000), [], [makeSnapshot({
+    html: ['HTML', {}, ['BODY', {}, ['IMG', { ' onerror': 'alert(1)', 'x onmouseover=alert(2)': 'y', 'alt': 'safe' }]]],
+  })], [], 0);
+  const { html } = renderer.render();
+  expect(html).not.toContain('alert(1)');
+  expect(html).not.toContain('alert(2)');
+  expect(html).toContain('<IMG alt="safe">');
+});
+
 test('TV-133 snapshot renderer still renders ordinary custom elements', () => {
   const renderer = new SnapshotRenderer(new LRUCache(1_000_000), [], [makeSnapshot({
     html: ['HTML', {}, ['BODY', {},
