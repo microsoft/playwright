@@ -15,11 +15,40 @@
  */
 
 /**
- * WebSocket server that bridges Playwright MCP and Chrome Extension.
+ * WebSocket server that bridges Playwright MCP and the Playwright extension.
  *
- * Endpoints:
- * - /cdp/guid - Full CDP interface for Playwright MCP
- * - /extension/guid - Extension connection
+ *   Playwright (connectOverCDP)
+ *        │  CDP: Target.*, Page.*, ... with pw-tab-N session ids
+ *        ▼  ws /cdp/<uuid>
+ *   ┌─ CDPRelayServer (this file) ───────────────────────────────────────────┐
+ *   │ Speaks: CDP framing only (command ids ↔ responses). Launches Chrome    │
+ *   │ with the connect page, accepts both sockets, waits for the handshake.  │
+ *   │ Knows nothing about tabs, sessions or chrome.* APIs.                   │
+ *   │ ┌─ BrowserModel (browserModel.ts) ────────────────────────────────────┐│
+ *   │ │ Speaks: CDP semantics AND the extension protocol. The only          ││
+ *   │ │ translator, in both directions:                                     ││
+ *   │ │   CDP command    → chrome.* command  (Target.*, Browser.* switch)   ││
+ *   │ │   chrome.* event → CDP event         (chrome.tabs/debugger switch)  ││
+ *   │ │ State: tab id ↔ pw-tab-N session id, child sessions (workers).      ││
+ *   │ │ ┌─ ExtensionConnection ────────────────────────────────────────────┐││
+ *   │ │ │ Speaks: extension protocol framing only (ids ↔ responses).       │││
+ *   │ │ └──────────────────────────────────────────────────────────────────┘││
+ *   │ └─────────────────────────────────────────────────────────────────────┘│
+ *   └────┬───────────────────────────────────────────────────────────────────┘
+ *        │  extension protocol (protocol.ts): chrome.* calls and events
+ *        │  mirrored 1:1, plus extension.initialized
+ *        ▼  ws /extension/<uuid>
+ *   ┌─ Playwright extension (packages/extension/src) ────────────────────────┐
+ *   │ RelayConnection: speaks extension protocol ↔ chrome.* APIs. Invokes    │
+ *   │   allow-listed chrome.* commands reflectively, forwards the            │
+ *   │   chrome.debugger and chrome.tabs events of attached tabs.             │
+ *   │ ConnectedTabGroup: speaks chrome.tabGroups only. The Chrome tab group  │
+ *   │   is the source of truth for which tabs a client controls.             │
+ *   │ background.ts: one ConnectedTabGroup per client, connect page flow.    │
+ *   └────┬───────────────────────────────────────────────────────────────────┘
+ *        │  chrome.debugger / chrome.tabs / chrome.tabGroups
+ *        ▼
+ *   Chrome
  *
  * Handshake: the extension connects first, reports its initial tabs with
  * `chrome.tabs.onCreated`, then sends `extension.initialized`. Only then is
