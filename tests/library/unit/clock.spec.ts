@@ -778,6 +778,26 @@ it.describe('runFor', () => {
     expect(times.slice(1)).toEqual([1000, 1000, 1000, 1000, 1000]);
     expect(clock.Date.now()).toBe(9000);
   });
+
+  it('CK-222 should wait for the in-progress tick when a timer schedules another timer', {
+    annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43905' },
+  }, async ({ clock }) => {
+    const stub = createStub();
+    const paused = new Promise<void>(resolve => {
+      clock.requestAnimationFrame(() => {
+        clock.requestAnimationFrame(() => {});
+        void Promise.resolve().then(async () => {
+          await clock.pauseAt(clock.Date.now());
+          clock.setTimeout(stub, 0);
+          await clock.runFor(0);
+          resolve();
+        });
+      });
+    });
+    clock.resume();
+    await paused;
+    expect(stub.callCount).toBe(1);
+  });
 });
 
 it.describe('clearTimeout', () => {
