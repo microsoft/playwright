@@ -91,7 +91,7 @@ checks in `publish-calls.ts` are written by hand; keep them in line with `calls.
 
 | Call | Keys | What `publish-calls` does |
 |---|---|---|
-| `pull-request` | `repo`, `branch`, `title`, `patch`, `body` or `bodyFile`, `commitBody`, `labels` | Applies the patch to the checkout with `git apply --index`, rejects a patch that touches `.github/`, commits as the app, pushes to the branch, which must not exist yet, and opens a draft PR on the default branch with the labels that the repo has. |
+| `pull-request` | `repo`, `branch`, `base`, `title`, `patch`, `body` or `bodyFile`, `commitBody`, `labels` | Applies the patch to the checkout with `git apply --index`, rejects a patch that touches `.github/`, commits as the app, pushes to the branch, which must not exist yet, and opens a draft PR on `base`, or on the default branch without it, with the labels that the repo has. |
 | `push` | `repo`, `pullRequest`, `title`, `patch`, `commitBody`, `onto` | Checks that the PR is open and comes from a branch of the repo, and pushes to that branch. With `onto`, the patch is the whole PR against that commit: the PR is replayed on it and the branch is replaced. The push fails when the branch moved since the checkout. |
 | `issue` | `repo`, `title`, `body` or `bodyFile`, `labels`, `filedFor` | Uses an open issue whose text has the `filedFor` URL, or files one with the labels that the repo has. |
 | `comment` | `repo`, `issue`, `body` or `bodyFile` | Posts the text, with `{{pull-request}}` and `{{issue}}` replaced by the URLs of what the calls before it opened, or by a note when they failed. |
