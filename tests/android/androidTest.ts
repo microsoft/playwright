@@ -36,7 +36,9 @@ async function closeAllActivities(device: AndroidDevice) {
 
 export const androidTest = baseTest.extend<PageTestFixtures & AndroidTestFixtures, AndroidWorkerFixtures>({
   androidDeviceWorker: [async ({ playwright }, run) => {
-    const device = (await playwright._android.devices())[0];
+    const [device] = await playwright._android.devices();
+    if (!device)
+      throw new Error('No Android device is attached. Start the emulator with utils/avd_start.sh and check "adb devices".');
     await closeAllActivities(device);
     device.setDefaultTimeout(90000);
     await run(device);
