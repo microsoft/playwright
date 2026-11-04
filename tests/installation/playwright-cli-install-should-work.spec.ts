@@ -298,10 +298,13 @@ test('install --latest should pin browser versions in .playwright/browsers.json'
   const browsersJSONPath = path.join(localDir, 'browsers.json');
   const packageJSON = JSON.parse(await fs.promises.readFile(path.join(tmpWorkspace, 'node_modules', 'playwright-core', 'package.json'), 'utf-8'));
   const packageBrowsersJSON = JSON.parse(await fs.promises.readFile(path.join(tmpWorkspace, 'node_modules', 'playwright-core', 'browsers.json'), 'utf-8'));
-  const { browserVersion } = packageBrowsersJSON.browsers.find(b => b.name === 'chromium');
+  const { revision } = packageBrowsersJSON.browsers.find(b => b.name === 'chromium');
+
+  // TODO: remove PWTEST_STUB_LATEST_BROWSERS once the file is published on the CDN.
+  const env = { PWTEST_STUB_LATEST_BROWSERS: '1' };
 
   await test.step('playwright install chromium --latest', async () => {
-    const result = await exec('npx playwright install chromium --latest');
+    const result = await exec('npx playwright install chromium --latest', { env });
     expect(result).toContain(`Pinned the latest browser versions in ${browsersJSONPath}`);
     expect(result).toHaveLoggedSoftwareDownload(['chromium', 'chromium-headless-shell', 'ffmpeg', ...extraInstalledSoftware]);
     const browsersJSON = JSON.parse(await fs.promises.readFile(browsersJSONPath, 'utf-8'));
@@ -310,8 +313,8 @@ test('install --latest should pin browser versions in .playwright/browsers.json'
     expect(names).toEqual(expect.arrayContaining(['chromium', 'chromium-headless-shell', 'ffmpeg']));
     expect(names).not.toContain('firefox');
     const chromium = browsersJSON.browsers.find(b => b.name === 'chromium');
-    expect(chromium.revision).toBe(browserVersion);
-    expect(fs.existsSync(path.join(_browsersPath, `chromium-${browserVersion}`))).toBe(true);
+    expect(chromium.revision).toBe(revision);
+    expect(fs.existsSync(path.join(_browsersPath, `chromium-${revision}`))).toBe(true);
   });
 
   await test.step('playwright install uses the pinned versions', async () => {
@@ -347,7 +350,7 @@ test('install --latest should pin browser versions in .playwright/browsers.json'
     const sanity = await exec('node sanity.js playwright chromium', { expectToExitWithError: true });
     expect(sanity).toContain(`were pinned for Playwright 1.1.0`);
     // Pinning again fixes the file.
-    const result2 = await exec('npx playwright install chromium --latest');
+    const result2 = await exec('npx playwright install chromium --latest', { env });
     expect(result2).toContain(`Pinned the latest browser versions in ${browsersJSONPath}`);
     expect(result2).toHaveLoggedSoftwareDownload([]);
   });

@@ -30,7 +30,7 @@ import { calculateSha1 } from '@utils/crypto';
 import { getAsBooleanFromENV, getFromENV, getPackageManagerExecCommand } from '@utils/env';
 import { lock } from '@utils/third_party/lockfile';
 import { fetchData } from '../utils';
-import { getEmbedderName } from '../userAgent';
+import { getEmbedderName, getUserAgent } from '../userAgent';
 import { installDependenciesLinux, installDependenciesWindows, validateDependenciesLinux, validateDependenciesWindows } from './dependencies';
 import { dockerVersion, readDockerVersionSync, transformCommandsForRoot } from './dependencies';
 import { downloadBrowserWithProgressBar, logPolitely } from './browserFetcher';
@@ -608,14 +608,10 @@ function downloadSocketTimeout(): number {
   return +(downloadSocketTimeoutEnv || '0') || NET_DEFAULT_TIMEOUT;
 }
 
-// Stub until the file is published on the CDN: the package versions,
-// with chromium revisions in the new "browser version" scheme.
 function stubLatestBrowsersJSON(): string {
   const browsersJSON: BrowsersJSON = {
     playwrightVersion: packageJSON.version,
     browsers: packageBrowsersJSON().browsers.map(({ name, revision, browserVersion, title, revisionOverrides }) => {
-      if (name.startsWith('chromium') && browserVersion)
-        revision = browserVersion;
       return { name, revision, browserVersion, title, revisionOverrides };
     }),
   };
@@ -630,17 +626,15 @@ async function fetchLatestBrowsersJSON(): Promise<BrowsersJSON> {
   for (let attempt = 1; attempt <= retryCount; ++attempt) {
     debugLogger.log('install', `fetching latest browser versions from ${url} - attempt #${attempt}`);
     try {
-      // TODO: fetch the file from the CDN once it is published there, with getUserAgent() from '../userAgent'.
-      // const content = await fetchData(undefined, {
-      //   url,
-      //   headers: { 'User-Agent': getUserAgent() },
-      //   socketTimeout: downloadSocketTimeout(),
-      // }, async (params, response) => {
-      //   const error = new Error(`server returned code ${response.statusCode}. URL: ${params.url}`);
-      //   (error as any).statusCode = response.statusCode;
-      //   return error;
-      // });
-      const content = stubLatestBrowsersJSON();
+      const content = getAsBooleanFromENV('PWTEST_STUB_LATEST_BROWSERS') ? stubLatestBrowsersJSON() : await fetchData(undefined, {
+        url,
+        headers: { 'User-Agent': getUserAgent() },
+        socketTimeout: downloadSocketTimeout(),
+      }, async (params, response) => {
+        const error = new Error(`server returned code ${response.statusCode}. URL: ${params.url}`);
+        (error as any).statusCode = response.statusCode;
+        return error;
+      });
       return parseBrowsersJSON(url, content);
     } catch (e) {
       debugLogger.log('install', `attempt #${attempt} - ERROR: ${e.message}`);
@@ -654,6 +648,8 @@ async function fetchLatestBrowsersJSON(): Promise<BrowsersJSON> {
 
 export async function pinLatestBrowsers(executableNames: string[]): Promise<string> {
   const latest = await fetchLatestBrowsersJSON();
+  if (!isCompatibleOverride(latest))
+    throw new Error(`Latest browser versions were published for Playwright ${latest.playwrightVersion}, but the current version is ${packageJSON.version}`);
   let existing: BrowsersJSONOverride | undefined;
   try {
     existing = readBrowsersJSONOverride(localOverrideDirectory);

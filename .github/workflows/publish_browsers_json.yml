@@ -1,0 +1,108 @@
+name: "publish browsers.json"
+
+# Publishes packages/playwright-core/browsers.json from the checked-out ref as the
+# "latest browser versions" for a released Playwright minor version, so that
+# `npx playwright install --latest` on that version picks up newer browser builds.
+# See fetchLatestBrowsersJSON in packages/playwright-core/src/server/registry/index.ts.
+#
+# Published to the CDN storage bucket, next to the browser builds:
+#   https://cdn.playwright.dev/builds/browser-updates/v1.65/browsers.json
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Playwright minor version to publish for, e.g. 1.65'
+        required: true
+        type: string
+
+permissions:
+  id-token: write   # This is required for OIDC login (azure/login) to succeed
+  contents: read    # This is required for actions/checkout to succeed
+
+jobs:
+  publish:
+    name: "publish browsers.json for ${{ inputs.version }}"
+    runs-on: ubuntu-24.04
+    if: github.repository == 'microsoft/playwright'
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+    - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      with:
+        node-version: lts/*
+
+    - name: Generate browsers.json
+      id: generate
+      env:
+        VERSION: ${{ inputs.version }}
+      run: |
+        set -e
+        if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+$ ]]; then
+          echo "ERROR: expected a minor version like 1.65, got '$VERSION'"
+          exit 1
+        fi
+        BLOB_PATH="browser-updates/v$VERSION/browsers.json"
+        echo "blob-path=$BLOB_PATH" >> "$GITHUB_OUTPUT"
+        mkdir -p browser-updates
+        node - "$VERSION" packages/playwright-core/browsers.json browser-updates/browsers.json <<'SCRIPT'
+          const fs = require('fs');
+          const [version, source, target] = process.argv.slice(2);
+          if (!process.env.GITHUB_SHA)
+            throw new Error('GITHUB_SHA is not set');
+          const browsersJSON = JSON.parse(fs.readFileSync(source, 'utf-8'));
+          const browsers = browsersJSON.browsers.map(({ name, revision, browserVersion, title, revisionOverrides }) => {
+            return { name, revision, browserVersion, title, revisionOverrides };
+          });
+          const result = {
+            comment: `Latest browser versions for Playwright ${version}, published from ${source} at ${process.env.GITHUB_SHA}.`,
+            playwrightVersion: version,
+            browsers,
+          };
+          fs.writeFileSync(target, JSON.stringify(result, null, 2) + '\n');
+        SCRIPT
+        echo "Publishing to $BLOB_PATH:"
+        cat browser-updates/browsers.json
+
+    - name: Azure Login
+      uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
+      with:
+        client-id: ${{ secrets.AZURE_CDN_CLIENT_ID }}
+        tenant-id: ${{ secrets.AZURE_CDN_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_CDN_SUBSCRIPTION_ID }}
+
+    - name: Upload browsers.json to CDN storage
+      env:
+        BLOB_PATH: ${{ steps.generate.outputs.blob-path }}
+        AZURE_STORAGE_ACCOUNT: ${{ secrets.AZURE_STORAGE_ACCOUNT }}
+        AZURE_STORAGE_CONTAINER: ${{ secrets.AZURE_STORAGE_CONTAINER }}
+      run: |
+        set -e
+        # The file is republished on every browser roll, overwriting the previous one.
+        # Short max-age (5 minutes) limits how long CDN edges and proxies may store it.
+        az storage blob upload --auth-mode login \
+          --account-name "$AZURE_STORAGE_ACCOUNT" \
+          --container-name "$AZURE_STORAGE_CONTAINER" \
+          --name "$BLOB_PATH" \
+          --file browser-updates/browsers.json \
+          --content-type "application/json" \
+          --content-cache "public, max-age=300" \
+          --overwrite true
+        echo "Uploaded $BLOB_PATH"
+
+    - run: az logout
+      if: always()
+
+    - name: Verify browsers.json is served
+      env:
+        BLOB_PATH: ${{ steps.generate.outputs.blob-path }}
+        AZURE_STORAGE_CONTAINER: ${{ secrets.AZURE_STORAGE_CONTAINER }}
+      run: |
+        set -e
+        URL="https://cdn.playwright.dev/$AZURE_STORAGE_CONTAINER/$BLOB_PATH"
+        curl -fsSL --retry 5 --retry-delay 10 "$URL" -o served.json
+        if ! cmp -s served.json browser-updates/browsers.json; then
+          echo "ERROR: $URL does not match the uploaded file"
+          diff served.json browser-updates/browsers.json || true
+          exit 1
+        fi
+        echo "Verified: $URL"
