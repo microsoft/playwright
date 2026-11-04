@@ -109,6 +109,7 @@ test.describe(() => {
 
     {
       // No accessible name => two boxes.
+      await expect(recorder.page.locator('x-pw-highlight')).toHaveCount(2);
       const box11 = roundBox(await submitButton.boundingBox());
       const box12 = roundBox(await recorder.page.locator('x-pw-highlight').first().boundingBox());
       expect(box11).toEqual(box12);
@@ -121,7 +122,7 @@ test.describe(() => {
     {
       // Different button.
       await recorder.recorderPage.locator('.tab-aria .CodeMirror').pressSequentially('"Cancel"');
-      await expect(recorder.page.locator('x-pw-highlight')).toBeVisible();
+      await expect(recorder.page.locator('x-pw-highlight')).toHaveCount(1);
       const box1 = roundBox(await cancelButton.boundingBox());
       const box2 = roundBox(await recorder.page.locator('x-pw-highlight').boundingBox());
       expect(box1).toEqual(box2);

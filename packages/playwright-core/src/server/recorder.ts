@@ -370,11 +370,13 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
     if (previous && previous.selector === selector && previous.anyFrame === anyFrame)
       return;
     this._highlightedSelector = selector === undefined ? undefined : { selector, anyFrame };
-    await Promise.all(this._context.pages().map(async page => {
+    await Promise.all(this._context.pages().map(page => {
+      const promises: Promise<void>[] = [];
       if (previous)
-        await page.highlightController.removeHighlight(previous.selector).catch(() => {});
+        promises.push(page.highlightController.removeHighlight(previous.selector).catch(() => {}));
       if (selector)
-        await page.highlightController.addHighlight(selector, { anyFrame }).catch(() => {});
+        promises.push(page.highlightController.addHighlight(selector, { anyFrame }).catch(() => {}));
+      return Promise.all(promises);
     }));
   }
 
