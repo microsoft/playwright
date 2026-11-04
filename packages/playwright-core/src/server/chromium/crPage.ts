@@ -1036,7 +1036,8 @@ class FrameSession {
     const promises = [];
     if (!preserveWindowBoundaries && this._windowId) {
       let insets = { width: 0, height: 0 };
-      if (this._crPage._browserContext._browser.options.headful) {
+      const browser = this._crPage._browserContext._browser;
+      if (browser.options.headful) {
         // TODO: popup windows have their own insets.
         insets = { width: 24, height: 88 };
         if (process.platform === 'win32')
@@ -1051,6 +1052,11 @@ class FrameSession {
           // Account for the infobar here to work around the bug.
           insets.height += 46;
         }
+      } else if (!browser.isHeadlessShell()) {
+        // The new headless mode lays out tabs and toolbar like the headed mode does.
+        insets = { width: 0, height: 87 };
+        if (browser.isEdge())
+          insets = process.platform === 'darwin' ? { width: 8, height: 84 } : { width: 0, height: 84 };
       }
       promises.push(this.setWindowBounds({
         width: viewportSize.width + insets.width,
