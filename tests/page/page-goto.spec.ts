@@ -694,8 +694,9 @@ it('NA-050 should fail when navigating and show the url at the error message', a
 
 it('NA-051 should be able to navigate to a page controlled by service worker', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42694' },
-}, async ({ page, server, isElectron }) => {
+}, async ({ page, server, isElectron, isAndroid }) => {
   it.skip(isElectron);
+  it.skip(isAndroid, 'Service workers need a secure context, but the Android test server is reached over http://10.0.2.2');
 
   async function transaction(value: string | null) {
     const db = await new Promise<IDBDatabase>((resolve, reject) => {
