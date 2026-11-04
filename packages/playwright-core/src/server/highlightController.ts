@@ -40,6 +40,7 @@ export class HighlightController {
   private _entries = new Map<string, HighlightEntry>();
   private _resolutionTimer: NodeJS.Timeout | undefined;
   private _resolutionChain: Promise<void> = Promise.resolve();
+  private _pendingResolution: Promise<void> | undefined;
 
   constructor(page: Page) {
     this._page = page;
@@ -90,8 +91,15 @@ export class HighlightController {
       clearTimeout(this._resolutionTimer);
       this._resolutionTimer = undefined;
     }
-    this._resolutionChain = this._resolutionChain.then(() => this._resolve()).catch(() => {});
-    return this._resolutionChain;
+    // Coalesce multiple queued highlights.
+    if (!this._pendingResolution) {
+      this._pendingResolution = this._resolutionChain.then(() => {
+        this._pendingResolution = undefined;
+        return this._resolve();
+      }).catch(() => {});
+      this._resolutionChain = this._pendingResolution;
+    }
+    return this._pendingResolution;
   }
 
   private async _resolve() {
