@@ -16,12 +16,13 @@
 
 /* eslint-disable no-console */
 
+import fs from 'fs';
 import path from 'path';
 
 import { wrapInASCIIBox } from '@utils/ascii';
 import { isLikelyNpxGlobal } from '@utils/env';
 import { assert } from '@isomorphic/assert';
-import { registry, writeDockerVersion } from '../server/registry';
+import { registry, pinLatestBrowsers, writeDockerVersion } from '../server/registry';
 
 import type { BrowserInfo } from '../server/registry';
 
@@ -43,13 +44,20 @@ function printInstalledBrowsers(browsers: BrowserInfo[]) {
 
 function printGroupedByPlaywrightVersion(browsers: BrowserInfo[]) {
   const dirToVersion = new Map<string, string>();
+  const overrideReferences: BrowserInfo[] = [];
   for (const browser of browsers) {
     if (dirToVersion.has(browser.referenceDir))
       continue;
-    const packageJSON = require(path.join(browser.referenceDir, 'package.json'));
-    const version = packageJSON.version;
-    dirToVersion.set(browser.referenceDir, version);
+    const packageJSONPath = path.join(browser.referenceDir, 'package.json');
+    const packageJSON = fs.existsSync(packageJSONPath) ? require(packageJSONPath) : undefined;
+    if (packageJSON?.name !== 'playwright-core') {
+      // A "browsers.json" override directory, not a Playwright package.
+      overrideReferences.push(browser);
+      continue;
+    }
+    dirToVersion.set(browser.referenceDir, packageJSON.version);
   }
+  browsers = browsers.filter(browser => dirToVersion.has(browser.referenceDir));
 
   const groupedByPlaywrightMinorVersion = new Map<string, BrowserInfo[]>();
   for (const browser of browsers) {
@@ -80,6 +88,11 @@ function printGroupedByPlaywrightVersion(browsers: BrowserInfo[]) {
     console.log(`\nPlaywright version: ${version}`);
     printInstalledBrowsers(groupedByPlaywrightMinorVersion.get(version)!);
   }
+
+  if (overrideReferences.length) {
+    console.log(`\nBrowser versions from browsers.json:`);
+    printInstalledBrowsers(overrideReferences);
+  }
 }
 
 export async function markDockerImage(dockerImageNameTemplate: string) {
@@ -87,7 +100,7 @@ export async function markDockerImage(dockerImageNameTemplate: string) {
   await writeDockerVersion(dockerImageNameTemplate);
 }
 
-export async function installBrowsers(args: string[], options: { withDeps?: boolean, force?: boolean, dryRun?: boolean, list?: boolean, shell?: boolean, onlyShell?: boolean, progress?: boolean, remove?: boolean }) {
+export async function installBrowsers(args: string[], options: { withDeps?: boolean, force?: boolean, dryRun?: boolean, list?: boolean, shell?: boolean, onlyShell?: boolean, progress?: boolean, remove?: boolean, latest?: boolean }) {
   if (options.progress === false)
     process.env.PLAYWRIGHT_DOWNLOAD_NO_PROGRESS = '1';
   if (isLikelyNpxGlobal()) {
@@ -113,7 +126,15 @@ export async function installBrowsers(args: string[], options: { withDeps?: bool
   if (options.shell === false && options.onlyShell)
     throw new Error(`Only one of --no-shell and --only-shell can be specified`);
   const shell = options.shell === false ? 'no' : options.onlyShell ? 'only' : undefined;
-  const executables = registry.resolveBrowsers(args, { shell });
+  let executables = registry.resolveBrowsers(args, { shell });
+  if (options.latest) {
+    if (options.list || options.dryRun)
+      throw new Error(`Only one of --latest, --list and --dry-run can be specified`);
+    const file = await pinLatestBrowsers(executables.map(e => e.name));
+    console.log(`Pinned the latest browser versions in ${file}`);
+    registry.reload();
+    executables = registry.resolveBrowsers(args, { shell });
+  }
   if (options.withDeps)
     await registry.installDeps(executables, !!options.dryRun);
   if (options.dryRun && options.list)

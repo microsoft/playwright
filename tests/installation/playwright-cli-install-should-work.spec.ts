@@ -291,3 +291,96 @@ test('should print error if recording video without ffmpeg', async ({ exec, writ
     expect(result).toContain(`browserType.launchPersistentContext: Executable doesn't exist at`);
   });
 });
+
+test('install --latest should pin browser versions in .playwright/browsers.json', async ({ exec, tmpWorkspace, _browsersPath }) => {
+  await exec('npm i playwright');
+  const localDir = path.join(await fs.promises.realpath(tmpWorkspace), '.playwright');
+  const browsersJSONPath = path.join(localDir, 'browsers.json');
+  const packageJSON = JSON.parse(await fs.promises.readFile(path.join(tmpWorkspace, 'node_modules', 'playwright-core', 'package.json'), 'utf-8'));
+  const packageBrowsersJSON = JSON.parse(await fs.promises.readFile(path.join(tmpWorkspace, 'node_modules', 'playwright-core', 'browsers.json'), 'utf-8'));
+  const { browserVersion } = packageBrowsersJSON.browsers.find(b => b.name === 'chromium');
+
+  await test.step('playwright install chromium --latest', async () => {
+    const result = await exec('npx playwright install chromium --latest');
+    expect(result).toContain(`Pinned the latest browser versions in ${browsersJSONPath}`);
+    expect(result).toHaveLoggedSoftwareDownload(['chromium', 'chromium-headless-shell', 'ffmpeg', ...extraInstalledSoftware]);
+    const browsersJSON = JSON.parse(await fs.promises.readFile(browsersJSONPath, 'utf-8'));
+    expect(browsersJSON.playwrightVersion).toBe(packageJSON.version);
+    const names = browsersJSON.browsers.map(b => b.name);
+    expect(names).toEqual(expect.arrayContaining(['chromium', 'chromium-headless-shell', 'ffmpeg']));
+    expect(names).not.toContain('firefox');
+    const chromium = browsersJSON.browsers.find(b => b.name === 'chromium');
+    expect(chromium.revision).toBe(browserVersion);
+    expect(fs.existsSync(path.join(_browsersPath, `chromium-${browserVersion}`))).toBe(true);
+  });
+
+  await test.step('playwright install uses the pinned versions', async () => {
+    const result = await exec('npx playwright install chromium');
+    expect(result).toContain(`Using browser versions from ${browsersJSONPath}`);
+    expect(result).toContain('npx playwright install --latest');
+    expect(result).toHaveLoggedSoftwareDownload([]);
+  });
+
+  await test.step('playwright install from a subdirectory', async () => {
+    const cwd = path.join(tmpWorkspace, 'sub', 'dir');
+    await fs.promises.mkdir(cwd, { recursive: true });
+    const result = await exec('npx playwright install chromium', { cwd });
+    expect(result).toContain(`Using browser versions from ${browsersJSONPath}`);
+    expect(result).toHaveLoggedSoftwareDownload([]);
+  });
+
+  await test.step('playwright install --list', async () => {
+    const result = await exec('npx playwright install --list');
+    expect(result).toContain('Browser versions from browsers.json:');
+    expect(result).toContain(localDir);
+  });
+
+  await exec('node sanity.js playwright chromium');
+
+  await test.step('browsers.json from another Playwright version is an error', async () => {
+    const browsersJSON = JSON.parse(await fs.promises.readFile(browsersJSONPath, 'utf-8'));
+    browsersJSON.playwrightVersion = '1.1.0';
+    await fs.promises.writeFile(browsersJSONPath, JSON.stringify(browsersJSON));
+    const result = await exec('npx playwright install chromium', { expectToExitWithError: true });
+    expect(result).toContain(`Browser versions in ${browsersJSONPath} were pinned for Playwright 1.1.0`);
+    expect(result).toContain(`npx playwright install --latest`);
+    const sanity = await exec('node sanity.js playwright chromium', { expectToExitWithError: true });
+    expect(sanity).toContain(`were pinned for Playwright 1.1.0`);
+    // Pinning again fixes the file.
+    const result2 = await exec('npx playwright install chromium --latest');
+    expect(result2).toContain(`Pinned the latest browser versions in ${browsersJSONPath}`);
+    expect(result2).toHaveLoggedSoftwareDownload([]);
+  });
+});
+
+test('install should use browsers.json from the browsers path, with the local one taking precedence', async ({ exec, writeFiles, tmpWorkspace, _browsersPath }) => {
+  await exec('npm i playwright');
+  const localDir = path.join(await fs.promises.realpath(tmpWorkspace), '.playwright');
+  const packageBrowsersJSON = JSON.parse(await fs.promises.readFile(path.join(tmpWorkspace, 'node_modules', 'playwright-core', 'browsers.json'), 'utf-8'));
+  const { browserVersion } = packageBrowsersJSON.browsers.find(b => b.name === 'chromium');
+  const major = browserVersion.split('.')[0];
+
+  await fs.promises.mkdir(_browsersPath, { recursive: true });
+  await fs.promises.writeFile(path.join(_browsersPath, 'browsers.json'), JSON.stringify({ browsers: [
+    { name: 'chromium', revision: `${major}.0.0.100`, browserVersion },
+    { name: 'chromium-headless-shell', revision: `${major}.0.0.100`, browserVersion },
+  ] }));
+  await writeFiles({
+    '.playwright/browsers.json': JSON.stringify({ browsers: [
+      { name: 'chromium', revision: `${major}.0.0.200`, browserVersion },
+    ] }),
+  });
+
+  const result = await exec('npx playwright install chromium');
+  expect(result).toContain(`Using browser versions from ${path.join(localDir, 'browsers.json')}`);
+  expect(result).toContain(`Using browser versions from ${path.join(_browsersPath, 'browsers.json')}`);
+  expect(result).toHaveLoggedSoftwareDownload(['chromium', 'chromium-headless-shell', 'ffmpeg', ...extraInstalledSoftware]);
+  expect(fs.existsSync(path.join(_browsersPath, `chromium-${major}.0.0.200`))).toBe(true);
+  expect(fs.existsSync(path.join(_browsersPath, `chromium_headless_shell-${major}.0.0.100`))).toBe(true);
+
+  const list = await exec('npx playwright install --list');
+  expect(list).toContain(localDir);
+  expect(list).toContain(_browsersPath);
+
+  await exec('node sanity.js playwright chromium');
+});

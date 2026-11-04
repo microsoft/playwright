@@ -34,7 +34,7 @@ import { getEmbedderName } from '../userAgent';
 import { installDependenciesLinux, installDependenciesWindows, validateDependenciesLinux, validateDependenciesWindows } from './dependencies';
 import { dockerVersion, readDockerVersionSync, transformCommandsForRoot } from './dependencies';
 import { downloadBrowserWithProgressBar, logPolitely } from './browserFetcher';
-import { packageRoot, binPath } from '../../package';
+import { packageRoot, binPath, packageJSON } from '../../package';
 
 import type { DependencyGroup } from './dependencies';
 import type { HostPlatform } from '@utils/hostPlatform';
@@ -44,10 +44,12 @@ export { writeDockerVersion } from './dependencies';
 const PACKAGE_PATH = packageRoot;
 const BIN_PATH = binPath;
 
+const PLAYWRIGHT_STORAGE_BUCKET = 'https://cdn.playwright.dev';
+
 const PLAYWRIGHT_CDN_MIRRORS = [
   'https://cdn.playwright.dev/dbazure/download/playwright', // ESRP CDN
   'https://playwright.download.prss.microsoft.com/dbazure/download/playwright', // Directly hit ESRP CDN
-  'https://cdn.playwright.dev', // Hit the Storage Bucket directly
+  PLAYWRIGHT_STORAGE_BUCKET, // Hit the Storage Bucket directly
 ];
 
 if (process.env.PW_TEST_CDN_THAT_SHOULD_WORK) {
@@ -425,16 +427,27 @@ function isBrowserDirectory(browserDirectory: string): boolean {
   return false;
 }
 
-type BrowsersJSON = {
-  comment: string
-  browsers: {
-    name: string,
-    revision: string,
-    browserVersion?: string,
-    title?: string,
-    installByDefault: boolean,
-    revisionOverrides?: {[os: string]: string},
-  }[]
+type BrowsersJSONEntry = {
+  name: string,
+  revision: string,
+  browserVersion?: string,
+  title?: string,
+  installByDefault?: boolean,
+  revisionOverrides?: {[os: string]: string},
+};
+
+export type BrowsersJSON = {
+  comment?: string,
+  // Playwright version that the override file was created for.
+  playwrightVersion?: string,
+  browsers: BrowsersJSONEntry[],
+};
+
+// A "browsers.json" file that overrides revisions from the package "browsers.json".
+// Lives in `<dir>/browsers.json`, and `dir` is recorded as a backlink in the registry.
+type BrowsersJSONOverride = {
+  dir: string,
+  browsersJSON: BrowsersJSON,
 };
 
 type BrowsersJSONDescriptor = {
@@ -445,6 +458,7 @@ type BrowsersJSONDescriptor = {
   title?: string,
   installByDefault: boolean,
   dir: string,
+  overrideDir?: string,
 };
 
 export type BrowserInfo = {
@@ -454,9 +468,26 @@ export type BrowserInfo = {
   referenceDir: string,
 };
 
-function readDescriptors(browsersJSON: BrowsersJSON): BrowsersJSONDescriptor[] {
-  return (browsersJSON['browsers']).map(obj => {
-    const name = obj.name;
+function readDescriptors(browsersJSON: BrowsersJSON, overrides: BrowsersJSONOverride[] = []): BrowsersJSONDescriptor[] {
+  return (browsersJSON['browsers']).map(packageEntry => {
+    const name = packageEntry.name;
+    let obj = packageEntry;
+    let overrideDir: string | undefined;
+    for (const override of overrides) {
+      const entry = override.browsersJSON.browsers.find(b => b.name === name);
+      if (!entry)
+        continue;
+      obj = {
+        name,
+        revision: entry.revision,
+        browserVersion: entry.browserVersion,
+        revisionOverrides: entry.revisionOverrides,
+        title: entry.title ?? packageEntry.title,
+        installByDefault: packageEntry.installByDefault,
+      };
+      overrideDir = override.dir;
+      break;
+    }
     const revisionOverride = (obj.revisionOverrides || {})[hostPlatform];
     const revision = revisionOverride || obj.revision;
     const browserDirectoryPrefix = revisionOverride ? `${name}_${hostPlatform}_special` : `${name}`;
@@ -474,9 +505,182 @@ function readDescriptors(browsersJSON: BrowsersJSON): BrowsersJSONDescriptor[] {
       // To avoid older registries erroneously removing 'webkit-technology-preview', we have to
       // ensure that browser folders to never include dashes inside.
       dir: path.join(registryDirectory, browserDirectoryPrefix.replace(/-/g, '_') + '-' + revision),
+      overrideDir,
     };
     return descriptor;
   });
+}
+
+const kBrowsersJSONFileName = 'browsers.json';
+
+function computeLocalOverrideDirectory(): string {
+  const cwd = process.cwd();
+  let dir = cwd;
+  for (let i = 0; i < 10; i++) {
+    const candidate = path.join(dir, '.playwright');
+    if (fs.existsSync(candidate))
+      return candidate;
+    const parentDir = path.dirname(dir);
+    if (parentDir === dir)
+      break;
+    dir = parentDir;
+  }
+  return path.join(cwd, '.playwright');
+}
+
+const localOverrideDirectory = computeLocalOverrideDirectory();
+
+function minorVersion(version: string): string {
+  const [major, minor] = version.split('.');
+  return `${major}.${minor}`;
+}
+
+// Override files are specific to a Playwright version: browsers in them
+// are known to work with that version, but not necessarily with another one.
+function isCompatibleOverride(browsersJSON: BrowsersJSON): boolean {
+  return !browsersJSON.playwrightVersion || minorVersion(browsersJSON.playwrightVersion) === minorVersion(packageJSON.version);
+}
+
+function incompatibleOverrideError(override: BrowsersJSONOverride): Error {
+  const { embedderName } = getEmbedderName();
+  const command = buildPlaywrightCLICommand(embedderName, 'install --latest');
+  return new Error(`Browser versions in ${path.join(override.dir, kBrowsersJSONFileName)} were pinned for Playwright ${override.browsersJSON.playwrightVersion}, but the current version is ${packageJSON.version}. Run "${command}" to pin the latest browser versions for the current Playwright, or remove the file.`);
+}
+
+// Reads override files in the precedence order: local `.playwright/browsers.json` first,
+// then user-wide `<registry>/browsers.json`. A malformed or incompatible file
+// produces an error that is thrown when the registry is actually used.
+function readOverrides(): { overrides: BrowsersJSONOverride[], error?: Error } {
+  const overrides: BrowsersJSONOverride[] = [];
+  let error: Error | undefined;
+  for (const dir of [localOverrideDirectory, registryDirectory]) {
+    try {
+      const override = readBrowsersJSONOverride(dir);
+      if (!override)
+        continue;
+      if (!isCompatibleOverride(override.browsersJSON))
+        throw incompatibleOverrideError(override);
+      overrides.push(override);
+    } catch (e) {
+      error ??= e;
+    }
+  }
+  return { overrides, error };
+}
+
+function parseBrowsersJSON(file: string, content: string): BrowsersJSON {
+  let json: any;
+  try {
+    json = JSON.parse(content);
+  } catch (e) {
+    throw new Error(`Failed to parse ${file}: ${e.message}`);
+  }
+  if (!json || typeof json !== 'object' || !Array.isArray(json.browsers))
+    throw new Error(`Invalid ${file}: expected an object with a "browsers" array`);
+  for (const entry of json.browsers) {
+    if (!entry || typeof entry.name !== 'string' || typeof entry.revision !== 'string')
+      throw new Error(`Invalid ${file}: each browser must have a "name" and a "revision" string`);
+    if (entry.name.startsWith('chromium') && typeof entry.browserVersion !== 'string')
+      throw new Error(`Invalid ${file}: "${entry.name}" must have a "browserVersion" string`);
+  }
+  return json;
+}
+
+function readBrowsersJSONOverride(dir: string): BrowsersJSONOverride | undefined {
+  const file = path.join(dir, kBrowsersJSONFileName);
+  let content: string;
+  try {
+    content = fs.readFileSync(file, 'utf-8');
+  } catch (e) {
+    if (e.code === 'ENOENT' || e.code === 'ENOTDIR')
+      return undefined;
+    throw e;
+  }
+  return { dir, browsersJSON: parseBrowsersJSON(file, content) };
+}
+
+function packageBrowsersJSON(): BrowsersJSON {
+  return require(path.join(packageRoot, kBrowsersJSONFileName));
+}
+
+function downloadSocketTimeout(): number {
+  const downloadSocketTimeoutEnv = getFromENV('PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT');
+  return +(downloadSocketTimeoutEnv || '0') || NET_DEFAULT_TIMEOUT;
+}
+
+// Stub until the file is published on the CDN: the package versions,
+// with chromium revisions in the new "browser version" scheme.
+function stubLatestBrowsersJSON(): string {
+  const browsersJSON: BrowsersJSON = {
+    playwrightVersion: packageJSON.version,
+    browsers: packageBrowsersJSON().browsers.map(({ name, revision, browserVersion, title, revisionOverrides }) => {
+      if (name.startsWith('chromium') && browserVersion)
+        revision = browserVersion;
+      return { name, revision, browserVersion, title, revisionOverrides };
+    }),
+  };
+  return JSON.stringify(browsersJSON);
+}
+
+async function fetchLatestBrowsersJSON(): Promise<BrowsersJSON> {
+  const host = getFromENV('PLAYWRIGHT_DOWNLOAD_HOST') || PLAYWRIGHT_STORAGE_BUCKET;
+  const url = `${host}/builds/browser-updates/v${minorVersion(packageJSON.version)}/${kBrowsersJSONFileName}`;
+  const retryCount = 5;
+  let lastError: Error | undefined;
+  for (let attempt = 1; attempt <= retryCount; ++attempt) {
+    debugLogger.log('install', `fetching latest browser versions from ${url} - attempt #${attempt}`);
+    try {
+      // TODO: fetch the file from the CDN once it is published there, with getUserAgent() from '../userAgent'.
+      // const content = await fetchData(undefined, {
+      //   url,
+      //   headers: { 'User-Agent': getUserAgent() },
+      //   socketTimeout: downloadSocketTimeout(),
+      // }, async (params, response) => {
+      //   const error = new Error(`server returned code ${response.statusCode}. URL: ${params.url}`);
+      //   (error as any).statusCode = response.statusCode;
+      //   return error;
+      // });
+      const content = stubLatestBrowsersJSON();
+      return parseBrowsersJSON(url, content);
+    } catch (e) {
+      debugLogger.log('install', `attempt #${attempt} - ERROR: ${e.message}`);
+      if (e.statusCode === 404)
+        throw new Error(`No browser updates are available for Playwright ${packageJSON.version}. Update Playwright to the latest version instead.`);
+      lastError = e;
+    }
+  }
+  throw new Error(`Failed to fetch the latest browser versions from ${url}, caused by\n${lastError!.stack}`);
+}
+
+export async function pinLatestBrowsers(executableNames: string[]): Promise<string> {
+  const latest = await fetchLatestBrowsersJSON();
+  let existing: BrowsersJSONOverride | undefined;
+  try {
+    existing = readBrowsersJSONOverride(localOverrideDirectory);
+  } catch {
+    // Malformed file is replaced.
+  }
+  // Keep entries for other browsers, unless they were pinned for another Playwright version.
+  const browsers = existing && isCompatibleOverride(existing.browsersJSON) ? [...existing.browsersJSON.browsers] : [];
+  for (const name of executableNames) {
+    const entry = latest.browsers.find(b => b.name === name);
+    if (!entry)
+      continue;
+    const index = browsers.findIndex(b => b.name === name);
+    if (index === -1)
+      browsers.push(entry);
+    else
+      browsers[index] = entry;
+  }
+  const browsersJSON: BrowsersJSON = {
+    comment: `Browser versions pinned by "playwright install --latest". Remove this file to use the default versions.`,
+    playwrightVersion: packageJSON.version,
+    browsers,
+  };
+  const file = path.join(localOverrideDirectory, kBrowsersJSONFileName);
+  await fs.promises.mkdir(localOverrideDirectory, { recursive: true });
+  await fs.promises.writeFile(file, JSON.stringify(browsersJSON, null, 2) + '\n');
+  return file;
 }
 
 export type BrowserName = 'chromium' | 'firefox' | 'webkit';
@@ -502,18 +706,33 @@ interface ExecutableImpl extends Executable {
   _install?: (force: boolean) => Promise<void>;
   _dependencyGroup?: DependencyGroup;
   _isHermeticInstallation?: boolean;
+  _overrideDir?: string;
 }
 
 export class Registry {
-  private _executables: ExecutableImpl[];
+  private _executables!: ExecutableImpl[];
+  private _overrideError: Error | undefined;
 
-  constructor(browsersJSON: BrowsersJSON) {
-    const descriptors = readDescriptors(browsersJSON);
+  constructor() {
+    this.reload();
+  }
+
+  // Re-reads the package "browsers.json" and all the override files.
+  reload() {
+    const { overrides, error } = readOverrides();
+    this._overrideError = error;
+    this._initialize(packageBrowsersJSON(), overrides);
+  }
+
+  private _initialize(browsersJSON: BrowsersJSON, overrides: BrowsersJSONOverride[]) {
+    const descriptors = readDescriptors(browsersJSON, overrides);
     const findExecutablePath = (dir: string, name: keyof typeof EXECUTABLE_PATHS) => {
       const tokens = EXECUTABLE_PATHS[name][shortPlatform];
       return tokens ? path.join(dir, ...tokens) : undefined;
     };
     const executablePathOrDie = (name: string, e: string | undefined, installByDefault: boolean, sdkLanguage: string) => {
+      if (this._overrideError)
+        throw this._overrideError;
       if (!e)
         throw new Error(`${name} is not supported on ${hostPlatform}`);
       const installCommand = buildPlaywrightCLICommand(sdkLanguage, `install${installByDefault ? '' : ' ' + name}`);
@@ -573,6 +792,7 @@ export class Registry {
       revision: chromium.revision,
       browserVersion: chromium.browserVersion,
       _install: force => this._downloadExecutable(chromium, force, chromiumExecutable),
+      _overrideDir: chromium.overrideDir,
       _dependencyGroup: 'chromium',
       _isHermeticInstallation: true,
     });
@@ -592,6 +812,7 @@ export class Registry {
       revision: chromiumHeadlessShell.revision,
       browserVersion: chromiumHeadlessShell.browserVersion,
       _install: force => this._downloadExecutable(chromiumHeadlessShell, force, chromiumHeadlessShellExecutable),
+      _overrideDir: chromiumHeadlessShell.overrideDir,
       _dependencyGroup: 'chromium',
       _isHermeticInstallation: true,
     });
@@ -695,6 +916,7 @@ export class Registry {
       revision: firefox.revision,
       browserVersion: firefox.browserVersion,
       _install: force => this._downloadExecutable(firefox, force, firefoxExecutable),
+      _overrideDir: firefox.overrideDir,
       _dependencyGroup: 'firefox',
       _isHermeticInstallation: true,
     });
@@ -724,6 +946,7 @@ export class Registry {
       revision: webkit.revision,
       browserVersion: webkit.browserVersion,
       _install: force => this._downloadExecutable(webkit, force, webkitExecutable),
+      _overrideDir: webkit.overrideDir,
       _dependencyGroup: 'webkit',
       _isHermeticInstallation: true,
     });
@@ -773,6 +996,7 @@ export class Registry {
       title: ffmpeg.title,
       revision: ffmpeg.revision,
       _install: force => this._downloadExecutable(ffmpeg, force, ffmpegExecutable),
+      _overrideDir: ffmpeg.overrideDir,
       _dependencyGroup: 'tools',
       _isHermeticInstallation: true,
     });
@@ -790,6 +1014,7 @@ export class Registry {
       title: winldd.title,
       revision: winldd.revision,
       _install: force => this._downloadExecutable(winldd, force, winlddExecutable),
+      _overrideDir: winldd.overrideDir,
       _dependencyGroup: 'tools',
       _isHermeticInstallation: true,
     });
@@ -806,6 +1031,7 @@ export class Registry {
       title: android.title,
       revision: android.revision,
       _install: force => this._downloadExecutable(android, force),
+      _overrideDir: android.overrideDir,
       _dependencyGroup: 'tools',
       _isHermeticInstallation: true,
     });
@@ -910,6 +1136,10 @@ export class Registry {
     return Array.from(new Set(executables as ExecutableImpl[]));
   }
 
+  private _overrideDirectories(executables: ExecutableImpl[]): string[] {
+    return [...new Set(executables.map(e => e._overrideDir).filter((dir): dir is string => !!dir))];
+  }
+
   private async _validateHostRequirements(sdkLanguage: string, browserDirectory: string, linuxLddDirectories: string[], dlOpenLibraries: string[], windowsExeAndDllDirectories: string[]) {
     if (os.platform() === 'linux')
       return await validateDependenciesLinux(sdkLanguage, linuxLddDirectories.map(d => path.join(browserDirectory, d)), dlOpenLibraries);
@@ -933,6 +1163,8 @@ export class Registry {
 
   async install(executablesToInstall: Executable[], options?: { force?: boolean, gc?: boolean }) {
     const executables = this._dedupe(executablesToInstall);
+    if (this._overrideError)
+      throw this._overrideError;
     await fs.promises.mkdir(registryDirectory, { recursive: true });
     const lockfilePath = path.join(registryDirectory, '__dirlock');
     const linksDir = path.join(registryDirectory, '.links');
@@ -955,6 +1187,13 @@ export class Registry {
       // Create a link first, so that cache validation does not remove our own browsers.
       await fs.promises.mkdir(linksDir, { recursive: true });
       await fs.promises.writeFile(path.join(linksDir, calculateSha1(PACKAGE_PATH)), PACKAGE_PATH);
+      // Also link "browsers.json" overrides, so that their browsers are retained too.
+      for (const overrideDir of this._overrideDirectories(executables)) {
+        await fs.promises.writeFile(path.join(linksDir, calculateSha1(overrideDir)), overrideDir);
+        const { embedderName } = getEmbedderName();
+        const command = buildPlaywrightCLICommand(embedderName, 'install --latest');
+        logPolitely(`Using browser versions from ${path.join(overrideDir, kBrowsersJSONFileName)}. Remove this file to use the default versions, or run "${command}" to update to the latest versions.`);
+      }
 
       // Remove stale browsers.
       if (options?.gc !== false && !getAsBooleanFromENV('PLAYWRIGHT_SKIP_BROWSER_GC'))
@@ -1023,6 +1262,7 @@ export class Registry {
         await fs.promises.unlink(path.join(linksDir, link));
     } else {
       await fs.promises.unlink(path.join(linksDir, calculateSha1(PACKAGE_PATH))).catch(() => {});
+      await fs.promises.unlink(path.join(linksDir, calculateSha1(localOverrideDirectory))).catch(() => {});
     }
 
     // Remove stale browsers.
@@ -1122,11 +1362,7 @@ export class Registry {
 
     const title = this.calculateDownloadTitle(descriptor);
     const downloadFileName = `playwright-download-${descriptor.name}-${hostPlatform}-${descriptor.revision}.zip`;
-    // PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT is a misnomer, it actually controls the socket's
-    // max idle timeout. Unfortunately, we cannot rename it without breaking existing user workflows.
-    const downloadSocketTimeoutEnv = getFromENV('PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT');
-    const downloadSocketTimeout = +(downloadSocketTimeoutEnv || '0') || NET_DEFAULT_TIMEOUT;
-    await downloadBrowserWithProgressBar(title, descriptor.dir, executablePath, downloadURLs, downloadFileName, downloadSocketTimeout, force).catch(e => {
+    await downloadBrowserWithProgressBar(title, descriptor.dir, executablePath, downloadURLs, downloadFileName, downloadSocketTimeout(), force).catch(e => {
       throw new Error(`Failed to download ${title}, caused by\n${e.stack}`);
     });
   }
@@ -1210,7 +1446,7 @@ export class Registry {
       let linkTarget = '';
       try {
         linkTarget = (await fs.promises.readFile(linkPath)).toString();
-        const browsersJSON = require(path.join(linkTarget, 'browsers.json'));
+        const browsersJSON: BrowsersJSON = JSON.parse(await fs.promises.readFile(path.join(linkTarget, kBrowsersJSONFileName), 'utf-8'));
         const descriptors = readDescriptors(browsersJSON);
         for (const browserName of allDownloadableDirectoriesThatEverExisted) {
           // We retain browsers if they are found in the descriptor.
@@ -1405,6 +1641,6 @@ function lowercaseAllKeys(json: any): any {
   return result;
 }
 
-export const registry = new Registry(require(path.join(packageRoot, 'browsers.json')));
+export const registry = new Registry();
 
 export { runOopDownloadBrowserMain } from './oopDownloadBrowserMain';

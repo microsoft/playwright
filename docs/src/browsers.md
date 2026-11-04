@@ -155,6 +155,50 @@ Check the [release notes](./release-notes.md) to see what the latest version is 
 npx playwright --version
 ```
 
+## Install the latest browsers
+
+Each Playwright release comes with specific browser versions. To test on newer browser versions without updating Playwright, run the install command with the `--latest` option. Playwright downloads the latest browser versions that work with your Playwright version, and pins them in the `.playwright/browsers.json` file in your project.
+
+```bash js
+npx playwright install --latest
+```
+
+```bash java
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install --latest"
+```
+
+```bash python
+playwright install --latest
+```
+
+```bash csharp
+pwsh bin/Debug/netX/playwright.ps1 install --latest
+```
+
+You can also pin only some of the browsers:
+
+```bash js
+npx playwright install chromium --latest
+```
+
+```bash java
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install chromium --latest"
+```
+
+```bash python
+playwright install chromium --latest
+```
+
+```bash csharp
+pwsh bin/Debug/netX/playwright.ps1 install chromium --latest
+```
+
+From now on, the install command and your tests use the browser versions from `.playwright/browsers.json`. Commit this file, so that everyone on the team and your CI use the same browser versions. Playwright looks for the `.playwright` directory in the current directory and its parent directories.
+
+To go back to the default browser versions, remove the file. To update to the latest browser versions again, run the install command with `--latest` again.
+
+The pinned browser versions are specific to the Playwright version that created the file. After you update Playwright, run the install command with `--latest` again, or remove the file.
+
 ## Configure Browsers
 
 Playwright can run tests on Chromium, WebKit and Firefox browsers as well as branded browsers such as Google Chrome and Microsoft Edge. It can also run on emulated tablet and mobile devices. See the [registry of device parameters](https://github.com/microsoft/playwright/blob/main/packages/isomorphic/deviceDescriptorsSource.json) for a complete list of selected desktop, tablet and mobile devices.

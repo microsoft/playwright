@@ -39,7 +39,7 @@ const expect = _expect.extend({
     const downloaded = new Set();
     let index = 0;
     while (true) {
-      const match = received.substring(index).match(/\(playwright (chromium|chromium-headless-shell|firefox|webkit|winldd|ffmpeg) v\d+\) downloaded/im);
+      const match = received.substring(index).match(/\(playwright (chromium|chromium-headless-shell|firefox|webkit|winldd|ffmpeg) v[\d.]+\) downloaded/im);
       if (!match)
         break;
       downloaded.add(match[1].replace(/\s/g, '-').toLowerCase());
@@ -153,7 +153,7 @@ export const test = _test
         await use(async expected => {
           if (!isolateBrowsers)
             throw new Error(`Test that checks browser installation must set "isolateBrowsers" to true`);
-          const actual = await fs.promises.readdir(_browsersPath).catch(() => []).then(files => files.map(f => f.split('-')[0].replace(/_/g, '-')).filter(f => !f.startsWith('.')));
+          const actual = await fs.promises.readdir(_browsersPath).catch(() => []).then(files => files.filter(f => !f.startsWith('.') && f !== 'browsers.json').map(f => f.split('-')[0].replace(/_/g, '-')));
           expect(new Set(actual)).toEqual(new Set(expected));
         });
       },

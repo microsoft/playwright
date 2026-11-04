@@ -222,6 +222,7 @@ npx playwright install --with-deps
 | `--dry-run` | Don't perform installation, just print information |
 | `--list` | Print list of browsers from all Playwright installations |
 | `--only-shell` | Only install chromium-headless-shell instead of full Chromium |
+| `--latest` | Install the latest browser versions and pin them in `.playwright/browsers.json`, see [Install the latest browsers](./browsers.md#install-the-latest-browsers) |
 | `--no-shell` | Don't install chromium-headless-shell |
 | `--no-progress` | Don't show download progress bars |
 | `--no-remove` | Don't remove unused browsers |

@@ -80,6 +80,7 @@ export function decorateProgram(program: Command) {
       .option('--force', 'force reinstall of already installed browsers')
       .option('--only-shell', 'only install headless shell when installing chromium')
       .option('--no-shell', 'do not install chromium headless shell')
+      .option('--latest', 'install the latest browser versions and pin them in .playwright/browsers.json')
       .option('--no-progress', 'do not show download progress bars')
       .option('--no-remove', 'do not remove unused browsers')
       .action(async function(args: string[], options: { withDeps?: boolean, force?: boolean, dryRun?: boolean, list?: boolean, shell?: boolean, onlyShell?: boolean, progress?: boolean, remove?: boolean }) {
