@@ -275,9 +275,7 @@ export class SnapshotRenderer {
   }
 }
 
-// Every piece of trace-controlled data that ends up in the snapshot HTML goes through
-// this class, so escaping and name validation live in one place. Do not append raw
-// strings from the trace anywhere else.
+// All trace-controlled data goes through this class, so escaping and name checks live in one place.
 class HtmlBuilder {
   private _chunks: string[] = [];
 
@@ -285,7 +283,6 @@ class HtmlBuilder {
     this._chunks.push(escapeHTML(text));
   }
 
-  // Returns false when the name is rejected. The caller must then skip the element.
   openTag(name: string): boolean {
     if (!isSafeName(name))
       return false;
@@ -293,7 +290,6 @@ class HtmlBuilder {
     return true;
   }
 
-  // Attributes with an unsafe name are dropped.
   attribute(name: string, value: string) {
     if (!isSafeName(name))
       return;
@@ -313,9 +309,7 @@ class HtmlBuilder {
   }
 }
 
-// A tag or attribute name ends at whitespace, "/", ">" or "=", and quotes change how
-// the rest of the tag is parsed. Any of them would let a crafted trace smuggle extra
-// attributes or elements. Allow Unicode custom elements such as math-α.
+// Reject names that would end the tag or attribute name early. Allow Unicode custom elements such as math-α.
 function isSafeName(name: string): boolean {
   return !!name && !/[\s=<>\/"']/.test(name);
 }
