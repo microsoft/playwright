@@ -248,11 +248,11 @@ export class ClockController {
         if (this._currentRealTimeTimer !== realTimeTimer)
           return;
         this._syncRealTime();
-        let resolvePromise!: () => void;
-        realTimeTimer.promise = new Promise<void>(f => { resolvePromise = f; });
+        let fulfill = () => {};
+        realTimeTimer.promise = new Promise<void>(f => fulfill = f);
         // eslint-disable-next-line no-console
         void this._runTo(this._now.ticks).catch(e => console.error(e)).then(() => {
-          resolvePromise();
+          fulfill();
           if (this._currentRealTimeTimer !== realTimeTimer)
             return;
           this._currentRealTimeTimer = undefined;
