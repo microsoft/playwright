@@ -91,11 +91,11 @@ export class SnapshotRenderer {
   }
 
   render(): RenderedFrameSnapshot {
-    const result: string[] = [];
+    const result = new HtmlBuilder();
     const visit = (n: NodeSnapshot, snapshotIndex: number, parentTag: string | undefined, parentAttrs: [string, string][] | undefined) => {
       // Text node.
       if (typeof n === 'string') {
-        result.push(escapeHTML(n));
+        result.text(n);
         return;
       }
 
@@ -114,17 +114,14 @@ export class SnapshotRenderer {
         // crafted trace file could include them to achieve XSS.
         if (name.toUpperCase() === 'SCRIPT')
           return;
-        // Reject names that would emit extra attributes (space, =, <, >, /).
-        // Allow Unicode custom elements such as math-α.
-        if (/[\s=<>\/]/.test(name))
-          return;
         // Element node.
         // Note that <noscript> will not be rendered by default in the trace viewer, because
         // JS is enabled. So rename it to <x-noscript>.
         const upperName = name.toUpperCase();
         const nodeName = upperName === 'NOSCRIPT' ? 'X-NOSCRIPT' : name;
         const attrs = Object.entries(nodeAttrs || {});
-        result.push('<', nodeName);
+        if (!result.openTag(nodeName))
+          return;
         const kCurrentSrcAttribute = '__playwright_current_src__';
         const isFrame = upperName === 'IFRAME' || upperName === 'FRAME';
         const isAnchor = upperName === 'A';
@@ -138,10 +135,6 @@ export class SnapshotRenderer {
         const hasUnsafeHttpEquiv = isMeta && attrs.some(a => a[0].toLowerCase() === 'http-equiv' && !kAllowedMetaHttpEquivs.has(a[1].trim().toLowerCase()));
         for (const [attr, value] of attrs) {
           let attrName = attr;
-          // Reject names that would emit extra attributes (space, =, <, >, /, quotes).
-          // For example, a crafted trace could use " onerror" to bypass the "on" check below.
-          if (!attr || /[\s=<>\/"']/.test(attr))
-            continue;
           // Strip event handler attributes. The capture side already empties these,
           // but a crafted trace file could include live handlers (e.g. onerror, onclick).
           // escapeHTMLAttribute does not help because payloads like "alert(1)" contain
@@ -180,20 +173,21 @@ export class SnapshotRenderer {
           let attrValue = value;
           if (!isAnchor && (attr.toLowerCase() === 'href' || attr.toLowerCase() === 'src' || attr === kCurrentSrcAttribute))
             attrValue = rewriteURLForCustomProtocol(value);
-          result.push(' ', attrName, '="', escapeHTMLAttribute(attrValue), '"');
+          result.attribute(attrName, attrValue);
         }
         if (upperName === 'STYLE') {
           // Style has always exactly one child which is a text node.
           const styleContent = typeof children[0] === 'string' ? children[0] : '';
-          result.push(' ', '__playwright_style_content__', '="', escapeHTMLAttribute(rewriteURLsInStyleSheetForCustomProtocol(styleContent)), '"');
-          result.push('></', nodeName, '>');
+          result.attribute('__playwright_style_content__', rewriteURLsInStyleSheetForCustomProtocol(styleContent));
+          result.endOpenTag();
+          result.closeTag(nodeName);
           return;
         }
-        result.push('>');
+        result.endOpenTag();
         for (const child of children)
           visit(child, snapshotIndex, nodeName, attrs);
         if (!autoClosing.has(nodeName))
-          result.push('</', nodeName, '>');
+          result.closeTag(nodeName);
         return;
       } else {
         // Why are we here? Let's not throw, just in case.
@@ -215,7 +209,7 @@ export class SnapshotRenderer {
         // Hide the document in order to prevent flickering. We will unhide once script has processed shadow.
         '<style>*,*::before,*::after { visibility: hidden }</style>',
         `<script nonce="${scriptNonce}">${snapshotScript(this.viewport(), this._callId, this.snapshotName)}</script>`
-      ].join('') + result.join('');
+      ].join('') + result.toString();
       return { value: { html, scriptNonce }, size: html.length };
     });
 
@@ -279,6 +273,51 @@ export class SnapshotRenderer {
 
     return result;
   }
+}
+
+// Every piece of trace-controlled data that ends up in the snapshot HTML goes through
+// this class, so escaping and name validation live in one place. Do not append raw
+// strings from the trace anywhere else.
+class HtmlBuilder {
+  private _chunks: string[] = [];
+
+  text(text: string) {
+    this._chunks.push(escapeHTML(text));
+  }
+
+  // Returns false when the name is rejected. The caller must then skip the element.
+  openTag(name: string): boolean {
+    if (!isSafeName(name))
+      return false;
+    this._chunks.push('<', name);
+    return true;
+  }
+
+  // Attributes with an unsafe name are dropped.
+  attribute(name: string, value: string) {
+    if (!isSafeName(name))
+      return;
+    this._chunks.push(' ', name, '="', escapeHTMLAttribute(value), '"');
+  }
+
+  endOpenTag() {
+    this._chunks.push('>');
+  }
+
+  closeTag(name: string) {
+    this._chunks.push('</', name, '>');
+  }
+
+  toString() {
+    return this._chunks.join('');
+  }
+}
+
+// A tag or attribute name ends at whitespace, "/", ">" or "=", and quotes change how
+// the rest of the tag is parsed. Any of them would let a crafted trace smuggle extra
+// attributes or elements. Allow Unicode custom elements such as math-α.
+function isSafeName(name: string): boolean {
+  return !!name && !/[\s=<>\/"']/.test(name);
 }
 
 const autoClosing = new Set(['AREA', 'BASE', 'BR', 'COL', 'COMMAND', 'EMBED', 'HR', 'IMG', 'INPUT', 'KEYGEN', 'LINK', 'MENUITEM', 'META', 'PARAM', 'SOURCE', 'TRACK', 'WBR']);
