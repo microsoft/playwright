@@ -65,6 +65,38 @@ export function enclosingShadowRootOrDocument(element: Element): Document | Shad
     return node as Document | ShadowRoot;
 }
 
+export function getAssociatedLabels(element: Element): HTMLLabelElement[] {
+  // https://html.spec.whatwg.org/multipage/forms.html#category-label
+  const isNonHiddenInput = element.nodeName === 'INPUT' && (element as HTMLInputElement).type !== 'hidden';
+  if (['BUTTON', 'METER', 'OUTPUT', 'PROGRESS', 'SELECT', 'TEXTAREA'].includes(element.nodeName) || isNonHiddenInput)
+    return [...(element as HTMLInputElement).labels || []];
+  if (!element.localName.includes('-'))
+    return [];
+
+  // Custom elements expose labels only through ElementInternals. Read the association from the labels instead.
+  const root = element.getRootNode() as Document | DocumentFragment | Element;
+  let labelsByControl = cacheLabelsByControl?.get(root);
+  if (!labelsByControl) {
+    labelsByControl = new Map();
+    const allLabels = [...root.querySelectorAll('label')];
+    if (root instanceof HTMLLabelElement)
+      allLabels.unshift(root);
+    for (const label of allLabels) {
+      const control = label.control;
+      if (!control)
+        continue;
+      let labels = labelsByControl.get(control);
+      if (!labels) {
+        labels = [];
+        labelsByControl.set(control, labels);
+      }
+      labels.push(label);
+    }
+    cacheLabelsByControl?.set(root, labelsByControl);
+  }
+  return labelsByControl.get(element) || [];
+}
+
 function enclosingShadowHost(element: Element): Element | undefined {
   while (element.parentElement)
     element = element.parentElement;
@@ -199,6 +231,7 @@ let cacheStyle: Map<Element, CSSStyleDeclaration | undefined> | undefined;
 let cacheStyleBefore: Map<Element, CSSStyleDeclaration | undefined> | undefined;
 let cacheStyleAfter: Map<Element, CSSStyleDeclaration | undefined> | undefined;
 let cacheStyleVisibility: Map<Element, boolean> | undefined;
+let cacheLabelsByControl: Map<Node, Map<Element, HTMLLabelElement[]>> | undefined;
 let cachesCounter = 0;
 
 export function beginDOMCaches() {
@@ -207,6 +240,7 @@ export function beginDOMCaches() {
   cacheStyleBefore ??= new Map();
   cacheStyleAfter ??= new Map();
   cacheStyleVisibility ??= new Map();
+  cacheLabelsByControl ??= new Map();
 }
 
 export function endDOMCaches() {
@@ -215,5 +249,6 @@ export function endDOMCaches() {
     cacheStyleBefore = undefined;
     cacheStyleAfter = undefined;
     cacheStyleVisibility = undefined;
+    cacheLabelsByControl = undefined;
   }
 }

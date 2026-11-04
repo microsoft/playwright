@@ -16,7 +16,7 @@
 
 import * as css from '@isomorphic/cssTokenizer';
 
-import { beginDOMCaches, closestCrossShadow, elementSafeTagName, enclosingShadowRootOrDocument, endDOMCaches, getElementComputedStyle, isElementStyleVisibilityVisible, isListBoxSelect, isVisibleTextNode, parentElementOrShadowHost } from './domUtils';
+import { beginDOMCaches, closestCrossShadow, elementSafeTagName, enclosingShadowRootOrDocument, endDOMCaches, getAssociatedLabels, getElementComputedStyle, isElementStyleVisibilityVisible, isListBoxSelect, isVisibleTextNode, parentElementOrShadowHost } from './domUtils';
 
 import type { AriaRole } from '@isomorphic/ariaSnapshot';
 
@@ -808,6 +808,14 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
 
   // step 2e.
   if (!['presentation', 'none'].includes(role)) {
+    if (!labelledBy && tagName.includes('-')) {
+      const labels = getAssociatedLabels(element);
+      if (labels.length) {
+        options.visitedElements.add(element);
+        return getAccessibleNameFromAssociatedLabels(labels, options);
+      }
+    }
+
     // https://w3c.github.io/html-aam/#input-type-button-input-type-submit-and-input-type-reset-accessible-name-computation
     //
     // SPEC DIFFERENCE.
