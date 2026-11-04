@@ -91,11 +91,13 @@ test('TV-124 snapshot renderer nonces the bootstrap script', () => {
 
 test('TV-125 snapshot renderer strips event handler attributes', () => {
   const renderer = new SnapshotRenderer(new LRUCache(1_000_000), [], [makeSnapshot({
-    html: ['HTML', {}, ['BODY', {}, ['IMG', { 'onerror': 'alert(1)', 'src': 'x' }]]],
+    html: ['HTML', {}, ['BODY', {}, ['IMG', { 'onerror': 'alert(1)', ' onerror': 'alert(2)', 'x onmouseover=alert(3)': 'y', 'src': 'x' }]]],
   })], [], 0);
   const { html } = renderer.render();
-  expect(html).not.toContain('onerror="alert(1)"');
-  expect(html).toContain('src="x"');
+  expect(html).not.toContain('alert(1)');
+  expect(html).not.toContain('alert(2)');
+  expect(html).not.toContain('alert(3)');
+  expect(html).toContain('<IMG src="x">');
 });
 
 test('TV-126 snapshot renderer strips onclick attributes', () => {
@@ -162,16 +164,6 @@ test('TV-132 snapshot renderer drops unsafe tag names that smuggle attributes', 
   expect(html).not.toContain('onerror=alert(1)');
   expect(html).not.toContain('<img src=x');
   expect(html).toContain('safe');
-});
-
-test('TV-137 snapshot renderer drops unsafe attribute names that smuggle attributes', () => {
-  const renderer = new SnapshotRenderer(new LRUCache(1_000_000), [], [makeSnapshot({
-    html: ['HTML', {}, ['BODY', {}, ['IMG', { ' onerror': 'alert(1)', 'x onmouseover=alert(2)': 'y', 'alt': 'safe' }]]],
-  })], [], 0);
-  const { html } = renderer.render();
-  expect(html).not.toContain('alert(1)');
-  expect(html).not.toContain('alert(2)');
-  expect(html).toContain('<IMG alt="safe">');
 });
 
 test('TV-133 snapshot renderer still renders ordinary custom elements', () => {
