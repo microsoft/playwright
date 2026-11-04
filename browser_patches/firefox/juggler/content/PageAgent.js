@@ -502,36 +502,45 @@ export class PageAgent {
       repeat,
       keyCode
     });
-    if (type === 'keydown') {
-      if (text && text !== key) {
-        tip.commitCompositionWith(text, keyEvent);
-      } else {
-        const flags = 0;
-        // On macOS, Firefox treats Option+<printable key> as text input. Empty text
-        // means no text should be inserted, so we consume keydown after the page
-        // has seen it, which prevents the keypress, same as in Chromium and WebKit.
-        const suppressTextInput = !text && [...key].length === 1 && Services.appinfo.OS === 'Darwin';
-        if (!suppressTextInput) {
-          tip.keydown(keyEvent, flags);
+    const windowUtils = frame.domWindow().windowUtils;
+    const microTaskLevel = windowUtils.microTaskLevel;
+    // The actor's WebIDL callback raises the microtask level. Reset it while
+    // dispatching so checkpoints run between DOM events, as with native input.
+    windowUtils.microTaskLevel = 0;
+    try {
+      if (type === 'keydown') {
+        if (text && text !== key) {
+          tip.commitCompositionWith(text, keyEvent);
         } else {
-          const dispose = helper.addEventListener(this._docShell.chromeEventHandler, 'keydown', event => {
-            if (event.altKey && !event.ctrlKey && !event.metaKey)
-              event.preventDefault();
-          }, { capture: true, mozSystemGroup: true });
-          try {
+          const flags = 0;
+          // On macOS, Firefox treats Option+<printable key> as text input. Empty text
+          // means no text should be inserted, so we consume keydown after the page
+          // has seen it, which prevents the keypress, same as in Chromium and WebKit.
+          const suppressTextInput = !text && [...key].length === 1 && Services.appinfo.OS === 'Darwin';
+          if (!suppressTextInput) {
             tip.keydown(keyEvent, flags);
-          } finally {
-            dispose();
+          } else {
+            const dispose = helper.addEventListener(this._docShell.chromeEventHandler, 'keydown', event => {
+              if (event.altKey && !event.ctrlKey && !event.metaKey)
+                event.preventDefault();
+            }, { capture: true, mozSystemGroup: true });
+            try {
+              tip.keydown(keyEvent, flags);
+            } finally {
+              dispose();
+            }
           }
         }
+      } else if (type === 'keyup') {
+        if (text)
+          throw new Error(`keyup does not support text option`);
+        const flags = 0;
+        tip.keyup(keyEvent, flags);
+      } else {
+        throw new Error(`Unknown type ${type}`);
       }
-    } else if (type === 'keyup') {
-      if (text)
-        throw new Error(`keyup does not support text option`);
-      const flags = 0;
-      tip.keyup(keyEvent, flags);
-    } else {
-      throw new Error(`Unknown type ${type}`);
+    } finally {
+      windowUtils.microTaskLevel = microTaskLevel;
     }
   }
 
