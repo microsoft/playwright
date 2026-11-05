@@ -89,7 +89,8 @@ const request = defineTabTool({
   handle: async (tab, params, response) => {
     const request = await tab.request(params.index);
     if (!request) {
-      response.addError(`Request #${params.index} not found. Use browser_network_requests to see available indexes.`);
+      const hint = tab.context.config.skillMode ? 'Run requests to see available numbers.' : 'Use browser_network_requests to see available indexes.';
+      response.addError(`Request #${params.index} not found. ${hint}`);
       return;
     }
     if (params.part) {

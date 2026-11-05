@@ -33,7 +33,8 @@ const startRecording = defineTool({
     const tab = await context.ensureTab();
     await context.startRecording();
     await tab.page.bringToFront();
-    response.addTextResult(`Recording started. Call ${stopRecording.schema.name} to retrieve the recorded actions.`);
+    const hint = context.config.skillMode ? 'Run recording-stop' : `Call ${stopRecording.schema.name}`;
+    response.addTextResult(`Recording started. ${hint} to retrieve the recorded actions.`);
   },
 });
 
@@ -50,8 +51,10 @@ const stopRecording = defineTool({
 
   handle: async (context, params, response) => {
     const recordedActions = await context.stopRecording();
-    if (!recordedActions)
-      throw new Error(`No recording in progress, use ${startRecording.schema.name} to start one.`);
+    if (!recordedActions) {
+      const command = context.config.skillMode ? 'recording-start' : startRecording.schema.name;
+      throw new Error(`No recording in progress, use ${command} to start one.`);
+    }
     if (!recordedActions.length) {
       response.addTextResult('Recording stopped. No actions were recorded.');
     } else {

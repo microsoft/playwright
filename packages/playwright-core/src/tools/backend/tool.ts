@@ -72,13 +72,18 @@ export function defineTabTool<Input extends z.Schema>(tool: TabTool<Input>): Too
     ...tool,
     handle: async (context, params, response, signal) => {
       const tab = await context.ensureTab();
-      const modalStates = tab.modalStates().map(state => state.type);
-      if (tool.clearsModalState && !modalStates.includes(tool.clearsModalState))
-        response.addError(`Error: The tool "${tool.schema.name}" can only be used when there is related modal state present.`);
-      else if (!tool.clearsModalState && modalStates.length)
-        response.addError(`Error: Tool "${tool.schema.name}" does not handle the modal state.`);
-      else
+      const modalStates = tab.modalStates();
+      if (tool.clearsModalState && !modalStates.some(state => state.type === tool.clearsModalState)) {
+        response.addError(context.config.skillMode
+          ? `${response.commandName ?? 'This command'} requires an open ${tool.clearsModalState === 'dialog' ? 'dialog' : 'file chooser'}.`
+          : `Error: The tool "${tool.schema.name}" can only be used when there is related modal state present.`);
+      } else if (!tool.clearsModalState && modalStates.length) {
+        response.addError(context.config.skillMode
+          ? modalStates.map(state => `${response.commandName ?? 'This command'} is blocked by an open ${state.description}; run ${state.clearedBy.skill} first.`).join('\n')
+          : `Error: Tool "${tool.schema.name}" does not handle the modal state.`);
+      } else {
         return tool.handle(tab, params, response, signal);
+      }
     },
   };
 }

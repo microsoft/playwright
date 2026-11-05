@@ -195,15 +195,21 @@ test('eval <ref>', async ({ cli, server }) => {
 // Firefox can deliver Page.dialogOpened after the default 5s action timeout
 // (seen after the FF 153 roll, especially on Windows), so the click loses the
 // modal race and the response never includes the dialog. Keep the race open longer.
-test('dialog-accept', async ({ cli, server, mcpBrowser }) => {
+test('dialog-accept', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-cli/issues/515' } }, async ({ cli, server, mcpBrowser }) => {
   server.setContent('/', `<button onclick="alert('MyAlert')">Button</button>`, 'text/html');
   await cli('open', server.PREFIX, { env: { PLAYWRIGHT_MCP_TIMEOUT_ACTION: mcpBrowser === 'firefox' ? '30000' : '' } });
   const { output } = await cli('click', 'e2');
   expect(output).toContain('MyAlert');
   expect(output).toContain('["alert" dialog with message "MyAlert"]: can be handled by dialog-accept or dialog-dismiss');
+  const { output: blocked, exitCode } = await cli('click', 'e2');
+  expect(blocked).toContain('click is blocked by an open "alert" dialog with message "MyAlert"; run dialog-accept or dialog-dismiss first.');
+  expect(exitCode).toBe(1);
+  expect((await cli('snapshot')).output).toContain('snapshot is blocked by an open "alert" dialog');
   await cli('dialog-accept');
   const { inlineSnapshot } = await cli('snapshot');
   expect(inlineSnapshot).not.toContain('MyAlert');
+  expect((await cli('dialog-accept')).output).toBe('### Error\ndialog-accept requires an open dialog.');
+  expect((await cli('check', 'e2')).output).toContain('### Error\nError: Not a checkbox or radio button');
 });
 
 test('dialog-dismiss', async ({ cli, server, mcpBrowser }) => {
