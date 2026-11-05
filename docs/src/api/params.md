@@ -935,6 +935,19 @@ on selectors that imply single target DOM element will throw when more than one 
 This option does not affect any Locator APIs (Locators are always strict). Defaults to `false`.
 See [Locator] to learn more about the strict mode.
 
+## context-option-locate-only-visible
+* langs: js
+* since: v1.66
+- `locateOnlyVisible` <[boolean]>
+
+Whether to restrict all locators in this context to [visible](../actionability.md#visible) elements.
+Defaults to `false`. When enabled, actions, assertions and queries behave as if [`method: Locator.visible`]
+were appended to the end of the locator chain, unless its last part is an explicit visibility filter.
+For example, `.filter({ visible: false })` at the end of a locator selects hidden elements even when this
+option is enabled. Intermediate locators and inner locators used in [`method: Locator.filter`] are not
+automatically filtered. This does not change the accessibility rules of [`method: Page.getByRole`]
+or the behavior of selector-based methods such as [`method: Page.querySelector`].
+
 ## context-option-service-worker-policy
 - `serviceWorkers` "ServiceWorkerPolicy" <"allow"|"block">
 
@@ -1167,6 +1180,7 @@ between the same pixel in compared images, between zero (strict) and one (lax), 
 - %%-context-option-recordvideo-dir-%%
 - %%-context-option-recordvideo-size-%%
 - %%-context-option-strict-%%
+- %%-context-option-locate-only-visible-%%
 - %%-context-option-service-worker-policy-%%
 
 ## browser-option-args

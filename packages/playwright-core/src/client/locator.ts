@@ -18,7 +18,7 @@ import { inspect } from 'util';
 
 import { asLocatorDescription, locatorCustomDescription } from '@isomorphic/locatorGenerators';
 import { getByAltTextSelector, getByLabelSelector, getByPlaceholderSelector, getByRoleSelector, getByTestIdSelector, getByTextSelector, getByTitleSelector } from '@isomorphic/locatorUtils';
-import { kAnyFrameSelector } from '@isomorphic/selectorParser';
+import { kAnyFrameSelector, parseSelector } from '@isomorphic/selectorParser';
 import { escapeForTextSelector } from '@isomorphic/stringUtils';
 import { isString } from '@isomorphic/rtti';
 import { monotonicTime } from '@isomorphic/time';
@@ -83,6 +83,12 @@ export class Locator implements api.Locator {
       (this as any)[inspect.custom] = () => this._inspect();
   }
 
+  selectorForQuery(): string {
+    if (!this._frame.page().context()._options.locateOnlyVisible || parseSelector(this._selector).parts.at(-1)?.name === 'visible')
+      return this._selector;
+    return this._selector + ' >> visible=true';
+  }
+
   async _wrapApiCall<R>(func: () => Promise<R>, options?: ApiCallOptions): Promise<R> {
     return await this._frame._wrapApiCall(func, options);
   }
@@ -91,10 +97,10 @@ export class Locator implements api.Locator {
     const timeout = this._frame._timeout({ timeout: options.timeout }).timeout;
     const deadline = timeout ? monotonicTime() + timeout : 0;
 
-    const result = await this._frame._channel.waitForSelector({ selector: this._selector, strict: true, state: 'attached' }, { signal: options.signal, timeout });
+    const result = await this._frame._channel.waitForSelector({ selector: this.selectorForQuery(), strict: true, state: 'attached' }, { signal: options.signal, timeout });
     const handle = ElementHandle.fromNullable(result.element) as ElementHandle<SVGElement | HTMLElement> | null;
     if (!handle)
-      throw new Error(`Could not resolve ${this._selector} to DOM Element`);
+      throw new Error(`Could not resolve ${this.selectorForQuery()} to DOM Element`);
     try {
       return await task(handle, deadline ? deadline - monotonicTime() : 0);
     } finally {
@@ -116,30 +122,30 @@ export class Locator implements api.Locator {
   }
 
   async check(options: channels.ElementHandleCheckOptions & TimeoutOptions = {}) {
-    return await this._frame.check(this._selector, { strict: true, ...options });
+    return await this._frame.check(this.selectorForQuery(), { strict: true, ...options });
   }
 
   async click(options: channels.ElementHandleClickOptions & TimeoutOptions = {}): Promise<void> {
-    return await this._frame.click(this._selector, { strict: true, ...options });
+    return await this._frame.click(this.selectorForQuery(), { strict: true, ...options });
   }
 
   async dblclick(options: channels.ElementHandleDblclickOptions & TimeoutOptions = {}): Promise<void> {
-    await this._frame.dblclick(this._selector, { strict: true, ...options });
+    await this._frame.dblclick(this.selectorForQuery(), { strict: true, ...options });
   }
 
   async dispatchEvent(type: string, eventInit: Object = {}, options?: TimeoutOptions) {
-    return await this._frame.dispatchEvent(this._selector, type, eventInit, { strict: true, ...options });
+    return await this._frame.dispatchEvent(this.selectorForQuery(), type, eventInit, { strict: true, ...options });
   }
 
   async dragTo(target: Locator, options: channels.FrameDragAndDropOptions & TimeoutOptions = {}) {
-    return await this._frame.dragAndDrop(this._selector, target._selector, {
+    return await this._frame.dragAndDrop(this.selectorForQuery(), target.selectorForQuery(), {
       strict: true,
       ...options,
     });
   }
 
   async drop(payload: DropPayload, options: Omit<channels.FrameDropOptions, 'payloads' | 'localPaths' | 'streams' | 'data' | 'force' | 'trial'> & TimeoutOptions = {}) {
-    await this._frame._drop(this._selector, payload, { strict: true, ...options });
+    await this._frame._drop(this.selectorForQuery(), payload, { strict: true, ...options });
   }
 
   @apiCall({ title: 'Evaluate' })
@@ -148,7 +154,7 @@ export class Locator implements api.Locator {
   }
 
   async evaluateAll<R, Arg>(pageFunction: structs.PageFunctionOn<Element[], Arg, R>, arg?: Arg): Promise<R> {
-    return await this._frame.$$eval(this._selector, pageFunction, arg);
+    return await this._frame.$$eval(this.selectorForQuery(), pageFunction, arg);
   }
 
   @apiCall({ title: 'Evaluate' })
@@ -157,7 +163,7 @@ export class Locator implements api.Locator {
   }
 
   async fill(value: string, options: channels.ElementHandleFillOptions & TimeoutOptions = {}): Promise<void> {
-    return await this._frame.fill(this._selector, value, { strict: true, ...options });
+    return await this._frame.fill(this.selectorForQuery(), value, { strict: true, ...options });
   }
 
   @apiCall({ title: 'Clear' })
@@ -167,17 +173,17 @@ export class Locator implements api.Locator {
 
   async _highlight() {
     // VS Code extension uses this one, keep it for now.
-    return await this._frame._highlight(this._selector);
+    return await this._frame._highlight(this.selectorForQuery());
   }
 
   async highlight(options: { style?: string | Record<string, string | number> } = {}) {
     const style = typeof options.style === 'object' ? cssObjectToString(options.style) : options.style;
-    await this._frame._highlight(this._selector, style);
+    await this._frame._highlight(this.selectorForQuery(), style);
     return new DisposableStub(() => this.hideHighlight());
   }
 
   async hideHighlight() {
-    await this._frame._hideHighlight(this._selector);
+    await this._frame._hideHighlight(this.selectorForQuery());
   }
 
   locator(selectorOrLocator: string | Locator, options?: Omit<LocatorOptions, 'visible'>): Locator {
@@ -233,11 +239,11 @@ export class Locator implements api.Locator {
   }
 
   async elementHandle(options?: TimeoutOptions): Promise<ElementHandle<SVGElement | HTMLElement>> {
-    return await this._frame.waitForSelector(this._selector, { strict: true, state: 'attached', ...options })!;
+    return await this._frame.waitForSelector(this.selectorForQuery(), { strict: true, state: 'attached', ...options })!;
   }
 
   async elementHandles(): Promise<api.ElementHandle<SVGElement | HTMLElement>[]> {
-    return await this._frame.$$(this._selector);
+    return await this._frame.$$(this.selectorForQuery());
   }
 
   contentFrame() {
@@ -277,68 +283,68 @@ export class Locator implements api.Locator {
   }
 
   async focus(options?: TimeoutOptions): Promise<void> {
-    return await this._frame.focus(this._selector, { strict: true, ...options });
+    return await this._frame.focus(this.selectorForQuery(), { strict: true, ...options });
   }
 
   async blur(options?: TimeoutOptions): Promise<void> {
-    await this._frame._channel.blur({ selector: this._selector, strict: true, ...options }, this._frame._timeout(options));
+    await this._frame._channel.blur({ selector: this.selectorForQuery(), strict: true, ...options }, this._frame._timeout(options));
   }
 
   async count(): Promise<number> {
-    return await this._frame._queryCount(this._selector);
+    return await this._frame._queryCount(this.selectorForQuery());
   }
 
   async normalize(): Promise<Locator> {
-    const { resolvedSelector } = await this._frame._channel.resolveSelector({ selector: this._selector }, kNoTimeout);
+    const { resolvedSelector } = await this._frame._channel.resolveSelector({ selector: this.selectorForQuery() }, kNoTimeout);
     return new Locator(this._frame, resolvedSelector);
   }
 
   async getAttribute(name: string, options?: TimeoutOptions): Promise<string | null> {
-    return await this._frame.getAttribute(this._selector, name, { strict: true, ...options });
+    return await this._frame.getAttribute(this.selectorForQuery(), name, { strict: true, ...options });
   }
 
   async hover(options: channels.ElementHandleHoverOptions & TimeoutOptions = {}): Promise<void> {
-    return await this._frame.hover(this._selector, { strict: true, ...options });
+    return await this._frame.hover(this.selectorForQuery(), { strict: true, ...options });
   }
 
   async innerHTML(options?: TimeoutOptions): Promise<string> {
-    return await this._frame.innerHTML(this._selector, { strict: true, ...options });
+    return await this._frame.innerHTML(this.selectorForQuery(), { strict: true, ...options });
   }
 
   async innerText(options?: TimeoutOptions): Promise<string> {
-    return await this._frame.innerText(this._selector, { strict: true, ...options });
+    return await this._frame.innerText(this.selectorForQuery(), { strict: true, ...options });
   }
 
   async inputValue(options?: TimeoutOptions): Promise<string> {
-    return await this._frame.inputValue(this._selector, { strict: true, ...options });
+    return await this._frame.inputValue(this.selectorForQuery(), { strict: true, ...options });
   }
 
   async isChecked(options?: TimeoutOptions): Promise<boolean> {
-    return await this._frame.isChecked(this._selector, { strict: true, ...options });
+    return await this._frame.isChecked(this.selectorForQuery(), { strict: true, ...options });
   }
 
   async isDisabled(options?: TimeoutOptions): Promise<boolean> {
-    return await this._frame.isDisabled(this._selector, { strict: true, ...options });
+    return await this._frame.isDisabled(this.selectorForQuery(), { strict: true, ...options });
   }
 
   async isEditable(options?: TimeoutOptions): Promise<boolean> {
-    return await this._frame.isEditable(this._selector, { strict: true, ...options });
+    return await this._frame.isEditable(this.selectorForQuery(), { strict: true, ...options });
   }
 
   async isEnabled(options?: TimeoutOptions): Promise<boolean> {
-    return await this._frame.isEnabled(this._selector, { strict: true, ...options });
+    return await this._frame.isEnabled(this.selectorForQuery(), { strict: true, ...options });
   }
 
   async isHidden(options?: TimeoutOptions): Promise<boolean> {
-    return await this._frame.isHidden(this._selector, { strict: true, ...options });
+    return await this._frame.isHidden(this.selectorForQuery(), { strict: true, ...options });
   }
 
   async isVisible(options?: TimeoutOptions): Promise<boolean> {
-    return await this._frame.isVisible(this._selector, { strict: true, ...options });
+    return await this._frame.isVisible(this.selectorForQuery(), { strict: true, ...options });
   }
 
   async press(key: string, options: channels.ElementHandlePressOptions & TimeoutOptions = {}): Promise<void> {
-    return await this._frame.press(this._selector, key, { strict: true, ...options });
+    return await this._frame.press(this.selectorForQuery(), key, { strict: true, ...options });
   }
 
   @apiCall({ title: 'Screenshot' })
@@ -348,12 +354,12 @@ export class Locator implements api.Locator {
   }
 
   async ariaSnapshot(options: TimeoutOptions & { mode?: 'ai' | 'default', depth?: number, boxes?: boolean } = {}): Promise<string> {
-    const result = await this._frame._channel.ariaSnapshot({ mode: options.mode, selector: this._selector, depth: options.depth, boxes: options.boxes }, this._frame._timeout(options));
+    const result = await this._frame._channel.ariaSnapshot({ mode: options.mode, selector: this.selectorForQuery(), depth: options.depth, boxes: options.boxes }, this._frame._timeout(options));
     return result.snapshot;
   }
 
   async ariaSnapshotJSON(options: TimeoutOptions & { mode?: 'ai' | 'default', depth?: number, boxes?: boolean } = {}): Promise<AriaSnapshotJSON> {
-    const result = await this._frame._channel.ariaSnapshotJSON({ mode: options.mode, selector: this._selector, depth: options.depth, boxes: options.boxes }, this._frame._timeout(options));
+    const result = await this._frame._channel.ariaSnapshotJSON({ mode: options.mode, selector: this.selectorForQuery(), depth: options.depth, boxes: options.boxes }, this._frame._timeout(options));
     return result.snapshot;
   }
 
@@ -363,7 +369,7 @@ export class Locator implements api.Locator {
   }
 
   async selectOption(values: string | api.ElementHandle | SelectOption | string[] | api.ElementHandle[] | SelectOption[] | null, options: SelectOptionOptions = {}): Promise<string[]> {
-    return await this._frame.selectOption(this._selector, values, { strict: true, ...options });
+    return await this._frame.selectOption(this.selectorForQuery(), values, { strict: true, ...options });
   }
 
   @apiCall({ title: 'Select text' })
@@ -379,19 +385,19 @@ export class Locator implements api.Locator {
   }
 
   async setInputFiles(files: string | FilePayload | string[] | FilePayload[], options: channels.ElementHandleSetInputFilesOptions & TimeoutOptions = {}) {
-    return await this._frame.setInputFiles(this._selector, files, { strict: true, ...options });
+    return await this._frame.setInputFiles(this.selectorForQuery(), files, { strict: true, ...options });
   }
 
   async tap(options: channels.ElementHandleTapOptions & TimeoutOptions = {}): Promise<void> {
-    return await this._frame.tap(this._selector, { strict: true, ...options });
+    return await this._frame.tap(this.selectorForQuery(), { strict: true, ...options });
   }
 
   async textContent(options?: TimeoutOptions): Promise<string | null> {
-    return await this._frame.textContent(this._selector, { strict: true, ...options });
+    return await this._frame.textContent(this.selectorForQuery(), { strict: true, ...options });
   }
 
   async type(text: string, options: channels.ElementHandleTypeOptions & TimeoutOptions = {}): Promise<void> {
-    return await this._frame.type(this._selector, text, { strict: true, ...options });
+    return await this._frame.type(this.selectorForQuery(), text, { strict: true, ...options });
   }
 
   async pressSequentially(text: string, options: channels.ElementHandleTypeOptions & TimeoutOptions = {}): Promise<void> {
@@ -399,30 +405,31 @@ export class Locator implements api.Locator {
   }
 
   async uncheck(options: channels.ElementHandleUncheckOptions & TimeoutOptions = {}) {
-    return await this._frame.uncheck(this._selector, { strict: true, ...options });
+    return await this._frame.uncheck(this.selectorForQuery(), { strict: true, ...options });
   }
 
   async all(): Promise<Locator[]> {
-    return new Array(await this.count()).fill(0).map((e, i) => this.nth(i));
+    const locator = new Locator(this._frame, this.selectorForQuery());
+    return new Array(await locator.count()).fill(0).map((e, i) => locator.nth(i));
   }
 
   async allInnerTexts(): Promise<string[]> {
-    return await this._frame.$$eval(this._selector, ee => ee.map(e => (e as HTMLElement).innerText));
+    return await this._frame.$$eval(this.selectorForQuery(), ee => ee.map(e => (e as HTMLElement).innerText));
   }
 
   async allTextContents(): Promise<string[]> {
-    return await this._frame.$$eval(this._selector, ee => ee.map(e => e.textContent || ''));
+    return await this._frame.$$eval(this.selectorForQuery(), ee => ee.map(e => e.textContent || ''));
   }
 
   waitFor(options: channels.FrameWaitForSelectorOptions & TimeoutOptions & { state: 'attached' | 'visible' }): Promise<void>;
   waitFor(options?: channels.FrameWaitForSelectorOptions & TimeoutOptions): Promise<void>;
   async waitFor(options?: channels.FrameWaitForSelectorOptions & TimeoutOptions): Promise<void> {
-    await this._frame._channel.waitForSelector({ selector: this._selector, strict: true, omitReturnValue: true, ...options }, this._frame._timeout(options));
+    await this._frame._channel.waitForSelector({ selector: this.selectorForQuery(), strict: true, omitReturnValue: true, ...options }, this._frame._timeout(options));
   }
 
   async waitForFunction<R, Arg>(pageFunction: structs.PageFunctionOn<SVGElement | HTMLElement, Arg, R>, arg?: Arg, options?: TimeoutOptions): Promise<void> {
     await this._frame._channel.waitForFunction({
-      selector: this._selector,
+      selector: this.selectorForQuery(),
       strict: true,
       expression: String(pageFunction),
       isFunction: typeof pageFunction === 'function',
@@ -434,7 +441,7 @@ export class Locator implements api.Locator {
   async _expect(expression: string, options: FrameExpectParams): Promise<ExpectResult> {
     return this._frame._expect(expression, {
       ...options,
-      selector: this._selector,
+      selector: this.selectorForQuery(),
     });
   }
 

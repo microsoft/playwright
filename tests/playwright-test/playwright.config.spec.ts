@@ -84,6 +84,7 @@ test('should respect contextOptions', async ({ runInlineTest }) => {
             isMobile: true,
             javaScriptEnabled: true,
             locale: 'fr-FR',
+            locateOnlyVisible: true,
             offline: true,
             permissions: ['geolocation'],
             timezoneId: 'TIMEZONE',
@@ -95,7 +96,7 @@ test('should respect contextOptions', async ({ runInlineTest }) => {
     `,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
-      test('pass', async ({ acceptDownloads, bypassCSP, colorScheme, deviceScaleFactor, extraHTTPHeaders, hasTouch, ignoreHTTPSErrors, isMobile, javaScriptEnabled, locale, offline, permissions, timezoneId, userAgent, viewport }) => {
+      test('pass', async ({ acceptDownloads, bypassCSP, colorScheme, deviceScaleFactor, extraHTTPHeaders, hasTouch, ignoreHTTPSErrors, isMobile, javaScriptEnabled, locale, locateOnlyVisible, offline, permissions, timezoneId, userAgent, viewport }) => {
         expect.soft(acceptDownloads).toBe(false);
         expect.soft(bypassCSP).toBe(true);
         expect.soft(colorScheme).toBe('dark');
@@ -106,6 +107,7 @@ test('should respect contextOptions', async ({ runInlineTest }) => {
         expect.soft(isMobile).toBe(true);
         expect.soft(javaScriptEnabled).toBe(true);
         expect.soft(locale).toBe('fr-FR');
+        expect.soft(locateOnlyVisible).toBe(true);
         expect.soft(offline).toBe(true);
         expect.soft(permissions).toEqual(['geolocation']);
         expect.soft(timezoneId).toBe('TIMEZONE');
@@ -136,6 +138,7 @@ test('should override contextOptions', async ({ runInlineTest }) => {
         isMobile: true,
         javaScriptEnabled: true,
         locale: 'fr-FR',
+        locateOnlyVisible: false,
         offline: true,
         permissions: ['geolocation'],
         reducedMotion: 'reduce',
@@ -155,6 +158,7 @@ test('should override contextOptions', async ({ runInlineTest }) => {
             isMobile: false,
             javaScriptEnabled: false,
             locale: 'en-US',
+            locateOnlyVisible: true,
             offline: false,
             permissions: [],
             reducedMotion: 'no-preference',
@@ -167,7 +171,7 @@ test('should override contextOptions', async ({ runInlineTest }) => {
     `,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
-      test('pass', async ({ acceptDownloads, bypassCSP, colorScheme, contrast, deviceScaleFactor, extraHTTPHeaders, forcedColors, hasTouch, ignoreHTTPSErrors, isMobile, javaScriptEnabled, locale, offline, permissions, reducedMotion, timezoneId, userAgent, viewport }) => {
+      test('pass', async ({ acceptDownloads, bypassCSP, colorScheme, contrast, deviceScaleFactor, extraHTTPHeaders, forcedColors, hasTouch, ignoreHTTPSErrors, isMobile, javaScriptEnabled, locale, locateOnlyVisible, offline, permissions, reducedMotion, timezoneId, userAgent, viewport }) => {
         expect.soft(acceptDownloads).toBe(false);
         expect.soft(bypassCSP).toBe(true);
         expect.soft(colorScheme).toBe('dark');
@@ -180,6 +184,7 @@ test('should override contextOptions', async ({ runInlineTest }) => {
         expect.soft(isMobile).toBe(true);
         expect.soft(javaScriptEnabled).toBe(true);
         expect.soft(locale).toBe('fr-FR');
+        expect.soft(locateOnlyVisible).toBe(false);
         expect.soft(offline).toBe(true);
         expect.soft(permissions).toEqual(['geolocation']);
         expect.soft(reducedMotion).toBe('reduce');
@@ -194,20 +199,23 @@ test('should override contextOptions', async ({ runInlineTest }) => {
   expect(result.passed).toBe(1);
 });
 
-test('should respect testIdAttribute', async ({ runInlineTest }) => {
+test('should respect testIdAttribute and locateOnlyVisible', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       export default {
         use: {
           testIdAttribute: 'data-pw',
+          locateOnlyVisible: true,
         }
       };
     `,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('pass', async ({ page }) => {
-        await page.setContent('<div data-pw="myid">Hi</div>');
+        await page.setContent('<button data-pw="myid" hidden>Hi</button><button data-pw="myid" onclick="this.textContent = \\'Clicked\\'">Hi</button>');
         await expect(page.getByTestId('myid')).toHaveCount(1);
+        await page.getByTestId('myid').click();
+        await expect(page.getByTestId('myid')).toHaveText('Clicked');
       });
     `,
   }, { workers: 1 });

@@ -208,6 +208,7 @@ ContextOptions:
           properties:
             $mixin: ShowActionsOptions
     strictSelectors: boolean?
+    locateOnlyVisible: boolean?
     serviceWorkers:
       type: enum?
       literals:

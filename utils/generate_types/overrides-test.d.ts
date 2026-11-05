@@ -302,6 +302,7 @@ export interface PlaywrightTestOptions {
   isMobile: boolean;
   javaScriptEnabled: boolean;
   locale: string | undefined;
+  locateOnlyVisible: boolean;
   offline: boolean;
   permissions: string[] | undefined;
   proxy: Proxy | undefined;

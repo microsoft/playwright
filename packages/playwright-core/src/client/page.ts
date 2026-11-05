@@ -432,7 +432,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
       throw new Error(`Locator must belong to the main frame of this page`);
     if (options.times === 0)
       return;
-    const { uid } = await this._channel.registerLocatorHandler({ selector: locator._selector, noWaitAfter: options.noWaitAfter }, kNoTimeout);
+    const { uid } = await this._channel.registerLocatorHandler({ selector: locator.selectorForQuery(), noWaitAfter: options.noWaitAfter }, kNoTimeout);
     this._locatorHandlers.set(uid, { locator, handler, times: options.times });
   }
 
@@ -651,7 +651,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     if (mask) {
       copy.mask = mask.map(locator => ({
         frame: locator._frame._channel,
-        selector: locator._selector,
+        selector: locator.selectorForQuery(),
       }));
     }
     const result = await this._channel.screenshot(copy, this._timeoutSettings.timeout(options));
@@ -667,11 +667,11 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return await this._wrapApiCall(async () => {
       const mask = options?.mask ? options?.mask.map(locator => ({
         frame: (locator as Locator)._frame._channel,
-        selector: (locator as Locator)._selector,
+        selector: (locator as Locator).selectorForQuery(),
       })) : undefined;
       const locator = options.locator ? {
         frame: (options.locator as Locator)._frame._channel,
-        selector: (options.locator as Locator)._selector,
+        selector: (options.locator as Locator).selectorForQuery(),
       } : undefined;
       try {
         const result = await this._channel.expectScreenshot({
