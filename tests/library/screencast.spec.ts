@@ -45,11 +45,12 @@ test('SC-001 screencast.start delivers frames via onFrame callback', async ({ br
     // Each frame must be a valid JPEG (starts with FF D8)
     expect(frame[0]).toBe(0xff);
     expect(frame[1]).toBe(0xd8);
-    const { width, height } = jpegDimensions(frame);
-    // Frame should be scaled down to fit the maximum size.
-    expect(width).toBe(500);
-    expect(height).toBe(200);
   }
+  // Chromium scales the first frame against the window size it had before the viewport
+  // was applied, so only the last frame is reliably scaled down to fit the maximum size.
+  const { width, height } = jpegDimensions(frames[frames.length - 1]);
+  expect(width).toBe(500);
+  expect(height).toBe(200);
 
   await context.close();
 });

@@ -57,6 +57,8 @@ export class CRBrowser extends Browser {
   private _tracingRecording = false;
   private _tracingClient: CRSession | undefined;
   private _userAgent: string = '';
+  private _isHeadlessShell = false;
+  private _isEdge = false;
 
   static async connect(parent: SdkObject, transport: ConnectionTransport, options: BrowserOptions, devtools?: CRDevTools): Promise<CRBrowser> {
     // Make a copy in case we need to update `headful` property below.
@@ -81,6 +83,10 @@ export class CRBrowser extends Browser {
     // We don't trust the option as it may lie in case of connectOverCDP where remote browser
     // may have been launched with different options.
     browser.options.headful = !version.userAgent.includes('Headless');
+    // The headless shell reports itself as HeadlessChrome, while the new headless mode
+    // of the full browser reports the regular product name.
+    browser._isHeadlessShell = version.product.startsWith('HeadlessChrome/');
+    browser._isEdge = version.product.startsWith('Edg/');
     if (!options.persistent) {
       await session.send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true });
       return browser;
@@ -158,6 +164,14 @@ export class CRBrowser extends Browser {
     if (this._userAgent.includes('Macintosh'))
       return 'mac';
     return 'linux';
+  }
+
+  isHeadlessShell(): boolean {
+    return this._isHeadlessShell;
+  }
+
+  isEdge(): boolean {
+    return this._isEdge;
   }
 
   isClank(): boolean {
