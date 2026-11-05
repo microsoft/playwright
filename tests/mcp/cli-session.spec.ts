@@ -113,8 +113,15 @@ test('delete-data', async ({ cli, server, mcpBrowserNormalized }) => {
   expect(fs.existsSync(dataDir)).toBe(false);
 });
 
-test('delete-data named session', async ({ cli, server, mcpBrowserNormalized }) => {
+test('delete-data named session', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-cli/issues/499' },
+}, async ({ cli, server, mcpBrowserNormalized }) => {
+  await cli('-s', 'mysession-test', 'open', server.HELLO_WORLD, '--persistent');
+  await cli('-s', 'mysession-test', 'localstorage-set', 'k', 'data-of-mysession-test');
+  await cli('-s', 'mysession-test', 'close');
+
   await cli('-s', 'mysession', 'open', server.HELLO_WORLD, '--persistent');
+  await cli('-s', 'mysession', 'close');
 
   const dataDir = path.resolve(await daemonFolder(), 'ud-mysession-' + mcpBrowserNormalized);
   expect(fs.existsSync(dataDir)).toBe(true);
@@ -123,6 +130,10 @@ test('delete-data named session', async ({ cli, server, mcpBrowserNormalized }) 
   expect(output).toContain(`Deleted user data for browser 'mysession'.`);
 
   expect(fs.existsSync(dataDir)).toBe(false);
+
+  await cli('-s', 'mysession-test', 'open', server.HELLO_WORLD, '--persistent');
+  const { output: storageOutput } = await cli('-s', 'mysession-test', 'localstorage-get', 'k');
+  expect(storageOutput).toContain('data-of-mysession-test');
 });
 
 test('delete-data non-existent session', async ({ cli }) => {

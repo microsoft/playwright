@@ -62,8 +62,9 @@ export class Session {
   async deleteData(): Promise<{ existed: boolean, deletedUserDataDir: boolean }> {
     await this.stop();
 
+    const browserToken = this.config.browser.launchOptions.channel ?? this.config.browser.browserName;
     const dataDirs = await fs.promises.readdir(this._sessionFile.daemonDir).catch(() => []);
-    const matchingEntries = dataDirs.filter(file => file === `${this.name}.session` || file.startsWith(`ud-${this.name}-`));
+    const matchingEntries = dataDirs.filter(file => file === `${this.name}.session` || file === `ud-${this.name}-${browserToken}`);
     if (matchingEntries.length === 0)
       return { existed: false, deletedUserDataDir: false };
 
