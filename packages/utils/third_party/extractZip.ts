@@ -177,7 +177,10 @@ class Extractor {
       debug('creating symlink', link, dest);
       await fs.symlink(link, dest);
     } else {
-      await pipeline(readStream, createWriteStream(dest, { mode: procMode }));
+      // 'wx' fails when dest exists, including a symlink left by a previous entry.
+      // Otherwise an archive could place a symlink and then a regular file with the
+      // same name to write outside of the extraction directory.
+      await pipeline(readStream, createWriteStream(dest, { mode: procMode, flags: 'wx' }));
     }
   }
 
