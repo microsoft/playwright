@@ -640,6 +640,21 @@ Page:
       title: Stop screencast
       group: configuration
 
+    videoStartForTest:
+      internal: true
+      parameters:
+        size:
+          type: object?
+          properties:
+            width: int
+            height: int
+        fps: int?
+      returns:
+        artifact: Artifact
+
+    videoStopForTest:
+      internal: true
+
     updateSubscription:
       internal: true
       parameters:
@@ -785,4 +800,3 @@ Page:
     worker:
       parameters:
         worker: Worker
-

@@ -306,6 +306,8 @@ export const methodMetainfo = new Map<string, MethodMetainfo>([
   ['Page.screencastStart', { title: 'Start screencast', group: 'configuration', }],
   ['Page.screencastFrameAck', { internal: true, }],
   ['Page.screencastStop', { title: 'Stop screencast', group: 'configuration', }],
+  ['Page.videoStartForTest', { internal: true, }],
+  ['Page.videoStopForTest', { internal: true, }],
   ['Page.updateSubscription', { internal: true, }],
   ['Page.setDockTile', { internal: true, }],
   ['Page.webStorageItems', { title: 'Get WebStorage items', group: 'getter', }],

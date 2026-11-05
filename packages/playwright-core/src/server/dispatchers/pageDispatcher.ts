@@ -69,6 +69,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   private _screencastFrameId = 0;
   private _screencastFrameAcks = new Map<number, ManualPromise<void>>();
   private _videoRecorder: VideoRecorder | undefined;
+  private _testVideoRecorder: VideoRecorder | undefined;
 
   static from(parentScope: BrowserContextDispatcher, page: Page): PageDispatcher {
     return PageDispatcher.fromNullable(parentScope, page)!;
@@ -447,6 +448,22 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     }
   }
 
+  async videoStartForTest(params: channels.PageVideoStartForTestParams): Promise<channels.PageVideoStartForTestResult> {
+    if (this._testVideoRecorder)
+      throw new Error('Test video is already running');
+    if (params.fps !== undefined && params.fps <= 0)
+      throw new Error(`"fps" must be a positive number, got ${params.fps}`);
+    const recorder = new VideoRecorder(this._page.screencast);
+    const artifact = recorder.start(params);
+    this._testVideoRecorder = recorder;
+    return { artifact: createVideoDispatcher(this.parentScope(), artifact) };
+  }
+
+  async videoStopForTest(): Promise<void> {
+    await this._testVideoRecorder?.stop();
+    this._testVideoRecorder = undefined;
+  }
+
   private _clearScreencastFrameAcks() {
     for (const promise of this._screencastFrameAcks.values())
       promise.resolve();
@@ -508,6 +525,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
       (this._page.coverage as CRCoverage).stopCSSCoverage().catch(() => {});
     this._cssCoverageActive = false;
     this.screencastStop({}, undefined).catch(() => {});
+    this.videoStopForTest().catch(() => {});
   }
 
   async setDockTile(params: channels.PageSetDockTileParams): Promise<void> {

@@ -2704,6 +2704,18 @@ scheme.PageScreencastFrameAckParams = tObject({
 scheme.PageScreencastFrameAckResult = tOptional(tObject({}));
 scheme.PageScreencastStopParams = tOptional(tObject({}));
 scheme.PageScreencastStopResult = tOptional(tObject({}));
+scheme.PageVideoStartForTestParams = tObject({
+  size: tOptional(tObject({
+    width: tInt,
+    height: tInt,
+  })),
+  fps: tOptional(tInt),
+});
+scheme.PageVideoStartForTestResult = tObject({
+  artifact: tChannel(['Artifact']),
+});
+scheme.PageVideoStopForTestParams = tOptional(tObject({}));
+scheme.PageVideoStopForTestResult = tOptional(tObject({}));
 scheme.PageUpdateSubscriptionParams = tObject({
   event: tEnum(['console', 'dialog', 'dialogClosed', 'fileChooser', 'request', 'response', 'requestFinished', 'requestFailed']),
   enabled: tBoolean,

@@ -26,6 +26,7 @@ import { trimStringWithEllipsis  } from '@isomorphic/stringUtils';
 import { urlMatches, urlMatchesEqual } from '@isomorphic/urlMatch';
 import { LongStandingScope } from '@isomorphic/manualPromise';
 import { isObject, isRegExp, isString } from '@isomorphic/rtti';
+import { debugLogger } from '@utils/debugLogger';
 import { Artifact } from './artifact';
 import { ChannelOwner, apiCall, internal } from './channelOwner';
 import { evaluationScript, initScriptSourceWithExposedFunctions } from './clientHelper';
@@ -313,6 +314,44 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     if (!this._browserContext._options.recordVideo)
       return null;
     return this._video;
+  }
+
+  async _startVideoForTest(options: { size?: Size, fps?: number, showActions?: Parameters<api.Screencast['showActions']>[0] }): Promise<Artifact | undefined> {
+    return await this._wrapApiCall(async () => {
+      try {
+        const { artifact } = await this._channel.videoStartForTest({ size: options.size, fps: options.fps }, kNoTimeout);
+        if (options.showActions)
+          await this.screencast.showActions(options.showActions);
+        return Artifact.from(artifact);
+      } catch (error) {
+        if (!isTargetClosedError(error))
+          throw error;
+      }
+    }, { internal: true });
+  }
+
+  async _stopVideoForTest(artifact: Artifact, options: { path?: string, showActions?: boolean }): Promise<boolean> {
+    return await this._wrapApiCall(async () => {
+      try {
+        await this._channel.videoStopForTest({}, kNoTimeout);
+        if (options.showActions)
+          await this.screencast.hideActions();
+      } catch (error) {
+        if (!isTargetClosedError(error))
+          throw error;
+      }
+      try {
+        if (options.path)
+          await artifact.saveAs(options.path);
+        await artifact.delete();
+        return !!options.path;
+      } catch (error) {
+        if (!isTargetClosedError(error))
+          throw error;
+        debugLogger.log('error', `Failed to collect test video after browser closure: ${error}`);
+        return false;
+      }
+    }, { internal: true });
   }
 
   async pickLocator(): Promise<Locator> {
