@@ -19879,9 +19879,16 @@ export interface APIRequestContext {
    */
   delete<T = any>(url: string, options?: {
     /**
-     * Allows to set post data of the request. If the data parameter is an object, it will be serialized to json string
-     * and `content-type` header will be set to `application/json` if not explicitly set. Otherwise the `content-type`
-     * header will be set to `application/octet-stream` if not explicitly set.
+     * Allows to set post data of the request. If the data parameter is an object other than a [Buffer], it will be
+     * serialized to JSON and the `content-type` header will be set to `application/json` if not explicitly set.
+     *
+     * If the data parameter is a string and the explicitly set `content-type` is `application/json` (case-insensitive,
+     * with optional parameters such as `charset=utf-8`), the string is sent as is if it parses as JSON. Otherwise, it is
+     * JSON-encoded as a string, including quotes and escaping. Strings with other content types are sent as is.
+     *
+     * Pass a [Buffer], such as `Buffer.from(body, 'utf8')`, to send exact bytes without JSON encoding, for example to
+     * send deliberately malformed JSON or a body used to compute a signature. For strings and buffers, the `content-type`
+     * header defaults to `application/octet-stream` if not explicitly set.
      */
     data?: string|Buffer|Serializable;
 
@@ -20021,9 +20028,16 @@ export interface APIRequestContext {
    */
   fetch<T = any>(urlOrRequest: string|Request, options?: {
     /**
-     * Allows to set post data of the request. If the data parameter is an object, it will be serialized to json string
-     * and `content-type` header will be set to `application/json` if not explicitly set. Otherwise the `content-type`
-     * header will be set to `application/octet-stream` if not explicitly set.
+     * Allows to set post data of the request. If the data parameter is an object other than a [Buffer], it will be
+     * serialized to JSON and the `content-type` header will be set to `application/json` if not explicitly set.
+     *
+     * If the data parameter is a string and the explicitly set `content-type` is `application/json` (case-insensitive,
+     * with optional parameters such as `charset=utf-8`), the string is sent as is if it parses as JSON. Otherwise, it is
+     * JSON-encoded as a string, including quotes and escaping. Strings with other content types are sent as is.
+     *
+     * Pass a [Buffer], such as `Buffer.from(body, 'utf8')`, to send exact bytes without JSON encoding, for example to
+     * send deliberately malformed JSON or a body used to compute a signature. For strings and buffers, the `content-type`
+     * header defaults to `application/octet-stream` if not explicitly set.
      */
     data?: string|Buffer|Serializable;
 
@@ -20150,9 +20164,16 @@ export interface APIRequestContext {
    */
   get<T = any>(url: string, options?: {
     /**
-     * Allows to set post data of the request. If the data parameter is an object, it will be serialized to json string
-     * and `content-type` header will be set to `application/json` if not explicitly set. Otherwise the `content-type`
-     * header will be set to `application/octet-stream` if not explicitly set.
+     * Allows to set post data of the request. If the data parameter is an object other than a [Buffer], it will be
+     * serialized to JSON and the `content-type` header will be set to `application/json` if not explicitly set.
+     *
+     * If the data parameter is a string and the explicitly set `content-type` is `application/json` (case-insensitive,
+     * with optional parameters such as `charset=utf-8`), the string is sent as is if it parses as JSON. Otherwise, it is
+     * JSON-encoded as a string, including quotes and escaping. Strings with other content types are sent as is.
+     *
+     * Pass a [Buffer], such as `Buffer.from(body, 'utf8')`, to send exact bytes without JSON encoding, for example to
+     * send deliberately malformed JSON or a body used to compute a signature. For strings and buffers, the `content-type`
+     * header defaults to `application/octet-stream` if not explicitly set.
      */
     data?: string|Buffer|Serializable;
 
@@ -20247,9 +20268,16 @@ export interface APIRequestContext {
    */
   head<T = any>(url: string, options?: {
     /**
-     * Allows to set post data of the request. If the data parameter is an object, it will be serialized to json string
-     * and `content-type` header will be set to `application/json` if not explicitly set. Otherwise the `content-type`
-     * header will be set to `application/octet-stream` if not explicitly set.
+     * Allows to set post data of the request. If the data parameter is an object other than a [Buffer], it will be
+     * serialized to JSON and the `content-type` header will be set to `application/json` if not explicitly set.
+     *
+     * If the data parameter is a string and the explicitly set `content-type` is `application/json` (case-insensitive,
+     * with optional parameters such as `charset=utf-8`), the string is sent as is if it parses as JSON. Otherwise, it is
+     * JSON-encoded as a string, including quotes and escaping. Strings with other content types are sent as is.
+     *
+     * Pass a [Buffer], such as `Buffer.from(body, 'utf8')`, to send exact bytes without JSON encoding, for example to
+     * send deliberately malformed JSON or a body used to compute a signature. For strings and buffers, the `content-type`
+     * header defaults to `application/octet-stream` if not explicitly set.
      */
     data?: string|Buffer|Serializable;
 
@@ -20344,9 +20372,16 @@ export interface APIRequestContext {
    */
   patch<T = any>(url: string, options?: {
     /**
-     * Allows to set post data of the request. If the data parameter is an object, it will be serialized to json string
-     * and `content-type` header will be set to `application/json` if not explicitly set. Otherwise the `content-type`
-     * header will be set to `application/octet-stream` if not explicitly set.
+     * Allows to set post data of the request. If the data parameter is an object other than a [Buffer], it will be
+     * serialized to JSON and the `content-type` header will be set to `application/json` if not explicitly set.
+     *
+     * If the data parameter is a string and the explicitly set `content-type` is `application/json` (case-insensitive,
+     * with optional parameters such as `charset=utf-8`), the string is sent as is if it parses as JSON. Otherwise, it is
+     * JSON-encoded as a string, including quotes and escaping. Strings with other content types are sent as is.
+     *
+     * Pass a [Buffer], such as `Buffer.from(body, 'utf8')`, to send exact bytes without JSON encoding, for example to
+     * send deliberately malformed JSON or a body used to compute a signature. For strings and buffers, the `content-type`
+     * header defaults to `application/octet-stream` if not explicitly set.
      */
     data?: string|Buffer|Serializable;
 
@@ -20483,9 +20518,16 @@ export interface APIRequestContext {
    */
   post<T = any>(url: string, options?: {
     /**
-     * Allows to set post data of the request. If the data parameter is an object, it will be serialized to json string
-     * and `content-type` header will be set to `application/json` if not explicitly set. Otherwise the `content-type`
-     * header will be set to `application/octet-stream` if not explicitly set.
+     * Allows to set post data of the request. If the data parameter is an object other than a [Buffer], it will be
+     * serialized to JSON and the `content-type` header will be set to `application/json` if not explicitly set.
+     *
+     * If the data parameter is a string and the explicitly set `content-type` is `application/json` (case-insensitive,
+     * with optional parameters such as `charset=utf-8`), the string is sent as is if it parses as JSON. Otherwise, it is
+     * JSON-encoded as a string, including quotes and escaping. Strings with other content types are sent as is.
+     *
+     * Pass a [Buffer], such as `Buffer.from(body, 'utf8')`, to send exact bytes without JSON encoding, for example to
+     * send deliberately malformed JSON or a body used to compute a signature. For strings and buffers, the `content-type`
+     * header defaults to `application/octet-stream` if not explicitly set.
      */
     data?: string|Buffer|Serializable;
 
@@ -20580,9 +20622,16 @@ export interface APIRequestContext {
    */
   put<T = any>(url: string, options?: {
     /**
-     * Allows to set post data of the request. If the data parameter is an object, it will be serialized to json string
-     * and `content-type` header will be set to `application/json` if not explicitly set. Otherwise the `content-type`
-     * header will be set to `application/octet-stream` if not explicitly set.
+     * Allows to set post data of the request. If the data parameter is an object other than a [Buffer], it will be
+     * serialized to JSON and the `content-type` header will be set to `application/json` if not explicitly set.
+     *
+     * If the data parameter is a string and the explicitly set `content-type` is `application/json` (case-insensitive,
+     * with optional parameters such as `charset=utf-8`), the string is sent as is if it parses as JSON. Otherwise, it is
+     * JSON-encoded as a string, including quotes and escaping. Strings with other content types are sent as is.
+     *
+     * Pass a [Buffer], such as `Buffer.from(body, 'utf8')`, to send exact bytes without JSON encoding, for example to
+     * send deliberately malformed JSON or a body used to compute a signature. For strings and buffers, the `content-type`
+     * header defaults to `application/octet-stream` if not explicitly set.
      */
     data?: string|Buffer|Serializable;
 

@@ -92,6 +92,8 @@ export default defineConfig({
 
 - String and `URLSearchParams` values of the `params` option in [APIRequestContext] requests are now appended to the query that the URL already has, instead of replacing it.
 
+- [APIRequestContext] now matches `application/json` content types case-insensitively and with parameters, such as `application/json;charset=UTF-8`, when serializing string `data`. Previously, only the exact value `application/json` triggered JSON encoding. With these content types, a string that does not parse as JSON is now JSON-encoded, including quotes and escaping, instead of being sent as is. This changes malformed JSON bodies and can invalidate signatures computed over the original string. Pass `data: Buffer.from(body, 'utf8')` to send exact bytes without JSON encoding. Strings that already parse as JSON and `Buffer` data are unchanged.
+
 - `.css`, `.less` and `.scss` imports in test files now load as empty modules instead of being removed, so the imported file must exist.
 
 - The blob reporter again deletes the content of its output directory before it writes the report. Playwright 1.64 kept reports with other names.
