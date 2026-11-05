@@ -14,6 +14,12 @@
  * limitations under the License.
  */
 
+// Wire protocol between the CDP relay (this package) and the Playwright
+// extension (packages/extension). BrowserModel sends the commands and handles
+// the events. The extension side lives in packages/extension/src/relayConnection.ts:
+// chrome.* commands are allow-listed there and invoked reflectively, anything
+// else needs an explicit handler.
+
 // The protocol version defined in this file. Bumped whenever the
 // commands/events change. Sent to the extension, which rejects clients
 // requesting a version it does not support.
@@ -43,9 +49,9 @@ export type Tab = {
 };
 export type TabRemoveInfo = { windowId: number; isWindowClosing: boolean };
 
-// Protocol v2: command params/results mirror chrome.* positional arguments,
-// so the extension can spread them straight into chrome.<api>.<method>(...).
-export type ExtensionCommandV2 = {
+// Command params/results mirror chrome.* positional arguments, so the
+// extension can spread them straight into chrome.<api>.<method>(...).
+export type ExtensionCommands = {
   // chrome.debugger.attach(target, requiredVersion)
   'chrome.debugger.attach': {
     params: [target: Debuggee, requiredVersion: string];
@@ -73,8 +79,8 @@ export type ExtensionCommandV2 = {
   };
 };
 
-// Protocol v2 events mirror chrome.<api>.<event>.addListener callback signatures.
-export type ExtensionEventsV2 = {
+// Events mirror chrome.<api>.<event>.addListener callback signatures.
+export type ExtensionEvents = {
   // chrome.debugger.onEvent: (source, method, params?) => void
   'chrome.debugger.onEvent': {
     params: [source: DebuggerSession, method: string, eventParams?: object];
@@ -91,11 +97,10 @@ export type ExtensionEventsV2 = {
   'chrome.tabs.onRemoved': {
     params: [tabId: number, removeInfo: TabRemoveInfo];
   };
-  // Playwright-specific: signals end of the initial tab handshake. The relay
-  // withholds Playwright-side CDP messages until this event arrives, so that
-  // `Target.setAutoAttach` can be answered from a fully-populated tab model
-  // rather than blocking on a user pick.
+  // Playwright-specific: signals end of the initial tab handshake, see cdpRelay.ts.
   'extension.initialized': {
     params: [];
   };
 };
+
+export type ExtensionEvent = { [M in keyof ExtensionEvents]: { method: M, params: ExtensionEvents[M]['params'] } }[keyof ExtensionEvents];

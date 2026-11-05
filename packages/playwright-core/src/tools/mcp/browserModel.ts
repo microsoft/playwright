@@ -15,27 +15,27 @@
  */
 
 /**
- * Browser-side tab model used by the v2 relay. Owns the mapping between
- * chrome tab ids and CDP session ids, and is the single place that
- * translates between the chrome.* dialect spoken by the extension and the
- * CDP dialect spoken by Playwright.
+ * The browser as seen through the extension connection. Owns the mapping
+ * between chrome tab ids and the CDP session ids exposed to Playwright, and is
+ * the single place that translates between the chrome.* dialect spoken by the
+ * extension and the CDP dialect spoken by Playwright, in both directions.
  *
- * Lifecycle:
- *  1. Extension connects and, after the user allows, pushes a
- *     `chrome.tabs.onCreated` for each initial tab followed by
- *     `extension.initialized`. The model records these as "known" tabs
- *     without attaching yet.
- *  2. The relay observes `ready()` resolving and unpauses the Playwright ws.
- *  3. Playwright sends `Target.setAutoAttach` → model calls
- *     `enableAutoAttach()`, which attaches to every known tab and emits
- *     `Target.attachedToTarget` for each.
- *  4. Subsequent tab creates / debugger detaches / removes flow through the
- *     same model inputs and are translated into CDP events on the fly.
+ * Tabs reported via `chrome.tabs.onCreated` are recorded as "known" without
+ * attaching. `Target.setAutoAttach` from Playwright attaches to every known
+ * tab and emits `Target.attachedToTarget` for each; later tab creates,
+ * debugger detaches and removes are translated into CDP events on the fly.
  */
+
+import debug from 'debug';
+import ws from 'ws';
+import { rewriteErrorMessage } from '@utils/stackTrace';
 
 import { logUnhandledError } from './log';
 
-import type { DebuggerSession, Debuggee, Tab } from './protocol';
+import type { WebSocket } from 'ws';
+import type { DebuggerSession, ExtensionCommands, ExtensionEvent } from './protocol';
+
+const debugLogger = debug('pw:mcp:relay');
 
 export type CDPMessage = {
   id?: number;
@@ -46,63 +46,153 @@ export type CDPMessage = {
   error?: { code?: number; message: string };
 };
 
-export type SendCommand = (method: string, params: any) => Promise<any>;
-export type SendToCDPClient = (message: CDPMessage) => void;
+export type BrowserModelDelegate = {
+  sendToCDPClient(message: CDPMessage): void;
+  onInitialized(): void;
+  onClose(reason: string): void;
+};
 
 type TabSession = {
   tabId: number;
   sessionId: string;
   targetInfo: any;
-  // Child CDP sessionIds (workers, oopifs, ...) belonging to this tab,
-  // tracked via Target.attachedToTarget / Target.detachedFromTarget events.
+  // Child CDP sessions (workers, oopifs, ...) of this tab, tracked via
+  // Target.attachedToTarget / Target.detachedFromTarget events.
   childSessions: Set<string>;
 };
 
 export class BrowserModel {
-  private _sendToExtension: SendCommand;
-  // Set only while a Playwright CDP connection is attached (see
-  // `connectOverCDP`). Before that, any attempt to emit to Playwright is a
-  // no-op — the model is observation-only during the extension handshake.
-  private _sendToCDPClient: SendToCDPClient | null = null;
-  // Tabs observed via chrome.tabs.onCreated, whether or not the debugger is attached yet.
-  private _knownTabs = new Map<number, Tab>();
-  // Subset of _knownTabs we've attached the debugger to and assigned a sessionId.
+  private _extension: ExtensionConnection;
+  private _delegate: BrowserModelDelegate;
+  private _background: boolean;
+  // Tabs reported by the extension, whether or not the debugger is attached yet.
+  private _knownTabIds = new Set<number>();
+  // Subset of _knownTabIds we've attached the debugger to and assigned a sessionId.
   private _tabSessions = new Map<number, TabSession>();
   private _autoAttach = false;
   private _nextSessionId = 1;
 
-  constructor(sendToExtension: SendCommand) {
-    this._sendToExtension = sendToExtension;
+  constructor(socket: WebSocket, background: boolean, delegate: BrowserModelDelegate) {
+    this._delegate = delegate;
+    this._background = background;
+    this._extension = new ExtensionConnection(socket, event => this._onExtensionEvent(event), reason => delegate.onClose(reason));
   }
 
-  // Wires the model's CDP output sink. Called by the handler once the
-  // extension handshake is done and a Playwright CDP client is ready to
-  // receive events. Before this call the model is observation-only —
-  // `Target.attachedToTarget` etc. would be answered into a black hole.
-  connectOverCDP(sendToCDPClient: SendToCDPClient): void {
-    this._sendToCDPClient = sendToCDPClient;
+  close(reason: string) {
+    this._extension.close(reason);
   }
 
-  private _emit(message: CDPMessage): void {
-    this._sendToCDPClient?.(message);
+  async handleCDPCommand(method: string, params: any, sessionId: string | undefined): Promise<any> {
+    switch (method) {
+      case 'Browser.getVersion':
+        return {
+          protocolVersion: '1.3',
+          product: 'Chrome/Extension-Bridge',
+          userAgent: 'CDP-Bridge-Server/1.0.0',
+        };
+      case 'Browser.setDownloadBehavior':
+        return {};
+      case 'Target.setAutoAttach':
+        if (sessionId)
+          break;
+        await this._enableAutoAttach();
+        return {};
+      case 'Target.createTarget':
+        return await this._createTarget(params?.url);
+      case 'Target.closeTarget':
+        return await this._closeTarget(params?.targetId);
+      case 'Target.getTargetInfo':
+        return sessionId ? this._findTabSession(s => s.sessionId === sessionId)?.targetInfo : undefined;
+      case 'Page.bringToFront':
+      case 'Target.activateTarget':
+        if (this._background)
+          return {};
+        break;
+    }
+    return await this._extension.send('chrome.debugger.sendCommand', [this._debuggerTarget(method, sessionId), method, params]);
   }
 
-  // ─── Extension → model inputs ─────────────────────────────────────────
-
-  onTabCreated(tab: Tab): void {
-    if (tab.id === undefined)
-      return;
-    this._knownTabs.set(tab.id, tab);
-    if (this._autoAttach)
-      void this._attachTab(tab.id).catch(logUnhandledError);
+  // Turn auto-attach on and attach to every tab we already know about.
+  private async _enableAutoAttach(): Promise<void> {
+    this._autoAttach = true;
+    const tabIds = [...this._knownTabIds];
+    await Promise.all(tabIds.map(tabId => this._attachTab(tabId).catch(logUnhandledError)));
   }
 
-  onTabRemoved(tabId: number): void {
-    this._knownTabs.delete(tabId);
-    this._detachTab(tabId);
+  private async _createTarget(url: string | undefined): Promise<{ targetId: string | undefined }> {
+    const tab = await this._extension.send('chrome.tabs.create', [{ url, active: !this._background }]);
+    if (tab?.id === undefined)
+      throw new Error('Failed to create tab');
+    this._knownTabIds.add(tab.id);
+    const tabSession = await this._attachTab(tab.id);
+    return { targetId: tabSession.targetInfo?.targetId };
   }
 
-  onDebuggerEvent(source: DebuggerSession, method: string, params: any): void {
+  private async _closeTarget(targetId: string | undefined): Promise<{ success: boolean }> {
+    const tabSession = targetId ? this._findTabSession(s => s.targetInfo?.targetId === targetId) : undefined;
+    if (!tabSession)
+      return { success: false };
+    await this._extension.send('chrome.tabs.remove', [tabSession.tabId]);
+    return { success: true };
+  }
+
+  // Resolves the chrome.debugger target for a CDP command from Playwright:
+  // 1. No sessionId: browser-level command (Storage.*, Browser.*, ...). chrome.debugger.sendCommand
+  //    requires a target, so route through any attached tab; the result does not depend on the tab.
+  // 2. sessionId is a relay-level tab session (pw-tab-N) → strip it and route by tabId.
+  // 3. sessionId is a child CDP session (worker, oopif) → route to its owning tab,
+  //    keep the sessionId so the extension forwards it to chrome.debugger.
+  private _debuggerTarget(method: string, sessionId: string | undefined): DebuggerSession {
+    if (!sessionId) {
+      const tabSession = this._tabSessions.values().next().value;
+      if (!tabSession)
+        throw new Error(`No attached tab to forward browser-level command: ${method}`);
+      return { tabId: tabSession.tabId };
+    }
+    const tabSession = this._findTabSession(s => s.sessionId === sessionId);
+    if (tabSession)
+      return { tabId: tabSession.tabId };
+    const parentSession = this._findTabSession(s => s.childSessions.has(sessionId));
+    if (parentSession)
+      return { tabId: parentSession.tabId, sessionId };
+    throw new Error(`No tab found for sessionId: ${sessionId}`);
+  }
+
+  private _onExtensionEvent(event: ExtensionEvent): void {
+    switch (event.method) {
+      case 'chrome.tabs.onCreated': {
+        const [tab] = event.params;
+        if (tab.id === undefined)
+          break;
+        this._knownTabIds.add(tab.id);
+        if (this._autoAttach)
+          void this._attachTab(tab.id).catch(logUnhandledError);
+        break;
+      }
+      case 'chrome.tabs.onRemoved': {
+        const [tabId] = event.params;
+        this._knownTabIds.delete(tabId);
+        this._detachTab(tabId);
+        break;
+      }
+      case 'chrome.debugger.onEvent': {
+        const [source, method, params] = event.params;
+        this._onDebuggerEvent(source, method, params);
+        break;
+      }
+      case 'chrome.debugger.onDetach': {
+        const [source] = event.params;
+        if (source.tabId !== undefined)
+          this._detachTab(source.tabId);
+        break;
+      }
+      case 'extension.initialized':
+        this._delegate.onInitialized();
+        break;
+    }
+  }
+
+  private _onDebuggerEvent(source: DebuggerSession, method: string, params: any): void {
     if (source.tabId === undefined)
       return;
     const tabSession = this._tabSessions.get(source.tabId);
@@ -112,7 +202,7 @@ export class BrowserModel {
     // them to the correct tab. Target.attachedToTarget introduces a new
     // sessionId belonging to the same tab; Target.detachedFromTarget
     // releases it.
-    const childSessionId = (params as { sessionId?: string } | undefined)?.sessionId;
+    const childSessionId = params?.sessionId as string | undefined;
     if (method === 'Target.attachedToTarget' && childSessionId)
       tabSession.childSessions.add(childSessionId);
     else if (method === 'Target.detachedFromTarget' && childSessionId)
@@ -120,99 +210,20 @@ export class BrowserModel {
     // Top-level CDP events for the tab use the tab's relay sessionId.
     // Child CDP sessions (workers, oopifs) keep their own sessionId.
     const sessionId = source.sessionId || tabSession.sessionId;
-    this._emit({ sessionId, method, params });
+    this._delegate.sendToCDPClient({ sessionId, method, params });
   }
-
-  onDebuggerDetach(source: Debuggee): void {
-    if (source.tabId !== undefined)
-      this._detachTab(source.tabId);
-  }
-
-  // ─── Playwright → model commands ──────────────────────────────────────
-
-  // Turn auto-attach on and attach to every tab we already know about.
-  // Called in response to Playwright's `Target.setAutoAttach` on the root session.
-  async enableAutoAttach(): Promise<void> {
-    this._autoAttach = true;
-    const tabIds = [...this._knownTabs.keys()];
-    await Promise.all(tabIds.map(tabId => this._attachTab(tabId).catch(logUnhandledError)));
-  }
-
-  async createTarget(url: string | undefined, active: boolean): Promise<{ targetId: string | undefined }> {
-    const tab = await this._sendToExtension('chrome.tabs.create', [{ url, active }]);
-    if (tab?.id === undefined)
-      throw new Error('Failed to create tab');
-    this._knownTabs.set(tab.id, tab);
-    const tabSession = await this._attachTab(tab.id);
-    return { targetId: tabSession.targetInfo?.targetId };
-  }
-
-  async closeTarget(targetId: string | undefined): Promise<{ success: boolean }> {
-    const tabSession = targetId ? this._findTabSession(s => s.targetInfo?.targetId === targetId) : undefined;
-    if (!tabSession)
-      return { success: false };
-    await this._sendToExtension('chrome.tabs.remove', [tabSession.tabId]);
-    return { success: true };
-  }
-
-  getTargetInfo(sessionId: string | undefined): any {
-    if (!sessionId)
-      return undefined;
-    return this._findTabSession(s => s.sessionId === sessionId)?.targetInfo;
-  }
-
-  // Forward a browser-level CDP command (Storage.*, Browser.*, etc.) that is
-  // not associated with a specific tab. chrome.debugger.sendCommand requires a
-  // target, so we route through any attached tab; the command itself is
-  // browser-scoped and returns the same result regardless of which tab is used.
-  async sendBrowserCommand(method: string, params: any): Promise<any> {
-    const tabSession = this._tabSessions.values().next().value;
-    if (!tabSession)
-      throw new Error(`No attached tab to forward browser-level command: ${method}`);
-    return await this._sendToExtension('chrome.debugger.sendCommand', [
-      { tabId: tabSession.tabId },
-      method,
-      params,
-    ]);
-  }
-
-  // Forward a CDP command from Playwright to the tab its sessionId resolves to.
-  async sendCommand(sessionId: string, method: string, params: any): Promise<any> {
-    // Two cases:
-    // 1. sessionId is a relay-level tab session (pw-tab-N) → strip and route by tabId.
-    // 2. sessionId is a child CDP session (worker, oopif) → route to its owning tab,
-    //    keep the sessionId so the extension forwards it to chrome.debugger.
-    let tabSession = this._findTabSession(s => s.sessionId === sessionId);
-    let cdpSessionId: string | undefined;
-    if (!tabSession) {
-      tabSession = this._findTabSession(s => s.childSessions.has(sessionId));
-      cdpSessionId = sessionId;
-    }
-    if (!tabSession)
-      throw new Error(`No tab found for sessionId: ${sessionId}`);
-    return await this._sendToExtension('chrome.debugger.sendCommand', [
-      { tabId: tabSession.tabId, sessionId: cdpSessionId },
-      method,
-      params,
-    ]);
-  }
-
-  // ─── Internals ────────────────────────────────────────────────────────
 
   private async _attachTab(tabId: number): Promise<TabSession> {
     const existing = this._tabSessions.get(tabId);
     if (existing)
       return existing;
-    await this._sendToExtension('chrome.debugger.attach', [{ tabId }, '1.3']);
-    const result = await this._sendToExtension('chrome.debugger.sendCommand', [
-      { tabId },
-      'Target.getTargetInfo',
-    ]);
+    await this._extension.send('chrome.debugger.attach', [{ tabId }, '1.3']);
+    const result = await this._extension.send('chrome.debugger.sendCommand', [{ tabId }, 'Target.getTargetInfo']);
     const targetInfo = result?.targetInfo;
     const sessionId = `pw-tab-${this._nextSessionId++}`;
     const tabSession: TabSession = { tabId, sessionId, targetInfo, childSessions: new Set() };
     this._tabSessions.set(tabId, tabSession);
-    this._emit({
+    this._delegate.sendToCDPClient({
       method: 'Target.attachedToTarget',
       params: {
         sessionId,
@@ -228,7 +239,7 @@ export class BrowserModel {
     if (!tabSession)
       return;
     this._tabSessions.delete(tabId);
-    this._emit({
+    this._delegate.sendToCDPClient({
       method: 'Target.detachedFromTarget',
       params: {
         sessionId: tabSession.sessionId,
@@ -243,5 +254,101 @@ export class BrowserModel {
         return session;
     }
     return undefined;
+  }
+}
+
+type ExtensionMessage = {
+  id?: number;
+  method?: string;
+  params?: any;
+  result?: any;
+  error?: string;
+};
+
+// Typed request/response channel over the extension WebSocket.
+class ExtensionConnection {
+  private readonly _ws: WebSocket;
+  private readonly _callbacks = new Map<number, { resolve: (o: any) => void, reject: (e: Error) => void, error: Error }>();
+  private _lastId = 0;
+  private _onmessage: (event: ExtensionEvent) => void;
+  private _onclose: (reason: string) => void;
+
+  constructor(socket: WebSocket, onmessage: (event: ExtensionEvent) => void, onclose: (reason: string) => void) {
+    this._ws = socket;
+    this._onmessage = onmessage;
+    this._onclose = onclose;
+    this._ws.on('message', this._onMessage.bind(this));
+    this._ws.on('close', this._onClose.bind(this));
+    this._ws.on('error', this._onError.bind(this));
+  }
+
+  async send<M extends keyof ExtensionCommands>(method: M, params: ExtensionCommands[M]['params']): Promise<ExtensionCommands[M]['result']> {
+    if (this._ws.readyState !== ws.OPEN)
+      throw new Error(`Unexpected WebSocket state: ${this._ws.readyState}`);
+    const id = ++this._lastId;
+    this._ws.send(JSON.stringify({ id, method, params }));
+    const error = new Error(`Protocol error: ${method}`);
+    return new Promise((resolve, reject) => {
+      this._callbacks.set(id, { resolve, reject, error });
+    });
+  }
+
+  close(message: string) {
+    debugLogger('closing extension connection:', message);
+    if (this._ws.readyState === ws.OPEN)
+      this._ws.close(1000, message);
+  }
+
+  private _onMessage(event: ws.RawData) {
+    const eventData = event.toString();
+    let parsedJson;
+    try {
+      parsedJson = JSON.parse(eventData);
+    } catch (e: any) {
+      debugLogger(`<closing ws> Closing websocket due to malformed JSON. eventData=${eventData} e=${e?.message}`);
+      this._ws.close();
+      return;
+    }
+    try {
+      this._handleParsedMessage(parsedJson);
+    } catch (e: any) {
+      debugLogger(`<closing ws> Closing websocket due to failed onmessage callback. eventData=${eventData} e=${e?.message}`);
+      this._ws.close();
+    }
+  }
+
+  private _handleParsedMessage(object: ExtensionMessage) {
+    if (!object.id) {
+      this._onmessage(object as ExtensionEvent);
+      return;
+    }
+    const callback = this._callbacks.get(object.id);
+    if (!callback) {
+      debugLogger('← Extension: unexpected response', object);
+      return;
+    }
+    this._callbacks.delete(object.id);
+    if (object.error)
+      callback.reject(rewriteErrorMessage(callback.error, object.error));
+    else
+      callback.resolve(object.result);
+  }
+
+  private _onClose(code: number, reason: Buffer) {
+    const message = reason.toString();
+    debugLogger(`<ws closed> code=${code} reason=${message}`);
+    this._dispose();
+    this._onclose(message);
+  }
+
+  private _onError(event: ws.ErrorEvent) {
+    debugLogger(`<ws error> message=${event.message} type=${event.type} target=${event.target}`);
+    this._dispose();
+  }
+
+  private _dispose() {
+    for (const callback of this._callbacks.values())
+      callback.reject(new Error('WebSocket closed'));
+    this._callbacks.clear();
   }
 }
