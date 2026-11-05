@@ -312,6 +312,14 @@ test('my-command', async ({ cli, server }) => {
 
 ---
 
+### Embedding the CLI Client
+
+The `playwright-core/lib/tools/cli-client/program` entry point exports `parseArgs(argv)`
+and `program(options?)`. An embedder can parse once, inspect `args._[0]`, then call
+`program({ args, embedderVersion })`. `parseArgs` uses the CLI's boolean options and normalizes
+`-s` to `session` and `-g` to `global`. Without `args`, `program` parses
+`process.argv.slice(2)` as usual. `program` can mutate `args`, so inspect it before the call.
+
 ## Adding Config Options
 
 When you need to add a new config option, update these files in order:
