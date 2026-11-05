@@ -14,7 +14,32 @@
  * limitations under the License.
  */
 
+import fs from 'fs/promises';
+import path from 'path';
+
 import { test, expect } from './cli-fixtures';
+
+test('downloads preserve files with the same suggested filename', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-cli/issues/514' },
+}, async ({ cli, server }, testInfo) => {
+  server.setContent('/', `
+    <a href="/v1" download="same.txt">V1</a>
+    <a href="/v2" download="same.txt">V2</a>
+  `, 'text/html');
+  server.setContent('/v1', 'v1', 'text/plain');
+  server.setContent('/v2', 'v2', 'text/plain');
+  await cli('open', server.PREFIX);
+
+  for (const [link, filename] of [['V1', 'same.txt'], ['V2', 'same-1.txt']]) {
+    let { output } = await cli('click', `text=${link}`);
+    await expect.poll(async () => {
+      output += (await cli('snapshot')).output;
+      return output;
+    }).toContain(`Downloaded file same.txt to "${path.join('.playwright-cli', filename)}"`);
+  }
+  expect(await fs.readFile(testInfo.outputPath('.playwright-cli', 'same.txt'), 'utf8')).toBe('v1');
+  expect(await fs.readFile(testInfo.outputPath('.playwright-cli', 'same-1.txt'), 'utf8')).toBe('v2');
+});
 
 test('screenshot', async ({ cli, server, mcpBrowser }) => {
   await cli('open', server.HELLO_WORLD);
