@@ -18,7 +18,7 @@ import fs from 'fs';
 import url from 'url';
 
 import { recordResolvedFile } from './compilationCache';
-import { hasTransformedExtension, isStyleFile, resolveHook, shouldTransform, transformHook } from './transform';
+import { hasTransformedExtension, isStyleFile, resolveHook, resolveViaSyncHooks, shouldTransform, transformHook } from './transform';
 import { fileIsModule } from '../util';
 
 export function resolve(specifier: string, context: { parentURL?: string, conditions?: string[] | Set<string> }, nextResolve: Function) {
@@ -35,7 +35,7 @@ export function resolve(specifier: string, context: { parentURL?: string, condit
       specifier = new Set(context.conditions).has('import') ? url.pathToFileURL(resolved).toString() : resolved;
     }
   }
-  const result = nextResolve(specifier, context);
+  const result = resolveViaSyncHooks(() => nextResolve(specifier, context));
   recordResolvedFile(result?.url, context.parentURL);
   return result;
 }
