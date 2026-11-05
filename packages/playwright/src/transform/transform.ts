@@ -385,7 +385,7 @@ export function wrapFunctionWithLocation<A extends any[], R>(func: (location: Lo
   return (...args) => {
     const oldPrepareStackTrace = Error.prepareStackTrace;
     const oldStackTraceLimit = Error.stackTraceLimit;
-    Error.prepareStackTrace = 'Bun' in globalThis ? bunCallerLocation : nodeCallerLocation;
+    Error.prepareStackTrace = bunHasZeroBasedColumns ? bunCallerLocation : nodeCallerLocation;
     Error.stackTraceLimit = 2;
     const obj: { stack: Location } = {} as any;
     let location: Location;
@@ -412,15 +412,14 @@ function nodeCallerLocation(error: Error, stackFrames: NodeJS.CallSite[]) {
   };
 }
 
-// Bun switched CallSite columns from 0-based to 1-based in 1.4.4.
-const bunRuntime = (globalThis as { Bun?: { version: string, semver: { satisfies(version: string, range: string): boolean } } }).Bun;
-const bunHasOneBasedColumns = bunRuntime?.semver.satisfies(bunRuntime.version, '>=1.4.4') ?? false;
+declare const Bun: { version: string, semver: { order(a: string, b: string): number } };
+// Bun's CallSite columns were 0-based before 1.4.4; since then they match V8.
+const bunHasZeroBasedColumns = 'Bun' in globalThis && Bun.semver.order(Bun.version, '1.4.4') < 0;
 
 function bunCallerLocation(error: Error, stackFrames: NodeJS.CallSite[]) {
   const frame = stackFrames[1];
-  // Bun does not apply source maps of .js files. Source maps take 0-based columns.
-  const column = frame.getColumnNumber()! - (bunHasOneBasedColumns ? 1 : 0);
-  const position = sourceMapSupport.mapSourcePosition({ source: frame.getFileName()!, line: frame.getLineNumber()!, column });
+  // Bun's CallSite.getColumnNumber() is 0-based, and Bun does not apply source maps of .js files.
+  const position = sourceMapSupport.mapSourcePosition({ source: frame.getFileName()!, line: frame.getLineNumber()!, column: frame.getColumnNumber()! });
   return {
     file: position.source,
     line: position.line,

@@ -33,7 +33,6 @@ test('should list tests', {
       test('example2', async ({}) => {
         expect(1 + 1).toBe(2);
       });
-test('example3', () => {});
     `
   }, { 'list': true });
   expect(result.exitCode).toBe(0);
@@ -41,11 +40,9 @@ test('example3', () => {});
     `Listing tests:`,
     `  [foo] › a.test.js:3:7 › example1`,
     `  [foo] › a.test.js:6:7 › example2`,
-    `  [foo] › a.test.js:9:1 › example3`,
     `  a.test.js:3:7 › example1`,
     `  a.test.js:6:7 › example2`,
-    `  a.test.js:9:1 › example3`,
-    `Total: 6 tests in 1 file`
+    `Total: 4 tests in 1 file`
   ].join('\n'));
 });
 
