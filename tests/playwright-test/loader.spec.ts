@@ -1133,10 +1133,19 @@ test('should complain when one test file imports another', async ({ runInlineTes
   expect(result.output).toContain(`test file "a.test.ts" should not import test file "b.test.ts"`);
 });
 
-test('should support dynamic imports and requires of js, ts from js, ts and cjs', async ({ runInlineTest }) => {
+test('should support dynamic imports and requires of js, ts from js, ts and cjs', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43939' },
+}, async ({ runInlineTest }) => {
   const result = await runInlineTest({
+    'tsconfig.json': JSON.stringify({
+      compilerOptions: { baseUrl: '.', paths: { '@lib/*': ['./*'], '@utils': ['./utils'] } },
+    }),
+    'utils.ts': `
+      export const value: string = 'foo';
+    `,
     'helper.ts': `
-      export const foo: string = 'foo';
+      import { value } from '@utils';
+      export const foo: string = value;
     `,
     'helper2.ts': `
       export const bar = 'bar';
@@ -1154,7 +1163,7 @@ test('should support dynamic imports and requires of js, ts from js, ts and cjs'
       import { test, expect } from '@playwright/test';
 
       test('pass', async () => {
-        const { foo } = await import('./helper');
+        const { foo } = await import('@lib/helper');
         expect(foo).toBe('foo');
 
         const { baz } = await import('./helper3');
