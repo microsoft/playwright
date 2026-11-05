@@ -18,9 +18,10 @@ This page is the reference for maintainers. The agent reads the guides instead.
 
 ## What this repo defines
 
-Every repo calls these actions as `microsoft/playwright/.github/actions/<name>@main`. This repo
-calls them as `./.github/actions/<name>`. A change to an action or a guide is live in every repo
-the moment it lands on `main`.
+Every repo calls these actions as `microsoft/playwright/.github/actions/<name>@<sha> # main`, pinned
+to a full commit SHA. This repo calls them as `./.github/actions/<name>`, except for the revision
+jobs that check out the PR, which pin them like every other repo. A change to an action or a guide
+reaches a repo when its pin moves.
 
 | Action | What it does | Credentials it uses |
 |---|---|---|
@@ -325,8 +326,9 @@ Where to look after a run:
 
 How to change the system:
 
-- Behavior that is the same everywhere: change the action or the guide in this repo. It is live in
-  every repo as soon as it lands on `main`. Try it with a manual run on this repo first.
+- Behavior that is the same everywhere: change the action or the guide in this repo. Try it with a
+  manual run on this repo first. To roll it out, move the pin in each repo's workflow files and
+  `setup-triage-runner`, and in this repo's `revision.yml`.
 - Behavior of one repo: change its workflow files, its `setup-triage-runner`, its skill or its
   instructions file.
 - A new repo needs:
