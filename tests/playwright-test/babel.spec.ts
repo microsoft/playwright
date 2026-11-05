@@ -135,7 +135,9 @@ for (const [compilerOptions, define] of [
   [{ target: 'ES2021', useDefineForClassFields: true }, true],
   [{ target: 'ESNext', useDefineForClassFields: false }, false],
 ] as const) {
-  test(`should ${define ? 'define' : 'assign'} class fields with ${JSON.stringify(compilerOptions)}`, async ({ runInlineTest }) => {
+  test(`should ${define ? 'define' : 'assign'} class fields with ${JSON.stringify(compilerOptions)}`, {
+    annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43936' },
+  }, async ({ runInlineTest }) => {
     const result = await runInlineTest({
       'tsconfig.json': JSON.stringify({ compilerOptions }),
       'example.spec.ts': `
@@ -147,7 +149,12 @@ for (const [compilerOptions, define] of [
           set overridden(value: string) { this.setterCalls.push(value); }
         }
 
+        function decorate(value) { return value; }
+
+        @decorate
         class Derived extends Base {
+          static initialized = 'field';
+          static { this.initialized += '-block'; }
           redeclared: string;
           overridden = 'derived';
           fromParameter = this.parameter + '-field';
@@ -155,6 +162,7 @@ for (const [compilerOptions, define] of [
         }
 
         test('works', () => {
+          expect(Derived.initialized).toBe('field-block');
           const derived = new Derived('parameter');
           expect(derived.redeclared).toBe(${define ? 'undefined' : `'base'`});
           expect(derived.setterCalls).toEqual(${define ? '[]' : `['derived']`});
