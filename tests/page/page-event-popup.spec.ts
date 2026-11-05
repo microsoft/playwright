@@ -156,3 +156,38 @@ it('PO-013 should report popup opened from iframes', async ({ page, server, brow
   ]);
   expect(popup).toBeTruthy();
 });
+
+it('PO-030 should finish loading after opening a popup while a cross-site iframe is loading', {
+  annotation: [
+    { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43629' },
+    { type: 'issue', description: 'https://crbug.com/581925564' },
+  ],
+}, async ({ page, server, isHeadlessShell, isElectron, isAndroid }) => {
+  it.skip(isElectron || isAndroid, 'No defined site-isolation policy');
+  it.fixme(isHeadlessShell, 'Without site isolation, which is the default in headless shell, the opener never fires the load event');
+
+  let finishFrame: () => void;
+  const frameMayFinish = new Promise<void>(resolve => finishFrame = resolve);
+  server.setRoute('/frame.html', async (req, res) => {
+    await frameMayFinish;
+    res.setHeader('Content-Type', 'text/html');
+    res.end('<body>frame</body>');
+  });
+  server.setRoute('/opener.html', (req, res) => {
+    res.setHeader('Content-Type', 'text/html');
+    res.end(`
+      <iframe src="${server.CROSS_PROCESS_PREFIX}/frame.html"></iframe>
+      <script>window.open('${server.EMPTY_PAGE}')</script>
+    `);
+  });
+
+  const [popup] = await Promise.all([
+    page.waitForEvent('popup'),
+    page.goto(server.PREFIX + '/opener.html', { waitUntil: 'commit' }),
+  ]);
+  // The iframe is still loading when the popup opens.
+  finishFrame();
+  await popup.waitForLoadState('load');
+  await page.waitForLoadState('load');
+  expect(await page.evaluate(() => document.readyState)).toBe('complete');
+});
