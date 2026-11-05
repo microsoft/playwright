@@ -73,11 +73,8 @@ const booleanOptions: (keyof (GlobalOptions & OpenOptions & AttachOptions & { al
   'version',
 ];
 
-export async function program(options?: { embedderVersion?: string}) {
-  const clientInfo = createClientInfo();
+export function parseArgs(argv: string[]): MinimistArgs {
   const help = require(libPath('tools', 'cli-client', 'help.json'));
-
-  const argv = process.argv.slice(2);
   const boolean = [...help.booleanOptions, ...booleanOptions];
   const args: MinimistArgs = minimist(argv, { boolean, string: ['_'] });
   // Normalize -s alias to --session
@@ -90,6 +87,13 @@ export async function program(options?: { embedderVersion?: string}) {
     args.global = true;
     delete args.g;
   }
+  return args;
+}
+
+export async function program(options?: { args?: MinimistArgs, embedderVersion?: string }) {
+  const clientInfo = createClientInfo();
+  const help = require(libPath('tools', 'cli-client', 'help.json'));
+  const args = options?.args ?? parseArgs(process.argv.slice(2));
 
   const output: Output = args.json ? new JsonOutput() : new TextOutput();
   const commandName = args._?.[0];

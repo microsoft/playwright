@@ -16,6 +16,23 @@
 
 import { test, expect, eventsPage } from './cli-fixtures';
 
+test('accepts parsed arguments from an embedder', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43938' } }, async ({ childProcess, cliEnv }) => {
+  const child = childProcess({
+    command: [process.execPath, '-e', `
+      const assert = require('assert');
+      const { parseArgs, program } = require('playwright-core/lib/tools/cli-client/program');
+      assert.deepStrictEqual(parseArgs(['-s', 'list', 'snapshot']), { _: ['snapshot'], session: 'list' });
+      assert.deepStrictEqual(parseArgs(['-g', 'install', '--skills']), { _: ['install'], global: true, skills: true });
+      const args = parseArgs(['-s', 'list', '--json', 'close']);
+      program({ args });
+    `, '--', 'unknown-command'],
+    env: cliEnv,
+  });
+  expect(await child.exitCode).toBe(0);
+  expect(child.stderr).toBe('');
+  expect(JSON.parse(child.stdout)).toEqual({ session: 'list', status: 'not-open' });
+});
+
 test('unknown option', async ({ cli, server }) => {
   const { error, exitCode } = await cli('open', '--some-option', 'value', 'about:blank');
   expect(exitCode).toBe(1);
