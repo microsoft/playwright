@@ -412,10 +412,15 @@ function nodeCallerLocation(error: Error, stackFrames: NodeJS.CallSite[]) {
   };
 }
 
+// Bun switched CallSite columns from 0-based to 1-based in 1.4.4.
+const bunRuntime = (globalThis as { Bun?: { version: string, semver: { satisfies(version: string, range: string): boolean } } }).Bun;
+const bunHasOneBasedColumns = bunRuntime?.semver.satisfies(bunRuntime.version, '>=1.4.4') ?? false;
+
 function bunCallerLocation(error: Error, stackFrames: NodeJS.CallSite[]) {
   const frame = stackFrames[1];
-  // Bun's CallSite.getColumnNumber() is 0-based, and Bun does not apply source maps of .js files.
-  const position = sourceMapSupport.mapSourcePosition({ source: frame.getFileName()!, line: frame.getLineNumber()!, column: frame.getColumnNumber()! });
+  // Bun does not apply source maps of .js files. Source maps take 0-based columns.
+  const column = frame.getColumnNumber()! - (bunHasOneBasedColumns ? 1 : 0);
+  const position = sourceMapSupport.mapSourcePosition({ source: frame.getFileName()!, line: frame.getLineNumber()!, column });
   return {
     file: position.source,
     line: position.line,

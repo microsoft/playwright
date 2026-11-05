@@ -18,7 +18,9 @@ import { test, expect } from './playwright-test-fixtures';
 import path from 'path';
 import fs from 'fs';
 
-test('should list tests', async ({ runInlineTest }) => {
+test('should list tests', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43934' },
+}, async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       export default { projects: [{ name: 'foo' }, {}] };
@@ -31,6 +33,7 @@ test('should list tests', async ({ runInlineTest }) => {
       test('example2', async ({}) => {
         expect(1 + 1).toBe(2);
       });
+test('example3', () => {});
     `
   }, { 'list': true });
   expect(result.exitCode).toBe(0);
@@ -38,9 +41,11 @@ test('should list tests', async ({ runInlineTest }) => {
     `Listing tests:`,
     `  [foo] › a.test.js:3:7 › example1`,
     `  [foo] › a.test.js:6:7 › example2`,
+    `  [foo] › a.test.js:9:1 › example3`,
     `  a.test.js:3:7 › example1`,
     `  a.test.js:6:7 › example2`,
-    `Total: 4 tests in 1 file`
+    `  a.test.js:9:1 › example3`,
+    `Total: 6 tests in 1 file`
   ].join('\n'));
 });
 
