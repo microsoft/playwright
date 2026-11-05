@@ -18,7 +18,9 @@ import { test, expect } from './playwright-test-fixtures';
 import path from 'path';
 import fs from 'fs';
 
-test('should list tests', async ({ runInlineTest }) => {
+test('should list tests', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43934' },
+}, async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       export default { projects: [{ name: 'foo' }, {}] };

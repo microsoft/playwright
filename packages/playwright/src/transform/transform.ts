@@ -385,7 +385,7 @@ export function wrapFunctionWithLocation<A extends any[], R>(func: (location: Lo
   return (...args) => {
     const oldPrepareStackTrace = Error.prepareStackTrace;
     const oldStackTraceLimit = Error.stackTraceLimit;
-    Error.prepareStackTrace = 'Bun' in globalThis ? bunCallerLocation : nodeCallerLocation;
+    Error.prepareStackTrace = bunHasZeroBasedColumns ? bunCallerLocation : nodeCallerLocation;
     Error.stackTraceLimit = 2;
     const obj: { stack: Location } = {} as any;
     let location: Location;
@@ -411,6 +411,10 @@ function nodeCallerLocation(error: Error, stackFrames: NodeJS.CallSite[]) {
     column: frame.getColumnNumber(),
   };
 }
+
+declare const Bun: { version: string, semver: { order(a: string, b: string): number } };
+// Bun's CallSite columns were 0-based before 1.4.4; since then they match V8.
+const bunHasZeroBasedColumns = 'Bun' in globalThis && Bun.semver.order(Bun.version, '1.4.4') < 0;
 
 function bunCallerLocation(error: Error, stackFrames: NodeJS.CallSite[]) {
   const frame = stackFrames[1];
