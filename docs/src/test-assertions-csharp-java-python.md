@@ -31,6 +31,7 @@ The following assertions will retry until the assertion passes or the assertion 
 | :- | :- |
 | [`method: LocatorAssertions.toBeAttached`] | Element is attached |
 | [`method: LocatorAssertions.toBeChecked`] | Checkbox is checked |
+| [`method: LocatorAssertions.toBeClickable`] | Element can be clicked |
 | [`method: LocatorAssertions.toBeDisabled`] | Element is disabled |
 | [`method: LocatorAssertions.toBeEditable`] | Element is editable |
 | [`method: LocatorAssertions.toBeEmpty`] | Container is empty |

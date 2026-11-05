@@ -2315,6 +2315,7 @@ export interface FrameChannel extends FrameEventTarget, Channel {
   innerText(params: FrameInnerTextParams, progress: Progress): Promise<FrameInnerTextResult>;
   inputValue(params: FrameInputValueParams, progress: Progress): Promise<FrameInputValueResult>;
   isChecked(params: FrameIsCheckedParams, progress: Progress): Promise<FrameIsCheckedResult>;
+  isClickable(params: FrameIsClickableParams, progress: Progress): Promise<FrameIsClickableResult>;
   isDisabled(params: FrameIsDisabledParams, progress: Progress): Promise<FrameIsDisabledResult>;
   isEnabled(params: FrameIsEnabledParams, progress: Progress): Promise<FrameIsEnabledResult>;
   isHidden(params: FrameIsHiddenParams, progress: Progress): Promise<FrameIsHiddenResult>;
@@ -2730,6 +2731,16 @@ export type FrameIsCheckedOptions = {
   strict?: boolean,
 };
 export type FrameIsCheckedResult = {
+  value: boolean,
+};
+export type FrameIsClickableParams = {
+  selector: string,
+  strict?: boolean,
+};
+export type FrameIsClickableOptions = {
+  strict?: boolean,
+};
+export type FrameIsClickableResult = {
   value: boolean,
 };
 export type FrameIsDisabledParams = {

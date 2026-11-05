@@ -16281,6 +16281,30 @@ export interface Locator {
   }): Promise<boolean>;
 
   /**
+   * Returns whether the element can be clicked: it is [visible](https://playwright.dev/docs/actionability#visible),
+   * [stable](https://playwright.dev/docs/actionability#stable), [enabled](https://playwright.dev/docs/actionability#enabled),
+   * [not inert](https://playwright.dev/docs/actionability#not-inert) and [receives pointer events](https://playwright.dev/docs/actionability#receives-events) at
+   * the point where a click would happen, for example it is not covered by another element. Returns `false` when the
+   * locator does not match any element.
+   *
+   * **NOTE** If you need to assert that an element can be clicked, prefer
+   * [expect(locator).toBeClickable([options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-be-clickable)
+   * to avoid flakiness. See [assertions guide](https://playwright.dev/docs/test-assertions) for more details.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const clickable = await page.getByRole('button').isClickable();
+   * ```
+   *
+   * **Details**
+   *
+   * This method does not click the element and does not wait for the element to become clickable. It may scroll the
+   * element into view.
+   */
+  isClickable(): Promise<boolean>;
+
+  /**
    * Returns whether the element is disabled, the opposite of [enabled](https://playwright.dev/docs/actionability#enabled).
    *
    * **NOTE** If you need to assert that an element is disabled, prefer

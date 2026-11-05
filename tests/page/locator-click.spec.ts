@@ -24,6 +24,28 @@ it('LO-052 should work @smoke', async ({ page, server }) => {
   expect(await page.evaluate(() => window['result'])).toBe('Clicked');
 });
 
+it('LO-200 isClickable should work', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43849' } }, async ({ page, server }) => {
+  await page.goto(server.PREFIX + '/input/button.html');
+  const button = page.locator('button');
+  // isClickable does not wait, so the default timeout does not apply to it.
+  page.setDefaultTimeout(1);
+  expect(await button.isClickable()).toBe(true);
+  page.setDefaultTimeout(0);
+  expect(await page.evaluate(() => window['result'])).toBe('Was not clicked');
+
+  await page.$eval('button', button => button.disabled = true);
+  expect(await button.isClickable()).toBe(false);
+  await page.$eval('button', button => button.disabled = false);
+
+  await page.$eval('button', button => button.insertAdjacentHTML('afterend', '<div style="position: fixed; inset: 0"></div>'));
+  expect(await button.isClickable()).toBe(false);
+
+  expect(await page.locator('no-such-element').isClickable()).toBe(false);
+
+  await page.setContent('<iframe style="display: none" srcdoc="<button>Hidden</button>"></iframe>');
+  expect(await page.frameLocator('iframe').locator('button').isClickable()).toBe(false);
+});
+
 it('LO-053 should work with Node removed', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/button.html');
   await page.evaluate(() => delete window['Node']);

@@ -1790,6 +1790,42 @@ var isChecked = await page.GetByRole(AriaRole.Checkbox).IsCheckedAsync();
 
 ### option: Locator.isChecked.signal = %%-input-signal-%%
 
+## async method: Locator.isClickable
+* since: v1.66
+- returns: <[boolean]>
+
+Returns whether the element can be clicked: it is [visible](../actionability.md#visible), [stable](../actionability.md#stable), [enabled](../actionability.md#enabled), [not inert](../actionability.md#not-inert) and [receives pointer events](../actionability.md#receives-events) at the point where a click would happen, for example it is not covered by another element. Returns `false` when the locator does not match any element.
+
+:::warning[Asserting clickability]
+If you need to assert that an element can be clicked, prefer [`method: LocatorAssertions.toBeClickable`] to avoid flakiness. See [assertions guide](../test-assertions.md) for more details.
+:::
+
+**Usage**
+
+```js
+const clickable = await page.getByRole('button').isClickable();
+```
+
+```java
+boolean clickable = page.getByRole(AriaRole.BUTTON).isClickable();
+```
+
+```python async
+clickable = await page.get_by_role("button").is_clickable()
+```
+
+```python sync
+clickable = page.get_by_role("button").is_clickable()
+```
+
+```csharp
+Boolean clickable = await page.GetByRole(AriaRole.Button).IsClickableAsync();
+```
+
+**Details**
+
+This method does not click the element and does not wait for the element to become clickable. It may scroll the element into view.
+
 ## async method: Locator.isDisabled
 * since: v1.14
 - returns: <[boolean]>

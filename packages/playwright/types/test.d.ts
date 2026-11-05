@@ -9539,6 +9539,38 @@ interface LocatorAssertions {
   }): Promise<void>;
 
   /**
+   * Ensures the [Locator](https://playwright.dev/docs/api/class-locator) points to an element that can be clicked: it
+   * is [visible](https://playwright.dev/docs/actionability#visible), [stable](https://playwright.dev/docs/actionability#stable),
+   * [enabled](https://playwright.dev/docs/actionability#enabled), [not inert](https://playwright.dev/docs/actionability#not-inert) and
+   * [receives pointer events](https://playwright.dev/docs/actionability#receives-events) at the point where a click would happen, for example
+   * it is not covered by another element.
+   *
+   * **Usage**
+   *
+   * ```js
+   * await expect(page.getByRole('button', { name: 'Submit' })).toBeClickable();
+   * ```
+   *
+   * **Details**
+   *
+   * This assertion does not click the element. It may scroll the element into view.
+   * @param options
+   */
+  toBeClickable(options?: {
+    /**
+     * An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+     * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+     * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+     */
+    signal?: AbortSignal;
+
+    /**
+     * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
    * Ensures the [Locator](https://playwright.dev/docs/api/class-locator) points to a disabled element. Element is
    * disabled if it has "disabled" attribute or is disabled via
    * ['aria-disabled'](https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Attributes/aria-disabled). Note

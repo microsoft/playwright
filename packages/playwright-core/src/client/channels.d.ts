@@ -2314,6 +2314,7 @@ export interface FrameChannel extends FrameEventTarget, Channel {
   innerText(params: FrameInnerTextParams, options: TimeoutOptions): Promise<FrameInnerTextResult>;
   inputValue(params: FrameInputValueParams, options: TimeoutOptions): Promise<FrameInputValueResult>;
   isChecked(params: FrameIsCheckedParams, options: TimeoutOptions): Promise<FrameIsCheckedResult>;
+  isClickable(params: FrameIsClickableParams, options: TimeoutOptions): Promise<FrameIsClickableResult>;
   isDisabled(params: FrameIsDisabledParams, options: TimeoutOptions): Promise<FrameIsDisabledResult>;
   isEnabled(params: FrameIsEnabledParams, options: TimeoutOptions): Promise<FrameIsEnabledResult>;
   isHidden(params: FrameIsHiddenParams, options: TimeoutOptions): Promise<FrameIsHiddenResult>;
@@ -2729,6 +2730,16 @@ export type FrameIsCheckedOptions = {
   strict?: boolean,
 };
 export type FrameIsCheckedResult = {
+  value: boolean,
+};
+export type FrameIsClickableParams = {
+  selector: string,
+  strict?: boolean,
+};
+export type FrameIsClickableOptions = {
+  strict?: boolean,
+};
+export type FrameIsClickableResult = {
   value: boolean,
 };
 export type FrameIsDisabledParams = {

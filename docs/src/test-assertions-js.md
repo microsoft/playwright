@@ -31,6 +31,7 @@ Note that retrying assertions are async, so you must `await` them.
 | :- | :- |
 | [await expect(locator).toBeAttached()](./api/class-locatorassertions.md#locator-assertions-to-be-attached) | Element is attached |
 | [await expect(locator).toBeChecked()](./api/class-locatorassertions.md#locator-assertions-to-be-checked) | Checkbox is checked |
+| [await expect(locator).toBeClickable()](./api/class-locatorassertions.md#locator-assertions-to-be-clickable) | Element can be clicked |
 | [await expect(locator).toBeDisabled()](./api/class-locatorassertions.md#locator-assertions-to-be-disabled) | Element is disabled |
 | [await expect(locator).toBeEditable()](./api/class-locatorassertions.md#locator-assertions-to-be-editable) | Element is editable |
 | [await expect(locator).toBeEmpty()](./api/class-locatorassertions.md#locator-assertions-to-be-empty) | Container is empty |

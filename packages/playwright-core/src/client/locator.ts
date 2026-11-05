@@ -317,6 +317,10 @@ export class Locator implements api.Locator {
     return await this._frame.isChecked(this._selector, { strict: true, ...options });
   }
 
+  async isClickable(): Promise<boolean> {
+    return (await this._frame._channel.isClickable({ selector: this._selector, strict: true }, kNoTimeout)).value;
+  }
+
   async isDisabled(options?: TimeoutOptions): Promise<boolean> {
     return await this._frame.isDisabled(this._selector, { strict: true, ...options });
   }

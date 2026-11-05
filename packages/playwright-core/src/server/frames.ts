@@ -1401,6 +1401,37 @@ export class Frame extends SdkObject<FrameEventMap> {
     return !(await this.isVisible(progress, target));
   }
 
+  async isClickable(progress: Progress, target: types.SelectorTarget): Promise<boolean> {
+    progress.log(`  checking clickability of ${this._asLocator(target.selector)}`);
+    try {
+      return await this._checkClickable(progress, target, 0) ?? false;
+    } catch (e) {
+      if (this.isNonRetriableError(e))
+        throw e;
+      return false;
+    }
+  }
+
+  // Resolves the target and runs the actionability checks of a click on it, without clicking.
+  // This is a single attempt, so that the caller resolves the target again before the next attempt.
+  // Returns null when the target does not match any element.
+  private async _checkClickable(progress: Progress, target: types.SelectorTarget, retry: number): Promise<boolean | null> {
+    const resolved = await progress.race(this.selectors.callOnSelectorHandle({ ...target, markTargets: 'all' }, ({ injected, elements }) => {
+      return { element: elements[0], log: `  locator resolved to ${injected.previewNode(elements[0])}` };
+    }, {}));
+    if (!resolved)
+      return null;
+    const result = resolved.result;
+    progress.log(await progress.race(result.evaluate(r => r.log)));
+    const element = await progress.race(result.evaluateHandle(r => r.element));
+    result.dispose();
+    try {
+      return await element._checkClickable(progress, resolved.frameVisible, retry);
+    } finally {
+      element.dispose();
+    }
+  }
+
   async isDisabled(progress: Progress, target: types.SelectorTarget): Promise<boolean> {
     return this._elementState(progress, target, 'disabled');
   }
@@ -1480,6 +1511,7 @@ export class Frame extends SdkObject<FrameEventMap> {
     }
     // `isSet` distinguishes "not collected yet" from "collected with received: undefined".
     const lastIntermediateResult: { isSet: boolean, received?: ExpectReceived, errorMessage?: string } = { isSet: false };
+    let retry = 0;
     try {
       // Step 1: perform locator handlers checkpoint with a specified timeout.
       if (selector)
@@ -1490,7 +1522,7 @@ export class Frame extends SdkObject<FrameEventMap> {
       // Supports the case of `expect(locator).toBeVisible({ timeout: 1 })`
       // that should succeed when the locator is already visible.
       try {
-        const resultOneShot = await this._expectInternal(progress, selector, options, lastIntermediateResult, true);
+        const resultOneShot = await this._expectInternal(progress, selector, options, lastIntermediateResult, true, retry++);
         if (resultOneShot.matches !== options.isNot)
           return;
       } catch (e) {
@@ -1502,7 +1534,7 @@ export class Frame extends SdkObject<FrameEventMap> {
       // Step 3: auto-retry expect with increasing timeouts. Bounded by the total remaining time.
       await this.retryWithProgressAndBackoff(progress, async (progress, continuePolling) => {
         await this._page.performActionPreChecks(progress);
-        const { matches, received } = await this._expectInternal(progress, selector, options, lastIntermediateResult, false);
+        const { matches, received } = await this._expectInternal(progress, selector, options, lastIntermediateResult, false, retry++);
         if (matches === options.isNot) {
           // Keep waiting in these cases:
           // expect(locator).conditionThatDoesNotMatch
@@ -1532,11 +1564,13 @@ export class Frame extends SdkObject<FrameEventMap> {
     }
   }
 
-  private async _expectInternal(progress: Progress, selector: string | undefined, options: FrameExpectParams, lastIntermediateResult: { received?: ExpectReceived, isSet: boolean, errorMessage?: string }, noAbort: boolean) {
-    const progressLog = (text: string) => progress.log(text);
+  private async _expectInternal(progress: Progress, selector: string | undefined, options: FrameExpectParams, lastIntermediateResult: { received?: ExpectReceived, isSet: boolean, errorMessage?: string }, noAbort: boolean, retry: number) {
     // The first expect check, a.k.a. one-shot, always finishes - even when progress is aborted.
-    if (noAbort)
-      progress = nullProgress;
+    // It still writes to the call log.
+    if (noAbort) {
+      const abortable = progress;
+      progress = { ...nullProgress, log: message => abortable.log(message) };
+    }
     const mainWorld = options.expression === 'to.have.property';
     const isArray = options.expression === 'to.have.count' || options.expression.endsWith('.array');
     const effectiveSelector = selector ?? (options.expression === 'to.match.aria' ? 'body' : ':root');
@@ -1545,33 +1579,25 @@ export class Frame extends SdkObject<FrameEventMap> {
     let matches = options.isNot;
     let missingReceived = false;
 
-    // Non-array expectations are strict (callOnSelector throws on multiple); array ones are not.
-    const resolved = await progress.race(this.selectors.callOnSelector({ selector: effectiveSelector, strict: !isArray, mainWorld, markTargets: 'all' }, async ({ injected, elements, frameVisible }, options) => {
-      const isArray = options.expression === 'to.have.count' || options.expression.endsWith('.array');
-      const log = isArray
-        ? `  locator resolved to ${elements.length} element${elements.length === 1 ? '' : 's'}`
-        : `  locator resolved to ${injected.previewNode(elements[0])}`;
-      return { log, ...await injected.expect(elements[0], options, elements, frameVisible) };
-    }, options));
-
-    if (resolved) {
-      received = resolved.result.received;
-      matches = resolved.result.matches;
-      if (resolved.result.log)
-        progressLog(resolved.result.log);
+    const result = await this._expectOnSelector(progress, effectiveSelector, options, retry);
+    if (result) {
+      received = result.received;
+      matches = result.matches;
+      if (result.log)
+        progress.log(result.log);
     } else {
       // When no elements matched the selector, some assertions can still pass.
       if (options.expression === 'to.have.count') {
-        progressLog(`  locator resolved to 0 elements`);
+        progress.log(`  locator resolved to 0 elements`);
         received = { value: 0 };
         matches = 0 === options.expectedNumber;
       } else if (options.expression.endsWith('.array')) {
-        progressLog(`  locator resolved to 0 elements`);
+        progress.log(`  locator resolved to 0 elements`);
         received = { value: [] };
         matches = (options.expectedText?.length ?? 0) === 0;
       } else if (!options.isNot && options.expression === 'to.be.hidden') {
         matches = true;
-      } else if (options.isNot && options.expression === 'to.be.visible') {
+      } else if (options.isNot && (options.expression === 'to.be.visible' || options.expression === 'to.be.clickable')) {
         matches = false;
       } else if (!options.isNot && options.expression === 'to.be.detached') {
         matches = true;
@@ -1584,12 +1610,7 @@ export class Frame extends SdkObject<FrameEventMap> {
         missingReceived = true;
       }
       if (matches === options.isNot && !isArray) {
-        const context = await progress.race(this.context(mainWorld ? 'main' : 'utility'));
-        const injected = await progress.race(context.injectedScript());
-        const ariaSnapshot = await progress.race(injected.evaluate(injected => {
-          if (injected.document.body)
-            return injected.ariaSnapshotForExpectFailure(injected.document.body, { mode: 'default' });
-        }));
+        const ariaSnapshot = await this._ariaSnapshotForExpectFailure(progress, mainWorld ? 'main' : 'utility');
         if (ariaSnapshot)
           received = { ...received, ariaSnapshot };
       }
@@ -1601,9 +1622,47 @@ export class Frame extends SdkObject<FrameEventMap> {
       lastIntermediateResult.received = received;
       lastIntermediateResult.isSet = true;
       if (!missingReceived && !Array.isArray(received?.value))
-        progressLog(`  unexpected value "${renderUnexpectedValue(options.expression, received?.value)}"`);
+        progress.log(`  unexpected value "${renderUnexpectedValue(options.expression, received?.value)}"`);
     }
     return { matches, received };
+  }
+
+  // Resolves the selector and evaluates the expectation on the matching elements.
+  // Returns null when the selector does not match any element.
+  private async _expectOnSelector(progress: Progress, selector: string, options: FrameExpectParams, retry: number): Promise<{ matches: boolean, received?: ExpectReceived, log?: string } | null> {
+    if (options.expression === 'to.be.clickable') {
+      // Clickability runs the actionability checks of a click, which scroll and hit test
+      // across frames. Everything else is evaluated in the browser.
+      const clickable = await this._checkClickable(progress, { selector, strict: true }, retry);
+      if (clickable === null)
+        return null;
+      const received: ExpectReceived = { value: clickable ? 'clickable' : 'not clickable' };
+      // Another element usually makes the target not clickable, so snapshot the whole page.
+      if (clickable === options.isNot)
+        received.ariaSnapshot = await this._ariaSnapshotForExpectFailure(progress, 'utility');
+      return { matches: clickable, received };
+    }
+
+    const mainWorld = options.expression === 'to.have.property';
+    const isArray = options.expression === 'to.have.count' || options.expression.endsWith('.array');
+    // Non-array expectations are strict (callOnSelector throws on multiple); array ones are not.
+    const resolved = await progress.race(this.selectors.callOnSelector({ selector, strict: !isArray, mainWorld, markTargets: 'all' }, async ({ injected, elements, frameVisible }, options) => {
+      const isArray = options.expression === 'to.have.count' || options.expression.endsWith('.array');
+      const log = isArray
+        ? `  locator resolved to ${elements.length} element${elements.length === 1 ? '' : 's'}`
+        : `  locator resolved to ${injected.previewNode(elements[0])}`;
+      return { log, ...await injected.expect(elements[0], options, elements, frameVisible) };
+    }, options));
+    return resolved ? resolved.result : null;
+  }
+
+  private async _ariaSnapshotForExpectFailure(progress: Progress, world: types.World): Promise<string | undefined> {
+    const context = await progress.race(this.context(world));
+    const injected = await progress.race(context.injectedScript());
+    return await progress.race(injected.evaluate(injected => {
+      if (injected.document.body)
+        return injected.ariaSnapshotForExpectFailure(injected.document.body, { mode: 'default' });
+    }));
   }
 
   async waitForFunctionExpression<R>(progress: Progress, expression: string, isFunction: boolean | undefined, arg: any, options: { pollingInterval?: number }, world: types.World = 'main'): Promise<js.SmartHandle<R>> {

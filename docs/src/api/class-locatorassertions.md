@@ -111,6 +111,15 @@ The opposite of [`method: LocatorAssertions.toBeChecked`].
 ### option: LocatorAssertions.NotToBeChecked.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.18
 
+## async method: LocatorAssertions.NotToBeClickable
+* since: v1.66
+* langs: python
+
+The opposite of [`method: LocatorAssertions.toBeClickable`].
+
+### option: LocatorAssertions.NotToBeClickable.timeout = %%-csharp-java-python-assertions-timeout-%%
+* since: v1.66
+
 ## async method: LocatorAssertions.NotToBeDisabled
 * since: v1.20
 * langs: python
@@ -612,6 +621,52 @@ This option can't be true when [`option: LocatorAssertions.toBeChecked.checked`]
 
 ### option: LocatorAssertions.toBeChecked.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.18
+
+## async method: LocatorAssertions.toBeClickable
+* since: v1.66
+* langs:
+  - alias-java: isClickable
+
+Ensures the [Locator] points to an element that can be clicked: it is [visible](../actionability.md#visible), [stable](../actionability.md#stable), [enabled](../actionability.md#enabled), [not inert](../actionability.md#not-inert) and [receives pointer events](../actionability.md#receives-events) at the point where a click would happen, for example it is not covered by another element.
+
+**Usage**
+
+```js
+await expect(page.getByRole('button', { name: 'Submit' })).toBeClickable();
+```
+
+```java
+assertThat(page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Submit"))).isClickable();
+```
+
+```python async
+from playwright.async_api import expect
+
+await expect(page.get_by_role("button", name="Submit")).to_be_clickable()
+```
+
+```python sync
+from playwright.sync_api import expect
+
+expect(page.get_by_role("button", name="Submit")).to_be_clickable()
+```
+
+```csharp
+await Expect(Page.GetByRole(AriaRole.Button, new() { Name = "Submit" })).ToBeClickableAsync();
+```
+
+**Details**
+
+This assertion does not click the element. It may scroll the element into view.
+
+### option: LocatorAssertions.toBeClickable.timeout = %%-js-assertions-timeout-%%
+* since: v1.66
+
+### option: LocatorAssertions.toBeClickable.signal = %%-js-assertions-signal-%%
+* since: v1.66
+
+### option: LocatorAssertions.toBeClickable.timeout = %%-csharp-java-python-assertions-timeout-%%
+* since: v1.66
 
 ## async method: LocatorAssertions.toBeDisabled
 * since: v1.20

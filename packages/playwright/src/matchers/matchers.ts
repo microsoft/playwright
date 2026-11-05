@@ -116,6 +116,16 @@ export function toBeChecked(
   }, options);
 }
 
+export function toBeClickable(
+  this: ExpectMatcherStateInternal,
+  locator: LocatorEx,
+  options?: { timeout?: number, signal?: AbortSignal },
+) {
+  return toBeTruthy.call(this, 'toBeClickable', locator, 'Locator', 'clickable', '', async (isNot, timeout, signal) => {
+    return await locator._expect('to.be.clickable', { isNot, timeout, signal, title: this.title });
+  }, options);
+}
+
 export function toBeDisabled(
   this: ExpectMatcherStateInternal,
   locator: LocatorEx,

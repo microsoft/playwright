@@ -517,6 +517,20 @@ Frame:
         snapshot: true
         pause: true
 
+    isClickable:
+      title: Is clickable
+      subtitle: '{selector}'
+      group: getter
+      parameters:
+        # Note: compared to other isFoo methods, isClickable is a one-shot operation without a timeout.
+        selector: string
+        strict: boolean?
+      returns:
+        value: boolean
+      flags:
+        snapshot: true
+        pause: true
+
     isDisabled:
       title: Is disabled
       subtitle: '{selector}'

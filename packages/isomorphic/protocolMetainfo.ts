@@ -154,6 +154,7 @@ export const methodMetainfo = new Map<string, MethodMetainfo>([
   ['Frame.innerText', { title: 'Get inner text', subtitle: '{selector}', snapshot: true, pause: true, group: 'getter', }],
   ['Frame.inputValue', { title: 'Get input value', subtitle: '{selector}', snapshot: true, pause: true, group: 'getter', }],
   ['Frame.isChecked', { title: 'Is checked', subtitle: '{selector}', snapshot: true, pause: true, group: 'getter', }],
+  ['Frame.isClickable', { title: 'Is clickable', subtitle: '{selector}', snapshot: true, pause: true, group: 'getter', }],
   ['Frame.isDisabled', { title: 'Is disabled', subtitle: '{selector}', snapshot: true, pause: true, group: 'getter', }],
   ['Frame.isEnabled', { title: 'Is enabled', subtitle: '{selector}', snapshot: true, pause: true, group: 'getter', }],
   ['Frame.isHidden', { title: 'Is hidden', subtitle: '{selector}', snapshot: true, pause: true, group: 'getter', }],

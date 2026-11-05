@@ -490,6 +490,58 @@ Call log:
   });
 });
 
+test.describe('toBeClickable', () => {
+  test('EX-329 default', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43849' } }, async ({ page }) => {
+    await page.setContent(`
+      <button onclick="window.clicked = true">Submit</button>
+      <div id="overlay" style="position: fixed; inset: 0"></div>
+    `);
+    const locator = page.locator('button');
+    await expect(locator).not.toBeClickable();
+
+    const error = await expect(locator).toBeClickable({ timeout: 1000 }).catch(e => e);
+    expect(stripAnsi(error.message)).toContain('Expected: clickable');
+    expect(stripAnsi(error.message)).toContain('Received: not clickable');
+    expect(stripAnsi(error.message)).toContain('locator resolved to <button onclick="window.clicked = true">Submit</button>');
+    expect(stripAnsi(error.message)).toContain('<div id="overlay"></div> intercepts pointer events');
+    expect(error.matcherResult.ariaSnapshot).toContain('button "Submit"');
+
+    setTimeout(() => {
+      page.$eval('#overlay', overlay => overlay.remove()).catch(() => {});
+    }, 500);
+    await expect(locator).toBeClickable();
+    await expect(locator).toBeClickable({ timeout: 1 });
+    expect(await page.evaluate('window.clicked')).toBe(undefined);
+  });
+
+  test('EX-330 when nothing matches', async ({ page }) => {
+    await page.setContent('<div></div>');
+    const locator = page.locator('button');
+    await expect(locator).not.toBeClickable();
+    const error = await expect(locator).toBeClickable({ timeout: 1000 }).catch(e => e);
+    expect(stripAnsi(error.message)).toContain('Error: element(s) not found');
+  });
+
+  test('EX-331 under fixed header', async ({ page }) => {
+    // The fixed header covers everything but the bottom strip of the viewport.
+    // The first check scrolls the button to the center, under the header, so
+    // the next check scrolls it to the bottom instead, the same way click does.
+    await page.setContent(`
+      <style>
+        body { margin: 0; }
+        .spacer { height: 2000px; }
+        #header { position: fixed; top: 0; left: 0; right: 0; bottom: 50px; }
+        button { height: 30px; }
+      </style>
+      <div id="header"></div>
+      <div class="spacer"></div>
+      <button>Target</button>
+      <div class="spacer"></div>
+    `);
+    await expect(page.locator('button')).toBeClickable();
+  });
+});
+
 test('EX-062 toBeFocused', async ({ page }) => {
   await page.setContent('<input></input>');
   const locator = page.locator('input');

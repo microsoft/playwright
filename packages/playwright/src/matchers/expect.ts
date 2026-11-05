@@ -51,6 +51,7 @@ import {
   deadlineForMatcher,
   toBeAttached,
   toBeChecked,
+  toBeClickable,
   toBeDisabled,
   toBeEditable,
   toBeEmpty,
@@ -180,6 +181,7 @@ function throwUnsupportedExpectMatcherError() {
 const customAsyncMatchers = {
   toBeAttached,
   toBeChecked,
+  toBeClickable,
   toBeDisabled,
   toBeEditable,
   toBeEmpty,

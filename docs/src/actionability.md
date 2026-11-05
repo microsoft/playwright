@@ -55,6 +55,7 @@ Playwright includes auto-retrying assertions that remove flakiness by waiting un
 | :- | :- |
 | [`method: LocatorAssertions.toBeAttached`] | Element is attached |
 | [`method: LocatorAssertions.toBeChecked`] | Checkbox is checked |
+| [`method: LocatorAssertions.toBeClickable`] | Element can be clicked |
 | [`method: LocatorAssertions.toBeDisabled`] | Element is disabled |
 | [`method: LocatorAssertions.toBeEditable`] | Element is editable |
 | [`method: LocatorAssertions.toBeEmpty`] | Container is empty |

@@ -52,6 +52,35 @@ type PointerAction = {
   perform: (progress: Progress, point: types.Point) => Promise<void>,
 };
 
+// By default, we scroll with protocol method to reveal the action point.
+// However, that might not work to scroll from under position:sticky elements
+// that overlay the target element. To fight this, we cycle through different
+// scroll alignments. This works in most scenarios.
+const kScrollAlignments: (ScrollIntoViewOptions | undefined)[] = [
+  undefined,
+  { block: 'end', inline: 'end' },
+  { block: 'center', inline: 'center' },
+  { block: 'start', inline: 'start' },
+];
+
+function describeActionFailure(result: Exclude<PerformActionResult, 'done'>): string {
+  if (result === 'error:notconnected')
+    return 'element was detached from the DOM';
+  if (result === 'error:notvisible')
+    return 'element is not visible';
+  if (result === 'error:notinviewport')
+    return 'element is outside of the viewport';
+  if (result === 'error:optionsnotfound')
+    return 'did not find some options';
+  if (result === 'error:optionnotenabled')
+    return 'option being selected is not enabled';
+  if ('hitTargetDescription' in result)
+    return `${result.hitTargetDescription} intercepts pointer events`;
+  if (result.missingState === 'non-inert')
+    return 'element is inert';
+  return `element is not ${result.missingState}`;
+}
+
 export class NonRecoverableDOMError extends Error {
 }
 
@@ -345,54 +374,19 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         await this._frame._page.performActionPreChecks(progress);
       const result = await action(progress, retry);
       ++retry;
-      if (result === 'error:notvisible') {
-        if (options.force)
-          throw new NonRecoverableDOMError('Element is not visible');
-        progress.log('  element is not visible');
-        continue;
-      }
-      if (result === 'error:notinviewport') {
-        if (options.force)
-          throw new NonRecoverableDOMError('Element is outside of the viewport');
-        progress.log('  element is outside of the viewport');
-        continue;
-      }
-      if (result === 'error:optionsnotfound') {
-        progress.log('  did not find some options');
-        continue;
-      }
-      if (result === 'error:optionnotenabled') {
-        progress.log('  option being selected is not enabled');
-        continue;
-      }
-      if (typeof result === 'object' && 'hitTargetDescription' in result) {
-        progress.log(`  ${result.hitTargetDescription} intercepts pointer events`);
-        continue;
-      }
-      if (typeof result === 'object' && 'missingState' in result) {
-        if (result.missingState === 'non-inert')
-          progress.log('  element is inert');
-        else
-          progress.log(`  element is not ${result.missingState}`);
-        continue;
-      }
-      return result;
+      if (result === 'done' || result === 'error:notconnected')
+        return result;
+      if (options.force && result === 'error:notvisible')
+        throw new NonRecoverableDOMError('Element is not visible');
+      if (options.force && result === 'error:notinviewport')
+        throw new NonRecoverableDOMError('Element is outside of the viewport');
+      progress.log(`  ${describeActionFailure(result)}`);
     }
   }
 
   async _retryPointerAction(progress: Progress, action: PointerAction, options: types.PointerActionOptions & types.PointerActionWaitOptions, frameVisible: boolean): Promise<'error:notconnected' | 'done'> {
     return await this._retryAction(progress, action.name, async (progress, retry) => {
-      // By default, we scroll with protocol method to reveal the action point.
-      // However, that might not work to scroll from under position:sticky elements
-      // that overlay the target element. To fight this, we cycle through different
-      // scroll alignments. This works in most scenarios.
-      const scrollOptions: (ScrollIntoViewOptions | undefined)[] = [
-        undefined,
-        { block: 'end', inline: 'end' },
-        { block: 'center', inline: 'center' },
-        { block: 'start', inline: 'start' },
-      ];
-      const forceScrollOptions = scrollOptions[retry % scrollOptions.length];
+      const forceScrollOptions = kScrollAlignments[retry % kScrollAlignments.length];
       return await this._performPointerAction(progress, action, forceScrollOptions, options, frameVisible);
     }, { trial: options.trial, force: options.force, skipActionPreChecks: action.skipActionPreChecks });
   }
@@ -549,12 +543,30 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   _click(progress: Progress, options: types.MouseClickOptions & types.PointerActionWaitOptions, waitAfter: boolean | 'disabled', frameVisible: boolean): Promise<'error:notconnected' | 'done'> {
-    return this._retryPointerAction(progress, {
+    return this._retryPointerAction(progress, this._clickAction(options, waitAfter), options, frameVisible);
+  }
+
+  // A single attempt of the actionability checks that precede a click, without the click itself.
+  // Unlike _click(), this does not retry, so that the caller can resolve the element again before the next attempt.
+  async _checkClickable(progress: Progress, frameVisible: boolean, retry: number): Promise<boolean> {
+    const options = { trial: true };
+    const forceScrollOptions = kScrollAlignments[retry % kScrollAlignments.length];
+    // A hidden frame does not render, so do not wait for a stable element inside it.
+    const result = frameVisible
+      ? await this._performPointerAction(progress, this._clickAction(options, 'disabled'), forceScrollOptions, options, frameVisible)
+      : { missingState: 'visible' as const };
+    if (result !== 'done')
+      progress.log(`  ${describeActionFailure(result)}`);
+    return result === 'done';
+  }
+
+  private _clickAction(options: types.MouseClickOptions & types.PointerActionWaitOptions, waitAfter: boolean | 'disabled'): PointerAction {
+    return {
       name: 'click',
       waitForEnabled: true,
       waitAfter,
       perform: (progress, point) => this._page.mouse.click(progress, point.x, point.y, options),
-    }, options, frameVisible);
+    };
   }
 
   async dblclick(progress: Progress, options: types.MouseClickOptions & types.PointerActionWaitOptions): Promise<void> {

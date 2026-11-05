@@ -2577,6 +2577,9 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `EX-326` | `page/expect-with-snapshot.spec.ts` | matchers that should not include an aria snapshot › toMatchAriaSnapshot failure has no extra aria snapshot |
 | `EX-327` | `page/matchers.misc.spec.ts` | should outlive frame navigation |
 | `EX-328` | `page/matchers.misc.spec.ts` | should print no-locator-resolved error when locator matcher did not resolve to any element |
+| `EX-329` | `page/expect-boolean.spec.ts` | toBeClickable › default |
+| `EX-330` | `page/expect-boolean.spec.ts` | toBeClickable › when nothing matches |
+| `EX-331` | `page/expect-boolean.spec.ts` | toBeClickable › under fixed header |
 
 ### FA — Favicon
 
@@ -3718,6 +3721,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `LO-197` | `library/locator-highlight.spec.ts` | Page.hideHighlight clears all locator highlights |
 | `LO-198` | `library/locator-highlight.spec.ts` | highlight should work with a custom selector engine that runs in the main world |
 | `LO-199` | `library/locator-highlight.spec.ts` | highlight should resolve relative to the frame of the locator |
+| `LO-200` | `page/locator-click.spec.ts` | isClickable should work |
 
 ### MC — Multiple clients
 

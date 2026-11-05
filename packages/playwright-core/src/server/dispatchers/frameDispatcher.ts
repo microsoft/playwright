@@ -208,6 +208,10 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
     return { value: await this._frame.isChecked(progress, params) };
   }
 
+  async isClickable(params: channels.FrameIsClickableParams, progress: Progress): Promise<channels.FrameIsClickableResult> {
+    return { value: await this._frame.isClickable(progress, params) };
+  }
+
   async isDisabled(params: channels.FrameIsDisabledParams, progress: Progress): Promise<channels.FrameIsDisabledResult> {
     return { value: await this._frame.isDisabled(progress, params) };
   }

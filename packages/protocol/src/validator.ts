@@ -1502,6 +1502,13 @@ scheme.FrameIsCheckedParams = tObject({
 scheme.FrameIsCheckedResult = tObject({
   value: tBoolean,
 });
+scheme.FrameIsClickableParams = tObject({
+  selector: tString,
+  strict: tOptional(tBoolean),
+});
+scheme.FrameIsClickableResult = tObject({
+  value: tBoolean,
+});
 scheme.FrameIsDisabledParams = tObject({
   selector: tString,
   strict: tOptional(tBoolean),
