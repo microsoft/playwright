@@ -127,7 +127,6 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `WM` | WebMCP | `library/{webmcp, webmcp-disabled}` |
 | `WO` | Workers | `page/workers`<br>`library/{shared-worker, browsercontext-service-worker-policy}` |
 | `WS` | WebSocket | `library/{web-socket, route-web-socket}` |
-| `ZP` | Zip extraction | `library/unit/extract-zip` |
 
 ## Tests
 
@@ -5573,10 +5572,3 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `WS-038` | `library/route-web-socket.spec.ts` | should work with baseURL regardless of scheme casing |
 | `WS-039` | `library/route-web-socket.spec.ts` | should expose protocols to the route handler |
 | `WS-040` | `library/route-web-socket.spec.ts` | should expose protocols on server-side route |
-
-### ZP — Zip extraction
-
-| ID | File | Title |
-|---|---|---|
-| `ZP-001` | `library/unit/extract-zip.spec.ts` | should not write through a symlink that leaves the extraction folder |
-| `ZP-002` | `library/unit/extract-zip.spec.ts` | should extract regular files and directories |

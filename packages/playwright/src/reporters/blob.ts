@@ -84,9 +84,13 @@ export class BlobReporter extends TeleReporterEmitter {
       zipFinishPromise.resolve(undefined);
     }).on('error', error => zipFinishPromise.reject(error));
 
+    const addedEntries = new Set<string>();
     for (const { originalPath, zipEntryPath } of this._attachments) {
+      if (addedEntries.has(zipEntryPath))
+        continue;
       if (!fs.statSync(originalPath, { throwIfNoEntry: false })?.isFile())
         continue;
+      addedEntries.add(zipEntryPath);
       zipFile.addFile(originalPath, zipEntryPath);
     }
 
