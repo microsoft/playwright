@@ -76,18 +76,11 @@ fi
 # A successful `npm publish` only means the registry accepted the package: it is processed
 # asynchronously and may show up minutes later, or never (playwright-core@1.65.0 never did,
 # leaving playwright@1.65.0 on @latest pointing to a missing dependency).
-# Name -> "pending" | "available" for every package published by this run.
-declare -A PUBLISHED=()
-
-function ensure_available {
+function wait_until_available {
   local name="$1"
-  if [[ "${PUBLISHED[$name]}" == "available" ]]; then
-    return 0
-  fi
   local attempt
   for attempt in $(seq 60); do
     if [[ "$(npm view "${name}@${VERSION}" version --prefer-online 2>/dev/null)" == "${VERSION}" ]]; then
-      PUBLISHED[$name]="available"
       return 0
     fi
     sleep 15
@@ -98,23 +91,13 @@ function ensure_available {
 
 echo "==================== Publishing version ${VERSION} ================"
 node ./utils/workspace.js --ensure-consistent
-# Listed in dependency order, so dependencies are published first.
+# Packages are listed in dependency order. Wait for each one to go live before publishing the next,
+# so nothing is published (and tagged) while a package it depends on is missing.
 PACKAGE_PATHS=$(node ./utils/workspace.js --list-public-package-paths)
 for package in ${PACKAGE_PATHS}; do
   name=$(node -p "require('${package}/package.json').name")
-  # Never publish (and tag) a package until the workspace packages it depends on are installable.
-  for dep in $(node -p "Object.keys(require('${package}/package.json').dependencies || {}).join(' ')"); do
-    if [[ -n "${PUBLISHED[$dep]}" ]]; then
-      ensure_available "${dep}"
-    fi
-  done
   npm publish --access=public "${package}" --tag="${NPM_PUBLISH_TAG}"
-  PUBLISHED[$name]="pending"
-done
-
-# Fail the job if anything that was accepted did not show up.
-for name in "${!PUBLISHED[@]}"; do
-  ensure_available "${name}"
+  wait_until_available "${name}"
 done
 
 echo "Done."

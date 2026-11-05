@@ -59,22 +59,17 @@ class Workspace {
 
   /**
    * Public packages, each listed after the workspace packages it depends on.
-   * Packages at the same depth keep their declaration order.
    * @returns {PWPackage[]}
    */
   publicPackagesInDependencyOrder() {
-    const byName = new Map(this._packages.map(pkg => [pkg.name, pkg]));
-    /** @type {Map<PWPackage, number>} */
-    const depths = new Map();
-    /** @param {PWPackage} pkg */
-    const depth = pkg => {
-      if (!depths.has(pkg)) {
-        const deps = Object.keys(pkg.packageJSON.dependencies || {}).map(name => byName.get(name)).filter(dep => !!dep);
-        depths.set(pkg, Math.max(0, ...deps.map(dep => depth(/** @type {PWPackage} */ (dep)) + 1)));
-      }
-      return /** @type {number} */ (depths.get(pkg));
+    const ordered = new Set();
+    const visit = pkg => {
+      for (const dep of Object.keys(pkg.packageJSON.dependencies || {}))
+        this._packages.filter(p => p.name === dep).forEach(visit);
+      ordered.add(pkg);
     };
-    return this._packages.filter(pkg => !pkg.isPrivate).sort((a, b) => depth(a) - depth(b));
+    this._packages.forEach(visit);
+    return [...ordered].filter(pkg => !pkg.isPrivate);
   }
 
   async version() {
