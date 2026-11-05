@@ -111,7 +111,7 @@ export async function startCliDaemonServer(
           await exit(async () => connection.send({ id, result: 'ok' }).catch(() => {}));
         } else if (method === 'run') {
           const { toolName, toolParams } = parseCliCommand(params.args);
-          toolParams._meta = { cwd: params.cwd, raw: params.raw || params.json, json: !!params.json };
+          toolParams._meta = { cwd: params.cwd, raw: params.raw || params.json, json: !!params.json, commandName: params.args._[0] };
           const response = await backend.callTool(toolName, toolParams, abortController.signal);
           await connection.send({ id, result: formatResult(response) });
         } else {

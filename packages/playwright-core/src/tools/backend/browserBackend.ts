@@ -94,6 +94,7 @@ export class BrowserBackend extends EventEmitter<{ disconnected: [], dynamictool
       isError: true,
     });
     const context = this._context!;
+    const commandName = context.config.skillMode ? rawArguments._meta?.commandName : undefined;
 
     let parsedArguments: any;
     let handle: (params: any, response: Response) => Promise<void>;
@@ -102,8 +103,13 @@ export class BrowserBackend extends EventEmitter<{ disconnected: [], dynamictool
       try {
         parsedArguments = tool.schema.inputSchema.parse(rawArguments);
       } catch (error) {
-        if (error instanceof z.ZodError)
+        if (error instanceof z.ZodError) {
+          if (context.config.skillMode) {
+            const details = error.issues.map(issue => `${issue.path.length ? `'${issue.path.join('.')}' argument: ` : ''}${issue.message}`).join('\n');
+            return formatError(`Invalid arguments for ${commandName ? `command "${commandName}"` : 'command'}:\n${details}`);
+          }
           return formatError(`Invalid arguments for tool "${name}":\n${z.prettifyError(error)}`);
+        }
         throw error;
       }
       handle = (params, response) => tool.handle(context, params, response, signal);
@@ -119,7 +125,7 @@ export class BrowserBackend extends EventEmitter<{ disconnected: [], dynamictool
 
     const cwd = rawArguments._meta?.cwd;
     const raw = !!rawArguments._meta?.raw;
-    const response = new Response(context, name, parsedArguments, { relativeTo: cwd, raw, json });
+    const response = new Response(context, name, parsedArguments, { relativeTo: cwd, raw, json, commandName });
     context.setRunningTool(name);
     let responseObject: mcpServer.CallToolResult & { isClose?: boolean };
     try {
@@ -129,7 +135,8 @@ export class BrowserBackend extends EventEmitter<{ disconnected: [], dynamictool
       responseObject = await response.serialize();
       this._sessionLog?.logResponse(name, parsedArguments, responseObject);
     } catch (error: any) {
-      const messages = [String(error), ...context.drainPendingUnhandledRejections().filter(reason => reason !== error).map(formatRejectionReason)];
+      const message = context.config.skillMode && error instanceof Error ? error.message : String(error);
+      const messages = [message, ...context.drainPendingUnhandledRejections().filter(reason => reason !== error).map(formatRejectionReason)];
       responseObject = formatError(messages.join('\n\n'));
     } finally {
       context.setRunningTool(undefined);

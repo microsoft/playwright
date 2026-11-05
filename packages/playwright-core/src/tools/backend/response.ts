@@ -63,16 +63,18 @@ export class Response {
 
   readonly toolName: string;
   readonly toolArgs: Record<string, any>;
+  readonly commandName: string | undefined;
   private _clientWorkspace: string;
   private _imageResults: { data: Buffer, imageType: 'png' | 'jpeg' | 'webp' }[] = [];
   private _raw: boolean;
   private _json: boolean;
   private _writtenFiles = new Set<string>();
 
-  constructor(context: Context, toolName: string, toolArgs: Record<string, any>, options?: { relativeTo?: string, raw?: boolean, json?: boolean }) {
+  constructor(context: Context, toolName: string, toolArgs: Record<string, any>, options?: { relativeTo?: string, raw?: boolean, json?: boolean, commandName?: string }) {
     this._context = context;
     this.toolName = toolName;
     this.toolArgs = toolArgs;
+    this.commandName = options?.commandName;
     this._clientWorkspace = options?.relativeTo ?? context.options.cwd;
     this._json = options?.json ?? false;
     this._raw = this._json || (options?.raw ?? false);

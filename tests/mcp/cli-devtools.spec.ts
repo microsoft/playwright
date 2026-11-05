@@ -208,24 +208,27 @@ test('response-body returns just the body', async ({ cli, server }) => {
   expect(output.trim()).toBe('{"name":"John Doe"}');
 });
 
-test('request with out-of-range index', async ({ cli, server }) => {
+test('request with out-of-range index', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-cli/issues/515' } }, async ({ cli, server }) => {
   await cli('open', server.PREFIX);
   const { output } = await cli('request', '999');
-  expect(output).toContain('Request #999 not found');
+  expect(output).toContain('Request #999 not found. Run requests to see available numbers.');
+  const { output: invalid, exitCode } = await cli('request', '0');
+  expect(invalid).toBe(`### Error\nInvalid arguments for command "request":\n'index' argument: Too small: expected number to be >=1`);
+  expect(exitCode).toBe(1);
 });
 
 function escapeRegExp(text: string): string {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-test('recording-start-stop', async ({ cli, server }) => {
+test('recording-start-stop', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-cli/issues/515' } }, async ({ cli, server }) => {
   server.setContent('/', `<title>Title</title><button>Submit</button>`, 'text/html');
 
   const { snapshot } = await cli('open', server.PREFIX);
   expect(snapshot).toContain(`- button "Submit" [ref=e2]`);
 
   const { output } = await cli('recording-start');
-  expect(output).toContain('Recording started');
+  expect(output).toContain('Recording started. Run recording-stop to retrieve the recorded actions.');
 
   await cli('click', 'e2');
 
@@ -235,6 +238,8 @@ test('recording-start-stop', async ({ cli, server }) => {
 \`\`\`js
 await page.getByRole('button', { name: 'Submit' }).click();
 \`\`\``);
+
+  expect((await cli('recording-stop')).output).toContain('No recording in progress, use recording-start to start one.');
 });
 
 test('tracing-start-stop', async ({ cli, server }, testInfo) => {
