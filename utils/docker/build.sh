@@ -16,25 +16,16 @@ if [[ ($1 == '--help') || ($1 == '-h') || ($1 == '') || ($2 == '') ]]; then
   exit 0
 fi
 
-BROWSERS_JSON="../../packages/playwright-core/browsers.json"
-
 function cleanup() {
   rm -f "playwright-core.tar.gz"
-  if [[ -f "${BROWSERS_JSON}.bak" ]]; then
-    mv -f "${BROWSERS_JSON}.bak" "${BROWSERS_JSON}"
-  fi
 }
 
 trap "cleanup; cd $(pwd -P)" EXIT
 cd "$(dirname "$0")"
 
 # We rely on `./playwright-core.tar.gz` to download browsers into the docker
-# image. The package is packed with the latest Chrome for Testing on the same
-# branch, so that the image ships the latest security fixes.
-cp "${BROWSERS_JSON}" "${BROWSERS_JSON}.bak"
-node ./update-chromium-version.mjs "${BROWSERS_JSON}"
+# image.
 node ../../utils/pack_package.js playwright-core ./playwright-core.tar.gz
-mv -f "${BROWSERS_JSON}.bak" "${BROWSERS_JSON}"
 PLAYWRIGHT_VERSION=$(node ../../utils/workspace.js --get-version)
 
 PLATFORM=""
