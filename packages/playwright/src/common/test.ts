@@ -16,8 +16,10 @@
 
 import { rootTestType } from './testType';
 import { computeTestCaseOutcome } from '../isomorphic/teleReceiver';
+import { parseRetries, serializeRetries } from './retries';
 import type { FixturesWithLocation, FullProjectInternal } from './config';
 import type { FixturePool } from './fixtures';
+import type { RetriesEntry } from './retries';
 import type { TestTypeImpl } from './testType';
 import type { TestAnnotation } from '../../types/test';
 import type * as reporterTypes from '../../types/testReporter';
@@ -48,7 +50,7 @@ export class Suite extends Base {
   _entries: (Suite | TestCase)[] = [];
   _hooks: { type: 'beforeEach' | 'afterEach' | 'beforeAll' | 'afterAll', fn: Function, title: string, location: Location }[] = [];
   _timeout: number | undefined;
-  _retries: number | undefined;
+  _retries: RetriesEntry[] | undefined;
   // Annotations known statically before running the test, e.g. `test.describe.skip()` or `test.describe({ annotation }, body)`.
   _staticAnnotations: TestAnnotation[] = [];
   // Explicitly declared tags that are not a part of the title.
@@ -222,7 +224,7 @@ export class Suite extends Base {
       only: this._only,
       requireFile: this._requireFile,
       timeout: this._timeout,
-      retries: this._retries,
+      retries: serializeRetries(this._retries),
       staticAnnotations: this._staticAnnotations.slice(),
       tags: this._tags.slice(),
       locks: this._locks.slice(),
@@ -239,7 +241,7 @@ export class Suite extends Base {
     suite._only = data.only;
     suite._requireFile = data.requireFile;
     suite._timeout = data.timeout;
-    suite._retries = data.retries;
+    suite._retries = parseRetries(data.retries);
     suite._staticAnnotations = data.staticAnnotations;
     suite._tags = data.tags;
     suite._locks = data.locks;
@@ -276,6 +278,7 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   timeout = 0;
   annotations: TestAnnotation[] = [];
   retries = 0;
+  _retries: RetriesEntry[] = [];
   repeatEachIndex = 0;
 
   _testType: TestTypeImpl;
@@ -337,6 +340,7 @@ export class TestCase extends Base implements reporterTypes.TestCase {
       id: this.id,
       title: this.title,
       retries: this.retries,
+      retryEntries: serializeRetries(this._retries),
       timeout: this.timeout,
       expectedStatus: this.expectedStatus,
       location: this.location,
@@ -355,6 +359,7 @@ export class TestCase extends Base implements reporterTypes.TestCase {
     const test = new TestCase(data.title, () => {}, rootTestType, data.location);
     test.id = data.id;
     test.retries = data.retries;
+    test._retries = parseRetries(data.retryEntries) ?? [];
     test.timeout = data.timeout;
     test.expectedStatus = data.expectedStatus;
     test._only = data.only;

@@ -23,6 +23,7 @@ import { eventsHelper } from '@utils/eventsHelper';
 import { addSuggestedRebaseline } from './rebase';
 import { WorkerHost } from './workerHost';
 import { ipc, test as testNs } from '../common';
+import { computeRetries } from '../common/retries';
 import { addLocationAndSnippetToError } from '../reporters/internalReporter';
 import { serializeError } from '../util';
 
@@ -544,7 +545,7 @@ class JobDispatcher {
     }
 
     const retryCandidates = new Set<testNs.TestCase>();
-    const serialSuitesWithFailures = new Set<testNs.Suite>();
+    const serialSuitesWithFailures = new Map<testNs.Suite, number>();
 
     for (const failedTest of this._failedTests) {
       if (this._failedWithNonRetriableError.has(failedTest))
@@ -557,7 +558,7 @@ class JobDispatcher {
           outermostSerialSuite = parent;
       }
       if (outermostSerialSuite && !this._failedWithNonRetriableError.has(outermostSerialSuite))
-        serialSuitesWithFailures.add(outermostSerialSuite);
+        serialSuitesWithFailures.set(outermostSerialSuite, Math.max(serialSuitesWithFailures.get(outermostSerialSuite) ?? 0, failedTest.retries));
     }
 
     // If we have failed tests that belong to a serial suite,
@@ -570,11 +571,14 @@ class JobDispatcher {
     });
     this._massSkipTestsFromRemaining(new Set(testsBelongingToSomeSerialSuiteWithFailures.map(test => test.id)), []);
 
-    for (const serialSuite of serialSuitesWithFailures) {
+    for (const [serialSuite, retries] of serialSuitesWithFailures) {
       // Add all tests from failed serial suites for possible retry.
       // These will only be retried together, because they have the same
       // "retries" setting and the same number of previous runs.
-      serialSuite.allTests().forEach(test => retryCandidates.add(test));
+      serialSuite.allTests().forEach(test => {
+        test.retries = retries;
+        retryCandidates.add(test);
+      });
     }
 
     const remaining = [...this._remainingByTestId.values()];
@@ -687,6 +691,8 @@ class JobDispatcher {
   }
 
   private _reportTestEnd(test: testNs.TestCase, result: TestResult) {
+    if (result.status !== test.expectedStatus)
+      test.retries = computeRetries(test._retries, result.errors);
     this._testRun.reporter.onTestEnd?.(test, result);
     const hadMaxFailures = this._isStoppedByMaxFailures();
     // Test is considered failing after the last retry.

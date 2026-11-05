@@ -127,6 +127,25 @@ test.describe(() => {
 });
 ```
 
+### Conditional retries
+
+The number of retries can depend on the error. Give a list of entries, each with a `count` and an optional `condition` regular expression. After each failed attempt, the largest `count` among the entries whose condition matches an error message of that attempt applies. An entry without a condition always applies.
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  retries: [
+    // Retry any failure once.
+    { count: 1 },
+    // Retry up to three times when the browser or the worker crashed.
+    { count: 3, condition: /Target crashed|worker process exited unexpectedly/ },
+  ],
+});
+```
+
+Worker crashes and timeouts are matched by their error message like any other failure. The latest failed attempt decides: a test that first crashes and then fails on an assertion only gets the retries of the assertion failure.
+
 ## Serial mode
 
 Use [`method: Test.describe.serial`] to group dependent tests to ensure they will always run together and in order. If one of the tests fails, all subsequent tests are skipped. All tests in the group are retried together.

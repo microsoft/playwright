@@ -20,8 +20,10 @@ import { calculateSha1 } from '@utils/crypto';
 import { toPosixPath } from '@utils/fileUtils';
 
 import { createFileMatcher, forceRegExp, parseLocationArg } from '../util';
+import { maxRetries } from './retries';
 
 import type { FullProjectInternal } from './config';
+import type { RetriesEntry } from './retries';
 import type { Suite, TestCase } from './test';
 import type { Matcher, TestCaseFilter } from '../util';
 
@@ -52,7 +54,7 @@ export function bindFileSuiteToProject(project: FullProjectInternal, suite: Suit
     test._projectId = project.id;
 
     // Inherit properties from parent suites.
-    let inheritedRetries: number | undefined;
+    let inheritedRetries: RetriesEntry[] | undefined;
     let inheritedTimeout: number | undefined;
     for (let parentSuite: Suite | undefined = suite; parentSuite; parentSuite = parentSuite.parent) {
       if (parentSuite._staticAnnotations.length)
@@ -66,7 +68,8 @@ export function bindFileSuiteToProject(project: FullProjectInternal, suite: Suit
       if (inheritedTimeout === undefined && parentSuite._timeout !== undefined)
         inheritedTimeout = parentSuite._timeout;
     }
-    test.retries = inheritedRetries ?? project.project.retries;
+    test._retries = inheritedRetries ?? project.retries;
+    test.retries = maxRetries(test._retries);
     test.timeout = inheritedTimeout ?? project.project.timeout;
 
     // Skip annotations imply skipped expectedStatus.

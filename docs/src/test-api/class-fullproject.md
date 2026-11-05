@@ -62,7 +62,7 @@ See [`property: TestProject.repeatEach`].
 * since: v1.10
 - type: <[int]>
 
-See [`property: TestProject.retries`].
+See [`property: TestProject.retries`]. When retries are configured as a list, this is the largest `count` in the list.
 
 ## property: FullProject.teardown
 * since: v1.34

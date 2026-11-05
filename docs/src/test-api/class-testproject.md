@@ -273,9 +273,13 @@ Whether to skip entries from `.gitignore` when searching for test files. By defa
 
 ## property: TestProject.retries
 * since: v1.10
-- type: ?<[int]>
+- type: ?<[int]|[Array]<[Object]>>
+  - `count` <[int]> The maximum number of retries given to a failed test when this entry applies.
+  - `condition` ?<[RegExp]> Regular expression matched against the error messages of the failed attempt. An entry without a condition always applies.
 
 The maximum number of retry attempts given to failed tests. Learn more about [test retries](../test-retries.md#retries).
+
+Set to a list to make the number of retries depend on the error, see [`property: TestConfig.retries`].
 
 Use [`method: Test.describe.configure`] to change the number of retries for a specific file or a group of tests.
 

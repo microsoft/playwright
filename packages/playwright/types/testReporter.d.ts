@@ -542,7 +542,8 @@ export interface TestCase {
   results: Array<TestResult>;
 
   /**
-   * The maximum number of retries given to this test in the configuration.
+   * The maximum number of retries given to this test in the configuration. With conditional retries, this is updated
+   * after each failed attempt to the number of retries that applies to that failure.
    *
    * Learn more about [test retries](https://playwright.dev/docs/test-retries#retries).
    */

@@ -367,3 +367,82 @@ test('should not defer remaining tests with isolated retries', async ({ runInlin
     'b1-1',
   ]);
 });
+
+test('should retry based on error condition', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.js': `
+      module.exports = { retries: [{ count: 1 }, { count: 3, condition: /flaky infra/ }] };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('infra', ({}, testInfo) => {
+        if (testInfo.retry < 3)
+          throw new Error('flaky infra');
+      });
+      test('bug', () => {
+        throw new Error('real bug');
+      });
+      test('mixed', ({}, testInfo) => {
+        throw new Error(testInfo.retry === 0 ? 'flaky infra' : 'real bug');
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.flaky).toBe(1);
+  expect(result.failed).toBe(2);
+  const specs = result.report.suites[0].specs;
+  expect(specs.map(spec => [spec.title, spec.tests[0].results.length])).toEqual([['infra', 4], ['bug', 2], ['mixed', 2]]);
+});
+
+test('should apply retry condition from test.describe.configure', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test.describe.configure({ retries: [{ count: 2, condition: /flaky infra/ }] });
+      test('infra', ({}, testInfo) => {
+        if (testInfo.retry < 2)
+          throw new Error('flaky infra');
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.flaky).toBe(1);
+  expect(result.results.length).toBe(3);
+});
+
+test('should retry worker crash based on condition', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.js': `
+      module.exports = { retries: [{ count: 2, condition: /worker process exited unexpectedly/ }] };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('crash', ({}, testInfo) => {
+        if (testInfo.retry < 2)
+          process.exit(1);
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.flaky).toBe(1);
+  expect(result.results.length).toBe(3);
+});
+
+test('should apply retry condition to serial suite', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test.describe.configure({ mode: 'serial', retries: [{ count: 2, condition: /flaky infra/ }] });
+      test('first', () => {});
+      test('second', ({}, testInfo) => {
+        if (testInfo.retry < 2)
+          throw new Error('flaky infra');
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.flaky).toBe(1);
+  const specs = result.report.suites[0].specs;
+  expect(specs.map(spec => [spec.title, spec.tests[0].results.length])).toEqual([['first', 3], ['second', 3]]);
+});
