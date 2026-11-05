@@ -583,9 +583,11 @@ Execution mode. Learn more about the execution modes [here](../test-parallel.md)
 
 ### option: Test.describe.configure.retries
 * since: v1.28
-- `retries` <[int]>
+- `retries` <[int]|[Array]<[Object]>>
+  - `count` <[int]> The maximum number of retries given to a failed test when this entry applies.
+  - `condition` ?<[RegExp]> Regular expression matched against the error messages of the failed attempt. An entry without a condition always applies.
 
-The number of retries for each test.
+The number of retries for each test. Set to a list to make the number of retries depend on the error, see [`property: TestConfig.retries`].
 
 ### option: Test.describe.configure.timeout
 * since: v1.28

@@ -537,13 +537,27 @@ interface TestProject<TestArgs = {}, WorkerArgs = {}> {
    * The maximum number of retry attempts given to failed tests. Learn more about
    * [test retries](https://playwright.dev/docs/test-retries#retries).
    *
+   * Set to a list to make the number of retries depend on the error, see
+   * [testConfig.retries](https://playwright.dev/docs/api/class-testconfig#test-config-retries).
+   *
    * Use [test.describe.configure([options])](https://playwright.dev/docs/api/class-test#test-describe-configure) to
    * change the number of retries for a specific file or a group of tests.
    *
    * Use [testConfig.retries](https://playwright.dev/docs/api/class-testconfig#test-config-retries) to change this
    * option for all projects.
    */
-  retries?: number;
+  retries?: number|Array<{
+    /**
+     * The maximum number of retries given to a failed test when this entry applies.
+     */
+    count: number;
+
+    /**
+     * Regular expression matched against the error messages of the failed attempt. An entry without a condition always
+     * applies.
+     */
+    condition?: RegExp;
+  }>;
 
   /**
    * The base directory, relative to the config file, for snapshot files created with `toMatchSnapshot`. Defaults to
@@ -916,7 +930,8 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
   repeatEach: number;
 
   /**
-   * See [testProject.retries](https://playwright.dev/docs/api/class-testproject#test-project-retries).
+   * See [testProject.retries](https://playwright.dev/docs/api/class-testproject#test-project-retries). When retries are
+   * configured as a list, this is the largest `count` in the list.
    */
   retries: number;
 
@@ -1747,6 +1762,12 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
    * The maximum number of retry attempts given to failed tests. By default failing tests are not retried. Learn more
    * about [test retries](https://playwright.dev/docs/test-retries#retries).
    *
+   * When set to a list, the number of retries depends on the error. After each failed attempt, Playwright takes the
+   * largest `count` among the entries that apply, and retries the test when it has run fewer times than that. The
+   * latest failed attempt decides: a test that first fails with a matching error and then with a different one only
+   * gets the retries of the latter. Worker crashes and timeouts are matched by their error message like any other
+   * failure.
+   *
    * **Usage**
    *
    * ```js
@@ -1758,8 +1779,33 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
    * });
    * ```
    *
+   * Retry any failure once, and up to three times when the browser or the worker crashed:
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   retries: [
+   *     { count: 1 },
+   *     { count: 3, condition: /Target crashed|worker process exited unexpectedly/ },
+   *   ],
+   * });
+   * ```
+   *
    */
-  retries?: number;
+  retries?: number|Array<{
+    /**
+     * The maximum number of retries given to a failed test when this entry applies.
+     */
+    count: number;
+
+    /**
+     * Regular expression matched against the error messages of the failed attempt. An entry without a condition always
+     * applies.
+     */
+    condition?: RegExp;
+  }>;
 
   /**
    * Controls when failed tests are retried. Defaults to `'immediate'`.

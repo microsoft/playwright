@@ -274,8 +274,19 @@ function validateProject(file: string, project: Project, title: string) {
   }
 
   if ('retries' in project && project.retries !== undefined) {
-    if (typeof project.retries !== 'number' || project.retries < 0)
-      throw errorWithFile(file, `${title}.retries must be a non-negative number`);
+    if (Array.isArray(project.retries)) {
+      for (let index = 0; index < project.retries.length; index++) {
+        const entry = project.retries[index];
+        if (!entry || typeof entry !== 'object')
+          throw errorWithFile(file, `${title}.retries[${index}] must be an object`);
+        if (typeof entry.count !== 'number' || entry.count < 0)
+          throw errorWithFile(file, `${title}.retries[${index}].count must be a non-negative number`);
+        if (entry.condition !== undefined && !isRegExp(entry.condition))
+          throw errorWithFile(file, `${title}.retries[${index}].condition must be a RegExp`);
+      }
+    } else if (typeof project.retries !== 'number' || project.retries < 0) {
+      throw errorWithFile(file, `${title}.retries must be a non-negative number or an array of { count, condition } objects`);
+    }
   }
 
   if ('testDir' in project && project.testDir !== undefined) {

@@ -20,12 +20,14 @@ import { getPackageManagerExecCommand } from '@utils/env';
 import { currentZone } from '@utils/zones';
 
 import { currentTestInfo, currentlyLoadingFileSuite, setCurrentlyLoadingFileSuite } from '../globals';
+import { normalizeRetries } from './retries';
 import { Suite, TestCase } from './test';
 import { expect } from '../matchers/expect';
 import { wrapFunctionWithLocation } from '../transform/transform';
 import { validateTestDetails } from './validators';
 
 import type { FixturesWithLocation } from './config';
+import type { RetriesEntry } from './retries';
 import type { Fixtures, TestDetails, TestStepInfo, TestType } from '../../types/test';
 import type { Location } from '../../types/testReporter';
 
@@ -189,7 +191,7 @@ export class TestTypeImpl {
     suite._hooks.push({ type: name, fn: fn!, title, location });
   }
 
-  private _configure(location: Location, options: { mode?: 'default' | 'parallel' | 'serial', retries?: number, timeout?: number, lock?: string | string[] }) {
+  private _configure(location: Location, options: { mode?: 'default' | 'parallel' | 'serial', retries?: number | RetriesEntry[], timeout?: number, lock?: string | string[] }) {
     throwIfRunningInsideJest();
     const suite = this._currentSuite(location, `test.describe.configure()`);
     if (!suite)
@@ -202,7 +204,7 @@ export class TestTypeImpl {
       suite._timeout = options.timeout;
 
     if (options.retries !== undefined)
-      suite._retries = options.retries;
+      suite._retries = normalizeRetries(options.retries);
 
     if (options.mode !== undefined) {
       if (suite._parallelMode !== 'none')

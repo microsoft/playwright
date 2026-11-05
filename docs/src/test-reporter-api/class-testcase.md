@@ -72,7 +72,7 @@ Results for each run of this test.
 * since: v1.10
 - type: <[int]>
 
-The maximum number of retries given to this test in the configuration.
+The maximum number of retries given to this test in the configuration. With conditional retries, this is updated after each failed attempt to the number of retries that applies to that failure.
 
 Learn more about [test retries](../test-retries.md#retries).
 
