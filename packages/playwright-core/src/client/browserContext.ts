@@ -31,7 +31,7 @@ import { Credentials } from './credentials';
 import { Debugger } from './debugger';
 import { Dialog } from './dialog';
 import { DisposableObject, DisposableStub } from './disposable';
-import { TargetClosedError, parseError } from './errors';
+import { TargetClosedError, isTargetClosedError, parseError } from './errors';
 import { Events } from './events';
 import { APIRequestContext } from './fetch';
 import { Frame } from './frame';
@@ -45,6 +45,8 @@ import { WebError } from './webError';
 import { Worker } from './worker';
 import { TimeoutSettings, kNoTimeout } from './timeoutSettings';
 import { mkdirIfNeeded } from './fileUtils';
+import { Artifact } from './artifact';
+import { Video } from './video';
 
 import type { ExposeFunctionsOptions } from './jsHandle';
 import type { BrowserContextOptions, Headers, SetStorageState, StorageState, WaitForEventOptions } from './types';
@@ -538,6 +540,23 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
 
   async _showRecorder(params: channels.BrowserContextShowRecorderParams) {
     await this._channel.showRecorder(params, kNoTimeout);
+  }
+
+  @internal
+  async _startVideoChunk(options: channels.BrowserContextStartVideoChunkParams) {
+    await this._channel.startVideoChunk(options, kNoTimeout);
+  }
+
+  @internal
+  async _stopVideoChunk(): Promise<Video[] | undefined> {
+    try {
+      const { artifacts } = await this._channel.stopVideoChunk({}, kNoTimeout);
+      return artifacts.map(artifact => new Video(this._connection, Artifact.from(artifact)));
+    } catch (error) {
+      if (!isTargetClosedError(error))
+        throw error;
+      return undefined;
+    }
   }
 
   async _startRecording(params: channels.BrowserContextStartRecordingParams, eventSink: RecorderEventSink) {

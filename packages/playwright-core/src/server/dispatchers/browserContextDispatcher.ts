@@ -20,6 +20,7 @@ import path from 'path';
 import { deserializeURLMatch, urlMatches } from '@isomorphic/urlMatch';
 import { createGuid } from '@utils/crypto';
 import { throwingResolveWithinRoot } from '@utils/fileUtils';
+import { debugLogger } from '@utils/debugLogger';
 import { BrowserContext } from '../browserContext';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';
 import { DebuggerDispatcher } from './debuggerDispatcher';
@@ -38,7 +39,10 @@ import { ProgrammaticRecorderApp, RecorderApp } from '../recorder/recorderApp';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
 import { JSHandleDispatcher } from './jsHandleDispatcher';
 import { disposeAll } from '../disposable';
+import { VideoRecorder } from '../videoRecorder';
+import { ArtifactDispatcher } from './artifactDispatcher';
 
+import type { Artifact } from '../artifact';
 import type { ConsoleMessage } from '../console';
 import type { Dialog } from '../dialog';
 import type { Request, Response, RouteHandler } from '../network';
@@ -62,6 +66,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   private _interceptionUrlMatchers: URLMatch[] = [];
   private _routeWebSocketInitScript: InitScript | undefined;
   private _recorderApp: ProgrammaticRecorderApp | undefined;
+  private _videoChunk: { recorders: { page: Page, recorder: VideoRecorder, artifact: Artifact }[], onPage: (page: Page) => void, showActions: boolean, error?: Error } | undefined;
 
   static from(parentScope: DispatcherScope, context: BrowserContext): BrowserContextDispatcher {
     const result = parentScope.connection.existingDispatcher<BrowserContextDispatcher>(context);
@@ -444,7 +449,56 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     this._object.selectors().setTestIdAttributeName(params.testIdAttributeName);
   }
 
+  async startVideoChunk(params: channels.BrowserContextStartVideoChunkParams): Promise<void> {
+    if (this._videoChunk)
+      throw new Error('Video chunk is already started');
+    if (params.fps !== undefined && params.fps <= 0)
+      throw new Error(`"fps" must be a positive number, got ${params.fps}`);
+    const chunk: NonNullable<BrowserContextDispatcher['_videoChunk']> = {
+      recorders: [],
+      showActions: !!params.showActions,
+      onPage: page => {
+        try {
+          if (params.showActions)
+            page.screencast.showActions(params.showActions);
+          const recorder = new VideoRecorder(page.screencast);
+          chunk.recorders.push({ page, recorder, artifact: recorder.start(params) });
+        } catch (error) {
+          chunk.error ??= error;
+        }
+      },
+    };
+    this._videoChunk = chunk;
+    this._context.on(BrowserContext.Events.Page, chunk.onPage);
+    for (const page of this._context.pages())
+      chunk.onPage(page);
+    if (chunk.error)
+      await this._stopVideoChunk();
+  }
+
+  async stopVideoChunk(): Promise<channels.BrowserContextStopVideoChunkResult> {
+    const artifacts = await this._stopVideoChunk();
+    return { artifacts: artifacts.map(artifact => ArtifactDispatcher.from(this.parentScope(), artifact)) };
+  }
+
+  private async _stopVideoChunk(): Promise<Artifact[]> {
+    const chunk = this._videoChunk;
+    if (!chunk)
+      return [];
+    this._videoChunk = undefined;
+    this._context.off(BrowserContext.Events.Page, chunk.onPage);
+    await Promise.all(chunk.recorders.map(({ recorder }) => recorder.stop()));
+    if (chunk.showActions) {
+      for (const { page } of chunk.recorders)
+        page.screencast.hideActions();
+    }
+    if (chunk.error)
+      throw chunk.error;
+    return chunk.recorders.map(({ artifact }) => artifact);
+  }
+
   override _onDispose() {
+    this._stopVideoChunk().catch(error => debugLogger.log('error', `Failed to stop video chunk: ${error}`));
     const recorderApp = this._recorderApp;
     this._recorderApp = undefined;
     recorderApp?.stop().catch(() => {});

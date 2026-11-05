@@ -39,7 +39,7 @@ import type { BrowserContext as BrowserContextImpl } from '../../playwright-core
 import type { APIRequestContext as APIRequestContextImpl, NewContextOptions as APIRequestContextOptions } from '../../playwright-core/src/client/fetch';
 import type { ChannelOwner } from '../../playwright-core/src/client/channelOwner';
 import type { Page as PageImpl } from '../../playwright-core/src/client/page';
-import type { BrowserContext, BrowserContextOptions, LaunchOptions, Page, Tracing } from 'playwright-core';
+import type { BrowserContext, BrowserContextOptions, LaunchOptions, Page, Tracing, Video } from 'playwright-core';
 
 export { expect } from './matchers/expect';
 export const _baseTest: TestType<{}, {}> = testType.rootTestType.test;
@@ -73,22 +73,23 @@ type WorkerFixtures = PlaywrightWorkerArgs & PlaywrightWorkerOptions & {
 
 // Note: utility fixtures and _utilityTest are reused in electron package. Be mindful when changing them.
 type UtilityTestFixtures = Pick<TestFixtures, 'testIdAttribute' | 'request' | '_combinedContextOptions' | '_setupArtifacts'>;
-type UtilityWorkerFixtures = Pick<WorkerFixtures, 'playwright' | 'screenshot' | 'trace'>;
+type UtilityWorkerFixtures = Pick<WorkerFixtures, 'playwright' | 'screenshot' | 'trace' | 'video'>;
 const utilityFixtures: Fixtures<UtilityTestFixtures, UtilityWorkerFixtures> = {
   playwright: [async ({}, use) => {
     await use(require('playwright-core'));
   }, { scope: 'worker', box: true }],
   screenshot: ['off', { scope: 'worker', option: true, box: true }],
   trace: ['off', { scope: 'worker', option: true, box: true }],
+  video: ['off', { scope: 'worker', option: true, box: true }],
   testIdAttribute: ['data-testid', { option: true, box: true }],
   _combinedContextOptions: [{}, { box: true }],
-  _setupArtifacts: [async ({ playwright, screenshot, _combinedContextOptions }, use, testInfo) => {
+  _setupArtifacts: [async ({ playwright, screenshot, video, _combinedContextOptions }, use, testInfo) => {
     // This fixture has a separate zero-timeout slot to ensure that artifact collection
     // happens even after some fixtures or hooks time out.
     // Now that default test timeout is known, we can replace zero with an actual value.
     testInfo.setTimeout(testInfo.project.timeout);
 
-    const artifactsRecorder = new ArtifactsRecorder(playwright, tracing().artifactsDir(), screenshot);
+    const artifactsRecorder = new ArtifactsRecorder(playwright, tracing().artifactsDir(), screenshot, video);
     await artifactsRecorder.willStartTest(testInfo as TestInfoImpl);
 
     const tracingGroupSteps: TestStepInternal[] = [];
@@ -216,7 +217,6 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
   connectOptions: [async ({ _optionConnectOptions }, use) => {
     await use(connectOptionsFromEnv() || _optionConnectOptions);
   }, { scope: 'worker', option: true, box: true }],
-  video: ['off', { scope: 'worker', option: true, box: true }],
 
   _browserOptions: [async ({ playwright, headless, channel, launchOptions }, use) => {
     const options: LaunchOptions = {
@@ -726,12 +726,16 @@ class ArtifactsRecorder {
 
   private _screenshotRecorder: SnapshotRecorder;
   private _pageSnapshot: string | undefined;
+  private _video: PlaywrightWorkerOptions['video'];
+  private _videoContexts = new Map<BrowserContextImpl, (() => Promise<void>) | undefined>();
+  private _videos: Video[] = [];
 
-  constructor(playwright: PlaywrightImpl, artifactsDir: string, screenshot: ScreenshotOption) {
+  constructor(playwright: PlaywrightImpl, artifactsDir: string, screenshot: ScreenshotOption, video: PlaywrightWorkerOptions['video']) {
     this._playwright = playwright;
     this._artifactsDir = artifactsDir;
     const screenshotOptions = typeof screenshot === 'string' ? undefined : screenshot;
     this._startedCollectingArtifacts = Symbol('startedCollectingArtifacts');
+    this._video = video;
 
     this._screenshotRecorder = new SnapshotRecorder(this, normalizeScreenshotMode(screenshot), 'screenshot', 'image/png', '.png', async (page, path) => {
       await page._wrapApiCall(async () => {
@@ -755,9 +759,17 @@ class ArtifactsRecorder {
   async didCreateBrowserContext(context: BrowserContextImpl) {
     await this._startTraceChunkOnContextCreation(context, context.tracing);
     await this._startTraceChunkOnContextCreation(context.request, context.request.tracing);
+    // beforeAll/afterAll have separate fixture scopes, outside the per-test recording.
+    const hook = this._testInfo._currentHookType();
+    if (!context._options.recordVideo && !this._videoContexts.has(context) && hook !== 'beforeAll' && hook !== 'afterAll' && shouldCaptureVideo(normalizeVideoMode(this._video), this._testInfo)) {
+      const options = typeof this._video === 'string' ? undefined : this._video;
+      await context._startVideoChunk({ size: options?.size, fps: options?.fps, showActions: options?.show?.actions });
+      this._videoContexts.set(context, await installScreencastTitleUpdater(this._testInfo, context, options?.show?.test));
+    }
   }
 
   async willCloseBrowserContext(context: BrowserContextImpl) {
+    await this._stopVideoChunk(context);
     await this._stopTracing(context, context.tracing);
     await this._screenshotRecorder.captureTemporary(context);
     await this._takePageSnapshot(context);
@@ -800,6 +812,15 @@ class ArtifactsRecorder {
 
   async didFinishTest() {
     await this.didFinishTestFunction();
+    await Promise.all([...this._videoContexts.keys()].map(context => this._stopVideoChunk(context)));
+    if (shouldPreserveVideo(normalizeVideoMode(this._video), this._testInfo)) {
+      for (const video of this._videos) {
+        const videoPath = this._testInfo.outputPath(`video-${createGuid()}.webm`);
+        await video.saveAs(videoPath);
+        this._testInfo.attachments.push({ name: 'video', path: videoPath, contentType: 'video/webm' });
+      }
+    }
+    await Promise.all(this._videos.map(video => video.delete()));
 
     const leftoverContexts = this._playwright._allContexts();
     const leftoverApiRequests = Array.from(this._playwright.request._contexts);
@@ -835,6 +856,22 @@ class ArtifactsRecorder {
           path: filePath,
         }, undefined);
       }
+    }
+  }
+
+  private async _stopVideoChunk(context: BrowserContextImpl) {
+    if (!this._videoContexts.has(context))
+      return;
+    const cleanup = this._videoContexts.get(context);
+    this._videoContexts.delete(context);
+    try {
+      const videos = await context._stopVideoChunk();
+      if (videos)
+        this._videos.push(...videos);
+      else
+        debugLogger.log('error', 'Could not collect video because the browser context was closed');
+    } finally {
+      await cleanup?.();
     }
   }
 
@@ -897,19 +934,31 @@ async function installScreencastTitleUpdater(testInfo: TestInfoImpl, context: Br
     lastUpdate = result.catch(() => {});
     return result;
   };
-  testInfo._onUserStepBegin = async title => {
+  const onUserStepBegin = async (title: string) => {
     stepStack.push(title);
     await updateOverlay();
   };
-  testInfo._onUserStepEnd = async () => {
+  const onUserStepEnd = async () => {
     stepStack.pop();
     await updateOverlay();
   };
+  testInfo._onUserStepBegin = onUserStepBegin;
+  testInfo._onUserStepEnd = onUserStepEnd;
 
-  context.on('page', async () => {
-    void updateOverlay();
-  });
+  const onPage = () => {
+    updateOverlay().catch(error => debugLogger.log('error', `Failed to update video overlay: ${error}`));
+  };
+  context.on('page', onPage);
   await updateOverlay();
+  return async () => {
+    context.off('page', onPage);
+    if (testInfo._onUserStepBegin === onUserStepBegin)
+      testInfo._onUserStepBegin = undefined;
+    if (testInfo._onUserStepEnd === onUserStepEnd)
+      testInfo._onUserStepEnd = undefined;
+    await lastUpdate;
+    await Promise.all([...overlays].map(([page, overlay]) => page.isClosed() ? undefined : overlay.dispose()));
+  };
 }
 
 function createTestOverlay(parts: string[], position: string, fontSize: number) {

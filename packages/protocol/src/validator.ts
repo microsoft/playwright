@@ -767,6 +767,29 @@ scheme.BrowserContextRecorderEventEvent = tObject({
   page: tChannel(['Page']),
   code: tString,
 });
+scheme.BrowserContextStartVideoChunkParams = tObject({
+  size: tOptional(tObject({
+    width: tInt,
+    height: tInt,
+  })),
+  fps: tOptional(tInt),
+  showActions: tOptional(tObject({
+    duration: tOptional(tFloat),
+    position: tOptional(tEnum(['top-left', 'top', 'top-right', 'bottom-left', 'bottom', 'bottom-right'])),
+    fontSize: tOptional(tInt),
+    cursor: tOptional(tEnum(['none', 'pointer'])),
+    style: tOptional(tObject({
+      point: tOptional(tString),
+      highlight: tOptional(tString),
+      title: tOptional(tString),
+    })),
+  })),
+});
+scheme.BrowserContextStartVideoChunkResult = tOptional(tObject({}));
+scheme.BrowserContextStopVideoChunkParams = tOptional(tObject({}));
+scheme.BrowserContextStopVideoChunkResult = tObject({
+  artifacts: tArray(tChannel(['Artifact'])),
+});
 scheme.BrowserContextAddCookiesParams = tObject({
   cookies: tArray(tType('SetNetworkCookie')),
 });

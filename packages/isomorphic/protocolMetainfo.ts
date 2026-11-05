@@ -77,6 +77,8 @@ export const methodMetainfo = new Map<string, MethodMetainfo>([
   ['Browser.newBrowserCDPSession', { title: 'Create CDP session', group: 'configuration', }],
   ['Browser.startTracing', { title: 'Start browser tracing', group: 'configuration', }],
   ['Browser.stopTracing', { title: 'Stop browser tracing', group: 'configuration', }],
+  ['BrowserContext.startVideoChunk', { internal: true, }],
+  ['BrowserContext.stopVideoChunk', { internal: true, }],
   ['BrowserContext.addCookies', { title: 'Add cookies', group: 'configuration', }],
   ['BrowserContext.addInitScript', { title: 'Add init script', group: 'configuration', }],
   ['BrowserContext.clearCookies', { title: 'Clear cookies', group: 'configuration', }],

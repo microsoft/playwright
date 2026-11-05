@@ -1311,6 +1311,8 @@ export interface BrowserContextEventTarget {
 }
 export interface BrowserContextChannel extends BrowserContextEventTarget, Channel {
   _type_BrowserContext: boolean;
+  startVideoChunk(params: BrowserContextStartVideoChunkParams, progress: Progress): Promise<BrowserContextStartVideoChunkResult>;
+  stopVideoChunk(params: BrowserContextStopVideoChunkParams, progress: Progress): Promise<BrowserContextStopVideoChunkResult>;
   addCookies(params: BrowserContextAddCookiesParams, progress: Progress): Promise<BrowserContextAddCookiesResult>;
   addInitScript(params: BrowserContextAddInitScriptParams, progress: Progress): Promise<BrowserContextAddInitScriptResult>;
   clearCookies(params: BrowserContextClearCookiesParams, progress: Progress): Promise<BrowserContextClearCookiesResult>;
@@ -1419,6 +1421,48 @@ export type BrowserContextRecorderEventEvent = {
   data: any,
   page: PageChannel,
   code: string,
+};
+export type BrowserContextStartVideoChunkParams = {
+  size?: {
+    width: number,
+    height: number,
+  },
+  fps?: number,
+  showActions?: {
+    duration?: number,
+    position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right',
+    fontSize?: number,
+    cursor?: 'none' | 'pointer',
+    style?: {
+      point?: string,
+      highlight?: string,
+      title?: string,
+    },
+  },
+};
+export type BrowserContextStartVideoChunkOptions = {
+  size?: {
+    width: number,
+    height: number,
+  },
+  fps?: number,
+  showActions?: {
+    duration?: number,
+    position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right',
+    fontSize?: number,
+    cursor?: 'none' | 'pointer',
+    style?: {
+      point?: string,
+      highlight?: string,
+      title?: string,
+    },
+  },
+};
+export type BrowserContextStartVideoChunkResult = void;
+export type BrowserContextStopVideoChunkParams = {};
+export type BrowserContextStopVideoChunkOptions = {};
+export type BrowserContextStopVideoChunkResult = {
+  artifacts: ArtifactChannel[],
 };
 export type BrowserContextAddCookiesParams = {
   cookies: SetNetworkCookie[],

@@ -478,7 +478,7 @@ test('should report click error on sigint', async ({ interactWithTestRunner }) =
   expect(result.output).toContain(`5 |         const promise = page.click('text=Missing');`);
 });
 
-test('should work with video: retain-on-failure', async ({ runInlineTest }) => {
+test('should work with video: retain-on-failure', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43915' } }, async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       export default { use: { video: 'retain-on-failure' }, name: 'chromium' };
@@ -495,12 +495,30 @@ test('should work with video: retain-on-failure', async ({ runInlineTest }) => {
         await page.waitForTimeout(3000);
         test.expect(1 + 1).toBe(1);
       });
+      test.describe('shared', () => {
+        test.describe.configure({ mode: 'serial' });
+        let page;
+        test.beforeAll(async ({ browser }) => {
+          page = await browser.newPage();
+        });
+        test.afterAll(async () => {
+          await page.close();
+        });
+        test('pass', async () => {
+          await page.setContent('<div>SHARED PASS</div>');
+        });
+        test('fail', async () => {
+          await page.setContent('<div>SHARED FAIL</div>');
+          await page.waitForTimeout(1000);
+          expect(1).toBe(2);
+        });
+      });
     `,
   }, { workers: 1 });
 
   expect(result.exitCode).toBe(1);
-  expect(result.passed).toBe(1);
-  expect(result.failed).toBe(1);
+  expect(result.passed).toBe(2);
+  expect(result.failed).toBe(2);
 
   const dirPass = test.info().outputPath('test-results', 'a-pass-chromium');
   const videoPass = fs.existsSync(dirPass) ? fs.readdirSync(dirPass).find(file => file.endsWith('webm')) : undefined;
@@ -508,6 +526,13 @@ test('should work with video: retain-on-failure', async ({ runInlineTest }) => {
 
   const videoFail = fs.readdirSync(test.info().outputPath('test-results', 'a-fail-chromium')).find(file => file.endsWith('webm'));
   expect(videoFail).toBeTruthy();
+
+  const sharedFailure = result.results.find(r => r.attachments.some(a => a.path?.includes('a-shared-fail-chromium')))!;
+  const sharedVideos = sharedFailure.attachments.filter(a => a.name === 'video');
+  expect(sharedVideos).toEqual([expect.objectContaining({ contentType: 'video/webm' })]);
+  expect(fs.statSync(sharedVideos[0].path!).size).toBeGreaterThan(0);
+  const sharedPassDir = test.info().outputPath('test-results', 'a-shared-pass-chromium');
+  expect(fs.existsSync(sharedPassDir)).toBeFalsy();
 });
 
 test('should work with video: on-first-retry', async ({ runInlineTest }) => {

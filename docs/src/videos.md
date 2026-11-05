@@ -19,7 +19,9 @@ Playwright Test can record videos for your tests, controlled by the `video` opti
 
 Video files will appear in the test output directory, typically `test-results`. See [`property: TestOptions.video`] for advanced video configuration.
 
-Videos are saved upon [browser context](./browser-contexts.md) closure at the end of a test. If you create a browser context manually, make sure to await [`method: BrowserContext.close`].
+For pages shared between tests, Playwright Test records a separate video for each test, including its `beforeEach` and `afterEach` hooks, but not `beforeAll` or `afterAll`. The shared page stays open between tests. This does not change videos explicitly configured with `recordVideo`, which still record the entire page lifetime.
+
+Playwright Test saves videos at the end of each test. Videos explicitly configured with `recordVideo` are saved upon page or [browser context](./browser-contexts.md) closure; make sure to await [`method: BrowserContext.close`].
 
 ```js tab=js-test title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
@@ -69,6 +71,7 @@ export default defineConfig({
 For multi-page scenarios, you can access the video file associated with the page via the
 [`method: Page.video`].
 
+For shared pages, use the video attachment in the test report. [`method: Page.video`] only exposes page-lifetime recordings configured with `recordVideo`.
 
 ```js
 const path = await page.video().path();

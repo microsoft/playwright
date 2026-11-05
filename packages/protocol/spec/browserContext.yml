@@ -26,6 +26,27 @@ BrowserContext:
 
   commands:
 
+    startVideoChunk:
+      internal: true
+      parameters:
+        size:
+          type: object?
+          properties:
+            width: int
+            height: int
+        fps: int?
+        showActions:
+          type: object?
+          properties:
+            $mixin: ShowActionsOptions
+
+    stopVideoChunk:
+      internal: true
+      returns:
+        artifacts:
+          type: array
+          items: Artifact
+
     addCookies:
       title: Add cookies
       group: configuration
