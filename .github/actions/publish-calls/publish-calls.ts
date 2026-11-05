@@ -13,7 +13,7 @@
 // Node can remove: no enum, no namespace, no parameter properties, no `import x = require()`. An
 // `import type` is removed too, and the file stays CommonJS.
 
-import type { Call as FileCall, Comment, Issue, Kind, PullRequest, Push, Reply } from './calls';
+import type { Call as FileCall, Comment, Issue, Kind, PullRequest, Push, Reply, Review, ReviewComment } from './calls';
 
 const fs: typeof import('fs') = require('fs');
 const path: typeof import('path') = require('path');
@@ -22,7 +22,7 @@ const { execFileSync }: typeof import('child_process') = require('child_process'
 // A call after the checks: the text read from its file, the patch as an absolute path, and the
 // repo in lower case.
 type Checked<T> = Omit<T, 'body' | 'bodyFile'> & { body: string };
-type Call = Checked<PullRequest> | Push | Checked<Issue> | Checked<Comment> | Checked<Reply>;
+type Call = Checked<PullRequest> | Push | Checked<Issue> | Checked<Comment> | Checked<Reply> | Checked<Review>;
 
 // The keys of a kind in calls.json, other than call and the text.
 type KeysOf<K extends Kind> = Exclude<keyof Extract<FileCall, { call: K }>, 'call'>;
@@ -55,6 +55,7 @@ type GitHub = {
       get(params: Repo & { pull_number: number }): Promise<{ data: { state: string, head: { ref: string, repo: { full_name: string } | null } } }>,
       getReviewComment(params: Repo & { comment_id: number }): Promise<{ data: { id: number, in_reply_to_id?: number, pull_request_url: string, html_url: string } }>,
       createReplyForReviewComment(params: Repo & { pull_number: number, comment_id: number, body: string }): Promise<unknown>,
+      createReview(params: Repo & { pull_number: number, commit_id: string, event: string, body: string, comments: (ReviewComment & { side: string })[] }): Promise<{ data: { html_url: string } }>,
     },
     issues: {
       addLabels(params: Repo & { issue_number: number, labels: string[] }): Promise<unknown>,
@@ -79,7 +80,7 @@ type Context = { repo: Repo };
 
 // The order in which the calls run, whatever their order in the file: a comment links the pull
 // request and the issue that were opened before it, and a reply comes after the push it explains.
-const KINDS: Kind[] = ['pull-request', 'push', 'issue', 'comment', 'reply'];
+const KINDS: Kind[] = ['pull-request', 'push', 'issue', 'comment', 'reply', 'review'];
 
 // The keys of each kind. A kind with text takes exactly one of body and bodyFile.
 const SCHEMA: { [K in Kind]: { required: KeysOf<K>[], optional: KeysOf<K>[], text: boolean } } = {
@@ -88,6 +89,7 @@ const SCHEMA: { [K in Kind]: { required: KeysOf<K>[], optional: KeysOf<K>[], tex
   'issue': { required: ['repo', 'title'], optional: ['labels', 'filedFor'], text: true },
   'comment': { required: ['repo', 'issue'], optional: [], text: true },
   'reply': { required: ['repo', 'pullRequest', 'comment'], optional: [], text: true },
+  'review': { required: ['repo', 'pullRequest', 'commit'], optional: ['comments'], text: true },
 };
 
 // The links that a comment can have, to what the calls before it opened.
@@ -99,6 +101,7 @@ const MAX_CALLS = 100;
 const MAX_TITLE = 256;
 const MAX_TEXT = 65536;
 const MAX_LABELS = 10;
+const MAX_REVIEW_COMMENTS = 50;
 
 const BOT_NAME = 'microsoft-playwright-automation[bot]';
 const BOT_EMAIL = '203992400+microsoft-playwright-automation[bot]@users.noreply.github.com';
@@ -215,6 +218,12 @@ async function publish({ github, context, core }: { github: GitHub, context: Con
           summary.push(`- Replied to ${target.html_url}`);
           break;
         }
+        case 'review': {
+          const url = await postReview(github, core, call);
+          core.setOutput('review', url);
+          summary.push(`- Posted the review ${url}`);
+          break;
+        }
       }
     } catch (error) {
       core.error(`${what} failed: ${(error as Error).message}`);
@@ -296,7 +305,7 @@ function parse(item: unknown, dir: string): Call {
   return call as Call;
 }
 
-function check(key: Key, value: unknown, dir: string): string | number | string[] {
+function check(key: Key, value: unknown, dir: string): string | number | string[] | ReviewComment[] {
   switch (key) {
     case 'repo': {
       if (typeof value !== 'string' || !FAMILY.test(value.toLowerCase()))
@@ -321,10 +330,16 @@ function check(key: Key, value: unknown, dir: string): string | number | string[
         throw new Error(`${key} must be a branch name, such as triage/123/456-1, got ${JSON.stringify(value)}`);
       return value;
     }
+    case 'commit':
     case 'onto': {
       if (typeof value !== 'string' || !/^[0-9a-f]{40}$/.test(value))
-        throw new Error(`onto must be a full commit sha, got ${JSON.stringify(value)}`);
+        throw new Error(`${key} must be a full commit sha, got ${JSON.stringify(value)}`);
       return value;
+    }
+    case 'comments': {
+      if (!Array.isArray(value) || value.length > MAX_REVIEW_COMMENTS)
+        throw new Error(`comments must be an array of at most ${MAX_REVIEW_COMMENTS} comments`);
+      return value.map(reviewComment);
     }
     case 'patch':
       return resolveFile(dir, value);
@@ -340,6 +355,20 @@ function check(key: Key, value: unknown, dir: string): string | number | string[
       return (value as string[]).map(label => label.trim());
     }
   }
+}
+
+function reviewComment(item: unknown): ReviewComment {
+  if (!item || typeof item !== 'object' || Array.isArray(item))
+    throw new Error('a comment of a review must be an object');
+  const { path: file, line, body, ...rest } = item as Record<string, unknown>;
+  const unknownKey = Object.keys(rest)[0];
+  if (unknownKey !== undefined)
+    throw new Error(`a comment of a review has an unknown key ${JSON.stringify(unknownKey)}`);
+  if (typeof file !== 'string' || !file || file.includes('\\') || file.startsWith('/') || file.split('/').some(part => !part || part === '.' || part === '..'))
+    throw new Error(`a comment of a review needs a path in the repo, got ${JSON.stringify(file)}`);
+  if (!isId(line))
+    throw new Error(`a comment of a review needs a line, got ${JSON.stringify(line)}`);
+  return { path: file, line, body: text(body, 'body') };
 }
 
 function text(value: unknown, key: string): string {
@@ -380,6 +409,7 @@ function checkScope(call: Call, scope: Scope): void {
       break;
     case 'push':
     case 'reply':
+    case 'review':
       if (call.call === 'push' && call.repo !== repository)
         throw new Error(`a push can only go to ${repository}, the repo of the run`);
       if (pullRequest !== undefined && !(call.repo === repository && call.pullRequest === pullRequest))
@@ -420,6 +450,26 @@ async function fileIssue(github: GitHub, core: Core, call: Checked<Issue>): Prom
   const labels = await knownLabels(github, core, call.repo, call.labels);
   const { data: issue } = await github.rest.issues.create({ owner, repo, title: call.title, labels, body: call.body });
   return issue.html_url;
+}
+
+// Posts the review as a comment, so that it never approves or blocks a PR. GitHub refuses the whole
+// review when one comment is not on a line of the diff, which the agent cannot check. The comments
+// then go at the end of the text, because the findings matter more than where they are shown.
+async function postReview(github: GitHub, core: Core, call: Checked<Review>): Promise<string> {
+  const [owner, repo] = call.repo.split('/');
+  const params = { owner, repo, pull_number: call.pullRequest, commit_id: call.commit, event: 'COMMENT' };
+  const comments = call.comments ?? [];
+  try {
+    const { data } = await github.rest.pulls.createReview({ ...params, body: call.body, comments: comments.map(comment => ({ ...comment, side: 'RIGHT' })) });
+    return data.html_url;
+  } catch (error) {
+    if (!comments.length || (error as { status?: number }).status !== 422)
+      throw error;
+    core.warning(`GitHub refused the comments of the review, so they go in its text: ${(error as Error).message}`);
+  }
+  const body = [call.body, ...comments.map(comment => `**\`${comment.path}:${comment.line}\`**\n\n${comment.body}`)].join('\n\n');
+  const { data } = await github.rest.pulls.createReview({ ...params, body, comments: [] });
+  return data.html_url;
 }
 
 // Applies the patch to the checkout, commits it on the checkout as the app, and pushes it to the
@@ -498,7 +548,8 @@ function targetOf(call: Call): number | undefined {
   switch (call.call) {
     case 'comment': return call.issue;
     case 'push':
-    case 'reply': return call.pullRequest;
+    case 'reply':
+    case 'review': return call.pullRequest;
   }
   return undefined;
 }
@@ -510,6 +561,7 @@ function describe(call: Call): string {
     case 'issue': return `issue in ${call.repo}`;
     case 'comment': return `comment on ${call.repo}#${call.issue}`;
     case 'reply': return `reply to comment ${call.comment} on ${call.repo}#${call.pullRequest}`;
+    case 'review': return `review of ${call.repo}#${call.pullRequest}`;
   }
 }
 
