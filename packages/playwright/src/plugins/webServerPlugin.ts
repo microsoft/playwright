@@ -27,6 +27,7 @@ import { launchProcess } from '@utils/processLauncher';
 
 import type { TestRunnerPlugin } from '.';
 import type { FullConfig } from '../../types/testReporter';
+import type { FullProject } from '../../types/test';
 import type { FullConfigInternal } from '../common';
 import type { ReporterV2 } from '../reporters/reporterV2';
 
@@ -59,14 +60,16 @@ export class WebServerPlugin implements TestRunnerPlugin {
   private _processExitedPromise!: Promise<any>;
   private _options: WebServerPluginOptions;
   private _checkPortOnly: boolean;
+  private _configLabel: string;
   private _reporter?: ReporterV2;
   private _waitForStdioPromise: ManualPromise | undefined;
 
   name = 'playwright:webserver';
 
-  constructor(options: WebServerPluginOptions, checkPortOnly: boolean) {
+  constructor(options: WebServerPluginOptions, checkPortOnly: boolean, configLabel = 'config.webServer') {
     this._options = options;
     this._checkPortOnly = checkPortOnly;
+    this._configLabel = configLabel;
   }
 
   public async setup(config: FullConfig, configDir: string, reporter: ReporterV2) {
@@ -99,11 +102,11 @@ export class WebServerPlugin implements TestRunnerPlugin {
       if (this._options.reuseExistingServer)
         return;
       const port = new URL(this._options.url!).port;
-      throw new Error(`${this._options.url ?? `http://localhost${port ? ':' + port : ''}`} is already used, make sure that nothing is running on the port/url or set reuseExistingServer:true in config.webServer.`);
+      throw new Error(`${this._options.url ?? `http://localhost${port ? ':' + port : ''}`} is already used, make sure that nothing is running on the port/url or set reuseExistingServer:true in ${this._configLabel}.`);
     }
 
     if (!this._options.command)
-      throw new Error('config.webServer.command cannot be empty');
+      throw new Error(`${this._configLabel}.command cannot be empty`);
 
     debugWebServer(`Starting WebServer process ${this._options.command}...`);
     const { launchedProcess, gracefullyClose } = await launchProcess({
@@ -139,7 +142,7 @@ export class WebServerPlugin implements TestRunnerPlugin {
         });
       },
       log: () => {},
-      onExit: code => processExitedReject(new Error(code ? `Process from config.webServer was not able to start. Exit code: ${code}` : 'Process from config.webServer exited early.')),
+      onExit: code => processExitedReject(new Error(code ? `Process from ${this._configLabel} was not able to start. Exit code: ${code}` : `Process from ${this._configLabel} exited early.`)),
       tempDirectories: [],
     });
     this._killProcess = gracefullyClose;
@@ -205,7 +208,7 @@ export class WebServerPlugin implements TestRunnerPlugin {
     const { timedOut } = await Promise.race(racingPromises);
     cancellationToken.canceled = true;
     if (timedOut)
-      throw new Error(`Timed out waiting ${launchTimeout}ms from config.webServer.`);
+      throw new Error(`Timed out waiting ${launchTimeout}ms from ${this._configLabel}.`);
     debugWebServer(`WebServer available`);
   }
 }
@@ -260,11 +263,18 @@ export const webServer = (options: WebServerPluginOptions): TestRunnerPlugin => 
 };
 
 export const webServerPluginsForConfig = (config: FullConfigInternal): TestRunnerPlugin[] => {
-  const shouldSetBaseUrl = !!config.config.webServer;
+  return webServerPluginsForServers(config.webServers, !!config.config.webServer, 'config.webServer');
+};
+
+export const webServerPluginsForProject = (project: FullProject): TestRunnerPlugin[] => {
+  return webServerPluginsForServers(project.webServer, false, `projects[${project.name}].webServer`);
+};
+
+function webServerPluginsForServers(webServers: FullProject['webServer'], shouldSetBaseUrl: boolean, configLabel: string): TestRunnerPlugin[] {
   const webServerPlugins = [];
-  for (const webServerConfig of config.webServers) {
+  for (const webServerConfig of webServers) {
     if (webServerConfig.port && webServerConfig.url)
-      throw new Error(`Either 'port' or 'url' should be specified in config.webServer.`);
+      throw new Error(`Either 'port' or 'url' should be specified in ${configLabel}.`);
 
     let url: string | undefined;
     if (webServerConfig.port || webServerConfig.url) {
@@ -274,11 +284,11 @@ export const webServerPluginsForConfig = (config: FullConfigInternal): TestRunne
       if (shouldSetBaseUrl && !webServerConfig.url)
         process.env.PLAYWRIGHT_TEST_BASE_URL = url;
     }
-    webServerPlugins.push(new WebServerPlugin({ ...webServerConfig,  url }, webServerConfig.port !== undefined));
+    webServerPlugins.push(new WebServerPlugin({ ...webServerConfig,  url }, webServerConfig.port !== undefined, configLabel));
   }
 
   return webServerPlugins;
-};
+}
 
 function prefixOutputLines(output: string, prefixName: string = 'WebServer'): string {
   const lastIsNewLine = output[output.length - 1] === '\n';

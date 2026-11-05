@@ -736,6 +736,9 @@ export default defineConfig({
 
 Launch a development web server (or multiple) during the tests.
 
+Top-level servers start before `globalSetup` and stop after `globalTeardown`, regardless of project
+selection. To start servers only for particular projects, use [`property: TestProject.webServer`].
+
 **Details**
 
 If the port is specified, Playwright Test will wait for it to be available on `127.0.0.1` or `::1`, before running the tests. If the url is specified, Playwright Test will wait for the URL to return a 2xx, 3xx, 400, 401, 402, or 403 status code before running the tests.

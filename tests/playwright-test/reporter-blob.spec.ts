@@ -2369,12 +2369,18 @@ test('shard chart', async ({ runInlineTest, writeFiles, showReport, page, mergeR
   `);
 });
 
-test('should populate projects in config when merging reports', async ({ runInlineTest, mergeReports }) => {
+test('should populate projects in config when merging reports', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43853' }
+}, async ({ runInlineTest, mergeReports, server }) => {
   const reportDir = test.info().outputPath('blob-report');
+  server.setRoute('/ready', (req, res) => res.end());
   class CustomReporter {
     onBegin(config, suite) {
       const projectNames = config.projects.map(p => p.name);
       console.log('%%' + JSON.stringify(projectNames));
+      console.log('%%' + JSON.stringify(config.projects.map(p => p.webServer)));
+      console.log('%%' + JSON.stringify(suite.suites.map(s => s.project().webServer)));
+      console.log('%%' + JSON.stringify(config.webServer));
     }
   }
   const files = {
@@ -2382,9 +2388,26 @@ test('should populate projects in config when merging reports', async ({ runInli
     'playwright.config.ts': `
       export default {
         reporter: [['blob', { outputDir: '${reportDir.replace(/\\/g, '/')}' }]],
+        webServer: {
+          command: 'echo private-top-level-command',
+          env: { TOKEN: 'private-top-level-token' },
+          cwd: __dirname,
+          url: '${server.PREFIX}/ready',
+          reuseExistingServer: true,
+        },
         projects: [
           { name: 'setup' },
-          { name: 'p1', dependencies: ['setup'] },
+          {
+            name: 'p1',
+            dependencies: ['setup'],
+            webServer: {
+              command: 'echo private-server-command',
+              env: { TOKEN: 'private-server-token' },
+              cwd: __dirname,
+              url: '${server.PREFIX}/ready',
+              reuseExistingServer: true,
+            },
+          },
           { name: 'p2', dependencies: ['setup'] },
         ]
       };
@@ -2395,17 +2418,32 @@ test('should populate projects in config when merging reports', async ({ runInli
     `,
   };
 
-  await runInlineTest(files, { shard: `1/2`, workers: 1 });
-  await runInlineTest(files, { shard: `2/2`, workers: 1 }, { PWTEST_BLOB_DO_NOT_REMOVE: '1' });
+  expect((await runInlineTest(files, { shard: `1/2`, workers: 1 })).exitCode).toBe(0);
+  expect((await runInlineTest(files, { shard: `2/2`, workers: 1 }, { PWTEST_BLOB_DO_NOT_REMOVE: '1' })).exitCode).toBe(0);
 
   const reportFiles = await fs.promises.readdir(reportDir);
   expect(reportFiles).toHaveLength(2);
+  for (const [index, reportFile] of reportFiles.entries()) {
+    const events = await extractReport(path.join(reportDir, reportFile), test.info().outputPath(`extracted-${index}`));
+    const projects = events.filter(e => e.method === 'onProject').map(e => e.params.project);
+    expect(projects.length).toBeGreaterThan(0);
+    for (const project of projects)
+      expect(project).not.toHaveProperty('webServer');
+    expect(events.find(e => e.method === 'onConfigure').params.config).not.toHaveProperty('webServer');
+    expect(JSON.stringify(events)).not.toContain('private-server-token');
+    expect(JSON.stringify(events)).not.toContain('private-server-command');
+    expect(JSON.stringify(events)).not.toContain('private-top-level-token');
+    expect(JSON.stringify(events)).not.toContain('private-top-level-command');
+  }
 
   const { exitCode, outputLines } = await mergeReports(reportDir, {}, { additionalArgs: ['--reporter', test.info().outputPath('reporter.js')] });
   expect(exitCode).toBe(0);
 
   const projectNames = JSON.parse(outputLines[0]);
   expect(projectNames).toEqual(['setup', 'p1', 'setup', 'p2']);
+  expect(JSON.parse(outputLines[1])).toEqual([[], [], [], []]);
+  expect(JSON.parse(outputLines[2])).toEqual([[], [], [], []]);
+  expect(JSON.parse(outputLines[3])).toBe(null);
 });
 
 test('workerIndex is rebased', async ({ runInlineTest, writeFiles, showReport, page, mergeReports }) => {

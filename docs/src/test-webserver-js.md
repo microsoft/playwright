@@ -7,6 +7,10 @@ title: "Web server"
 
 Playwright comes with a `webServer` option in the config file which gives you the ability to launch a local dev server before running your tests. This is ideal for when writing your tests during development and when you don't have a staging or production url to test against.
 
+To start a server only when a particular project runs, configure
+[`property: TestProject.webServer`] inside that project. Top-level servers start regardless of the
+selected projects. Put servers shared by multiple projects at the top level.
+
 ## Configuring a web server
 
 Use the `webServer` property in your Playwright config to launch a development web server during the tests.

@@ -164,6 +164,7 @@ Playwright version.
 - type: <[null]|[Object]>
 
 See [`property: TestConfig.webServer`].
+This property is `null` in merged reports because server configuration is not serialized.
 
 ## property: FullConfig.workers
 * since: v1.10
