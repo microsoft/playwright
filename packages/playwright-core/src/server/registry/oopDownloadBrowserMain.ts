@@ -120,7 +120,7 @@ async function main(options: DownloadParams) {
   log(`removing existing browser directory if any`);
   await removeFolders([options.browserDirectory]);
   log(`extracting archive`);
-  await extractZip(options.zipPath, { dir: options.browserDirectory, allowSymlinks: true });
+  await extractZip(options.zipPath, { dir: options.browserDirectory });
   if (options.executablePath) {
     log(`fixing permissions at ${options.executablePath}`);
     await fs.promises.chmod(options.executablePath, 0o755);

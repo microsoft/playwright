@@ -46,8 +46,6 @@ export interface Options {
   defaultDirMode?: number;
   /** File Mode (permissions), defaults to `0o644` */
   defaultFileMode?: number;
-  /** Allow symlink entries. Off by default, because they can point outside of `dir`. */
-  allowSymlinks?: boolean;
   /**
    * If present, will be called with (entry, zipfile),
    * entry is every entry from the zip file forwarded
@@ -171,23 +169,18 @@ class Extractor {
     if (isDir)
       return;
 
-    // Never write through a symlink. An archive can place a symlink entry and then
-    // a regular file with the same name to escape the extraction directory.
-    const existing = await fs.lstat(dest).catch(() => undefined);
-    if (existing?.isSymbolicLink())
-      throw new Error(`Refusing to overwrite symlink "${dest}" while processing file ${entry.fileName}`);
-
     debug('opening read stream', dest);
     const readStream = await promisify<Entry, stream.Readable>(this.zipfile.openReadStream.bind(this.zipfile))(entry);
 
     if (symlink) {
-      if (!this.opts.allowSymlinks)
-        throw new Error(`Symlink entry "${entry.fileName}" is not allowed`);
       const link = await getStream(readStream);
       debug('creating symlink', link, dest);
       await fs.symlink(link, dest);
     } else {
-      await pipeline(readStream, createWriteStream(dest, { mode: procMode }));
+      // 'wx' fails when dest exists, including a symlink left by a previous entry.
+      // Otherwise an archive could place a symlink and then a regular file with the
+      // same name to write outside of the extraction directory.
+      await pipeline(readStream, createWriteStream(dest, { mode: procMode, flags: 'wx' }));
     }
   }
 
