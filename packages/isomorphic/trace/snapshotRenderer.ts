@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { escapeHTMLAttribute, escapeHTML } from '../stringUtils';
+import { HtmlBuilder } from '../stringUtils';
 
 import type { FrameSnapshot, NodeNameAttributesChildNodesSnapshot, NodeSnapshot, ResourceSnapshot, SubtreeReferenceSnapshot } from './trace';
 import type { PageEntry } from './entries';
@@ -273,45 +273,6 @@ export class SnapshotRenderer {
 
     return result;
   }
-}
-
-// All trace-controlled data goes through this class, so escaping and name checks live in one place.
-class HtmlBuilder {
-  private _chunks: string[] = [];
-
-  text(text: string) {
-    this._chunks.push(escapeHTML(text));
-  }
-
-  openTag(name: string): boolean {
-    if (!isSafeName(name))
-      return false;
-    this._chunks.push('<', name);
-    return true;
-  }
-
-  attribute(name: string, value: string) {
-    if (!isSafeName(name))
-      return;
-    this._chunks.push(' ', name, '="', escapeHTMLAttribute(value), '"');
-  }
-
-  endOpenTag() {
-    this._chunks.push('>');
-  }
-
-  closeTag(name: string) {
-    this._chunks.push('</', name, '>');
-  }
-
-  toString() {
-    return this._chunks.join('');
-  }
-}
-
-// Reject names that would end the tag or attribute name early. Allow Unicode custom elements such as math-α.
-function isSafeName(name: string): boolean {
-  return !!name && !/[\s=<>\/"']/.test(name);
 }
 
 const autoClosing = new Set(['AREA', 'BASE', 'BR', 'COL', 'COMMAND', 'EMBED', 'HR', 'IMG', 'INPUT', 'KEYGEN', 'LINK', 'MENUITEM', 'META', 'PARAM', 'SOURCE', 'TRACK', 'WBR']);
