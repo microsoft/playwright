@@ -82,7 +82,7 @@ jobs:
         ref: ${{ needs.prepare.outputs.head }}
         persist-credentials: false
     - name: Rebase on main
-      uses: microsoft/playwright/.github/actions/rebase-pr@main
+      uses: microsoft/playwright/.github/actions/rebase-pr@d1518e3e3fca90352c4390814943cced496fd7e4 # main
       with:
         onto: ${{ needs.prepare.outputs.base }}
     - name: Record the directories
@@ -108,7 +108,7 @@ jobs:
     - name: Revise with Copilot CLI
       id: agent
       # No GitHub tools and no URL access: the agent reads the PR only from the review the prepare job filtered.
-      uses: microsoft/playwright/.github/actions/run-agent@main
+      uses: microsoft/playwright/.github/actions/run-agent@d1518e3e3fca90352c4390814943cced496fd7e4 # main
       with:
         prompt: |
           Follow the shared guide revision.md and this repo's AGENTS.md. Read both in full before starting.
@@ -142,7 +142,7 @@ jobs:
         path: ${{ runner.temp }}/revision
     # Never execute code or scripts from the artifact in the app job. The calls are data.
     - name: Check and make the calls
-      uses: microsoft/playwright/.github/actions/publish-calls@main
+      uses: microsoft/playwright/.github/actions/publish-calls@d1518e3e3fca90352c4390814943cced496fd7e4 # main
       with:
         token: ${{ steps.app-token.outputs.token }}
         dir: ${{ runner.temp }}/revision

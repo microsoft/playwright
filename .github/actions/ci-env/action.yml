@@ -5,7 +5,7 @@ description: >
   self-hosted runners start steps at Low and Firefox storage flushes then stall until the tests
   time out (https://github.com/microsoft/playwright/issues/43704). Exports CI_ENV_WINDOWS_NORMAL_IO,
   the PowerShell script a pwsh step dot-sources to do the same. The other Playwright repos use this
-  action as microsoft/playwright/.github/actions/ci-env@main.
+  action as microsoft/playwright/.github/actions/ci-env, pinned to a commit SHA.
 runs:
   using: composite
   steps:
