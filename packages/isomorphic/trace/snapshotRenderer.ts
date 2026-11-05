@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { escapeHTMLAttribute, escapeHTML } from '../stringUtils';
+import { HtmlBuilder } from '../stringUtils';
 
 import type { FrameSnapshot, NodeNameAttributesChildNodesSnapshot, NodeSnapshot, ResourceSnapshot, SubtreeReferenceSnapshot } from './trace';
 import type { PageEntry } from './entries';
@@ -91,11 +91,11 @@ export class SnapshotRenderer {
   }
 
   render(): RenderedFrameSnapshot {
-    const result: string[] = [];
+    const result = new HtmlBuilder();
     const visit = (n: NodeSnapshot, snapshotIndex: number, parentTag: string | undefined, parentAttrs: [string, string][] | undefined) => {
       // Text node.
       if (typeof n === 'string') {
-        result.push(escapeHTML(n));
+        result.text(n);
         return;
       }
 
@@ -114,17 +114,14 @@ export class SnapshotRenderer {
         // crafted trace file could include them to achieve XSS.
         if (name.toUpperCase() === 'SCRIPT')
           return;
-        // Reject names that would emit extra attributes (space, =, <, >, /).
-        // Allow Unicode custom elements such as math-α.
-        if (/[\s=<>\/]/.test(name))
-          return;
         // Element node.
         // Note that <noscript> will not be rendered by default in the trace viewer, because
         // JS is enabled. So rename it to <x-noscript>.
         const upperName = name.toUpperCase();
         const nodeName = upperName === 'NOSCRIPT' ? 'X-NOSCRIPT' : name;
         const attrs = Object.entries(nodeAttrs || {});
-        result.push('<', nodeName);
+        if (!result.openTag(nodeName))
+          return;
         const kCurrentSrcAttribute = '__playwright_current_src__';
         const isFrame = upperName === 'IFRAME' || upperName === 'FRAME';
         const isAnchor = upperName === 'A';
@@ -176,20 +173,21 @@ export class SnapshotRenderer {
           let attrValue = value;
           if (!isAnchor && (attr.toLowerCase() === 'href' || attr.toLowerCase() === 'src' || attr === kCurrentSrcAttribute))
             attrValue = rewriteURLForCustomProtocol(value);
-          result.push(' ', attrName, '="', escapeHTMLAttribute(attrValue), '"');
+          result.attribute(attrName, attrValue);
         }
         if (upperName === 'STYLE') {
           // Style has always exactly one child which is a text node.
           const styleContent = typeof children[0] === 'string' ? children[0] : '';
-          result.push(' ', '__playwright_style_content__', '="', escapeHTMLAttribute(rewriteURLsInStyleSheetForCustomProtocol(styleContent)), '"');
-          result.push('></', nodeName, '>');
+          result.attribute('__playwright_style_content__', rewriteURLsInStyleSheetForCustomProtocol(styleContent));
+          result.endOpenTag();
+          result.closeTag(nodeName);
           return;
         }
-        result.push('>');
+        result.endOpenTag();
         for (const child of children)
           visit(child, snapshotIndex, nodeName, attrs);
         if (!autoClosing.has(nodeName))
-          result.push('</', nodeName, '>');
+          result.closeTag(nodeName);
         return;
       } else {
         // Why are we here? Let's not throw, just in case.
@@ -211,7 +209,7 @@ export class SnapshotRenderer {
         // Hide the document in order to prevent flickering. We will unhide once script has processed shadow.
         '<style>*,*::before,*::after { visibility: hidden }</style>',
         `<script nonce="${scriptNonce}">${snapshotScript(this.viewport(), this._callId, this.snapshotName)}</script>`
-      ].join('') + result.join('');
+      ].join('') + result.toString();
       return { value: { html, scriptNonce }, size: html.length };
     });
 

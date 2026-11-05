@@ -155,11 +155,50 @@ export function escapeRegExp(s: string) {
 }
 
 const escaped = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', '\'': '&#39;' };
-export function escapeHTMLAttribute(s: string): string {
+function escapeHTMLAttribute(s: string): string {
   return s.replace(/[&<>"']/ug, char => (escaped as any)[char]);
 }
 export function escapeHTML(s: string): string {
   return s.replace(/[&<]/ug, char => (escaped as any)[char]);
+}
+
+// All trace-controlled data goes through this class, so escaping and name checks live in one place.
+export class HtmlBuilder {
+  private _chunks: string[] = [];
+
+  text(text: string) {
+    this._chunks.push(escapeHTML(text));
+  }
+
+  openTag(name: string): boolean {
+    if (!isSafeName(name))
+      return false;
+    this._chunks.push('<', name);
+    return true;
+  }
+
+  attribute(name: string, value: string) {
+    if (!isSafeName(name))
+      return;
+    this._chunks.push(' ', name, '="', escapeHTMLAttribute(value), '"');
+  }
+
+  endOpenTag() {
+    this._chunks.push('>');
+  }
+
+  closeTag(name: string) {
+    this._chunks.push('</', name, '>');
+  }
+
+  toString() {
+    return this._chunks.join('');
+  }
+}
+
+// Reject names that would end the tag or attribute name early. Allow Unicode custom elements such as math-α.
+function isSafeName(name: string): boolean {
+  return !!name && !/[\s=<>\/"']/.test(name);
 }
 
 export function longestCommonSubstring(s1: string, s2: string): string {
