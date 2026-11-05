@@ -294,6 +294,124 @@ CLI. See the following example:
 dotnet test -- Playwright.BrowserName=chromium Playwright.LaunchOptions.Headless=false Playwright.LaunchOptions.Channel=msedge
 ```
 
+## Retrying failed tests
+
+Playwright for .NET does not retry failed tests itself, use the retries of your test runner. NUnit and MSTest have an attribute that retries a single test, and [Microsoft.Testing.Platform](#retrying-with-microsofttestingplatform) can retry all failed tests of a run. Every attempt gets a new [BrowserContext] and [Page].
+
+<Tabs
+  groupId="test-runners"
+  defaultValue="mstest"
+  values={[
+    {label: 'MSTest', value: 'mstest'},
+    {label: 'NUnit', value: 'nunit'},
+    {label: 'xUnit', value: 'xunit'},
+    {label: 'xUnit v3', value: 'xunit-v3'},
+  ]
+}>
+<TabItem value="nunit">
+
+Add the [`Retry`](https://docs.nunit.org/articles/nunit/writing-tests/attributes/retry.html) attribute to a test method. Its argument is the total number of attempts, so `[Retry(3)]` retries a failed test up to two times.
+
+By default NUnit only retries a test that failed an NUnit assertion. Playwright assertions throw `PlaywrightException` and actions that time out throw `TimeoutException`, so pass both as `RetryExceptions`. This property requires NUnit 4.5 or later.
+
+```csharp
+using Microsoft.Playwright;
+using Microsoft.Playwright.NUnit;
+
+namespace PlaywrightTests;
+
+[Parallelizable(ParallelScope.Self)]
+[TestFixture]
+public class MyTest : PageTest
+{
+    [Test]
+    [Retry(3, RetryExceptions = [typeof(PlaywrightException), typeof(TimeoutException)])]
+    public async Task TestWithRetries()
+    {
+        await Page.GotoAsync("https://playwright.dev");
+        await Expect(Page.GetByRole(AriaRole.Link, new() { Name = "Get started" })).ToBeVisibleAsync();
+    }
+}
+```
+
+</TabItem>
+<TabItem value="mstest">
+
+Add the [`Retry`](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-mstest-writing-tests-controlling-execution) attribute to a test method. It requires MSTest 3.8 or later. Its argument is the number of retries, so `[Retry(2)]` runs a failing test up to three times. MSTest retries after any failure, including a failed Playwright assertion and a timeout.
+
+```csharp
+using System.Threading.Tasks;
+using Microsoft.Playwright;
+using Microsoft.Playwright.MSTest;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+
+namespace PlaywrightTests;
+
+[TestClass]
+public class ExampleTest : PageTest
+{
+    [TestMethod]
+    [Retry(2)]
+    public async Task TestWithRetries()
+    {
+        await Page.GotoAsync("https://playwright.dev");
+        await Expect(Page.GetByRole(AriaRole.Link, new() { Name = "Get started" })).ToBeVisibleAsync();
+    }
+}
+```
+
+</TabItem>
+<TabItem value="xunit">
+
+xUnit v2 has no built-in way to retry failed tests. Retries need xUnit v3, which runs on [Microsoft.Testing.Platform](#retrying-with-microsofttestingplatform).
+
+</TabItem>
+<TabItem value="xunit-v3">
+
+xUnit v3 has no retry attribute. Retry failed tests with [Microsoft.Testing.Platform](#retrying-with-microsofttestingplatform).
+
+</TabItem>
+</Tabs>
+
+### Retrying with Microsoft.Testing.Platform
+
+The [retry extension](https://learn.microsoft.com/en-us/dotnet/core/testing/microsoft-testing-platform-retry) of Microsoft.Testing.Platform reruns the failed tests of a run in a new process, without changes to the tests. It works with MSTest, NUnit and xUnit v3, but not with xUnit v2.
+
+First, run your tests on Microsoft.Testing.Platform. xUnit v3 [supports it](https://xunit.net/docs/getting-started/v3/microsoft-testing-platform) out of the box. For MSTest, set `EnableMSTestRunner` in the project file, and for NUnit set `EnableNUnitRunner`:
+
+```xml
+<PropertyGroup>
+  <OutputType>Exe</OutputType>
+  <EnableMSTestRunner>true</EnableMSTestRunner>
+</PropertyGroup>
+```
+
+With the .NET 10 SDK, `dotnet test` also needs the following `global.json` file:
+
+```json
+{
+  "test": {
+    "runner": "Microsoft.Testing.Platform"
+  }
+}
+```
+
+Then add the extension to the test project:
+
+```bash
+dotnet add package Microsoft.Testing.Extensions.Retry
+```
+
+:::note
+The major version of the package has to match the version of Microsoft.Testing.Platform that your test runner uses, otherwise no tests run. For example, xUnit v3 3.x needs version 1.x of the package, and xUnit v3 4.x needs version 2.x.
+:::
+
+Now you can retry each failed test up to two times:
+
+```bash
+dotnet test --retry-failed-tests 2
+```
+
 ## Using Verbose API Logs
 
 When you have enabled the [verbose API log](./debug.md#verbose-api-logs), via the `DEBUG` environment variable, you will see the messages in the standard error stream. Within Visual Studio, that will be the `Tests` pane of the `Output` window. It will also be displayed in the `Test Log` for each test.
