@@ -162,7 +162,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
     if (!config)
       return { status: 'failed', env: [] };
 
-    const { status, cleanup } = await runTasksDeferCleanup(new TestRun(config, reporter), [
+    const { status, cleanup } = await runTasksDeferCleanup(new TestRun(config, reporter, { includeNonDefaultProjects: true }), [
       ...createGlobalSetupTasks(config),
     ]);
 

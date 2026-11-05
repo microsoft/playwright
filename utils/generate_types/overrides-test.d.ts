@@ -59,6 +59,7 @@ type UseOptions<TestArgs, WorkerArgs> = Partial<WorkerArgs> & Partial<TestArgs>;
 
 interface TestProject<TestArgs = {}, WorkerArgs = {}> {
   use?: UseOptions<TestArgs, WorkerArgs>;
+  webServer?: TestConfigWebServer | TestConfigWebServer[];
 }
 
 export interface Project<TestArgs = {}, WorkerArgs = {}> extends TestProject<TestArgs, WorkerArgs> {
@@ -66,6 +67,7 @@ export interface Project<TestArgs = {}, WorkerArgs = {}> extends TestProject<Tes
 
 export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
   use: UseOptions<PlaywrightTestOptions & TestArgs, PlaywrightWorkerOptions & WorkerArgs>;
+  webServer: TestConfigWebServer[];
 }
 
 type LiteralUnion<T extends U, U = string> = T | (U & { zz_IGNORE_ME?: never });

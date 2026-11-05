@@ -486,6 +486,7 @@ export class TeleReporterReceiver {
       snapshotDir: this._absolutePath(project.snapshotDir),
       ignoreSnapshots: project.ignoreSnapshots ?? false,
       use: project.use,
+      webServer: [],
     };
   }
 

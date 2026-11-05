@@ -4,7 +4,7 @@
 
 Playwright Test supports running multiple test projects at the same time. This is useful for running tests in multiple configurations. For example, consider running tests against multiple browsers. This type describes format of a project in the configuration file, to access resolved configuration parameters at run time use [FullProject].
 
-`TestProject` encapsulates configuration specific to a single project. Projects are configured in [`property: TestConfig.projects`] specified in the [configuration file](../test-configuration.md). Note that all properties of [TestProject] are available in the top-level [TestConfig], in which case they are shared between all projects.
+`TestProject` encapsulates configuration specific to a single project. Projects are configured in [`property: TestConfig.projects`] specified in the [configuration file](../test-configuration.md). Note that all properties of [TestProject] are available in the top-level [TestConfig], in which case they are shared between all projects. The exception is [`property: TestProject.webServer`]: top-level servers are started separately, for the whole run.
 
 Here is an example configuration that runs every test in Chromium, Firefox and WebKit, both Desktop and Mobile versions.
 
@@ -427,6 +427,53 @@ export default defineConfig({
 ```
 
 Use [`property: TestConfig.use`] to change this option for all projects.
+
+## property: TestProject.webServer
+* since: v1.66
+- type: ?<[Object]|[Array]<[Object]>>
+
+Launch a development web server (or multiple) for this project. Accepts the same options as
+[`property: TestConfig.webServer`].
+
+Project servers are added to the top-level servers, not inherited from them or used to replace them.
+They start after `globalSetup` and stop before its returned teardown function and `globalTeardown`.
+In the command line, project selection controls which servers start, including servers for
+dependencies and teardown projects. Test filters and sharding do not affect server startup.
+Listing tests does not start project servers. In UI mode and VS Code, all project servers start
+with global setup and stay alive across test runs until global teardown or configuration reload.
+
+[`property: FullProject.webServer`] exposes these settings as an array, including in `globalSetup`.
+Project servers are not available during `globalSetup` or `globalTeardown`.
+
+For a single server with `port` and no `url`, the project's [`property: TestOptions.baseURL`] defaults
+to `http://localhost:<port>`. An explicitly configured `baseURL` takes precedence. For arrays or
+servers with `url`, configure `baseURL` explicitly.
+
+**Usage**
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  projects: [
+    {
+      name: 'local',
+      webServer: {
+        command: 'npm run start',
+        url: 'http://localhost:3000',
+        reuseExistingServer: !process.env.CI,
+      },
+      use: { baseURL: 'http://localhost:3000' },
+    },
+    {
+      name: 'production',
+      use: { baseURL: 'https://production.example' },
+    },
+  ],
+});
+```
+
+Running `npx playwright test --project=production` does not start the local server.
 
 ## property: TestProject.workers
 * since: v1.52
