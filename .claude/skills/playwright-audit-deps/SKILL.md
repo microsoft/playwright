@@ -17,6 +17,10 @@ A version is eligible when it is outside every advisory range, was published at 
 ago, and is accepted by every runtime dependent in `package-lock.json`. The newest eligible
 version wins. Packages that `npm install` pulls in beyond that age are pinned back the same way.
 
+The lint `npm run check-dependency-age` (part of `npm run lint` and `npm run flint`, so CI
+runs it on every PR) fails when any version in `package-lock.json` is less than 7 days old.
+The 8-day default here keeps a one-day margin above that limit.
+
 ## Steps
 
 1. Start from a clean checkout of `main` with `npm run build` done, so the bundle sidecars
@@ -31,9 +35,10 @@ version wins. Packages that `npm install` pulls in beyond that age are pinned ba
    packages in the "Not rolled" list and tell the user. Options: `--max-age-days=N` (default 8),
    `--severity=low|moderate|high|critical` (default moderate), `--base=<ref>` for the report diff.
 
-4. Verify: `npm run build`, then `npm run itest tests/installation/bundle-licenses.spec.ts tests/installation/bundle-size.spec.ts`.
-   A new dependency without a `repository` field, or a bigger bundle, fails here. Fix the cause
-   or drop that roll, then rerun the report.
+4. Verify: `npm run build`, then `npm run itest tests/installation/bundle-licenses.spec.ts tests/installation/bundle-size.spec.ts`
+   and `npm run check-dependency-age`. A new dependency without a `repository` field, a bigger
+   bundle, or a version younger than 7 days fails here. Fix the cause or drop that roll, then
+   rerun the report.
 
 5. Commit `package.json` and `package-lock.json` as one commit:
 

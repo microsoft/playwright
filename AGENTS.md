@@ -53,7 +53,7 @@ Assume watch is running and code is up to date. Generated files (types, channels
 npm run flint
 ```
 
-Runs all lint checks in parallel: eslint, tsc, doclint, check-deps, generate_channels, generate_types, lint-tests, test-types, lint-packages, code-snippet linting.
+Runs all lint checks in parallel: eslint, tsc, doclint, check-deps, generate_channels, generate_types, lint-tests, test-types, lint-packages, code-snippet linting, check-dependency-age (every version in `package-lock.json` must be at least 7 days old).
 
 **Run `flint` only before you upload a PR, and only after `npm run build`.** Do not run it before each commit. Do not use `tsc --noEmit` or individual lint commands separately.
 
