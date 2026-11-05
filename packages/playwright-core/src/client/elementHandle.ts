@@ -196,7 +196,7 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> implements
     if (mask) {
       copy.mask = mask.map(locator => ({
         frame: locator._frame._channel,
-        selector: locator._selector,
+        selector: locator.selectorForQuery(),
       }));
     }
     const result = await this._elementChannel.screenshot(copy, this._frame._timeout(options));

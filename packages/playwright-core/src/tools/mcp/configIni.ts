@@ -142,6 +142,7 @@ const longhandTypes: Record<string, LonghandType> = {
   'browser.contextOptions.isMobile': 'boolean',
   'browser.contextOptions.javaScriptEnabled': 'boolean',
   'browser.contextOptions.locale': 'string',
+  'browser.contextOptions.locateOnlyVisible': 'boolean',
   'browser.contextOptions.offline': 'boolean',
   'browser.contextOptions.permissions': 'string[]',
   'browser.contextOptions.reducedMotion': 'string',

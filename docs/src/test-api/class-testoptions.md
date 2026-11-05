@@ -451,6 +451,21 @@ export default defineConfig({
 });
 ```
 
+## property: TestOptions.locateOnlyVisible = %%-context-option-locate-only-visible-%%
+* since: v1.66
+
+**Usage**
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  use: {
+    locateOnlyVisible: true,
+  },
+});
+```
+
 ## property: TestOptions.navigationTimeout
 * since: v1.10
 - type: <[int]>

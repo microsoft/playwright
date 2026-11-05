@@ -8062,6 +8062,33 @@ export interface PlaywrightTestOptions {
    */
   locale: string | undefined;
   /**
+   * Whether to restrict all locators in this context to [visible](https://playwright.dev/docs/actionability#visible) elements. Defaults to
+   * `false`. When enabled, actions, assertions and queries behave as if
+   * [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible) were appended to the end of the
+   * locator chain, unless its last part is an explicit visibility filter. For example, `.filter({ visible: false })` at
+   * the end of a locator selects hidden elements even when this option is enabled. Intermediate locators and inner
+   * locators used in [locator.filter([options])](https://playwright.dev/docs/api/class-locator#locator-filter) are not
+   * automatically filtered. This does not change the accessibility rules of
+   * [page.getByRole(role[, options])](https://playwright.dev/docs/api/class-page#page-get-by-role) or the behavior of
+   * selector-based methods such as
+   * [page.$(selector[, options])](https://playwright.dev/docs/api/class-page#page-query-selector).
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   use: {
+   *     locateOnlyVisible: true,
+   *   },
+   * });
+   * ```
+   *
+   */
+  locateOnlyVisible: boolean;
+  /**
    * Whether to emulate network being offline. Defaults to `false`. Learn more about
    * [network emulation](https://playwright.dev/docs/emulation#offline).
    *

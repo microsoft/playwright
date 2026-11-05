@@ -631,7 +631,7 @@ export type ConsoleMessage = {
 };
 
 export function locatorSelector(locator: playwright.Locator): string {
-  return (locator as unknown as { _selector: string })._selector;
+  return (locator as unknown as { selectorForQuery(): string }).selectorForQuery();
 }
 
 // Accepts a selector or a locator in any language, e.g. `getByRole('button')` or `get_by_role("button")`.

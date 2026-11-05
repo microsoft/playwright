@@ -69,6 +69,52 @@ it('BC-002 should be able to click across browser contexts', async function({ br
   await page2.close();
 });
 
+it('BC-084 should locate only visible elements when configured', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43855' },
+}, async ({ page, contextFactory }) => {
+  const content = `
+    <section hidden><button data-testid="save">Save</button></section>
+    <section style="display: contents">
+      <button data-testid="save" onclick="this.textContent = 'Saved'">Save<span hidden>marker</span></button>
+    </section>
+    <iframe srcdoc="<button hidden>Save</button><button>Save</button>"></iframe>
+  `;
+  await page.setContent(content);
+  await expect(page.getByTestId('save')).toHaveCount(2);
+  await expect(page.getByTestId('save').click()).rejects.toThrow('strict mode violation');
+
+  const context = await contextFactory({ locateOnlyVisible: true });
+  const visiblePage = await context.newPage();
+  await visiblePage.setContent(content);
+  const save = visiblePage.getByTestId('save');
+  await expect(save).toHaveCount(1);
+  expect(await save.count()).toBe(1);
+  expect(await save.allTextContents()).toEqual(['Savemarker']);
+  const [onlySave] = await save.all();
+  await expect(onlySave).toHaveText('Savemarker');
+  await expect(save.first()).toHaveCount(0);
+  await expect(save.visible().first()).toHaveCount(1);
+  await expect(visiblePage.locator('section').getByTestId('save')).toHaveCount(1);
+  await expect(visiblePage.locator('section').locator(save)).toHaveCount(1);
+  await expect(save.filter({ has: visiblePage.getByText('marker') })).toHaveCount(1);
+  await expect(save.and(visiblePage.locator('button')).or(visiblePage.locator('missing'))).toHaveCount(1);
+  await expect(save.describe('save button')).toHaveText('Savemarker');
+  await save.click();
+  await expect(save).toHaveText('Saved');
+  await expect(visiblePage.frameLocator('iframe').getByText('Save')).toHaveCount(1);
+  await expect(visiblePage.locator('iframe').contentFrame().locator(visiblePage.getByText('Save'))).toHaveCount(1);
+  await expect(visiblePage.locator('section[hidden]')).toBeHidden();
+  await visiblePage.locator('section[hidden]').waitFor({ state: 'hidden' });
+  expect(await visiblePage.$$('button')).toHaveLength(2);
+  await expect(save.filter({ visible: false })).toHaveCount(1);
+  await expect(save.filter({ visible: false }).first()).toHaveCount(0);
+
+  await visiblePage.setContent('<input type="file" hidden>');
+  const fileInput = visiblePage.locator('input').filter({ visible: false });
+  await fileInput.setInputFiles({ name: 'file.txt', mimeType: 'text/plain', buffer: Buffer.from('contents') });
+  expect(await fileInput.evaluate(input => (input as HTMLInputElement).files[0].name)).toBe('file.txt');
+});
+
 it('BC-003 should be able to hover across browser contexts in parallel', async function({ browser, browserName, headless }) {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/40562' });
   it.fixme(browserName === 'firefox' && !headless, 'Hover is flaky in headed Firefox');
