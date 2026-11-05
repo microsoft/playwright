@@ -1037,14 +1037,14 @@ class FrameSession {
     if (!preserveWindowBoundaries && this._windowId) {
       let insets = { width: 0, height: 0 };
       const browser = this._crPage._browserContext._browser;
+      const platform = browser._platform();
       if (browser.options.headful) {
         // TODO: popup windows have their own insets.
-        insets = { width: 24, height: 88 };
-        if (process.platform === 'win32')
+        if (platform === 'win')
           insets = { width: 16, height: 88 };
-        else if (process.platform === 'linux')
+        else if (platform === 'linux')
           insets = { width: 8, height: 85 };
-        else if (process.platform === 'darwin')
+        else
           insets = { width: 2, height: 80 };
         if (this._crPage._browserContext.isPersistentContext()) {
           // FIXME: Chrome bug: OOPIF router is confused when hit target is
@@ -1054,9 +1054,9 @@ class FrameSession {
         }
       } else if (!browser.isHeadlessShell()) {
         // The new headless mode lays out tabs and toolbar like the headed mode does.
-        insets = { width: 0, height: 87 };
+        insets = { width: 0, height: platform === 'win' ? 90 : 87 };
         if (browser.isEdge())
-          insets = process.platform === 'darwin' ? { width: 8, height: 84 } : { width: 0, height: 84 };
+          insets = platform === 'mac' ? { width: 8, height: 84 } : { width: 0, height: 84 };
       }
       promises.push(this.setWindowBounds({
         width: viewportSize.width + insets.width,
