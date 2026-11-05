@@ -57,6 +57,21 @@ class Workspace {
     return this._packages;
   }
 
+  /**
+   * Public packages, each listed after the workspace packages it depends on.
+   * @returns {PWPackage[]}
+   */
+  publicPackagesInDependencyOrder() {
+    const ordered = new Set();
+    const visit = pkg => {
+      for (const dep of Object.keys(pkg.packageJSON.dependencies || {}))
+        this._packages.filter(p => p.name === dep).forEach(visit);
+      ordered.add(pkg);
+    };
+    this._packages.forEach(visit);
+    return [...ordered].filter(pkg => !pkg.isPrivate);
+  }
+
   async version() {
     const workspacePackageJSON = await readJSON(path.join(this._rootDir, 'package.json'));
     return workspacePackageJSON.version;
@@ -219,10 +234,9 @@ async function parseCLI() {
         die(`\n  ERROR: package-lock.json lockfileVersion must be 3`);
     },
     '--list-public-package-paths': () => {
-      for (const pkg of workspace.packages()) {
-        if (!pkg.isPrivate)
-          console.log(pkg.path);
-      }
+      // Dependency order: publishing relies on it to never publish a package before its dependencies.
+      for (const pkg of workspace.publicPackagesInDependencyOrder())
+        console.log(pkg.path);
     },
     '--get-version': async (version) => {
       console.log(await workspace.version());

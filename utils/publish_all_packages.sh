@@ -73,11 +73,31 @@ else
   exit 1
 fi
 
+# A successful `npm publish` only means the registry accepted the package: it is processed
+# asynchronously and may show up minutes later, or never (playwright-core@1.65.0 never did,
+# leaving playwright@1.65.0 on @latest pointing to a missing dependency).
+function wait_until_available {
+  local name="$1"
+  local attempt
+  for attempt in $(seq 60); do
+    if [[ "$(npm view "${name}@${VERSION}" version --prefer-online 2>/dev/null)" == "${VERSION}" ]]; then
+      return 0
+    fi
+    sleep 15
+  done
+  echo "ERROR: ${name}@${VERSION} was accepted by npm but did not become available within 15 minutes"
+  return 1
+}
+
 echo "==================== Publishing version ${VERSION} ================"
 node ./utils/workspace.js --ensure-consistent
-node ./utils/workspace.js --list-public-package-paths | while read package
-do
-  npm publish --access=public ${package} --tag="${NPM_PUBLISH_TAG}"
+# Packages are listed in dependency order. Wait for each one to go live before publishing the next,
+# so nothing is published (and tagged) while a package it depends on is missing.
+PACKAGE_PATHS=$(node ./utils/workspace.js --list-public-package-paths)
+for package in ${PACKAGE_PATHS}; do
+  name=$(node -p "require('${package}/package.json').name")
+  npm publish --access=public "${package}" --tag="${NPM_PUBLISH_TAG}"
+  wait_until_available "${name}"
 done
 
 echo "Done."
