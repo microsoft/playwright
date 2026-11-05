@@ -8815,7 +8815,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
   }
   
   /**
-   * Query and modify storage (cookies for now) under Site Isolation. Backed by the NetworkProcess-owned cookie store via API::HTTPCookieStore, so cross-origin iframe cookies are visible. The flat read also surfaces partitioned (CHIPS) cookies, each labeled with its partitionKey.
+   * Query and modify storage (cookies for now) under Site Isolation. Reads and deletes are scoped to the cookies the inspected page's frames can access, as Page.getCookies does without Site Isolation: for each frame, including cross-origin iframes in other processes, the cookies its document would send to its own URL and to its loaded same-site subresources' URLs, each labeled with its partitionKey. setCookie is not scoped.
    */
   export namespace Storage {
     /**
@@ -8895,6 +8895,10 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        * If the cookie is secure.
        */
       secure?: boolean;
+      /**
+       * The partition of the cookie. An empty string matches only unpartitioned cookies.
+       */
+      partitionKey?: string;
     }
     /**
      * Identifies the storage partition a cookie belongs to. At least one of 'userContext' or 'sourceOrigin' is present.
