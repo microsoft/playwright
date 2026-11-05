@@ -36,7 +36,7 @@ print(str(normalized))
 
 ### Browser Versions
 
-- Chromium 158.0.8127.2
+- Chromium 158.0.8127.18
 - Mozilla Firefox 159.0
 - WebKit 27.2
 
