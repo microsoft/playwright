@@ -274,6 +274,8 @@ export class AndroidDevice extends SdkObject {
   }
 
   async launchBrowser(progress: Progress, pkg: string = 'com.android.chrome', options: channels.AndroidDeviceLaunchBrowserParams): Promise<BrowserContext> {
+    if (options.viewportMode === 'maximized')
+      throw new Error('"maximized" viewport is not supported for this browser');
     debug('pw:android')('Force-stopping', pkg);
     await progress.race(this._backend.runCommand(`shell:am force-stop ${pkg}`));
     const socketName = isUnderTest() ? 'webview_devtools_remote_playwright_test' : ('playwright_' + createGuid() + '_devtools_remote');
@@ -350,7 +352,7 @@ export class AndroidDevice extends SdkObject {
         name: 'clank',
         browserType: 'chromium',
         slowMo: 0,
-        persistent: { ...options, noDefaultViewport: true },
+        persistent: { ...options, viewportMode: 'none' },
         artifactsDir,
         downloadsPath: artifactsDir,
         tracesDir: artifactsDir,

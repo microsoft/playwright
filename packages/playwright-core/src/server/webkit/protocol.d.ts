@@ -4502,6 +4502,13 @@ might return multiple quads for inline nodes.
     export type setDeviceMetricsOverrideReturnValue = {
     }
     /**
+     * Clears device metrics overrides without resizing the browser window.
+     */
+    export type clearDeviceMetricsOverrideParameters = {
+    }
+    export type clearDeviceMetricsOverrideReturnValue = {
+    }
+    /**
      * Allows to disable script execution for the page.
      */
     export type setJavaScriptEnabledParameters = {
@@ -7510,6 +7517,17 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
       pageProxyId: PageProxyID;
     }
     /**
+     * Maximizes the native browser window.
+     */
+    export type maximizeWindowParameters = {
+      /**
+       * Unique identifier of the page proxy.
+       */
+      pageProxyId: PageProxyID;
+    }
+    export type maximizeWindowReturnValue = {
+    }
+    /**
      * Navigates current page to the given URL.
      */
     export type navigateParameters = {
@@ -9681,6 +9699,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Dialog.disable": Dialog.disableParameters;
     "Dialog.handleJavaScriptDialog": Dialog.handleJavaScriptDialogParameters;
     "Emulation.setDeviceMetricsOverride": Emulation.setDeviceMetricsOverrideParameters;
+    "Emulation.clearDeviceMetricsOverride": Emulation.clearDeviceMetricsOverrideParameters;
     "Emulation.setJavaScriptEnabled": Emulation.setJavaScriptEnabledParameters;
     "Emulation.setAuthCredentials": Emulation.setAuthCredentialsParameters;
     "Emulation.setActiveAndFocused": Emulation.setActiveAndFocusedParameters;
@@ -9778,6 +9797,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Playwright.createContext": Playwright.createContextParameters;
     "Playwright.deleteContext": Playwright.deleteContextParameters;
     "Playwright.createPage": Playwright.createPageParameters;
+    "Playwright.maximizeWindow": Playwright.maximizeWindowParameters;
     "Playwright.navigate": Playwright.navigateParameters;
     "Playwright.grantFileReadAccess": Playwright.grantFileReadAccessParameters;
     "Playwright.takePageScreenshot": Playwright.takePageScreenshotParameters;
@@ -9992,6 +10012,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Dialog.disable": Dialog.disableReturnValue;
     "Dialog.handleJavaScriptDialog": Dialog.handleJavaScriptDialogReturnValue;
     "Emulation.setDeviceMetricsOverride": Emulation.setDeviceMetricsOverrideReturnValue;
+    "Emulation.clearDeviceMetricsOverride": Emulation.clearDeviceMetricsOverrideReturnValue;
     "Emulation.setJavaScriptEnabled": Emulation.setJavaScriptEnabledReturnValue;
     "Emulation.setAuthCredentials": Emulation.setAuthCredentialsReturnValue;
     "Emulation.setActiveAndFocused": Emulation.setActiveAndFocusedReturnValue;
@@ -10089,6 +10110,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Playwright.createContext": Playwright.createContextReturnValue;
     "Playwright.deleteContext": Playwright.deleteContextReturnValue;
     "Playwright.createPage": Playwright.createPageReturnValue;
+    "Playwright.maximizeWindow": Playwright.maximizeWindowReturnValue;
     "Playwright.navigate": Playwright.navigateReturnValue;
     "Playwright.grantFileReadAccess": Playwright.grantFileReadAccessReturnValue;
     "Playwright.takePageScreenshot": Playwright.takePageScreenshotReturnValue;

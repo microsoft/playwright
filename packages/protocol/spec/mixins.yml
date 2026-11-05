@@ -115,12 +115,17 @@ HttpCredentials:
 ContextOptions:
   type: mixin
   properties:
-    noDefaultViewport: boolean?
     viewport:
       type: object?
       properties:
         width: int
         height: int
+    viewportMode:
+      type: enum?
+      literals:
+      - none
+      - maximized
+      - fixed
     screen:
       type: object?
       properties:

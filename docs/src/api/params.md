@@ -391,7 +391,24 @@ When using [`method: Page.goto`], [`method: Page.route`], [`method: Page.waitFor
 * baseURL: `http://localhost:3000/foo` (without trailing slash) and navigating to `./bar.html` results in `http://localhost:3000/bar.html`
 
 ## context-option-viewport
-* langs: js, java
+* langs: js
+- `viewport` <[null]|"maximized"|[Object]>
+  * alias-js: ViewportSize
+  - `width` <[int]> page width in pixels.
+  - `height` <[int]> page height in pixels.
+
+Emulates consistent viewport for each page. Defaults to an 1280x720 viewport.
+Use `null` to disable the consistent viewport emulation. Learn more about [viewport emulation](../emulation#viewport).
+Use `"maximized"` to disable viewport emulation and maximize native browser windows.  This is only supported in headed mode and does not enter fullscreen mode or trigger the web Fullscreen API.
+
+:::note
+The `null` and `"maximized"` values opt out from the default presets and make viewport depend on the
+host window size defined by the operating system. It makes the execution of the
+tests non-deterministic.
+:::
+
+## java-context-option-viewport
+* langs: java
   - alias-java: viewportSize
 - `viewport` "ViewportSize" <[null]|[Object]>
   - `width` <[int]> page width in pixels.
@@ -399,11 +416,10 @@ When using [`method: Page.goto`], [`method: Page.route`], [`method: Page.waitFor
 
 Emulates consistent viewport for each page. Defaults to an 1280x720 viewport.
 Use `null` to disable the consistent viewport emulation. Learn more about [viewport emulation](../emulation#viewport).
+Use `ViewportSize.MAXIMIZED` to disable viewport emulation and maximize native browser windows.  This is only supported in headed mode and does not enter fullscreen mode or trigger the web Fullscreen API.
 
 :::note
-The `null` value opts out from the default presets, makes viewport depend on the
-host window size defined by the operating system. It makes the execution of the
-tests non-deterministic.
+The `null` and `ViewportSize.MAXIMIZED` values opt out from the default presets and make viewport depend on the host window size defined by the operating system.  It makes the execution of the tests non-deterministic.
 :::
 
 ## csharp-context-option-viewport
@@ -415,11 +431,10 @@ tests non-deterministic.
 
 Emulates consistent viewport for each page. Defaults to an 1280x720 viewport.
 Use `ViewportSize.NoViewport` to disable the consistent viewport emulation. Learn more about [viewport emulation](../emulation.md#viewport).
+Use `ViewportSize.Maximized` to disable viewport emulation and maximize native browser windows.  This is only supported in headed mode and does not enter fullscreen mode or trigger the web Fullscreen API.
 
 :::note
-The `ViewportSize.NoViewport` value opts out from the default presets,
-makes viewport depend on the host window size defined by the operating system.
-It makes the execution of the tests non-deterministic.
+The `ViewportSize.NoViewport` and `ViewportSize.Maximized` values opt out from the default presets and make viewport depend on the host window size defined by the operating system.  It makes the execution of the tests non-deterministic.
 :::
 
 ## context-option-screen
@@ -656,11 +671,17 @@ Function to be evaluated in the main Electron process.
 
 ## python-context-option-viewport
 * langs: python
-- `viewport` "ViewportSize" <[null]|[Object]>
+- `viewport` <[null]|"maximized"|[Object]>
+  * alias-python: ViewportSize
   - `width` <[int]> page width in pixels.
   - `height` <[int]> page height in pixels.
 
 Sets a consistent viewport for each page. Defaults to an 1280x720 viewport. `no_viewport` disables the fixed viewport. Learn more about [viewport emulation](../emulation.md#viewport).
+Use `viewport="maximized"` to disable viewport emulation and maximize native browser windows.  This is only supported in headed mode and does not enter fullscreen mode or trigger the web Fullscreen API.
+
+:::note
+The `no_viewport=True` and `viewport="maximized"` values opt out from the default presets and make viewport depend on the host window size defined by the operating system.  It makes the execution of the tests non-deterministic.
+:::
 
 ## python-context-option-no-viewport
 * langs: python
@@ -1132,6 +1153,7 @@ between the same pixel in compared images, between zero (strict) and one (lax), 
 - %%-context-option-bypasscsp-%%
 - %%-context-option-baseURL-%%
 - %%-context-option-viewport-%%
+- %%-java-context-option-viewport-%%
 - %%-csharp-context-option-viewport-%%
 - %%-python-context-option-viewport-%%
 - %%-context-option-screen-%%
