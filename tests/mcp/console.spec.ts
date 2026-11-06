@@ -18,16 +18,17 @@ import fs from 'fs';
 import path from 'path';
 import { test, expect, parseResponse, consoleEntries } from './fixtures';
 
-test('browser_console_messages', async ({ client, server }) => {
+test('browser_console_messages', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-mcp/issues/1839' } }, async ({ client, server }) => {
   server.setContent('/', `
     <!DOCTYPE html>
     <html>
       <script>
         console.log("Hello, world!");
-        console.error("Error");
       </script>
+      <script src="/ext.js"></script>
     </html>
   `, 'text/html');
+  server.setContent('/ext.js', '\nconsole.error("Error");', 'application/javascript');
 
   await client.callTool({
     name: 'browser_navigate',
@@ -43,10 +44,10 @@ test('browser_console_messages', async ({ client, server }) => {
     result: expect.stringContaining('Total messages: 2 (Errors: 1, Warnings: 0)'),
   });
   expect(resource).toHaveResponse({
-    result: expect.stringContaining(`[LOG] Hello, world! @ ${server.PREFIX}/:4`),
+    result: expect.stringContaining(`[LOG] Hello, world! @ ${server.PREFIX}/:5`),
   });
   expect(resource).toHaveResponse({
-    result: expect.stringContaining(`[ERROR] Error @ ${server.PREFIX}/:5`),
+    result: expect.stringContaining(`[ERROR] Error @ ${server.PREFIX}/ext.js:2`),
   });
 });
 

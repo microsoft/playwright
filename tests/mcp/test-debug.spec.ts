@@ -367,7 +367,7 @@ Error: failure
 - Page URL: about:blank
 - Page Title:
 - Console Messages:
-  - [ERROR] console.error @ :1
+  - [ERROR] console.error @ :2
   - Error from page
 - Page Snapshot:
 `));
