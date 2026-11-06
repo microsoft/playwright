@@ -116,7 +116,7 @@
     "@vitejs/plugin-react": "6.0.3",
     "@zip.js/zip.js": "2.7.73",
     "chokidar": "4.0.3",
-    "chromium-bidi": "12.1.0",
+    "chromium-bidi": "159.0.8132-0",
     "colors": "1.4.0",
     "commander": "15.0.0",
     "cross-env": "10.1.0",
