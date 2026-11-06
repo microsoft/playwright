@@ -353,7 +353,7 @@ export class ClockController {
     this._advanceNow(timer.callAt);
 
     if (timer.type === TimerType.Interval)
-      timer.callAt = shiftTicks(timer.callAt, timer.delay);
+      timer.callAt = shiftTicks(timer.callAt, timer.delay || 1);
     else
       this._timers.delete(timer.id);
     return timer;
