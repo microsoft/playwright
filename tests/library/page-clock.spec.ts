@@ -259,12 +259,25 @@ it.describe('stubTimers', () => {
     expect(calls).toEqual([]);
   });
 
-  it('CK-022 replaces global setInterval', async ({ page, calls }) => {
-    await page.evaluate(async () => {
-      setInterval(window.stub, 500);
+  it('CK-022 replaces global setInterval', {
+    annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43947' },
+  }, async ({ page, calls }) => {
+    const interval = await page.evaluate(() => {
+      return setInterval(window.stub, 500);
     });
     await page.clock.runFor(1000);
     expect(calls.length).toBe(2);
+
+    await page.evaluate(interval => {
+      clearInterval(interval);
+      setInterval(window.stub);
+    }, interval);
+    await page.clock.fastForward(0);
+    expect(calls).toHaveLength(3);
+    await page.clock.fastForward(1000);
+    expect(calls).toHaveLength(4);
+    await page.clock.runFor(10);
+    expect(calls).toHaveLength(14);
   });
 
   it('CK-023 replaces global clearInterval', async ({ page, calls }) => {
