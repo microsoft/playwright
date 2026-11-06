@@ -71,12 +71,31 @@ it('SE-076 getByText should work', async ({ page }) => {
   expect(await page.getByText('Hello', { exact: true }).evaluate(e => e.outerHTML)).toContain('>Hello</div>');
 });
 
-it('SE-077 getByLabel should work', async ({ page }) => {
+it('SE-077 getByLabel should work', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43898' } }, async ({ page }) => {
   await page.setContent(`<div><label for=target>Name</label><input id=target type=text></div>`);
   expect(await page.getByText('Name').evaluate(e => e.nodeName)).toBe('LABEL');
   expect(await page.getByLabel('Name').evaluate(e => e.nodeName)).toBe('INPUT');
   expect(await page.mainFrame().getByLabel('Name').evaluate(e => e.nodeName)).toBe('INPUT');
   expect(await page.locator('div').getByLabel('Name').evaluate(e => e.nodeName)).toBe('INPUT');
+
+  await page.setContent(`
+    <label for="city">City</label><my-field id="city" role="combobox">Pick one</my-field>
+    <label>Street <my-field id="street" role="combobox">Pick one</my-field></label>
+  `);
+  await page.evaluate(() => {
+    customElements.define('my-field', class extends HTMLElement {
+      static formAssociated = true;
+      constructor() {
+        super();
+        this.attachInternals();
+      }
+    });
+  });
+  expect(await page.evaluate(() => [...document.querySelectorAll('label')].map(label => label.control?.id))).toEqual(['city', 'street']);
+  expect.soft(await page.getByLabel('City').evaluateAll(elements => elements.map(e => e.id))).toEqual(['city']);
+  expect.soft(await page.getByLabel('Street').evaluateAll(elements => elements.map(e => e.id))).toEqual(['street']);
+  expect.soft(await page.getByRole('combobox', { name: 'City', exact: true }).evaluateAll(elements => elements.map(e => e.id))).toEqual(['city']);
+  expect.soft(await page.getByRole('combobox', { name: 'Street', exact: true }).evaluateAll(elements => elements.map(e => e.id))).toEqual(['street']);
 });
 
 it('SE-078 getByLabel should work with nested elements', async ({ page }) => {

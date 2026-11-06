@@ -3100,6 +3100,8 @@ export interface Page {
    * Allows locating input elements by the text of the associated `<label>` or `aria-labelledby` element, or by the
    * `aria-label` attribute.
    *
+   * Associated `<label>` elements are also supported for form-associated custom elements.
+   *
    * **Usage**
    *
    * For example, this method will find inputs by label "Username" and "Password" in the following DOM:
@@ -7482,6 +7484,8 @@ export interface Frame {
   /**
    * Allows locating input elements by the text of the associated `<label>` or `aria-labelledby` element, or by the
    * `aria-label` attribute.
+   *
+   * Associated `<label>` elements are also supported for form-associated custom elements.
    *
    * **Usage**
    *
@@ -15767,6 +15771,8 @@ export interface Locator {
    * Allows locating input elements by the text of the associated `<label>` or `aria-labelledby` element, or by the
    * `aria-label` attribute.
    *
+   * Associated `<label>` elements are also supported for form-associated custom elements.
+   *
    * **Usage**
    *
    * For example, this method will find inputs by label "Username" and "Password" in the following DOM:
@@ -21897,6 +21903,8 @@ export interface FrameLocator {
   /**
    * Allows locating input elements by the text of the associated `<label>` or `aria-labelledby` element, or by the
    * `aria-label` attribute.
+   *
+   * Associated `<label>` elements are also supported for form-associated custom elements.
    *
    * **Usage**
    *

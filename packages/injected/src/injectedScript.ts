@@ -517,9 +517,14 @@ export class InjectedScript {
       queryAll: (root: SelectorRoot, selector: string): Element[] => {
         const { matcher } = createTextMatcher(selector, true);
         const allElements = this._evaluator._queryCSS({ scope: root as Document | Element, pierceShadow: true }, '*');
-        return allElements.filter(element => {
-          return getElementLabels(this._evaluator._cacheText, element).some(label => matcher(label));
-        });
+        beginDOMCaches();
+        try {
+          return allElements.filter(element => {
+            return getElementLabels(this._evaluator._cacheText, element).some(label => matcher(label));
+          });
+        } finally {
+          endDOMCaches();
+        }
       }
     };
   }
