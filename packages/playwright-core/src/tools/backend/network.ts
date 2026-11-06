@@ -184,8 +184,9 @@ function canHaveResponseBody(httpResponse: playwright.Response | null): httpResp
   if (!httpResponse)
     return false;
   const status = httpResponse.status();
-  // Status codes that cannot have a response body per RFC 7230.
-  return status !== 204 && status !== 304 && !(status >= 100 && status < 200);
+  // Status codes that cannot have a response body per RFC 7230. Playwright
+  // also does not expose the body of any redirect (3xx) response.
+  return status !== 204 && !(status >= 300 && status < 400) && !(status >= 100 && status < 200);
 }
 
 function appendHeaderSection(lines: string[], title: string, headers: Record<string, string>): void {
