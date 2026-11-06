@@ -329,8 +329,11 @@ function configFromCLIOptions(cliOptions: CLIOptions): Config & { configFile?: s
   if (device && cliOptions.cdpEndpoint)
     throw new Error('Device emulation is not supported with cdpEndpoint.');
 
+  if (device && !Object.prototype.hasOwnProperty.call(playwright.devices, device))
+    throw new Error(`Unknown device "${device}"`);
+
   // Context options
-  const contextOptions: playwrightTypes.BrowserContextOptions = device ? playwright.devices[device] : {};
+  const contextOptions: playwrightTypes.BrowserContextOptions = device ? { ...playwright.devices[device] } : {};
 
   if (cliOptions.proxyServer) {
     const proxy: playwrightTypes.LaunchOptions['proxy'] = proxySettingsFromString(cliOptions.proxyServer);

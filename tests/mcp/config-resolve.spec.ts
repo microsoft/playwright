@@ -271,7 +271,7 @@ test('config file preserves context media preferences', async ({}, testInfo) => 
   expect(config.browser.contextOptions).toMatchObject(fileConfig.browser!.contextOptions!);
 });
 
-test.describe('mobile', () => {
+test.describe('device emulation', () => {
   test('--mobile defaults to a Chromium mobile device', async () => {
     const config = await resolveCLIConfigForMCP({ mobile: true }, emptyEnv);
     expect(config.browser.contextOptions.isMobile).toBe(true);
@@ -290,10 +290,16 @@ test.describe('mobile', () => {
     expect(config.browser.contextOptions.userAgent).toContain('iPhone');
   });
 
-  test('explicit viewport still wins over --mobile', async () => {
-    const config = await resolveCLIConfigForMCP({ mobile: true, viewportSize: { width: 800, height: 600 } }, emptyEnv);
+  test('explicit viewport still wins over --mobile', {
+    annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-mcp/issues/1834' },
+  }, async () => {
+    const defaults = await resolveCLIConfigForMCP({ mobile: true }, emptyEnv);
+    const config = await resolveCLIConfigForMCP({ mobile: true, viewportSize: { width: 800, height: 600 }, userAgent: 'custom-agent' }, emptyEnv);
     expect(config.browser.contextOptions.isMobile).toBe(true);
     expect(config.browser.contextOptions.viewport).toEqual({ width: 800, height: 600 });
+    expect(config.browser.contextOptions.userAgent).toBe('custom-agent');
+    const nextConfig = await resolveCLIConfigForMCP({ mobile: true }, emptyEnv);
+    expect(nextConfig.browser.contextOptions).toEqual(defaults.browser.contextOptions);
   });
 
   test('--mobile via env var', async () => {
@@ -307,9 +313,15 @@ test.describe('mobile', () => {
         .rejects.toThrow('--mobile is not supported with the Firefox browser.');
   });
 
-  test('--mobile cannot be combined with --device', async () => {
+  test('invalid device options are rejected', {
+    annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-mcp/issues/1834' },
+  }, async () => {
     await expect(resolveCLIConfigForMCP({ mobile: true, device: 'iPhone 15' }, emptyEnv))
         .rejects.toThrow('Cannot use --mobile together with --device');
+    await expect(resolveCLIConfigForMCP({ device: 'iPhone 99' }, emptyEnv))
+        .rejects.toThrow('Unknown device "iPhone 99"');
+    await expect(resolveCLIConfigForMCP({ device: 'iPhone 99', userAgent: 'custom-agent' }, emptyEnv))
+        .rejects.toThrow('Unknown device "iPhone 99"');
   });
 });
 
