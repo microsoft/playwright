@@ -75,7 +75,7 @@ test('browser_evaluate (element)', async ({ client, server }) => {
   });
 });
 
-test('browser_evaluate object', async ({ client, server }) => {
+test('browser_evaluate object', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-mcp/issues/1838' } }, async ({ client, server }) => {
   expect(await client.callTool({
     name: 'browser_navigate',
     arguments: { url: server.HELLO_WORLD },
@@ -92,6 +92,53 @@ test('browser_evaluate object', async ({ client, server }) => {
     result: JSON.stringify({ title: 'Title', url: server.HELLO_WORLD }, null, 2),
     code: `await page.evaluate('() => ({ title: document.title, url: document.URL })');`,
   });
+
+  expect(await client.callTool({
+    name: 'browser_evaluate',
+    arguments: {
+      function: `() => {
+        window.evaluationCount = (window.evaluationCount || 0) + 1;
+        const result = {
+          bigint: 10n,
+          regexp: /ab+c/i,
+          date: new Date('2026-01-01T00:00:00Z'),
+          numbers: [NaN, Infinity, -Infinity, -0],
+          missing: undefined,
+          nested: { a: { b: { c: { d: 'value' } } } },
+        };
+        result.self = result;
+        return result;
+      }`,
+    },
+  })).toHaveResponse({
+    result: `<ref *1> {
+  bigint: 10n,
+  regexp: /ab+c/i,
+  date: 2026-01-01T00:00:00.000Z,
+  numbers: [
+    NaN,
+    Infinity,
+    -Infinity,
+    -0
+  ],
+  missing: undefined,
+  nested: {
+    a: {
+      b: {
+        c: {
+          d: 'value'
+        }
+      }
+    }
+  },
+  self: [Circular *1]
+}`,
+    isError: undefined,
+  });
+  expect(await client.callTool({
+    name: 'browser_evaluate',
+    arguments: { function: '() => window.evaluationCount' },
+  })).toHaveResponse({ result: '1' });
 });
 
 test('browser_evaluate expression', async ({ client, server }) => {

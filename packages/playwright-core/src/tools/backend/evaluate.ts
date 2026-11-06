@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import { inspect } from 'util';
+
 import * as z from 'zod';
 import { escapeWithQuotes } from '@isomorphic/stringUtils';
 
@@ -67,13 +69,33 @@ const evaluate = defineTabTool({
       else
         response.addCode(`await page.evaluate(${escapeWithQuotes(codeExpression)});`);
 
-      const text = JSON.stringify(evalResult.result, null, 2) ?? 'undefined';
+      const text = isJSONValue(evalResult.result) ? JSON.stringify(evalResult.result, null, 2) : inspect(evalResult.result, {
+        depth: null,
+        maxArrayLength: null,
+        maxStringLength: null,
+        compact: false,
+        colors: false,
+        customInspect: false,
+      });
       await response.addResult('Evaluation result', text, { prefix: 'result', ext: 'json', suggestedFilename: params.filename });
     }).catch(e => {
       response.addError(e instanceof Error ? e.message : String(e));
     });
   },
 });
+
+function isJSONValue(value: unknown, seen = new Set<object>()): boolean {
+  if (value === null || typeof value === 'string' || typeof value === 'boolean')
+    return true;
+  if (typeof value === 'number')
+    return Number.isFinite(value) && !Object.is(value, -0);
+  if (typeof value !== 'object' || seen.has(value))
+    return false;
+  if (!Array.isArray(value) && Object.getPrototypeOf(value) !== Object.prototype)
+    return false;
+  seen.add(value);
+  return Object.values(value).every(item => isJSONValue(item, seen));
+}
 
 export default [
   evaluate,
