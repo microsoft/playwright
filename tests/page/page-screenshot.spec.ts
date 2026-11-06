@@ -21,6 +21,7 @@ import { verifyViewport, attachFrame } from '../config/utils';
 import type { Route } from 'playwright-core';
 import path from 'path';
 import fs from 'fs';
+import { PNG } from 'pngjs';
 import { comparePNGs } from '../config/comparator';
 import { utils } from '../../packages/playwright-core/lib/coreBundle';
 
@@ -234,6 +235,21 @@ it.describe('page screenshot', () => {
       fullPage: true
     });
     expect(screenshot).toMatchSnapshot('screenshot-grid-fullpage.png');
+  });
+
+  it('SS-097 should take fullPage screenshots of SVG documents', {
+    annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43962' },
+  }, async ({ page, server }) => {
+    await page.setViewportSize({ width: 500, height: 500 });
+    server.setRoute('/full-page.svg', (request, response) => {
+      response.setHeader('Content-Type', 'image/svg+xml');
+      response.end('<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1000"><rect width="800" height="1000" fill="orange"/></svg>');
+    });
+    await page.goto(server.PREFIX + '/full-page.svg');
+    const svgScreenshot = PNG.sync.read(await page.screenshot({ fullPage: true }));
+    expect(svgScreenshot.width).toBe(800);
+    expect(svgScreenshot.height).toBe(1000);
+    expect([...svgScreenshot.data.subarray(-4)]).toEqual([255, 165, 0, 255]);
   });
 
   it('SS-012 should take fullPage screenshots and mask elements outside of it', async ({ page, server }) => {
