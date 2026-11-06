@@ -136,11 +136,9 @@ export async function resolveCLIConfigForMCP(cliOptions: CLIOptions, env?: NodeJ
   const envOverrides = configFromEnv(env);
   const cliOverrides = configFromCLIOptions(cliOptions);
   const configFile = cliOverrides.configFile ?? envOverrides.configFile;
-  const configInFile = await loadConfig(configFile);
-  const configDir = configFile ? path.dirname(path.resolve(configFile)) : process.cwd();
 
   let result = defaultConfig;
-  result = mergeConfig(result, resolveConfigPaths(configInFile, configDir));
+  result = mergeConfig(result, await loadConfig(configFile));
   result = mergeConfig(result, resolveConfigPaths(envOverrides, process.cwd()));
   result = mergeConfig(result, resolveConfigPaths(cliOverrides, process.cwd()));
 
@@ -185,16 +183,11 @@ export async function resolveCLIConfigForCLI(daemonProfilesDir: string, sessionN
 
   const envOverrides = configFromEnv(env);
   const configFile = daemonOverrides.configFile ?? envOverrides.configFile;
-  const configInFile = await loadConfig(configFile);
-  const configDir = configFile ? path.dirname(path.resolve(configFile)) : process.cwd();
-  const globalConfigPath = path.join((env ?? process.env)['PWTEST_CLI_GLOBAL_CONFIG'] ?? os.homedir(), '.playwright', 'cli.config.json');
-  const globalConfigExists = fs.existsSync(globalConfigPath);
-  const globalConfigInFile = await loadConfig(globalConfigExists ? globalConfigPath : undefined);
-  const globalConfigDir = globalConfigExists ? path.dirname(globalConfigPath) : process.cwd();
+  const globalConfigFile = path.join((env ?? process.env)['PWTEST_CLI_GLOBAL_CONFIG'] ?? os.homedir(), '.playwright', 'cli.config.json');
 
   let result = defaultConfig;
-  result = mergeConfig(result, resolveConfigPaths(globalConfigInFile, globalConfigDir));
-  result = mergeConfig(result, resolveConfigPaths(configInFile, configDir));
+  result = mergeConfig(result, await loadConfig(fs.existsSync(globalConfigFile) ? globalConfigFile : undefined));
+  result = mergeConfig(result, await loadConfig(configFile));
   result = mergeConfig(result, resolveConfigPaths(envOverrides, process.cwd()));
   result = mergeConfig(result, resolveConfigPaths(daemonOverrides, process.cwd()));
 
@@ -218,12 +211,11 @@ export async function resolveCLIConfigForCLI(daemonProfilesDir: string, sessionN
   return { ...result, browser, configFile, skillMode: true };
 }
 
-export function resolveExtensionOptions(cliOptions: CLIOptions): { channel: string, executablePath?: string, profileDirName?: string } {
+export function resolveExtensionOptions(cliOptions: CLIOptions): { channel: string, profileDirName?: string } {
   const browser = cliOptions.browser ?? envToString(process.env.PLAYWRIGHT_MCP_BROWSER);
   const { channel } = resolveBrowserParam(browser);
-  const executablePath = cliOptions.executablePath ?? envToString(process.env.PLAYWRIGHT_MCP_EXECUTABLE_PATH);
   const profileDirName = cliOptions.profileDirName ?? envToString(process.env.PLAYWRIGHT_MCP_PROFILE_DIR_NAME);
-  return { channel: channel ?? 'chrome', executablePath, profileDirName };
+  return { channel: channel ?? 'chrome', profileDirName };
 }
 
 async function validateBrowserConfig(browser: MergedConfig['browser']): Promise<FullConfig['browser']> {
@@ -494,7 +486,15 @@ export function configFromEnv(env?: NodeJS.ProcessEnv): Config & { configFile?: 
 export async function loadConfig(configFile: string | undefined): Promise<Config> {
   if (!configFile)
     return {};
+  const config = await parseConfigFile(configFile);
+  // Relative paths are resolved against the directory of the file, or of its
+  // target when the file is a symlink.
+  const file = path.resolve(configFile);
+  const realFile = fs.lstatSync(file).isSymbolicLink() ? fs.realpathSync(file) : file;
+  return resolveConfigPaths(config, path.dirname(realFile));
+}
 
+async function parseConfigFile(configFile: string): Promise<Config> {
   if (configFile.endsWith('.ini'))
     return configFromIniFile(configFile);
 
@@ -512,11 +512,27 @@ export async function loadConfig(configFile: string | undefined): Promise<Config
   }
 }
 
-// initPage/initScript paths are resolved against a per-source base dir
+// File paths are resolved against a per-source base dir
 // (config-file dir for entries loaded from a --config file, cwd for entries
-// supplied via CLI flags or PLAYWRIGHT_MCP_INIT_* env vars) so they keep
+// supplied via CLI flags or PLAYWRIGHT_MCP_* env vars) so they keep
 // working when the CLI is invoked from a different cwd.
 function resolveConfigPaths(config: Config, baseDir: string): Config {
+  const resolve = <T extends object>(object: T | undefined, ...keys: (keyof T)[]) => {
+    for (const key of keys) {
+      const value = object?.[key];
+      if (value && typeof value === 'string')
+        object![key] = path.resolve(baseDir, value) as T[keyof T];
+    }
+  };
+  resolve(config, 'outputDir');
+  resolve(config.browser, 'userDataDir');
+  resolve(config.browser?.launchOptions, 'executablePath', 'tracesDir', 'downloadsPath', 'artifactsDir');
+  // An inline storage state object is kept as is.
+  resolve(config.browser?.contextOptions, 'storageState');
+  resolve(config.browser?.contextOptions?.recordHar, 'path');
+  resolve(config.browser?.contextOptions?.recordVideo, 'dir');
+  for (const certificate of config.browser?.contextOptions?.clientCertificates ?? [])
+    resolve(certificate, 'certPath', 'keyPath', 'pfxPath');
   if (config.browser?.initPage)
     config.browser.initPage = config.browser.initPage.map(p => path.resolve(baseDir, p));
   if (config.browser?.initScript)

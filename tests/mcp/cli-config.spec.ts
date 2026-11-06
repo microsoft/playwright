@@ -29,6 +29,24 @@ test('user-data-dir', async ({ cli, server }, testInfo) => {
   expect(fs.existsSync(testInfo.outputPath('my-data-dir'))).toBe(true);
 });
 
+test('project config resolves relative paths against .playwright', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-mcp/issues/1836' },
+}, async ({ cli, server }, testInfo) => {
+  const config = {
+    outputDir: 'artifacts',
+    browser: {
+      userDataDir: 'my-data-dir',
+    },
+  };
+  await fs.promises.writeFile(testInfo.outputPath('.playwright', 'cli.config.json'), JSON.stringify(config, null, 2));
+  await cli('open', server.PREFIX);
+  const { output } = await cli('config-print');
+  const printed = JSON.parse(output.slice(output.indexOf('{')));
+  expect(printed.outputDir).toBe(testInfo.outputPath('.playwright', 'artifacts'));
+  expect(printed.browser.userDataDir).toBe(testInfo.outputPath('.playwright', 'my-data-dir'));
+  expect(fs.existsSync(testInfo.outputPath('.playwright', 'my-data-dir'))).toBe(true);
+});
+
 test('context options', async ({ cli, server }, testInfo) => {
   const config = {
     browser: {
