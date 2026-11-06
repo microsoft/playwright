@@ -28,7 +28,7 @@ reaches a repo when its pin moves.
 | [`ci-env`](../actions/ci-env/action.yml) | Exports `CI_ENV_EXEC`, a wrapper that runs a command under xvfb on Linux and at normal I/O priority on Windows, and `CI_ENV_WINDOWS_NORMAL_IO`, the PowerShell script behind it. The test workflows use it too. | none |
 | [`run-agent`](../actions/run-agent/action.yml) | Copies the guides and `calls.d.ts` to `$AGENT_GUIDES_DIR`, runs the Copilot CLI with the prompt, puts the agent's `summary.md` into the run summary, uploads the output directory as an artifact and reports whether the result file exists. | the workflow token, for the Copilot requests and, when `github-tools` is `true`, for the GitHub tools |
 | [`collect-review`](../actions/collect-review/action.yml) | Writes the context of the revision to `review.json` and uploads it: the issue that the PR closes, or that its branch names, with its comments; the PR, with its description and commits; and the comments, reviews and unresolved threads on the PR. Only the comments of people with write access and of the bot get through. Fails when the maintainers left nothing to address. | the workflow token, to read the PR, the issue and the collaborators |
-| [`publish-calls`](../actions/publish-calls/action.yml) | Reads the agent's `calls.json`, checks every call against the schema and the Playwright repos, and makes none of them when one fails. Then opens the draft PR, pushes to the branch of a PR, files an issue, comments and replies in review threads, in that order, with the texts as the agent wrote them. See [The calls](#the-calls). | the app token |
+| [`publish-calls`](../actions/publish-calls/action.yml) | Reads the agent's `calls.json`, checks every call against the schema and the Playwright repos, and makes none of them when one fails. Then opens the draft PR, pushes to the branch of a PR, files an issue, comments, replies in review threads and posts a review, in that order, with the texts as the agent wrote them. See [The calls](#the-calls). | the app token |
 
 `run-agent` runs the Copilot CLI with all tools and paths allowed and no questions to the user, with
 a model and a credit budget that the workflow can override. `github-tools: true` gives the agent
@@ -97,6 +97,7 @@ checks in `publish-calls.ts` are written by hand; keep them in line with `calls.
 | `issue` | `repo`, `title`, `body` or `bodyFile`, `labels`, `filedFor` | Uses an open issue whose text has the `filedFor` URL, or files one with the labels that the repo has. |
 | `comment` | `repo`, `issue`, `body` or `bodyFile` | Posts the text, with `{{pull-request}}` and `{{issue}}` replaced by the URLs of what the calls before it opened, or by a note when they failed. |
 | `reply` | `repo`, `pullRequest`, `comment`, `body` or `bodyFile` | Checks that the comment is in a review thread of that PR, and replies to the thread. One reply per thread. |
+| `review` | `repo`, `pullRequest`, `commit`, `body` or `bodyFile`, `comments` | Posts a review with the state `COMMENT`, which never approves or blocks the PR, with the comments on lines of the diff at `commit`. When GitHub refuses a line, it posts the comments at the end of the text. The PR review workflow of `playwright-browsers` uses it. |
 
 The agent writes every text that is posted, with the footer that names the bot and links the run,
 and the branch, the commit body, the labels and `onto`. The guides and the skills say what to put
@@ -106,19 +107,20 @@ The checks, before any call runs:
 
 - **The shape.** Only the keys above, with the right types. Titles are one line of at most 256
   characters. A file is a regular file inside the output directory, named by a relative path
-  without `..`. At most one `pull-request`, one `push` and one `issue`, one comment per issue, one
+  without `..`. At most one `pull-request`, one `push`, one `issue` and one `review`, one comment per issue, one
   reply per comment.
 - **The family.** `repo` is `microsoft/playwright` or `microsoft/playwright-<name>`, so that a
   mistake files nothing on someone else's repo. A pull request and a push go only to the repo of
   the run, which is the checkout.
 - **The scope, when the workflow gives one.** `scope-kinds` lists the kinds that the run may make.
   `scope-issue` is the one issue that comments may target. `scope-pull-request` is the one PR that
-  the push, the replies and the comments may target. The workflows give none today.
+  the push, the replies, the review and the comments may target. Only the PR review workflow of
+  `playwright-browsers` gives them today.
 
 The checks are there to catch mistakes, not to stop an agent that wants to do harm: what the calls
 do is visible and can be undone. When a check fails, no call runs, and the job fails. The calls run
 in a fixed order, whatever the order in the file: `pull-request`, `push`, `issue`, `comment`,
-`reply`. When a call fails at run time, the others still run, except that a failed push skips the
+`reply`, `review`. When a call fails at run time, the others still run, except that a failed push skips the
 comments and replies on its PR, and the job fails at the end.
 
 ## The Issue triage workflow

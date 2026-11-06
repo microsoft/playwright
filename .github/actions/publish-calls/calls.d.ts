@@ -35,12 +35,12 @@
 //   regular file in $OUTPUT_DIR, not a link.
 // - A title is one line of at most 256 characters. A text has at most 65536 characters.
 // - A label that the repo does not have is dropped.
-// - At most one call of each kind `pull-request`, `push` and `issue`, at most one comment on each
-//   issue, and at most one reply to each comment.
+// - At most one call of each kind `pull-request`, `push`, `issue` and `review`, at most one comment
+//   on each issue, and at most one reply to each comment.
 //
 // What the job does with the calls:
 // - It makes them in this order, whatever their order in the file: pull-request, push, issue,
-//   comment, reply.
+//   comment, reply, review.
 // - In a comment, it replaces `{{pull-request}}` with the URL of the PR that the pull-request call
 //   opened, and `{{issue}}` with the URL of the issue that the issue call filed or found. When that
 //   call failed, or there is none, it puts a note that says so instead. You cannot know these URLs
@@ -70,7 +70,7 @@
 // publish-calls.ts in microsoft/playwright/.github/actions/publish-calls/ imports these types and
 // makes the checks.
 
-export type Call = PullRequest | Push | Issue | Comment | Reply;
+export type Call = PullRequest | Push | Issue | Comment | Reply | Review;
 
 export type Kind = Call['call'];
 
@@ -148,4 +148,27 @@ export type Reply = Text & {
   pullRequest: number;
   /** The id of a comment in the thread, from review.json. */
   comment: number;
+};
+
+/** Posts a review of a PR: a text, and comments on lines of its diff. A review from the bot never
+ * approves a PR or requests changes. The text has the footer, and the comments need none. */
+export type Review = Text & {
+  call: 'review';
+  repo: string;
+  pullRequest: number;
+  /** The commit that you reviewed, as a full sha. The lines of the comments are in its diff. */
+  commit: string;
+  /** At most 50. GitHub refuses a review with a line outside the diff of the PR. The job then posts
+   * the review without them, and with these comments at the end of the text. */
+  comments?: ReviewComment[];
+};
+
+/** A comment on one line of the diff of a PR. */
+export type ReviewComment = {
+  /** The path of the file in the repo. */
+  path: string;
+  /** The line number in the file at the commit of the review: an added line or a context line. */
+  line: number;
+  /** The markdown of the comment. */
+  body: string;
 };

@@ -2,11 +2,13 @@ name: 'Publish the calls'
 description: >
   Makes the calls that an agent left in calls.json in its output directory, from a job that has
   write credentials and never runs the agent's code: open a draft pull request, push to the branch
-  of a pull request, file an issue, comment on an issue or a pull request, reply in a review thread.
+  of a pull request, file an issue, comment on an issue or a pull request, reply in a review thread,
+  post a review.
   Everything that is posted comes from the calls. To catch mistakes, every call is checked before
   any of them runs: its shape, and its repo, which must be microsoft/playwright or
   microsoft/playwright-<name>. A scope-* input limits the calls more. When one call fails a check,
-  none of them runs. The calls run in a fixed order: pull request, push, issue, comment, reply.
+  none of them runs. The calls run in a fixed order: pull request, push, issue, comment, reply,
+  review.
   calls.d.ts has the types of the file, and the agent reads it too: run-agent copies it to the
   guides. publish-calls.ts has the checks. The job checks out the repo of the run at the commit
   that the patch of a pull-request or push call is against. A pull request in another Playwright
@@ -28,7 +30,7 @@ inputs:
     required: false
     default: ''
   scope-pull-request:
-    description: 'Number of the only pull request in this repo that the push, the replies and the comments may target'
+    description: 'Number of the only pull request in this repo that the push, the replies, the review and the comments may target'
     required: false
     default: ''
 outputs:
@@ -44,6 +46,9 @@ outputs:
   comment:
     description: 'true when a comment was posted'
     value: ${{ steps.publish.outputs.comment }}
+  review:
+    description: 'URL of the review, when one was posted'
+    value: ${{ steps.publish.outputs.review }}
 runs:
   using: composite
   steps:
