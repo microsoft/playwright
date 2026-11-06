@@ -1,0 +1,47 @@
+name: "promote release - npm dist-tags"
+
+# publish_release.yml publishes every package under "<tag>-pending" (next-pending, beta-pending or
+# latest-pending) and leaves <tag> where it is. This moves <tag> to the new version once npm has made
+# all of the packages live, so next, beta and latest never point at a package whose dependency is
+# still missing. To retry, run it by hand with the ID of the publish run.
+
+on:
+  workflow_run:
+    workflows: ["publish release - npm, trace viewer"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: "ID of the publish release run to promote"
+        required: true
+
+jobs:
+  promote-npm:
+    name: "move the npm dist-tag"
+    runs-on: ubuntu-24.04
+    if: github.repository == 'microsoft/playwright'
+    timeout-minutes: 330
+    permissions:
+      id-token: write  # This is required for OIDC login (npm dist-tag) to succeed
+      actions: read    # This is required to download npm-publish.json from the publish run
+      contents: read   # This is required for actions/checkout to succeed
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+    - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      with:
+        node-version: lts/*
+        registry-url: 'https://registry.npmjs.org'
+    # npm dist-tag supports OIDC login from npm 11.21.0.
+    - run: npm install -g npm@11.21.1
+    # The publish run uploads npm-publish.json only after it published every package. Runs that publish
+    # nothing, and release branches that still publish straight to <tag>, have none.
+    - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+      id: manifest
+      continue-on-error: true
+      with:
+        name: npm-publish
+        run-id: ${{ inputs.run_id || github.event.workflow_run.id }}
+        github-token: ${{ github.token }}
+    - name: Move the dist-tag once all packages are live
+      if: steps.manifest.outcome == 'success'
+      run: node utils/promote_npm_packages.js npm-publish.json
