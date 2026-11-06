@@ -234,7 +234,7 @@ async function parseCLI() {
         die(`\n  ERROR: package-lock.json lockfileVersion must be 3`);
     },
     '--list-public-package-paths': () => {
-      // Dependency order: publishing relies on it to never publish a package before its dependencies.
+      // Dependency order: packages are published, and their dist-tags moved, after their dependencies.
       for (const pkg of workspace.publicPackagesInDependencyOrder())
         console.log(pkg.path);
     },

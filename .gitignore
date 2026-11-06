@@ -42,3 +42,4 @@ playwright.env
 /firefox/
 .playwright/
 .npmrc
+/npm-publish.json
