@@ -339,6 +339,40 @@ test('browser_network_request response-body part saves binary to a file', async 
   expect(fs.readFileSync(bodyPath)).toEqual(pngBytes);
 });
 
+test('browser_network_request does not offer a response body for a redirect', async ({ client, server }) => {
+  server.setContent('/', `
+    <button onclick="fetch('/old')">Click me</button>
+  `, 'text/html');
+  server.setRedirect('/old', '/api');
+  server.setRoute('/api', (_req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify({ name: 'John Doe' }));
+  });
+
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX },
+  });
+
+  await client.callTool({
+    name: 'browser_click',
+    arguments: { element: 'Click me button', target: 'e2' },
+  });
+
+  const list = parseResponse(await client.callTool({
+    name: 'browser_network_requests',
+  }));
+  const match = list!.result!.match(/^(\d+)\. \[GET\] [^ ]+\/old => \[302\]/m);
+  expect(match).not.toBeNull();
+
+  const detail = parseResponse(await client.callTool({
+    name: 'browser_network_request',
+    arguments: { index: Number(match![1]) },
+  }));
+  expect(detail!.result).toContain('status:    [302]');
+  expect(detail!.result).not.toContain('part="response-body"');
+});
+
 test('browser_network_request rejects out-of-range index', async ({ client, server }) => {
   await client.callTool({
     name: 'browser_navigate',
