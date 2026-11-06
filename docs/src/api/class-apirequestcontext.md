@@ -272,7 +272,10 @@ context cookies from the response. The method will automatically follow redirect
 ### option: APIRequestContext.delete.headers = %%-js-python-csharp-fetch-option-headers-%%
 * since: v1.16
 
-### option: APIRequestContext.delete.data = %%-js-python-csharp-fetch-option-data-%%
+### option: APIRequestContext.delete.data = %%-js-fetch-option-data-%%
+* since: v1.17
+
+### option: APIRequestContext.delete.data = %%-python-csharp-fetch-option-data-%%
 * since: v1.17
 
 ### option: APIRequestContext.delete.form = %%-js-fetch-option-form-%%
@@ -451,7 +454,10 @@ If set changes the fetch method (e.g. [PUT](https://developer.mozilla.org/en-US/
 ### option: APIRequestContext.fetch.headers = %%-js-python-csharp-fetch-option-headers-%%
 * since: v1.16
 
-### option: APIRequestContext.fetch.data = %%-js-python-csharp-fetch-option-data-%%
+### option: APIRequestContext.fetch.data = %%-js-fetch-option-data-%%
+* since: v1.16
+
+### option: APIRequestContext.fetch.data = %%-python-csharp-fetch-option-data-%%
 * since: v1.16
 
 ### option: APIRequestContext.fetch.form = %%-js-fetch-option-form-%%
@@ -566,7 +572,10 @@ await request.GetAsync("https://example.com/api/getText", new() { Params = query
 ### option: APIRequestContext.get.headers = %%-js-python-csharp-fetch-option-headers-%%
 * since: v1.16
 
-### option: APIRequestContext.get.data = %%-js-python-csharp-fetch-option-data-%%
+### option: APIRequestContext.get.data = %%-js-fetch-option-data-%%
+* since: v1.26
+
+### option: APIRequestContext.get.data = %%-python-csharp-fetch-option-data-%%
 * since: v1.26
 
 ### option: APIRequestContext.get.form = %%-js-fetch-option-form-%%
@@ -633,7 +642,10 @@ context cookies from the response. The method will automatically follow redirect
 ### option: APIRequestContext.head.headers = %%-js-python-csharp-fetch-option-headers-%%
 * since: v1.16
 
-### option: APIRequestContext.head.data = %%-js-python-csharp-fetch-option-data-%%
+### option: APIRequestContext.head.data = %%-js-fetch-option-data-%%
+* since: v1.26
+
+### option: APIRequestContext.head.data = %%-python-csharp-fetch-option-data-%%
 * since: v1.26
 
 ### option: APIRequestContext.head.form = %%-python-fetch-option-form-%%
@@ -700,7 +712,10 @@ context cookies from the response. The method will automatically follow redirect
 ### option: APIRequestContext.patch.headers = %%-js-python-csharp-fetch-option-headers-%%
 * since: v1.16
 
-### option: APIRequestContext.patch.data = %%-js-python-csharp-fetch-option-data-%%
+### option: APIRequestContext.patch.data = %%-js-fetch-option-data-%%
+* since: v1.16
+
+### option: APIRequestContext.patch.data = %%-python-csharp-fetch-option-data-%%
 * since: v1.16
 
 ### option: APIRequestContext.patch.form = %%-js-fetch-option-form-%%
@@ -888,7 +903,10 @@ await request.PostAsync("https://example.com/api/uploadScript", new() { Multipar
 ### option: APIRequestContext.post.headers = %%-js-python-csharp-fetch-option-headers-%%
 * since: v1.16
 
-### option: APIRequestContext.post.data = %%-js-python-csharp-fetch-option-data-%%
+### option: APIRequestContext.post.data = %%-js-fetch-option-data-%%
+* since: v1.16
+
+### option: APIRequestContext.post.data = %%-python-csharp-fetch-option-data-%%
 * since: v1.16
 
 ### option: APIRequestContext.post.form = %%-js-fetch-option-form-%%
@@ -955,7 +973,10 @@ context cookies from the response. The method will automatically follow redirect
 ### option: APIRequestContext.put.headers = %%-js-python-csharp-fetch-option-headers-%%
 * since: v1.16
 
-### option: APIRequestContext.put.data = %%-js-python-csharp-fetch-option-data-%%
+### option: APIRequestContext.put.data = %%-js-fetch-option-data-%%
+* since: v1.16
+
+### option: APIRequestContext.put.data = %%-python-csharp-fetch-option-data-%%
 * since: v1.16
 
 ### option: APIRequestContext.put.form = %%-python-fetch-option-form-%%
