@@ -145,7 +145,7 @@ const pathSeparator = process.platform === 'win32' ? ';' : ':';
 const builtins = new Set(Module.builtinModules);
 
 export function resolveHook(filename: string, specifier: string): string | undefined {
-  if (specifier.startsWith('node:') || specifier.startsWith('file:') || builtins.has(specifier))
+  if (specifier.startsWith('node:') || builtins.has(specifier))
     return;
   if (!shouldTransform(filename))
     return;
@@ -336,41 +336,25 @@ export function installTransformIfNeeded() {
   registerESMLoader();
   cc.installSourceMapSupport();
 
-  // Node 22 resolves require() inside imported CommonJS through _resolveFilename
-  // before consulting the registered synchronous hooks.
-  installCJSResolveHook();
-
   // Async ESM loader ony covers "import", so install CJS hooks to cover "require".
   if (loaderChannel) {
-    installCJSLoadHook();
+    installCJSHooks();
     return;
   }
 
-  // When resolveHook does not map a specifier, for example in `require.resolve(id, { paths })`,
-  // Node's default resolver probes extensions. The mere presence of these dummy loaders
-  // teaches it that our extensions should be considered.
+  // Sync hooks intercept `require()`, but not the `require.resolve(id, { paths })` form.
+  // The mere presence of these dummy loaders teaches the default resolver that our extensions
+  // should be considered.
+  // Hopefully, one day `registerHooks({ resolve })` will also handle `require.resolve()`.
   const extensions = (Module as any)._extensions;
   for (const ext of ['.ts', '.cts', '.tsx', '.jsx'])
     extensions[ext] = extensions['.js'];
 }
 
-let resolvingViaSyncHooks = false;
-
-// Sync hooks run resolveHook before Node calls _resolveFilename, so the wrapper must not run it again.
-export function resolveViaSyncHooks<T>(callback: () => T): T {
-  const previous = resolvingViaSyncHooks;
-  resolvingViaSyncHooks = true;
-  try {
-    return callback();
-  } finally {
-    resolvingViaSyncHooks = previous;
-  }
-}
-
-function installCJSResolveHook() {
+function installCJSHooks() {
   const originalResolveFilename = (Module as any)._resolveFilename;
   function resolveFilename(this: any, specifier: string, parent: Module, ...rest: any[]) {
-    if (parent?.filename && !resolvingViaSyncHooks) {
+    if (parent) {
       const resolved = resolveHook(parent.filename, specifier);
       if (resolved !== undefined)
         specifier = resolved;
@@ -378,9 +362,7 @@ function installCJSResolveHook() {
     return originalResolveFilename.call(this, specifier, parent, ...rest);
   }
   (Module as any)._resolveFilename = resolveFilename;
-}
 
-function installCJSLoadHook() {
   addHook((code, filename) => {
     return transformHook(code, filename).code;
   }, shouldTransform, kTransformedExtensions);
