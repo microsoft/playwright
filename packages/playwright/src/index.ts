@@ -39,7 +39,7 @@ import type { BrowserContext as BrowserContextImpl } from '../../playwright-core
 import type { APIRequestContext as APIRequestContextImpl, NewContextOptions as APIRequestContextOptions } from '../../playwright-core/src/client/fetch';
 import type { ChannelOwner } from '../../playwright-core/src/client/channelOwner';
 import type { Page as PageImpl } from '../../playwright-core/src/client/page';
-import type { BrowserContext, BrowserContextOptions, LaunchOptions, Page, Tracing } from 'playwright-core';
+import type { BrowserContext, BrowserContextOptions, LaunchOptions, Tracing } from 'playwright-core';
 
 export { expect } from './matchers/expect';
 export const _baseTest: TestType<{}, {}> = testType.rootTestType.test;
@@ -73,22 +73,23 @@ type WorkerFixtures = PlaywrightWorkerArgs & PlaywrightWorkerOptions & {
 
 // Note: utility fixtures and _utilityTest are reused in electron package. Be mindful when changing them.
 type UtilityTestFixtures = Pick<TestFixtures, 'testIdAttribute' | 'request' | '_combinedContextOptions' | '_setupArtifacts'>;
-type UtilityWorkerFixtures = Pick<WorkerFixtures, 'playwright' | 'screenshot' | 'trace'>;
+type UtilityWorkerFixtures = Pick<WorkerFixtures, 'playwright' | 'screenshot' | 'trace' | 'video'>;
 const utilityFixtures: Fixtures<UtilityTestFixtures, UtilityWorkerFixtures> = {
   playwright: [async ({}, use) => {
     await use(require('playwright-core'));
   }, { scope: 'worker', box: true }],
   screenshot: ['off', { scope: 'worker', option: true, box: true }],
   trace: ['off', { scope: 'worker', option: true, box: true }],
+  video: ['off', { scope: 'worker', option: true, box: true }],
   testIdAttribute: ['data-testid', { option: true, box: true }],
   _combinedContextOptions: [{}, { box: true }],
-  _setupArtifacts: [async ({ playwright, screenshot, _combinedContextOptions }, use, testInfo) => {
+  _setupArtifacts: [async ({ playwright, screenshot, video, _combinedContextOptions }, use, testInfo) => {
     // This fixture has a separate zero-timeout slot to ensure that artifact collection
     // happens even after some fixtures or hooks time out.
     // Now that default test timeout is known, we can replace zero with an actual value.
     testInfo.setTimeout(testInfo.project.timeout);
 
-    const artifactsRecorder = new ArtifactsRecorder(playwright, tracing().artifactsDir(), screenshot);
+    const artifactsRecorder = new ArtifactsRecorder(playwright, tracing().artifactsDir(), screenshot, video);
     await artifactsRecorder.willStartTest(testInfo as TestInfoImpl);
 
     const tracingGroupSteps: TestStepInternal[] = [];
@@ -216,7 +217,6 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
   connectOptions: [async ({ _optionConnectOptions }, use) => {
     await use(connectOptionsFromEnv() || _optionConnectOptions);
   }, { scope: 'worker', option: true, box: true }],
-  video: ['off', { scope: 'worker', option: true, box: true }],
 
   _browserOptions: [async ({ playwright, headless, channel, launchOptions }, use) => {
     const options: LaunchOptions = {
@@ -401,12 +401,9 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
     playwright._defaultContextNavigationTimeout = undefined;
   }, { auto: 'all-hooks-included',  title: 'context configuration', box: true } as any],
 
-  _contextFactory: [async ({ browser, video, _reuseContext, _combinedContextOptions /** mitigate dep-via-auto lack of traceability */ }, use, testInfo) => {
+  _contextFactory: [async ({ browser, _combinedContextOptions /** mitigate dep-via-auto lack of traceability */ }, use, testInfo) => {
     const testInfoImpl = testInfo as TestInfoImpl;
-    const videoMode = normalizeVideoMode(video);
-    const captureVideo = shouldCaptureVideo(videoMode, testInfo) && !_reuseContext;
-    const contexts = new Map<BrowserContext, { close: () => Promise<void>, pagesWithVideo: Page[] }>();
-    let counter = 0;
+    const closeCallbacks: (() => Promise<void>)[] = [];
 
     await use(async options => {
       const hook = testInfoImpl._currentHookType();
@@ -417,16 +414,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
           `If you would like to configure your page before each test, do that in beforeEach hook instead.`,
         ].join('\n'));
       }
-      const show = typeof video === 'string' ? undefined : video.show;
-      const videoOptions: BrowserContextOptions = captureVideo ? {
-        recordVideo: {
-          dir: tracing().artifactsDir(),
-          size: typeof video === 'string' ? undefined : video.size,
-          fps: typeof video === 'string' ? undefined : video.fps,
-          showActions: show?.actions,
-        }
-      } : {};
-      const context = await browser.newContext({ ...videoOptions, ...options }) as BrowserContextImpl;
+      const context = await browser.newContext(options);
 
       let closed = false;
       const close = async () => {
@@ -435,31 +423,12 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
         closed = true;
         const closeReason = testInfo.status === 'timedOut' ? 'Test timeout of ' + testInfo.timeout + 'ms exceeded.' : 'Test ended.';
         await context.close({ reason: closeReason });
-        const preserveVideo = captureVideo && shouldPreserveVideo(videoMode, testInfo);
-        if (preserveVideo) {
-          const { pagesWithVideo: pagesForVideo } = contexts.get(context)!;
-          const videos = pagesForVideo.map(p => p.video()).filter(video => !!video);
-          await Promise.all(videos.map(async v => {
-            try {
-              const savedPath = testInfo.outputPath(`video${counter ? '-' + counter : ''}.webm`);
-              ++counter;
-              await v.saveAs(savedPath);
-              testInfo.attachments.push({ name: 'video', path: savedPath, contentType: 'video/webm' });
-            } catch (e) {
-              // Silent catch empty videos.
-            }
-          }));
-        }
       };
-
-      const contextData = { close, pagesWithVideo: [] as Page[] };
-      if (captureVideo)
-        context.on('page', page => contextData.pagesWithVideo.push(page));
-      contexts.set(context, contextData);
+      closeCallbacks.push(close);
       return { context, close };
     });
 
-    await Promise.all([...contexts.values()].map(data => data.close()));
+    await Promise.all(closeCallbacks.map(close => close()));
   }, { scope: 'test',  title: 'context', box: true }],
 
   _optionContextReuseMode: ['none', { scope: 'worker', option: true, box: true }],
@@ -475,21 +444,18 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
     await use(reuse);
   }, { scope: 'worker',  title: 'context', box: true }],
 
-  context: async ({ browser, video, _reuseContext, _contextFactory }, use, testInfoPublic) => {
+  context: async ({ browser, _reuseContext, _contextFactory }, use, testInfoPublic) => {
     const browserImpl = browser as BrowserImpl;
     const testInfo = testInfoPublic as TestInfoImpl;
-    const show = typeof video === 'string' ? undefined : video.show;
     attachConnectedHeaderIfNeeded(testInfo, browserImpl);
     if (!_reuseContext) {
       const { context, close } = await _contextFactory();
-      await installScreencastTitleUpdater(testInfo, context, show?.test);
       await use(context);
       await close();
       return;
     }
 
     const context = await browserImpl._wrapApiCall(() => browserImpl._newContextForReuse(), { internal: true });
-    await installScreencastTitleUpdater(testInfo, context, show?.test);
     await use(context);
     const closeReason = testInfo.status === 'timedOut' ? 'Test timeout of ' + testInfo.timeout + 'ms exceeded.' : 'Test ended.';
     await browserImpl._wrapApiCall(() => browserImpl._disconnectFromReusedContext(closeReason), { internal: true });
@@ -538,6 +504,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
 });
 
 type ScreenshotOption = PlaywrightWorkerOptions['screenshot'] | undefined;
+type VideoOption = PlaywrightWorkerOptions['video'] | undefined;
 
 function normalizeVideoMode(video: VideoMode | 'retry-with-video' | { mode: VideoMode } | undefined): VideoMode {
   if (!video)
@@ -729,9 +696,10 @@ class ArtifactsRecorder {
   private _startedCollectingArtifacts: symbol;
 
   private _screenshotRecorder: SnapshotRecorder;
+  private _videoRecorder: VideoRecorder;
   private _pageSnapshot: string | undefined;
 
-  constructor(playwright: PlaywrightImpl, artifactsDir: string, screenshot: ScreenshotOption) {
+  constructor(playwright: PlaywrightImpl, artifactsDir: string, screenshot: ScreenshotOption, video: VideoOption) {
     this._playwright = playwright;
     this._artifactsDir = artifactsDir;
     const screenshotOptions = typeof screenshot === 'string' ? undefined : screenshot;
@@ -742,6 +710,7 @@ class ArtifactsRecorder {
         await page.screenshot({ ...screenshotOptions, timeout: 5000, path, caret: 'initial' });
       }, { internal: true });
     });
+    this._videoRecorder = new VideoRecorder(this, video);
   }
 
   async willStartTest(testInfo: TestInfoImpl) {
@@ -749,6 +718,7 @@ class ArtifactsRecorder {
     testInfo._onDidFinishTestFunctionCallbacks.add(() => this.didFinishTestFunction());
 
     this._screenshotRecorder.fixOrdinal();
+    this._videoRecorder.willStartTest();
 
     // Process existing contexts.
     await Promise.all(this._playwright._allContexts().map(context => this.didCreateBrowserContext(context)));
@@ -759,11 +729,13 @@ class ArtifactsRecorder {
   async didCreateBrowserContext(context: BrowserContextImpl) {
     await this._startTraceChunkOnContextCreation(context, context.tracing);
     await this._startTraceChunkOnContextCreation(context.request, context.request.tracing);
+    await this._videoRecorder.didCreateBrowserContext(context);
   }
 
   async willCloseBrowserContext(context: BrowserContextImpl) {
     await this._stopTracing(context, context.tracing);
     await this._screenshotRecorder.captureTemporary(context);
+    await this._videoRecorder.willCloseBrowserContext(context);
     await this._takePageSnapshot(context);
   }
 
@@ -804,6 +776,7 @@ class ArtifactsRecorder {
 
   async didFinishTest() {
     await this.didFinishTestFunction();
+    await this._videoRecorder.didFinishTest();
 
     const leftoverContexts = this._playwright._allContexts();
     const leftoverApiRequests = Array.from(this._playwright.request._contexts);
@@ -874,46 +847,158 @@ class ArtifactsRecorder {
   }
 }
 
-async function installScreencastTitleUpdater(testInfo: TestInfoImpl, context: BrowserContext, testAnnotate?: { level?: 'file' | 'title' | 'step', position?: string, fontSize?: number }) {
-  if (!testAnnotate)
-    return;
+// Records a separate video for each page during the test, including pages that were
+// created before the test, for example in beforeAll, and are shared between tests.
+class VideoRecorder {
+  private _ordinal = 0;
+  private _mode: VideoMode;
+  private _options: Exclude<VideoOption, string | undefined> | undefined;
+  private _recordings = new Map<PageImpl, { file: string, started: Promise<void> }>();
+  private _temporary: string[] = [];
+  private _removeListeners: (() => void)[] = [];
+  private _overlays = new Map<PageImpl, { dispose(): Promise<void> }>();
+  private _stepStack: string[] = [];
+  private _lastOverlayUpdate = Promise.resolve();
 
-  const testTitle = testAnnotate.level === 'file' ? [testInfo.titlePath[0]] : testInfo.titlePath;
-  const stepStack: string[] = [];
-  const overlays = new Map<Page, { dispose(): Promise<void> }>();
-  const position = testAnnotate.position ?? 'top-left';
-  const fontSize = testAnnotate.fontSize ?? 14;
-  const level = testAnnotate.level ?? 'step';
+  constructor(private _artifactsRecorder: ArtifactsRecorder, video: VideoOption) {
+    this._mode = normalizeVideoMode(video);
+    this._options = typeof video === 'string' ? undefined : video;
+  }
 
-  const doUpdateOverlay = async () => {
-    const parts = level === 'step' ? [...testTitle, ...stepStack] : testTitle;
-    const html = createTestOverlay(parts, position, fontSize);
-    for (const page of context.pages()) {
-      await overlays.get(page)?.dispose();
-      overlays.delete(page);
-      const disposable = await page.screencast.showOverlay(html);
-      overlays.set(page, disposable);
+  willStartTest() {
+    // Since beforeAll(s), test and afterAll(s) reuse the same TestInfo, make sure we do not
+    // overwrite previous videos.
+    this._ordinal = this.testInfo.attachments.filter(a => a.name === 'video').length;
+
+    if (!this._shouldCapture() || !this._options?.show?.test)
+      return;
+    this.testInfo._onUserStepBegin = async title => {
+      this._stepStack.push(title);
+      await this._updateOverlay();
+    };
+    this.testInfo._onUserStepEnd = async () => {
+      this._stepStack.pop();
+      await this._updateOverlay();
+    };
+  }
+
+  async didCreateBrowserContext(context: BrowserContextImpl) {
+    if (!this._shouldCapture())
+      return;
+    const onPage = (page: PageImpl) => {
+      void this._startRecording(page);
+    };
+    context.on('page', onPage);
+    this._removeListeners.push(() => context.off('page', onPage));
+    await Promise.all(context.pages().map(page => this._startRecording(page)));
+  }
+
+  async willCloseBrowserContext(context: BrowserContextImpl) {
+    // Videos can only be saved while the context is open, including videos of the pages that are already closed.
+    const pages = [...this._recordings.keys()].filter(page => page.context() === context);
+    await Promise.all(pages.map(page => this._stopRecording(page)));
+  }
+
+  async didFinishTest() {
+    for (const removeListener of this._removeListeners)
+      removeListener();
+    this._removeListeners = [];
+    await Promise.all([...this._recordings.keys()].map(page => this._stopRecording(page)));
+    await this._disposeOverlays();
+    this.testInfo._onUserStepBegin = undefined;
+    this.testInfo._onUserStepEnd = undefined;
+
+    const preserve = shouldPreserveVideo(this._mode, this.testInfo);
+    for (const file of this._temporary) {
+      if (!preserve) {
+        await fs.promises.unlink(file).catch(() => {});
+        continue;
+      }
+      const videoPath = this.testInfo.outputPath(`video${this._ordinal ? '-' + this._ordinal : ''}.webm`);
+      try {
+        await fs.promises.rename(file, videoPath);
+      } catch {
+        // There is no file when the recording did not start, for example because the page was closed right away.
+        continue;
+      }
+      ++this._ordinal;
+      this.testInfo.attachments.push({ name: 'video', path: videoPath, contentType: 'video/webm' });
     }
-  };
-  let lastUpdate = Promise.resolve();
-  const updateOverlay = () => {
-    const result = lastUpdate.then(doUpdateOverlay);
-    lastUpdate = result.catch(() => {});
-    return result;
-  };
-  testInfo._onUserStepBegin = async title => {
-    stepStack.push(title);
-    await updateOverlay();
-  };
-  testInfo._onUserStepEnd = async () => {
-    stepStack.pop();
-    await updateOverlay();
-  };
+    this._temporary = [];
+  }
 
-  context.on('page', async () => {
-    void updateOverlay();
-  });
-  await updateOverlay();
+  private _shouldCapture() {
+    return shouldCaptureVideo(this._mode, this.testInfo);
+  }
+
+  private _startRecording(page: PageImpl): Promise<void> {
+    const existing = this._recordings.get(page);
+    if (existing)
+      return existing.started;
+    const file = path.join(this._artifactsRecorder._artifactsDir, createGuid() + '.webm');
+    const started = page._wrapApiCall(async () => {
+      const promises = [page.screencast.start({ path: file, size: this._options?.size, fps: this._options?.fps })];
+      if (this._options?.show?.actions)
+        promises.push(page.screencast.showActions(this._options.show.actions));
+      await Promise.all(promises);
+    }, { internal: true }).catch(() => {});
+    this._recordings.set(page, { file, started });
+    if (this._options?.show?.test)
+      void this._updateOverlay();
+    return started;
+  }
+
+  private async _stopRecording(page: PageImpl) {
+    const recording = this._recordings.get(page);
+    if (!recording)
+      return;
+    this._recordings.delete(page);
+    // Keep the videos in the page creation order.
+    this._temporary.push(recording.file);
+    await recording.started;
+    await page._wrapApiCall(async () => {
+      // Stopping the screencast saves the video, even when the page is already closed.
+      await page.screencast.stop();
+      if (this._options?.show?.actions && !page.isClosed())
+        await page.screencast.hideActions();
+    }, { internal: true }).catch(() => {});
+  }
+
+  private _updateOverlay(): Promise<void> {
+    const result = this._lastOverlayUpdate.then(() => this._doUpdateOverlay());
+    this._lastOverlayUpdate = result.catch(() => {});
+    return result;
+  }
+
+  private async _doUpdateOverlay() {
+    const testAnnotate = this._options!.show!.test!;
+    const level = testAnnotate.level ?? 'step';
+    const testTitle = level === 'file' ? [this.testInfo.titlePath[0]] : this.testInfo.titlePath;
+    const parts = level === 'step' ? [...testTitle, ...this._stepStack] : testTitle;
+    const html = createTestOverlay(parts, testAnnotate.position ?? 'top-left', testAnnotate.fontSize ?? 14);
+    for (const page of this._recordings.keys()) {
+      if (page.isClosed())
+        continue;
+      await page._wrapApiCall(async () => {
+        await this._overlays.get(page)?.dispose();
+        this._overlays.delete(page);
+        this._overlays.set(page, await page.screencast.showOverlay(html));
+      }, { internal: true }).catch(() => {});
+    }
+  }
+
+  private async _disposeOverlays() {
+    await this._lastOverlayUpdate;
+    for (const [page, overlay] of this._overlays) {
+      if (!page.isClosed())
+        await page._wrapApiCall(() => overlay.dispose(), { internal: true }).catch(() => {});
+    }
+    this._overlays.clear();
+  }
+
+  private get testInfo(): TestInfoImpl {
+    return this._artifactsRecorder._testInfo;
+  }
 }
 
 function createTestOverlay(parts: string[], position: string, fontSize: number) {
