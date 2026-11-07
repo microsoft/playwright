@@ -4566,7 +4566,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `SC-010` | `library/screencast.spec.ts` | start should throw on invalid fps |
 | `SC-011` | `library/screencast.spec.ts` | start should fail when another recording is in progress |
 | `SC-012` | `library/screencast.spec.ts` | stop should not fail when no recording is in progress |
-| `SC-013` | `library/screencast.spec.ts` | start should finish when page is closed |
+| `SC-013` | `library/screencast.spec.ts` | stop should save the video when page is closed |
 | `SC-014` | `library/screencast.spec.ts` | empty video |
 | `SC-015` | `library/screencast.spec.ts` | start dispose stops recording |
 | `SC-016` | `library/screencast-actions.spec.ts` | should show annotation on click |

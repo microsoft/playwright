@@ -18,7 +18,6 @@ import fs from 'fs';
 import path from 'path';
 import { expect, browserTest as test } from '../config/browserTest';
 import { ensureSomeFrames } from '../config/utils';
-import { kTargetClosedErrorMessage } from '../config/errors';
 import { VideoPlayer } from './videoPlayer';
 
 test.skip(({ mode }) => mode !== 'default', 'screencast is not available in remote mode');
@@ -257,16 +256,17 @@ test('SC-012 stop should not fail when no recording is in progress', async ({ br
   await context.close();
 });
 
-test('SC-013 start should finish when page is closed', async ({ browser }, testInfo) => {
-  const context = await browser.newContext();
+test('SC-013 stop should save the video when page is closed', async ({ browser }, testInfo) => {
+  const size = { width: 800, height: 800 };
+  const context = await browser.newContext({ viewport: size });
   const page = await context.newPage();
   const videoPath = testInfo.outputPath('video.webm');
-  await page.screencast.start({ path: videoPath, size: { width: 800, height: 800 } });
+  await page.screencast.start({ path: videoPath, size });
   await page.evaluate(() => document.body.style.backgroundColor = 'red');
   await ensureSomeFrames(page);
   await page.close();
-  const error = await page.screencast.stop().catch(e => e);
-  expect(error.message).toContain(kTargetClosedErrorMessage);
+  await page.screencast.stop();
+  expectRedFrames(videoPath, size);
   await context.close();
 });
 

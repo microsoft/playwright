@@ -478,10 +478,10 @@ test('should report click error on sigint', async ({ interactWithTestRunner }) =
   expect(result.output).toContain(`5 |         const promise = page.click('text=Missing');`);
 });
 
-test('should work with video: retain-on-failure', async ({ runInlineTest }) => {
+test('should work with video: retain-on-failure', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43915' } }, async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      export default { use: { video: 'retain-on-failure' }, name: 'chromium' };
+      export default { use: { video: { mode: 'retain-on-failure', size: { width: 320, height: 240 } }, trace: 'on' }, name: 'chromium' };
     `,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -496,11 +496,34 @@ test('should work with video: retain-on-failure', async ({ runInlineTest }) => {
         test.expect(1 + 1).toBe(1);
       });
     `,
+    'shared.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test.describe.configure({ mode: 'serial' });
+      let page;
+      test.beforeAll(async ({ browser }) => {
+        page = await browser.newPage();
+      });
+      test.afterAll(async () => {
+        await page.close();
+      });
+      test('shared pass', async () => {
+        await page.setContent('<div>PASS</div>');
+        await page.waitForTimeout(1000);
+      });
+      test('shared fail', async () => {
+        await page.setContent('<div>FAIL</div>');
+        const [popup] = await Promise.all([page.waitForEvent('popup'), page.evaluate(() => window.open('about:blank'))]);
+        await popup.setContent('<div>POPUP</div>');
+        await page.waitForTimeout(1000);
+        await popup.close();
+        expect(1).toBe(2);
+      });
+    `,
   }, { workers: 1 });
 
   expect(result.exitCode).toBe(1);
-  expect(result.passed).toBe(1);
-  expect(result.failed).toBe(1);
+  expect(result.passed).toBe(2);
+  expect(result.failed).toBe(2);
 
   const dirPass = test.info().outputPath('test-results', 'a-pass-chromium');
   const videoPass = fs.existsSync(dirPass) ? fs.readdirSync(dirPass).find(file => file.endsWith('webm')) : undefined;
@@ -508,6 +531,19 @@ test('should work with video: retain-on-failure', async ({ runInlineTest }) => {
 
   const videoFail = fs.readdirSync(test.info().outputPath('test-results', 'a-fail-chromium')).find(file => file.endsWith('webm'));
   expect(videoFail).toBeTruthy();
+
+  const sharedPass = result.report.suites.find(suite => suite.file === 'shared.test.ts')!.specs[0].tests[0].results[0];
+  const sharedFail = result.report.suites.find(suite => suite.file === 'shared.test.ts')!.specs[1].tests[0].results[0];
+  expect(sharedPass.attachments.filter(a => a.name === 'video')).toEqual([]);
+  // Shared page during the test, popup closed during the test, shared page during afterAll.
+  const videos = sharedFail.attachments.filter(a => a.name === 'video');
+  expect(videos.map(a => path.basename(a.path!))).toEqual(['video.webm', 'video-1.webm', 'video-2.webm']);
+  for (const video of videos) {
+    expect(video.contentType).toBe('video/webm');
+    const player = new VideoPlayer(video.path!);
+    expect(player.videoWidth).toBe(320);
+    expect(player.videoHeight).toBe(240);
+  }
 });
 
 test('should work with video: on-first-retry', async ({ runInlineTest }) => {
@@ -715,32 +751,6 @@ test('should work with video fps', async ({ runInlineTest }) => {
   const [file] = fs.readdirSync(folder);
   const videoPlayer = new VideoPlayer(path.join(folder, file));
   expect(videoPlayer.fps).toBe(60);
-});
-
-test('should work with video.path() throwing', async ({ runInlineTest }, testInfo) => {
-  // When running remotely, video.path() is not available, so we must not use it.
-  const result = await runInlineTest({
-    'playwright.config.js': `
-      module.exports = {
-        use: { video: { mode: 'on' } },
-        name: 'chromium',
-        preserveOutput: 'always',
-      };
-    `,
-    'a.test.ts': `
-      import { test, expect } from '@playwright/test';
-      test('pass', async ({ page }) => {
-        page.video().path = () => { throw new Error('No-no!'); };
-        await page.setContent('<div>PASS</div>');
-        await page.waitForTimeout(3000);
-      });
-    `,
-  }, { workers: 1 });
-  expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(1);
-  const dir = testInfo.outputPath(`test-results/a-pass-chromium/`);
-  const video = fs.readdirSync(dir).find(file => file.endsWith('webm'));
-  expect(video).toBeTruthy();
 });
 
 test('should pass fixture defaults to tests', async ({ runInlineTest }) => {

@@ -17,6 +17,7 @@
 import { Artifact } from './artifact';
 import { apiCall } from './channelOwner';
 import { DisposableStub } from './disposable';
+import { isTargetClosedError } from './errors';
 import { kNoTimeout } from './timeoutSettings';
 
 import type * as api from '../../types/types';
@@ -69,11 +70,19 @@ export class Screencast implements api.Screencast {
   async stop(): Promise<void> {
     this._started = false;
     this._onFrame = null;
-    await this._page._channel.screencastStop({}, kNoTimeout);
-    if (this._savePath)
-      await this._artifact?.saveAs(this._savePath);
+    const artifact = this._artifact;
+    const savePath = this._savePath;
     this._artifact = undefined;
     this._savePath = undefined;
+    try {
+      await this._page._channel.screencastStop({}, kNoTimeout);
+    } catch (error) {
+      // Closing the page stops the screencast, but the video can still be saved.
+      if (!isTargetClosedError(error))
+        throw error;
+    }
+    if (savePath)
+      await artifact?.saveAs(savePath);
   }
 
   async showActions(options?: { duration?: number, position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right', fontSize?: number, cursor?: 'none' | 'pointer', style?: { point?: string, highlight?: string, title?: string } }): Promise<DisposableStub> {
