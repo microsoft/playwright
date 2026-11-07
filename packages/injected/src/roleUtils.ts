@@ -789,6 +789,8 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
           return compositeString(element.getAttribute('aria-valuetext'), element, options.collectElements);
         if (element.hasAttribute('aria-valuenow'))
           return compositeString(element.getAttribute('aria-valuenow'), element, options.collectElements);
+        if (tagName === 'INPUT')
+          return compositeString((element as HTMLInputElement).value, element, options.collectElements);
         return compositeString(element.getAttribute('value'), element, options.collectElements);
       }
       if (['menu'].includes(role)) {
