@@ -62,7 +62,7 @@ index 04bd23515eb4505cee3d9752db6388c4961ec315..3d486ee6604d3cd15fd45a17a81406f0
  @RESPATH@/browser/modules/*
  @RESPATH@/modules/*
 diff --git a/docshell/base/BrowsingContext.cpp b/docshell/base/BrowsingContext.cpp
-index 0986f712c9246d9dee01a95237eb1b69e4b8349e..d2da89989aacddfca23f59df71ff4f52fdffb905 100644
+index 0986f712c9246d9dee01a95237eb1b69e4b8349e..e9827ca68ecb1b8cd922c16008a6fd7b76927c53 100644
 --- a/docshell/base/BrowsingContext.cpp
 +++ b/docshell/base/BrowsingContext.cpp
 @@ -122,8 +122,11 @@ struct ParamTraits<mozilla::dom::DisplayMode>
@@ -90,7 +90,7 @@ index 0986f712c9246d9dee01a95237eb1b69e4b8349e..d2da89989aacddfca23f59df71ff4f52
      fields.Get<IDX_IPAddressSpace>() = inherit->GetIPAddressSpace();
      fields.Get<IDX_ParentalControlsEnabled>() =
          inherit->GetParentalControlsEnabled();
-@@ -3615,6 +3622,15 @@ void BrowsingContext::DidSet(FieldIndex<IDX_LanguageOverride>,
+@@ -3615,6 +3622,19 @@ void BrowsingContext::DidSet(FieldIndex<IDX_LanguageOverride>,
    });
  }
  
@@ -100,13 +100,17 @@ index 0986f712c9246d9dee01a95237eb1b69e4b8349e..d2da89989aacddfca23f59df71ff4f52
 +  if (PrefersContrastOverride() == aOldValue) {
 +    return;
 +  }
-+  PresContextAffectingFieldChanged();
++  WalkPresContexts([&](nsPresContext* aPc) {
++    aPc->MediaFeatureValuesChanged(
++        {MediaFeatureChangeReason::PreferenceChange},
++        MediaFeatureChangePropagation::JustThisDocument);
++  });
 +}
 +
  void BrowsingContext::DidSet(FieldIndex<IDX_MediumOverride>,
                               nsString&& aOldValue) {
    MOZ_ASSERT(IsTop());
-@@ -3873,7 +3889,7 @@ void BrowsingContext::SetGeolocationServiceOverride(
+@@ -3873,7 +3893,7 @@ void BrowsingContext::SetGeolocationServiceOverride(
    if (aGeolocationOverride.WasPassed()) {
      if (!mGeolocationServiceOverride) {
        mGeolocationServiceOverride = MakeRefPtr<GeolocationService>();
@@ -398,6 +402,21 @@ index 24fc4978206ae6eba18971f243d680a8b8802e65..6331730b7ce41183682463294714eff0
    if (!fm->IsInActiveWindow(bc)) {
      return false;
    }
+diff --git a/dom/base/Element.cpp b/dom/base/Element.cpp
+index b0f08fd6241f36b7a499d33613030f27a63aab96..63dc0dca1e0050f9e4fc680a74ece4c9e9230ee2 100644
+--- a/dom/base/Element.cpp
++++ b/dom/base/Element.cpp
+@@ -2299,7 +2299,9 @@ void Element::GetAttrAssociatedElementsForBindings(
+ 
+   auto& [_, cachedAttrElements] =
+       ExtendedDOMSlots()->mAttrElementsMap.LookupOrInsert(aAttr);
+-  if (elements && elements == cachedAttrElements) {
++  // Another JS world may have populated cachedAttrElements before this
++  // binding has a cached value.
++  if (aUseCachedValue && elements && elements == cachedAttrElements) {
+     // 2. If the contents of elements is equal to the contents of this's cached
+     // attr-associated elements, then return this's cached attr-associated
+     // elements object.
 diff --git a/dom/base/Navigator.cpp b/dom/base/Navigator.cpp
 index 20fc3905d5d22d00f0d644cc4713d66a7965eb27..43d48a10249056017e7a47cc01bd637bfd1b5a1f 100644
 --- a/dom/base/Navigator.cpp
