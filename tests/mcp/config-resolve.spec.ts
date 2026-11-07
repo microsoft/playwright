@@ -354,6 +354,86 @@ test.describe('merge order', () => {
     expect(config.browser.isolated).toBe(true);
   });
 
+  test('config file paths resolve against the config dir, cli and env paths against cwd', {
+    annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-mcp/issues/1836' },
+  }, async ({}, testInfo) => {
+    const configDir = testInfo.outputPath('config');
+    await fs.promises.mkdir(configDir);
+    const configFile = path.join(configDir, 'config.json');
+    const fileConfig: Config = {
+      outputDir: 'artifacts',
+      browser: {
+        userDataDir: 'profile',
+        launchOptions: {
+          executablePath: 'browser',
+          tracesDir: 'traces',
+          downloadsPath: 'downloads',
+          artifactsDir: testInfo.outputPath('absolute-artifacts'),
+        },
+        contextOptions: {
+          storageState: 'state.json',
+          recordHar: { path: 'recording.har' },
+          recordVideo: { dir: 'videos' },
+          clientCertificates: [{ origin: 'https://example.com', certPath: 'cert.pem', keyPath: 'key.pem', pfxPath: 'cert.pfx' }],
+        },
+      },
+    };
+    await fs.promises.writeFile(configFile, JSON.stringify(fileConfig));
+    const config = await resolveCLIConfigForMCP({ config: configFile }, emptyEnv);
+    expect(config.outputDir).toBe(path.join(configDir, 'artifacts'));
+    expect(config.browser).toMatchObject({
+      userDataDir: path.join(configDir, 'profile'),
+      launchOptions: {
+        executablePath: path.join(configDir, 'browser'),
+        tracesDir: path.join(configDir, 'traces'),
+        downloadsPath: path.join(configDir, 'downloads'),
+        artifactsDir: testInfo.outputPath('absolute-artifacts'),
+      },
+      contextOptions: {
+        storageState: path.join(configDir, 'state.json'),
+        recordHar: { path: path.join(configDir, 'recording.har') },
+        recordVideo: { dir: path.join(configDir, 'videos') },
+        clientCertificates: [{
+          origin: 'https://example.com',
+          certPath: path.join(configDir, 'cert.pem'),
+          keyPath: path.join(configDir, 'key.pem'),
+          pfxPath: path.join(configDir, 'cert.pfx'),
+        }],
+      },
+    });
+
+    const overridden = await resolveCLIConfigForMCP({
+      config: configFile, outputDir: 'cli-output', executablePath: 'cli-browser',
+    }, {
+      PLAYWRIGHT_MCP_USER_DATA_DIR: 'env-profile',
+      PLAYWRIGHT_MCP_STORAGE_STATE: 'env-state.json',
+    });
+    expect(overridden.outputDir).toBe(path.resolve('cli-output'));
+    expect(overridden.browser.launchOptions.executablePath).toBe(path.resolve('cli-browser'));
+    expect(overridden.browser.userDataDir).toBe(path.resolve('env-profile'));
+    expect(overridden.browser.contextOptions.storageState).toBe(path.resolve('env-state.json'));
+  });
+
+  test('inline storage state in the config file is kept', async ({}, testInfo) => {
+    const configFile = testInfo.outputPath('config.json');
+    const storageState = { cookies: [], origins: [] };
+    await fs.promises.writeFile(configFile, JSON.stringify({ browser: { contextOptions: { storageState } } }));
+    const config = await resolveCLIConfigForMCP({ config: configFile }, emptyEnv);
+    expect(config.browser.contextOptions.storageState).toEqual(storageState);
+  });
+
+  test('symlinked config file resolves paths next to the real file', async ({}, testInfo) => {
+    test.skip(process.platform === 'win32', 'Creating symlinks requires elevated privileges on Windows.');
+    const realDir = testInfo.outputPath('real');
+    const linkDir = testInfo.outputPath('link');
+    await fs.promises.mkdir(realDir);
+    await fs.promises.mkdir(linkDir);
+    await fs.promises.writeFile(path.join(realDir, 'config.json'), JSON.stringify({ browser: { contextOptions: { storageState: 'state.json' } } }));
+    await fs.promises.symlink(path.join(realDir, 'config.json'), path.join(linkDir, 'config.json'));
+    const config = await resolveCLIConfigForMCP({ config: path.join(linkDir, 'config.json') }, emptyEnv);
+    expect(config.browser.contextOptions.storageState).toBe(path.join(realDir, 'state.json'));
+  });
+
   test('env overrides config file', {
     annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43038' },
   }, async ({}, testInfo) => {
@@ -681,6 +761,28 @@ test.describe('resolveCLIConfigForCLI - config file discovery', () => {
     await fs.promises.writeFile(configFile, JSON.stringify(fileConfig));
     const config = await resolveCLI(testInfo.outputPath('profiles'), 'default', { config: configFile }) as any;
     expect(config.network?.allowedOrigins).toEqual(['https://example.com']);
+  });
+
+  test('config file resolves relative paths against its directory', {
+    annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-mcp/issues/1836' },
+  }, async ({}, testInfo) => {
+    const configDir = testInfo.outputPath('config');
+    await fs.promises.mkdir(configDir);
+    const configFile = path.join(configDir, 'config.json');
+    await fs.promises.writeFile(configFile, JSON.stringify({ outputDir: 'artifacts', browser: { userDataDir: 'profile' } }));
+    const config = await resolveCLI(testInfo.outputPath('profiles'), 'default', { config: configFile });
+    expect(config.outputDir).toBe(path.join(configDir, 'artifacts'));
+    expect(config.browser.userDataDir).toBe(path.join(configDir, 'profile'));
+  });
+
+  test('global config resolves relative paths against its directory', async ({}, testInfo) => {
+    const fakeHome = testInfo.outputPath('home');
+    const globalConfigDir = path.join(fakeHome, '.playwright');
+    await fs.promises.mkdir(globalConfigDir, { recursive: true });
+    await fs.promises.writeFile(path.join(globalConfigDir, 'cli.config.json'), JSON.stringify({ outputDir: 'artifacts', browser: { userDataDir: 'profile' } }));
+    const config = await resolveCLIConfigForCLI(testInfo.outputPath('profiles'), 'default', {}, { PWTEST_CLI_GLOBAL_CONFIG: fakeHome });
+    expect(config.outputDir).toBe(path.join(globalConfigDir, 'artifacts'));
+    expect(config.browser.userDataDir).toBe(path.join(globalConfigDir, 'profile'));
   });
 });
 

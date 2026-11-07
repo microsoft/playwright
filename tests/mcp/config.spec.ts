@@ -15,22 +15,30 @@
  */
 
 import fs from 'node:fs';
+import path from 'node:path';
 
 import { test, expect, parseResponse } from './fixtures';
 import type { Config } from '../../packages/playwright-core/src/tools/mcp/config.d';
 
-test('config user data dir', async ({ startClient, server }, testInfo) => {
+test('config user data dir', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-mcp/issues/1836' },
+}, async ({ startClient, server }, testInfo) => {
   server.setContent('/', `
     <title>Title</title>
     <body>Hello, world!</body>
   `, 'text/html');
 
+  // Relative paths in the config file resolve against the config directory,
+  // not against the server cwd.
+  const configDir = testInfo.outputPath('config');
+  await fs.promises.mkdir(configDir);
   const config: Config = {
+    outputDir: 'artifacts',
     browser: {
-      userDataDir: testInfo.outputPath('user-data-dir'),
+      userDataDir: 'user-data-dir',
     },
   };
-  const configPath = testInfo.outputPath('config.json');
+  const configPath = path.join(configDir, 'config.json');
   await fs.promises.writeFile(configPath, JSON.stringify(config, null, 2));
 
   const { client } = await startClient({ args: ['--config', configPath] });
@@ -40,9 +48,45 @@ test('config user data dir', async ({ startClient, server }, testInfo) => {
   })).toHaveResponse({
     snapshot: expect.stringContaining(`Hello, world!`),
   });
+  expect((await client.callTool({ name: 'browser_take_screenshot' })).isError).toBeFalsy();
 
-  const files = await fs.promises.readdir(config.browser!.userDataDir!);
+  const artifacts = await fs.promises.readdir(path.join(configDir, 'artifacts'));
+  expect(artifacts).toEqual(expect.arrayContaining([expect.stringMatching(/\.yml$/), expect.stringMatching(/\.png$/)]));
+  const files = await fs.promises.readdir(path.join(configDir, 'user-data-dir'));
   expect(files.length).toBeGreaterThan(0);
+});
+
+test('config storage state', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-mcp/issues/1836' },
+}, async ({ startClient, server }, testInfo) => {
+  server.setContent('/', `
+    <body></body>
+    <script>document.body.textContent = 'Storage: ' + localStorage.getItem('test');</script>
+  `, 'text/html');
+
+  // Storage state only applies to isolated contexts. A relative path in the
+  // config file resolves against the config directory, not against the server cwd.
+  const configDir = testInfo.outputPath('config');
+  await fs.promises.mkdir(configDir);
+  await fs.promises.writeFile(path.join(configDir, 'state.json'), JSON.stringify({
+    origins: [{ origin: server.PREFIX, localStorage: [{ name: 'test', value: 'config-value' }] }],
+  }));
+  const config: Config = {
+    browser: {
+      isolated: true,
+      contextOptions: { storageState: 'state.json' },
+    },
+  };
+  const configPath = path.join(configDir, 'config.json');
+  await fs.promises.writeFile(configPath, JSON.stringify(config, null, 2));
+
+  const { client } = await startClient({ args: ['--config', configPath] });
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX },
+  })).toHaveResponse({
+    snapshot: expect.stringContaining('Storage: config-value'),
+  });
 });
 
 test('config with UTF-8 BOM', async ({ startClient, server }, testInfo) => {

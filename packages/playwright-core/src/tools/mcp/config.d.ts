@@ -48,6 +48,7 @@ export type Config = {
     /**
      * Path to a user data directory for browser profile persistence.
      * Temporary directory is created by default.
+     * Relative paths are resolved against the config file's directory.
      */
     userDataDir?: string;
 
@@ -56,6 +57,7 @@ export type Config = {
      * @see https://playwright.dev/docs/api/class-browsertype#browser-type-launch-persistent-context
      *
      * This is useful for settings options like `channel`, `headless`, `executablePath`, etc.
+     * Relative paths are resolved against the config file's directory.
      */
     launchOptions?: playwright.LaunchOptions;
 
@@ -63,6 +65,7 @@ export type Config = {
      * Context options for the browser context.
      *
      * This is useful for settings options like `viewport`.
+     * Relative paths are resolved against the config file's directory.
      */
     contextOptions?: playwright.BrowserContextOptions;
 
@@ -92,12 +95,14 @@ export type Config = {
 
     /**
      * Paths to TypeScript files to add as initialization scripts for Playwright page.
+     * Relative paths are resolved against the config file's directory.
      */
     initPage?: string[];
 
     /**
      * Paths to JavaScript files to add as initialization scripts.
      * The scripts will be evaluated in every page before any of the page's scripts.
+     * Relative paths are resolved against the config file's directory.
      */
     initScript?: string[];
   },
@@ -182,6 +187,7 @@ export type Config = {
    * The directory for automatically named output files, for example a screenshot taken without an
    * explicit file name. Files with an explicit name are resolved against the workspace root instead
    * and are not affected by this option.
+   * Relative paths are resolved against the config file's directory.
    */
   outputDir?: string;
 
