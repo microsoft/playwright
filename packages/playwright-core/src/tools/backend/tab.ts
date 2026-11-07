@@ -15,6 +15,8 @@
  */
 
 import { EventEmitter } from 'events';
+import fs from 'fs';
+import path from 'path';
 import { types } from 'util';
 import debug from 'debug';
 import { asLocator } from '@isomorphic/locatorGenerators';
@@ -238,7 +240,20 @@ export class Tab extends EventEmitter<TabEventsInterface> {
 
   private async _downloadStarted(download: playwright.Download) {
     // Do not trust web names.
-    const outputFile = await this.context.outputFile({ suggestedFilename: sanitizeForFilePath(download.suggestedFilename()), prefix: 'download', ext: 'bin' }, { origin: 'code' });
+    const suggestedFile = await this.context.outputFile({ suggestedFilename: sanitizeForFilePath(download.suggestedFilename()), prefix: 'download', ext: 'bin' }, { origin: 'code' });
+    const ext = path.extname(suggestedFile);
+    let outputFile = suggestedFile;
+    for (let ordinal = 1; ; ++ordinal) {
+      try {
+        // Reserve the name before saving, including for concurrent downloads.
+        await fs.promises.writeFile(outputFile, '', { flag: 'wx' });
+        break;
+      } catch (e) {
+        if ((e as NodeJS.ErrnoException).code !== 'EEXIST')
+          throw e;
+      }
+      outputFile = path.join(path.dirname(suggestedFile), `${path.basename(suggestedFile, ext)}-${ordinal}${ext}`);
+    }
     const entry = {
       download,
       finished: false,

@@ -133,6 +133,10 @@ playwright-cli run-code "async page => {
 
 ## File Downloads
 
+Downloads are saved automatically in the output directory using the suggested filename.
+If that name already exists, a numeric suffix is added before the extension, such as
+`report-1.pdf`. The download event reports the saved path.
+
 ```bash
 # Handle file download
 playwright-cli run-code "async page => {
