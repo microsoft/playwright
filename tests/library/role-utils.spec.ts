@@ -658,6 +658,20 @@ test('AR-170 should support search element', async ({ page }) => {
   await expect.soft(page.getByRole('search', { name: 'example' })).toBeVisible();
 });
 
+test('AR-172 embedded number and range inputs should contribute their current value', async ({ page }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43984' });
+
+  await page.setContent(`
+    <input type="checkbox" id="c1"><label for="c1">Remind me <input type="number" value="3"> times</label>
+    <input type="checkbox" id="c2"><label for="c2">Volume <input type="range"> percent</label>
+    <input type="checkbox" id="c3"><label for="c3">Level <input type="range" max="10" value="70"> of 10</label>
+  `);
+  await page.locator('input[type=number]').fill('5');
+  expect.soft(await getNameAndRole(page, '#c1')).toEqual({ role: 'checkbox', name: 'Remind me 5 times' });
+  expect.soft(await getNameAndRole(page, '#c2')).toEqual({ role: 'checkbox', name: 'Volume 50 percent' });
+  expect.soft(await getNameAndRole(page, '#c3')).toEqual({ role: 'checkbox', name: 'Level 10 of 10' });
+});
+
 function toArray(x: any): any[] {
   return Array.isArray(x) ? x : [x];
 }
