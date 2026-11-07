@@ -307,7 +307,6 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `AR-169` | `library/role-utils.spec.ts` | should ignore invalid aria-labelledby |
 | `AR-170` | `library/role-utils.spec.ts` | should support search element |
 | `AR-171` | `page/page-aria-snapshot.spec.ts` | should include inert elements and elements outside of a modal dialog |
-| `AR-172` | `library/role-utils.spec.ts` | embedded number and range inputs should contribute their current value |
 
 ### AT — Add script and style tags
 

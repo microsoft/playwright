@@ -519,6 +519,7 @@ test('AR-160 control embedded in a target element', async ({ page }) => {
 
 test('AR-161 searchbox embedded control should contribute its value', async ({ page }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42341' });
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43984' });
 
   await page.setContent(`
     <button id="b1" aria-labelledby="l1"></button><div id="l1" hidden><input type="text" value="Query"></div>
@@ -531,6 +532,16 @@ test('AR-161 searchbox embedded control should contribute its value', async ({ p
   expect.soft(await getNameAndRole(page, '#b2')).toEqual({ role: 'button', name: 'Query' });
   expect.soft(await getNameAndRole(page, '#c1')).toEqual({ role: 'checkbox', name: 'Flash the screen 5 times.' });
   expect.soft(await getNameAndRole(page, 'h1')).toEqual({ role: 'heading', name: 'Foo bar' });
+
+  await page.setContent(`
+    <input type="checkbox" id="c1"><label for="c1">Remind me <input type="number" value="3"> times</label>
+    <input type="checkbox" id="c2"><label for="c2">Volume <input type="range"> percent</label>
+    <input type="checkbox" id="c3"><label for="c3">Level <input type="range" max="10" value="70"> of 10</label>
+  `);
+  await page.locator('input[type=number]').fill('5');
+  expect.soft(await getNameAndRole(page, '#c1')).toEqual({ role: 'checkbox', name: 'Remind me 5 times' });
+  expect.soft(await getNameAndRole(page, '#c2')).toEqual({ role: 'checkbox', name: 'Volume 50 percent' });
+  expect.soft(await getNameAndRole(page, '#c3')).toEqual({ role: 'checkbox', name: 'Level 10 of 10' });
 });
 
 test('AR-162 svg role=presentation', async ({ page, server }) => {
@@ -656,20 +667,6 @@ test('AR-170 should support search element', async ({ page }) => {
   expect.soft(await getNameAndRole(page, '#search1')).toEqual({ role: 'search', name: 'example' });
   expect.soft(await getNameAndRole(page, '#search2')).toEqual({ role: 'search', name: '' });
   await expect.soft(page.getByRole('search', { name: 'example' })).toBeVisible();
-});
-
-test('AR-172 embedded number and range inputs should contribute their current value', async ({ page }) => {
-  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43984' });
-
-  await page.setContent(`
-    <input type="checkbox" id="c1"><label for="c1">Remind me <input type="number" value="3"> times</label>
-    <input type="checkbox" id="c2"><label for="c2">Volume <input type="range"> percent</label>
-    <input type="checkbox" id="c3"><label for="c3">Level <input type="range" max="10" value="70"> of 10</label>
-  `);
-  await page.locator('input[type=number]').fill('5');
-  expect.soft(await getNameAndRole(page, '#c1')).toEqual({ role: 'checkbox', name: 'Remind me 5 times' });
-  expect.soft(await getNameAndRole(page, '#c2')).toEqual({ role: 'checkbox', name: 'Volume 50 percent' });
-  expect.soft(await getNameAndRole(page, '#c3')).toEqual({ role: 'checkbox', name: 'Level 10 of 10' });
 });
 
 function toArray(x: any): any[] {
