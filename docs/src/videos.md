@@ -21,6 +21,8 @@ Video files will appear in the test output directory, typically `test-results`. 
 
 Videos are saved upon [browser context](./browser-contexts.md) closure at the end of a test. If you create a browser context manually, make sure to await [`method: BrowserContext.close`].
 
+When you [reuse a page between tests](./test-retries.md#reuse-single-page-between-tests), Playwright Test records a separate video for each test without closing the page. These videos include `beforeEach` and `afterEach` hooks, but not `beforeAll` or `afterAll`, and appear as attachments in the test report, not through [`method: Page.video`]. Explicit [`option: Browser.newContext.recordVideo`] recordings still cover the lifetime of the page and must be attached manually.
+
 ```js tab=js-test title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 export default defineConfig({

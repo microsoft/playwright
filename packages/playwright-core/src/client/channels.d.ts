@@ -4049,6 +4049,8 @@ export interface PageChannel extends PageEventTarget, Channel {
   screencastStart(params: PageScreencastStartParams, options: TimeoutOptions): Promise<PageScreencastStartResult>;
   screencastFrameAck(params: PageScreencastFrameAckParams, options: TimeoutOptions): Promise<PageScreencastFrameAckResult>;
   screencastStop(params: PageScreencastStopParams, options: TimeoutOptions): Promise<PageScreencastStopResult>;
+  videoStartForTest(params: PageVideoStartForTestParams, options: TimeoutOptions): Promise<PageVideoStartForTestResult>;
+  videoStopForTest(params: PageVideoStopForTestParams, options: TimeoutOptions): Promise<PageVideoStopForTestResult>;
   updateSubscription(params: PageUpdateSubscriptionParams, options: TimeoutOptions): Promise<PageUpdateSubscriptionResult>;
   setDockTile(params: PageSetDockTileParams, options: TimeoutOptions): Promise<PageSetDockTileResult>;
   webStorageItems(params: PageWebStorageItemsParams, options: TimeoutOptions): Promise<PageWebStorageItemsResult>;
@@ -4670,6 +4672,26 @@ export type PageScreencastFrameAckResult = void;
 export type PageScreencastStopParams = {};
 export type PageScreencastStopOptions = {};
 export type PageScreencastStopResult = void;
+export type PageVideoStartForTestParams = {
+  size?: {
+    width: number,
+    height: number,
+  },
+  fps?: number,
+};
+export type PageVideoStartForTestOptions = {
+  size?: {
+    width: number,
+    height: number,
+  },
+  fps?: number,
+};
+export type PageVideoStartForTestResult = {
+  artifact: ArtifactChannel,
+};
+export type PageVideoStopForTestParams = {};
+export type PageVideoStopForTestOptions = {};
+export type PageVideoStopForTestResult = void;
 export type PageUpdateSubscriptionParams = {
   event: 'console' | 'dialog' | 'dialogClosed' | 'fileChooser' | 'request' | 'response' | 'requestFinished' | 'requestFailed',
   enabled: boolean,

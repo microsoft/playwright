@@ -146,8 +146,8 @@ class FfmpegVideoRecorder {
     //     the 1M budget visibly blurs scrolling text, while the scaled ~14M is visually lossless.
     //   Note that we can switch to "-qmin 20 -qmax 50 -crf 30" for smaller video size but worse quality.
     //
-    // We use "pad" and "crop" video filters (-vf option) to resize incoming frames
-    // that might be of the different size to the desired video size.
+    // Other screencast clients, such as tracing, can request larger frames.
+    // Scale down before padding, without enlarging frames smaller than the video.
     //   https://ffmpeg.org/ffmpeg-filters.html#pad-1
     //   https://ffmpeg.org/ffmpeg-filters.html#crop
     //
@@ -200,7 +200,7 @@ class FfmpegVideoRecorder {
       `-threads ${threads}`,
       `-tile-columns ${tileColumns}`,
       '-row-mt 1',
-      `-vf pad=${w}:${h}:0:0:gray,crop=${w}:${h}:0:0`,
+      `-vf scale=w='min(iw,${w})':h='min(ih,${h})':force_original_aspect_ratio=decrease,pad=${w}:${h}:0:0:gray,crop=${w}:${h}:0:0`,
       `-metadata creation_time=${new Date(this._creationTimeMs).toISOString()}`,
     ].flatMap(option => option.split(' '));
     args.push(this._outputFile);
