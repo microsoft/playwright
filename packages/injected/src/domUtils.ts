@@ -88,7 +88,7 @@ export function getAssociatedLabels(element: Element): HTMLLabelElement[] {
   // }
   // Also, for a hidden input, the "labels" getter will return null.
   // So this function can be simplified dramatically:
-  return Reflect.get(element, "labels") || [];
+  return Array.from(Reflect.get(element, "labels") || []);
 }
 
 function enclosingShadowHost(element: Element): Element | undefined {
