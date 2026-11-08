@@ -17,7 +17,9 @@
 type GlobalOptions = {
   browserNameForWorkarounds?: string;
 };
+
 let globalOptions: GlobalOptions = {};
+
 export function setGlobalOptions(options: GlobalOptions) {
   globalOptions = options;
 }
@@ -67,34 +69,26 @@ export function enclosingShadowRootOrDocument(element: Element): Document | Shad
 
 export function getAssociatedLabels(element: Element): HTMLLabelElement[] {
   // https://html.spec.whatwg.org/multipage/forms.html#category-label
-  const isNonHiddenInput = element.nodeName === 'INPUT' && (element as HTMLInputElement).type !== 'hidden';
-  if (['BUTTON', 'METER', 'OUTPUT', 'PROGRESS', 'SELECT', 'TEXTAREA'].includes(element.nodeName) || isNonHiddenInput)
-    return [...(element as HTMLInputElement).labels || []];
-  if (!element.localName.includes('-'))
-    return [];
 
-  // Custom elements expose labels only through ElementInternals. Read the association from the labels instead.
-  const root = element.getRootNode() as Document | DocumentFragment | Element;
-  let labelsByControl = cacheLabelsByControl?.get(root);
-  if (!labelsByControl) {
-    labelsByControl = new Map();
-    const allLabels = [...root.querySelectorAll('label')];
-    if (root instanceof HTMLLabelElement)
-      allLabels.unshift(root);
-    for (const label of allLabels) {
-      const control = label.control;
-      if (!control)
-        continue;
-      let labels = labelsByControl.get(control);
-      if (!labels) {
-        labels = [];
-        labelsByControl.set(control, labels);
-      }
-      labels.push(label);
-    }
-    cacheLabelsByControl?.set(root, labelsByControl);
-  }
-  return labelsByControl.get(element) || [];
+  // "labels" property exists only for INPUT, BUTTON, METER, OUTPUT, PROGRESS, SELECT and TEXTAREA,
+  // but hardcoding these names limits custom elements.
+  // Any custom element that wants to be a real form element must also implement a "labels" getter:
+  // class CustomFormElement extends HTMLElement {
+  //    static formAssociated = true;
+  //    #internals;
+  //
+  //    constructor() {
+  //     super();
+  //     this.#internals = this.attachInternals();
+  //    }
+  //
+  //    get labels() {
+  //     return this.#internals.labels;
+  //    }
+  // }
+  // Also, for a hidden input, the "labels" getter will return null.
+  // So this function can be simplified dramatically:
+  return Reflect.get(element, "labels") || [];
 }
 
 function enclosingShadowHost(element: Element): Element | undefined {
