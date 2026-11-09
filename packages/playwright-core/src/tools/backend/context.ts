@@ -96,6 +96,7 @@ export type RouteEntry = {
 export type FilenameTemplate = {
   prefix: string;
   ext: string;
+  ordinal?: boolean;
   suggestedFilename?: string;
   date?: Date;
 };
@@ -132,6 +133,7 @@ export class Context {
     traces: (TraceInfo & { browserContext: playwrightTypes.BrowserContext })[];
   } | undefined;
   private _disposables: Disposable[] = [];
+  private _outputFiles = new Set<string>();
 
   private _webmcpToolsSignature = '';
   private _redactUrlParamsRegex: RegExp | undefined;
@@ -250,7 +252,15 @@ export class Context {
 
   async outputFile(template: FilenameTemplate, options: { origin: 'code' | 'llm' }): Promise<string> {
     const baseName = template.suggestedFilename || `${template.prefix}-${(template.date ?? new Date()).toISOString().replace(/[:.]/g, '-')}${template.ext ? '.' + template.ext : ''}`;
-    return await outputFile(this.options, baseName, options);
+    const resolvedFile = await outputFile(this.options, baseName, options);
+    if (!template.ordinal)
+      return resolvedFile;
+    const { dir, name, ext } = path.parse(resolvedFile);
+    let fileName = resolvedFile;
+    for (let ordinal = 1; this._outputFiles.has(fileName) || fs.existsSync(fileName); ++ordinal)
+      fileName = path.join(dir, `${name}-${ordinal}${ext}`);
+    this._outputFiles.add(fileName);
+    return fileName;
   }
 
   async startVideoRecording(fileName: string, params: VideoParams) {
