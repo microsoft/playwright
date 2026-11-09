@@ -15,7 +15,6 @@
  */
 
 import { test, expect } from './cli-fixtures';
-import { writeFiles } from './fixtures';
 
 function isAlive(pid: number): boolean {
   try {
@@ -26,44 +25,14 @@ function isAlive(pid: number): boolean {
   }
 }
 
-test('kill-all kills only filtered pid', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-cli/issues/525' } }, async ({ cli, server }, testInfo) => {
+test('kill-all kills only filtered pid', async ({ cli, server }) => {
   const { daemonPid } = await cli('open', server.HELLO_WORLD);
   expect(daemonPid).toBeDefined();
   expect(isAlive(daemonPid)).toBe(true);
 
-  const env: Record<string, string> = { PWTEST_KILL_ALL_PID_FILTER_FOR_TEST: String(daemonPid) };
-  if (process.platform === 'win32') {
-    // Restrict enumeration to our daemon and its enumerators. The PID filter
-    // would otherwise hide the PowerShell/cmd self-match.
-    const prefix = `
-      $self = Get-CimInstance Win32_Process -Filter ('ProcessId = ' + $PID);
-      $processes = Get-CimInstance Win32_Process | Where-Object {
-        $_.ProcessId -eq ${daemonPid} -or $_.ProcessId -eq $PID -or
-        ($_.ProcessId -eq $self.ParentProcessId -and $_.Name -eq 'cmd.exe')
-      };
-      function Get-CimInstance { $processes };
-    `.replace(/\s+/g, ' ');
-    await writeFiles({
-      'enumerate.cjs': `
-        const cp = require('child_process');
-        const prefix = ${JSON.stringify(prefix)};
-        const { execSync, execFileSync } = cp;
-        cp.execSync = (command, options) => {
-          if (!command.startsWith('powershell -NoProfile -NonInteractive -Command "'))
-            throw new Error('Unexpected enumeration command');
-          return execSync(command.replace('-Command "', '-Command "' + prefix), options);
-        };
-        cp.execFileSync = (file, args, options) => {
-          if (file !== 'powershell' || !args.includes('-Command'))
-            throw new Error('Unexpected enumeration command');
-          return execFileSync(file, args.map((arg, i) => args[i - 1] === '-Command' ? prefix + arg : arg), options);
-        };
-      `,
-    });
-    delete env.PWTEST_KILL_ALL_PID_FILTER_FOR_TEST;
-    env.NODE_OPTIONS = `--require ${JSON.stringify(testInfo.outputPath('enumerate.cjs'))}`;
-  }
-  const { output } = await cli('kill-all', { env });
+  const { output } = await cli('kill-all', {
+    env: { PWTEST_KILL_ALL_PID_FILTER_FOR_TEST: String(daemonPid) },
+  });
   expect(output).toContain(`Killed daemon process ${daemonPid}`);
   expect(output).toContain('Killed 1 daemon process.');
 
