@@ -5116,7 +5116,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 
 | ID | File | Title |
 |---|---|---|
-| `TV-001` | `library/trace-viewer.spec.ts` | should show empty trace viewer |
+| `TV-001` | `library/trace-viewer.spec.ts` | should load a dropped trace into empty trace viewer |
 | `TV-002` | `library/trace-viewer.spec.ts` | should open two trace viewers |
 | `TV-003` | `library/trace-viewer.spec.ts` | should open trace viewer on specific host |
 | `TV-004` | `library/trace-viewer.spec.ts` | should show tracing.group in the action list with location |

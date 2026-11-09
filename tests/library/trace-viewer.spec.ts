@@ -92,9 +92,22 @@ test.beforeAll(async function recordTrace({ browser, browserName, browserType, s
   (browserType as any)._instrumentation.removeListener(csi);
 });
 
-test('TV-001 should show empty trace viewer', async ({ showTraceViewer }, testInfo) => {
-  const traceViewer = await showTraceViewer(testInfo.outputPath());
+test('TV-001 should load a dropped trace into empty trace viewer', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43993' },
+}, async ({ showTraceViewer, page }) => {
+  const traceViewer = await showTraceViewer(undefined);
   await expect(traceViewer.page).toHaveTitle('Playwright Trace Viewer');
+  await page.goto(traceViewer.page.url());
+  await expect(page.getByRole('heading', { name: 'Drop Playwright Trace to load' })).toBeVisible();
+  const dataTransfer = await page.evaluateHandle(trace => {
+    const dataTransfer = new DataTransfer();
+    dataTransfer.items.add(new File([Uint8Array.from(atob(trace), c => c.charCodeAt(0))], 'trace.zip', { type: 'application/zip' }));
+    return dataTransfer;
+  }, fs.readFileSync(traceFile, 'base64'));
+  await page.locator('.workbench-loader').dispatchEvent('dragover', { dataTransfer });
+  await page.getByText('Release to analyse the Playwright Trace').dispatchEvent('drop', { dataTransfer });
+  await expect(page.locator('.drop-target')).not.toBeVisible();
+  await expect(page.locator('.action-title')).toContainText([/Create page/, /Close page/]);
 });
 
 test('TV-002 should open two trace viewers', async ({ showTraceViewer }, testInfo) => {
