@@ -59,6 +59,13 @@ export class FFNetworkManager {
   }
 
   _onRequestWillBeSent(event: Protocol.Network.requestWillBeSentPayload) {
+    // WebSocket handshakes can arrive after their frame has been detached.
+    // Align with Chromium and WebKit by handling them separately from other network activity.
+    if (event.cause === 'TYPE_WEBSOCKET') {
+      this._webSocketRequestIds.add(event.requestId);
+      this._page._onWebSocketRequestWillBeSent(event.requestId, event.url, event.headers);
+      return;
+    }
     const redirectedFrom = event.redirectedFrom ? (this._requests.get(event.redirectedFrom) || null) : null;
     const frame = redirectedFrom ? redirectedFrom.request.frame() : (event.frameId ? this._page._page.frameManager.frame(event.frameId) : null);
     if (!frame)
@@ -68,12 +75,6 @@ export class FFNetworkManager {
       return;
     if (redirectedFrom)
       this._requests.delete(redirectedFrom._id);
-    // Align with Chromium and WebKit by having WebSocket be handled separately from other network activity.
-    if (event.cause === 'TYPE_WEBSOCKET') {
-      this._webSocketRequestIds.add(event.requestId);
-      this._page._onWebSocketRequestWillBeSent(event.requestId, event.url, event.headers);
-      return;
-    }
     const request = new InterceptableRequest(frame, redirectedFrom, event);
     let route;
     if (event.isIntercepted)

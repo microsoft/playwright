@@ -5575,3 +5575,4 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `WS-038` | `library/route-web-socket.spec.ts` | should work with baseURL regardless of scheme casing |
 | `WS-039` | `library/route-web-socket.spec.ts` | should expose protocols to the route handler |
 | `WS-040` | `library/route-web-socket.spec.ts` | should expose protocols on server-side route |
+| `WS-041` | `library/web-socket.spec.ts` | should navigate while an iframe opens WebSockets |
