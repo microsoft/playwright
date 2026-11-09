@@ -34,6 +34,12 @@ print(str(normalized))
 
 - String values of the `params` option in [APIRequestContext] requests are now appended to the query that the URL already has, instead of replacing it.
 
+### Announcements
+
+* 🐍 The Python client is now a line-by-line port of the Node.js client, so it behaves the same way. The API did not change. If you see a change in behavior, [file an issue](https://github.com/microsoft/playwright-python/issues).
+* 📦 Playwright now publishes a source distribution next to the wheels. It does not include Node.js, so installs that do not accept wheels now work, such as `pip install --no-binary :all:` and Poetry with `installer.no-binary`. An install from the source distribution uses [a pre-installed Node.js](./browsers.md#using-a-pre-installed-nodejs) that you set with `PLAYWRIGHT_NODEJS_PATH`.
+* 🧩 `pyee` is not a dependency anymore, so it no longer conflicts with packages that need a different version of it.
+
 ### Browser Versions
 
 - Chromium 158.0.8127.18
