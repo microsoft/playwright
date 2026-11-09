@@ -76,17 +76,25 @@ function moveDistTags() {
   for (const name of packages) {
     const distTags = JSON.parse(npm(['view', name, 'dist-tags', '--json', '--prefer-online']));
     const current = distTags[tag];
+    // npm can list a version that just went live without its publish time: it is the newest then.
+    const publishedAt = publishTime(name, version);
     if (current === version) {
       console.log(`${name}@${tag} is already ${version}`);
-    } else if (current && publishTime(name, current) > publishTime(name, version)) {
+    } else if (current && publishedAt && publishTime(name, current) > publishedAt) {
       // A later run promoted a newer version first.
       console.log(`${name}@${tag} stays at ${current}, which was published after ${version}`);
     } else {
-      npm(['dist-tag', 'add', `${name}@${version}`, tag]);
+      distTag(['add', `${name}@${version}`, tag]);
     }
     if (distTags[pendingTag] === version)
-      npm(['dist-tag', 'rm', name, pendingTag]);
+      distTag(['rm', name, pendingTag]);
   }
+}
+
+/** @param {string[]} args */
+function distTag(args) {
+  // npm reports a refused OIDC login at the verbose level only, and then fails with E401.
+  npm(['dist-tag', ...args, '--loglevel=verbose']);
 }
 
 /** @type {Map<string, Record<string, string>>} */
