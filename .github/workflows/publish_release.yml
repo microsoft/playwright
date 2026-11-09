@@ -18,6 +18,8 @@ jobs:
     permissions:
       id-token: write  # This is required for OIDC login (NPM publish) to succeed
       contents: read   # This is required for actions/checkout to succeed
+    outputs:
+      manifest: ${{ steps.manifest.outputs.artifact-id }}
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
     - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -45,13 +47,43 @@ jobs:
     - name: "publish release to NPM"
       if: github.event_name == 'release' && github.event.action == 'published'
       run: utils/publish_all_packages.sh --release
-    # promote_release.yml reads it to move the dist-tag once all packages are live.
+    # promote-npm reads it to move the dist-tag once all packages are live.
     - name: Upload the list of published packages
+      id: manifest
       uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
       with:
         name: npm-publish
         path: npm-publish.json
         if-no-files-found: ignore
+
+  # publish-npm publishes every package under "<tag>-pending" (next-pending, beta-pending or
+  # latest-pending) and leaves <tag> where it is. This moves <tag> to the new version once npm has made
+  # all of the packages live, so next, beta and latest never point at a package whose dependency is
+  # still missing. It is a job of this workflow because the trusted publisher of the packages on npm
+  # is publish_release.yml: npm refuses the OIDC login of another workflow. To retry, re-run the job.
+  promote-npm:
+    name: "move the npm dist-tag"
+    needs: publish-npm
+    # A run that publishes nothing uploads no list.
+    if: needs.publish-npm.outputs.manifest != ''
+    runs-on: ubuntu-24.04
+    timeout-minutes: 330
+    permissions:
+      id-token: write  # This is required for OIDC login (npm dist-tag) to succeed
+      contents: read   # This is required for actions/checkout to succeed
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+    - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      with:
+        node-version: lts/*
+        registry-url: 'https://registry.npmjs.org'
+    # npm dist-tag supports OIDC login from npm 11.21.0.
+    - run: npm install -g npm@11.21.1
+    - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+      with:
+        name: npm-publish
+    - name: Move the dist-tag once all packages are live
+      run: node utils/promote_npm_packages.js npm-publish.json
 
   publish-trace-viewer:
     name: "publish Trace Viewer to trace.playwright.dev"
