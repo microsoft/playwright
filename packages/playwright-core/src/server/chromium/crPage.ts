@@ -1261,7 +1261,7 @@ async function emulateLocale(session: CRSession, locale: string) {
   }
 }
 
-async function emulateTimezone(session: CRSession, timezoneId: string) {
+export async function emulateTimezone(session: CRSession, timezoneId: string) {
   try {
     await session.send('Emulation.setTimezoneOverride', { timezoneId: timezoneId });
   } catch (exception) {
