@@ -62,7 +62,7 @@ index 04bd23515eb4505cee3d9752db6388c4961ec315..3d486ee6604d3cd15fd45a17a81406f0
  @RESPATH@/browser/modules/*
  @RESPATH@/modules/*
 diff --git a/docshell/base/BrowsingContext.cpp b/docshell/base/BrowsingContext.cpp
-index 0986f712c9246d9dee01a95237eb1b69e4b8349e..d2da89989aacddfca23f59df71ff4f52fdffb905 100644
+index 0986f712c9246d9dee01a95237eb1b69e4b8349e..e9827ca68ecb1b8cd922c16008a6fd7b76927c53 100644
 --- a/docshell/base/BrowsingContext.cpp
 +++ b/docshell/base/BrowsingContext.cpp
 @@ -122,8 +122,11 @@ struct ParamTraits<mozilla::dom::DisplayMode>
@@ -90,7 +90,7 @@ index 0986f712c9246d9dee01a95237eb1b69e4b8349e..d2da89989aacddfca23f59df71ff4f52
      fields.Get<IDX_IPAddressSpace>() = inherit->GetIPAddressSpace();
      fields.Get<IDX_ParentalControlsEnabled>() =
          inherit->GetParentalControlsEnabled();
-@@ -3615,6 +3622,15 @@ void BrowsingContext::DidSet(FieldIndex<IDX_LanguageOverride>,
+@@ -3615,6 +3622,19 @@ void BrowsingContext::DidSet(FieldIndex<IDX_LanguageOverride>,
    });
  }
  
@@ -100,13 +100,17 @@ index 0986f712c9246d9dee01a95237eb1b69e4b8349e..d2da89989aacddfca23f59df71ff4f52
 +  if (PrefersContrastOverride() == aOldValue) {
 +    return;
 +  }
-+  PresContextAffectingFieldChanged();
++  WalkPresContexts([&](nsPresContext* aPc) {
++    aPc->MediaFeatureValuesChanged(
++        {MediaFeatureChangeReason::PreferenceChange},
++        MediaFeatureChangePropagation::JustThisDocument);
++  });
 +}
 +
  void BrowsingContext::DidSet(FieldIndex<IDX_MediumOverride>,
                               nsString&& aOldValue) {
    MOZ_ASSERT(IsTop());
-@@ -3873,7 +3889,7 @@ void BrowsingContext::SetGeolocationServiceOverride(
+@@ -3873,7 +3893,7 @@ void BrowsingContext::SetGeolocationServiceOverride(
    if (aGeolocationOverride.WasPassed()) {
      if (!mGeolocationServiceOverride) {
        mGeolocationServiceOverride = MakeRefPtr<GeolocationService>();
@@ -398,6 +402,21 @@ index 24fc4978206ae6eba18971f243d680a8b8802e65..6331730b7ce41183682463294714eff0
    if (!fm->IsInActiveWindow(bc)) {
      return false;
    }
+diff --git a/dom/base/Element.cpp b/dom/base/Element.cpp
+index b0f08fd6241f36b7a499d33613030f27a63aab96..63dc0dca1e0050f9e4fc680a74ece4c9e9230ee2 100644
+--- a/dom/base/Element.cpp
++++ b/dom/base/Element.cpp
+@@ -2299,7 +2299,9 @@ void Element::GetAttrAssociatedElementsForBindings(
+ 
+   auto& [_, cachedAttrElements] =
+       ExtendedDOMSlots()->mAttrElementsMap.LookupOrInsert(aAttr);
+-  if (elements && elements == cachedAttrElements) {
++  // Another JS world may have populated cachedAttrElements before this
++  // binding has a cached value.
++  if (aUseCachedValue && elements && elements == cachedAttrElements) {
+     // 2. If the contents of elements is equal to the contents of this's cached
+     // attr-associated elements, then return this's cached attr-associated
+     // elements object.
 diff --git a/dom/base/Navigator.cpp b/dom/base/Navigator.cpp
 index 20fc3905d5d22d00f0d644cc4713d66a7965eb27..43d48a10249056017e7a47cc01bd637bfd1b5a1f 100644
 --- a/dom/base/Navigator.cpp
@@ -462,10 +481,47 @@ index 7929fcdeb59c47dbd2bee9e8d8bfd7ef2e8db87b..0c4c0bc14f8c42276833607daae5f70d
    mouseOrPointerEvent.pointerId = aMouseEventData.mIdentifier;
    mouseOrPointerEvent.mModifiers =
 diff --git a/dom/base/nsFocusManager.cpp b/dom/base/nsFocusManager.cpp
-index bb523c271733fb3b5be45c990cea9cf4378fae8b..cab093cb55891c0c683c310b42e8601cab5648ad 100644
+index bb523c271733fb3b5be45c990cea9cf4378fae8b..9c2687c13ec7a25b5ce6049715a7fa93a158f87d 100644
 --- a/dom/base/nsFocusManager.cpp
 +++ b/dom/base/nsFocusManager.cpp
-@@ -1892,6 +1892,10 @@ Maybe<uint64_t> nsFocusManager::SetFocusInner(Element* aNewContent,
+@@ -837,17 +837,25 @@ void nsFocusManager::WindowLowered(mozIDOMWindowProxy* aWindow,
+     }
+   }
+ 
+-  // clear the mouse capture as the active window has changed
+-  PresShell::ReleaseCapturingContent();
+-
+-  // In addition, reset the drag state to ensure that we are no longer in
+-  // drag-select mode.
+-  if (mFocusedWindow) {
+-    nsCOMPtr<nsIDocShell> docShell = mFocusedWindow->GetDocShell();
+-    if (docShell) {
+-      if (PresShell* presShell = docShell->GetPresShell()) {
+-        RefPtr<nsFrameSelection> frameSelection = presShell->FrameSelection();
+-        frameSelection->SetDragState(false);
++  nsCOMPtr<nsIDocShell> loweredDocShell = window->GetDocShell();
++  // An automated page remains focused when another page's window is activated.
++  // Preserve its native capture and selection drag just as we preserve focus.
++  bool preserveInputState =
++      XRE_IsContentProcess() && loweredDocShell &&
++      nsDocShell::Cast(loweredDocShell)->ShouldOverrideHasFocus();
++  if (!preserveInputState) {
++    // clear the mouse capture as the active window has changed
++    PresShell::ReleaseCapturingContent();
++
++    // In addition, reset the drag state to ensure that we are no longer in
++    // drag-select mode.
++    if (mFocusedWindow) {
++      nsCOMPtr<nsIDocShell> docShell = mFocusedWindow->GetDocShell();
++      if (docShell) {
++        if (PresShell* presShell = docShell->GetPresShell()) {
++          RefPtr<nsFrameSelection> frameSelection = presShell->FrameSelection();
++          frameSelection->SetDragState(false);
++        }
+       }
+     }
+   }
+@@ -1892,6 +1900,10 @@ Maybe<uint64_t> nsFocusManager::SetFocusInner(Element* aNewContent,
          (GetActiveBrowsingContext() == newRootBrowsingContext);
    }
  
@@ -476,7 +532,7 @@ index bb523c271733fb3b5be45c990cea9cf4378fae8b..cab093cb55891c0c683c310b42e8601c
    // Exit fullscreen if a website focuses another window
    if (StaticPrefs::full_screen_api_exit_on_windowRaise() &&
        !isElementInActiveWindow && (aFlags & FLAG_RAISE)) {
-@@ -2453,6 +2457,7 @@ bool nsFocusManager::BlurImpl(BrowsingContext* aBrowsingContextToClear,
+@@ -2453,6 +2465,7 @@ bool nsFocusManager::BlurImpl(BrowsingContext* aBrowsingContextToClear,
                                bool aIsLeavingDocument, bool aAdjustWidget,
                                bool aRemainActive, Element* aElementToFocus,
                                uint64_t aActionId) {
@@ -484,7 +540,7 @@ index bb523c271733fb3b5be45c990cea9cf4378fae8b..cab093cb55891c0c683c310b42e8601c
    LOGFOCUS(("<<Blur begin actionid: %" PRIu64 ">>", aActionId));
  
    // hold a reference to the focused content, which may be null
-@@ -2496,6 +2501,13 @@ bool nsFocusManager::BlurImpl(BrowsingContext* aBrowsingContextToClear,
+@@ -2496,6 +2509,13 @@ bool nsFocusManager::BlurImpl(BrowsingContext* aBrowsingContextToClear,
      return true;
    }
  
@@ -498,7 +554,7 @@ index bb523c271733fb3b5be45c990cea9cf4378fae8b..cab093cb55891c0c683c310b42e8601c
    // Keep a ref to presShell since dispatching the DOM event may cause
    // the document to be destroyed.
    RefPtr<PresShell> presShell = docShell->GetPresShell();
-@@ -2677,7 +2689,11 @@ bool nsFocusManager::BlurImpl(BrowsingContext* aBrowsingContextToClear,
+@@ -2677,7 +2697,11 @@ bool nsFocusManager::BlurImpl(BrowsingContext* aBrowsingContextToClear,
      }
  
      // check if a different window was focused
@@ -511,7 +567,7 @@ index bb523c271733fb3b5be45c990cea9cf4378fae8b..cab093cb55891c0c683c310b42e8601c
    } else if (GetActiveBrowsingContext()) {
      // Otherwise, the blur of the element without blurring the document
      // occurred normally. Call UpdateCaret to redisplay the caret at the right
-@@ -3266,7 +3282,9 @@ void nsFocusManager::RaiseWindow(nsPIDOMWindowOuter* aWindow,
+@@ -3266,7 +3290,9 @@ void nsFocusManager::RaiseWindow(nsPIDOMWindowOuter* aWindow,
      }
    }
  
