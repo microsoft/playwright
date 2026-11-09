@@ -47,3 +47,23 @@ it('CR-035 should not create pages automatically', async ({ browserType }) => {
   await browser.close();
   expect(targets.length).toBe(0);
 });
+
+it('CR-047 should not start an on-device model benchmark', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43992' },
+}, async ({ browserType }) => {
+  const browser = await browserType.launch({
+    // Trigger startup measurement after one second instead of three minutes.
+    args: ['--enable-features=LogOnDeviceMetricsOnStartup:on_device_startup_metric_delay/1s'],
+  });
+  const page = await browser.newPage();
+  await page.setContent('<button>Test page</button>');
+  const session = await browser.newBrowserCDPSession();
+  await page.waitForTimeout(5000);
+  const { processInfo } = await session.send('SystemInfo.getProcessInfo');
+  const { histograms } = await session.send('Browser.getHistograms', {
+    query: 'OptimizationGuide.ModelExecution.OnDeviceModelPerformanceClass',
+  });
+  await browser.close();
+  expect(processInfo.map(info => info.type)).not.toContain('on_device_model.mojom.OnDeviceModelService');
+  expect(histograms).toEqual([]);
+});

@@ -85,6 +85,9 @@ export const chromiumSwitches = (options?: { android?: boolean }) => [
   '--disable-updater-scheduler', // Prevents Edge-specific updater from being launched when Edge is launched on mac.
   '--force-color-profile=srgb',
   '--metrics-recording-only',
+  // Skip the on-device model performance benchmark, as Chrome for Testing does.
+  // See https://github.com/microsoft/playwright/issues/43992
+  '--optimization-guide-performance-class=8',
   '--no-first-run',
   '--password-store=basic',
   '--use-mock-keychain',
