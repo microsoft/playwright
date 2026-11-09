@@ -4999,6 +4999,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `SS-095` | `page/page-screenshot.spec.ts` | page screenshot › should capture webgl canvas after its drawing buffer is resized |
 | `SS-096` | `page/page-screenshot.spec.ts` | page screenshot › should not wait for unused font face with failed local() source |
 | `SS-097` | `page/page-screenshot.spec.ts` | page screenshot › should take fullPage screenshots of SVG documents |
+| `SS-098` | `page/page-screenshot.spec.ts` | page screenshot animations › should not finish scroll-driven animations |
 
 ### ST — Storage
 

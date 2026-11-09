@@ -112,6 +112,9 @@ function inPagePrepareForScreenshots(screenshotStyle: string, hideCaret: boolean
       for (const animation of root.getAnimations()) {
         if (!animation.effect || animation.playbackRate === 0 || infiniteAnimationsToResume.has(animation))
           continue;
+        // Scroll-driven animations follow the scroll position, not time, so there is nothing to finish.
+        if (!(animation.timeline instanceof DocumentTimeline))
+          continue;
         const endTime = animation.effect.getComputedTiming().endTime;
         if (Number.isFinite(endTime)) {
           try {

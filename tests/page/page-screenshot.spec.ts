@@ -836,6 +836,25 @@ it.describe('page screenshot animations', () => {
     expect(comparePNGs(buffer1, buffer2, { maxDiffPixels: 50 })).not.toBe(null);
   });
 
+  it('SS-098 should not finish scroll-driven animations', {
+    annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43986' },
+  }, async ({ page }) => {
+    await page.setContent(`
+      <style>
+        @keyframes show { from { opacity: 0 } to { opacity: 1 } }
+        body { timeline-scope: --strip; }
+        .scroller { overflow-x: auto; width: 200px; scroll-timeline: --strip x; }
+        .content { width: 400px; height: 20px; }
+        .indicator { width: 50px; height: 50px; background: red; animation: show linear both; animation-timeline: --strip; }
+      </style>
+      <div class="scroller"><div class="content"></div></div>
+      <div class="indicator"></div>
+    `);
+    const expected = await page.screenshot({ animations: 'allow' });
+    const actual = await page.screenshot({ animations: 'disabled' });
+    expect(actual.equals(expected)).toBe(true);
+  });
+
   it('SS-058 should fire transitionend for finite transitions', async ({ page, server, browserName, platform }) => {
     await page.goto(server.PREFIX + '/css-transition.html');
     const div = page.locator('div');
