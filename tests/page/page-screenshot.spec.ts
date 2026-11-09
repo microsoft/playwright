@@ -740,6 +740,28 @@ declare global {
 }
 
 it.describe('page screenshot animations', () => {
+  it('SS-098 should preserve scroll animation progress during screenshots', {
+    annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43986' },
+  }, async ({ page }) => {
+    await page.setContent(`
+      <style>
+        @keyframes reveal { from { opacity: 0 } to { opacity: 1 } }
+        body { timeline-scope: --progress; }
+        #scroller { width: 100px; overflow-x: auto; scroll-timeline: --progress x; }
+        #content { width: 200px; height: 20px; }
+        #indicator { width: 40px; height: 40px; background: red;
+          animation: reveal linear both; animation-timeline: --progress; }
+      </style>
+      <div id="scroller"><div id="content"></div></div>
+      <div id="indicator"></div>
+    `);
+    await rafraf(page);
+    const expected = await page.screenshot({ animations: 'allow' });
+    const actual = await page.screenshot({ animations: 'disabled' });
+    expect(comparePNGs(actual, expected)).toBe(null);
+    expect((await page.screenshot({ animations: 'allow' })).equals(expected)).toBe(true);
+  });
+
   it('SS-052 should not capture infinite css animation', async ({ page, server }) => {
     await page.goto(server.PREFIX + '/rotate-z.html');
     const div = page.locator('div');
