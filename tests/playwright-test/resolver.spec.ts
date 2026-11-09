@@ -1373,3 +1373,103 @@ test.describe('directory imports', () => {
     expect(tscResult.exitCode).toBe(0);
   });
 });
+
+test.describe('package.json imports', () => {
+  for (const { type, condition } of [{ type: 'module', condition: 'esm' }, { type: 'commonjs', condition: 'cjs' }]) {
+    test(`should try targets until one exists in ${type}`, {
+      annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43966' },
+    }, async ({ runInlineTest, runTSC }) => {
+      const files = {
+        'package.json': JSON.stringify({
+          name: 'example-project',
+          type,
+          imports: {
+            '#/*': ['./src/*', './src/*.ts', './src/*/index.ts'],
+            '#lib/*': './src/lib/*',
+            '#condition': {
+              import: ['./src/missing.ts', './src/esm.ts'],
+              require: ['./src/missing.ts', './src/cjs.ts'],
+            },
+            '#custom': { custom: './src/custom.ts', default: './src/missing.ts' },
+          },
+        }),
+        'tsconfig.json': JSON.stringify({
+          compilerOptions: { moduleResolution: 'bundler', module: 'preserve', customConditions: ['custom'], noEmit: true, allowJs: true, types: ['node'] },
+        }),
+        'playwright.config.ts': `export default {};`,
+        'src/utils/env.ts': `export const env: string = 'env';`,
+        'src/widgets/index.ts': `export const widgets: string = 'widgets';`,
+        'src/lib/foo.ts': `export const foo: string = 'foo';`,
+        'src/esm.ts': `export const condition: string = 'esm';`,
+        'src/cjs.ts': `export const condition: string = 'cjs';`,
+        'src/custom.ts': `export const custom: string = 'custom';`,
+        'src/helper.js': `export { env as envFromJs } from '#/utils/env';`,
+        'example.spec.ts': `
+          import { test, expect } from '@playwright/test';
+          import { env } from '#/utils/env';
+          import { widgets } from '#/widgets';
+          import { foo } from '#lib/foo.js';
+          import { condition } from '#condition';
+          import { custom } from '#custom';
+          import { envFromJs } from './src/helper.js';
+          test('test', () => {
+            expect([env, widgets, foo, condition, custom, envFromJs]).toEqual(['env', 'widgets', 'foo', '${condition}', 'custom', 'env']);
+          });
+        `,
+      };
+
+      for (const env of [{}, { PLAYWRIGHT_FORCE_ASYNC_LOADER: '1' }]) {
+        const result = await runInlineTest(files, {}, { NODE_OPTIONS: '--conditions=custom', ...env });
+        expect(result.exitCode).toBe(0);
+        expect(result.passed).toBe(1);
+      }
+
+      const tscResult = await runTSC(files);
+      expect(tscResult.exitCode).toBe(0);
+    });
+  }
+
+  test('should keep the target that Node.js picks', async ({ runInlineTest }) => {
+    const result = await runInlineTest({
+      'package.json': JSON.stringify({
+        name: 'example-project',
+        type: 'module',
+        imports: {
+          '#package': ['./src/missing.ts', 'dep'],
+          '#optional': ['optional-dep', './src/local.ts'],
+          '#both': './src/both.js',
+          '#first-null': [null, './src/local.ts'],
+          '#/*': './src/*.ts',
+          '#/utils/*': './lib/*.ts',
+          '#paths': './src/local.ts',
+        },
+      }),
+      'tsconfig.json': JSON.stringify({
+        compilerOptions: { paths: { '#paths': ['./src/from-paths.ts'] } },
+      }),
+      'playwright.config.ts': `export default {};`,
+      'node_modules/dep/package.json': JSON.stringify({ name: 'dep', type: 'module', exports: './index.js' }),
+      'node_modules/dep/index.js': `export const value = 'dep';`,
+      'src/local.ts': `export const value: string = 'local';`,
+      'src/both.js': `export const value = 'both.js';`,
+      'src/both.ts': `export const value: string = 'both.ts';`,
+      'src/from-paths.ts': `export const value: string = 'from-paths';`,
+      'src/utils/foo.ts': `export const value: string = 'src/utils/foo';`,
+      'lib/foo.ts': `export const value: string = 'lib/foo';`,
+      'example.spec.ts': `
+        import { test, expect } from '@playwright/test';
+        import { value as pkg } from '#package';
+        import { value as optional } from '#optional';
+        import { value as both } from '#both';
+        import { value as firstNull } from '#first-null';
+        import { value as longestPattern } from '#/utils/foo';
+        import { value as fromPaths } from '#paths';
+        test('test', () => {
+          expect([pkg, optional, both, firstNull, longestPattern, fromPaths]).toEqual(['dep', 'local', 'both.js', 'local', 'lib/foo', 'from-paths']);
+        });
+      `,
+    });
+    expect(result.exitCode).toBe(0);
+    expect(result.passed).toBe(1);
+  });
+});
