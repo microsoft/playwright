@@ -5,7 +5,7 @@ title: "Test Runners"
 
 ## Introduction
 
-While Playwright for .NET isn't tied to a particular test runner or testing framework, in our experience the easiest way of getting started is by using the base classes we provide for MSTest, NUnit, xUnit, or xUnit v3. These classes support running tests on multiple browser engines, adjusting launch/context options and getting a [Page]/[BrowserContext] instance per test out of the box. 
+While Playwright for .NET isn't tied to a particular test runner or testing framework, in our experience the easiest way of getting started is by using the base classes we provide for MSTest, NUnit, xUnit, or xUnit v3. These classes support running tests on multiple browser engines, adjusting launch/context options and getting a [Page]/[BrowserContext] instance per test out of the box.
 
 Playwright and Browser instances will be reused between tests for better performance. We
 recommend running each test case in a new BrowserContext, this way browser state will be
@@ -312,7 +312,7 @@ Playwright for .NET does not retry failed tests itself, use the retries of your 
 
 Add the [`Retry`](https://docs.nunit.org/articles/nunit/writing-tests/attributes/retry.html) attribute to a test method. Its argument is the total number of attempts, so `[Retry(3)]` retries a failed test up to two times.
 
-By default NUnit only retries a test that failed an NUnit assertion. Playwright assertions throw `PlaywrightException` and actions that time out throw `TimeoutException`, so pass both as `RetryExceptions`. This property requires NUnit 4.5 or later.
+By default NUnit only retries a test that failed an NUnit assertion. Playwright assertions throw [PlaywrightAssertionException], other Playwright errors throw [PlaywrightException] and actions that time out throw `TimeoutException`, so pass them all as `RetryExceptions`. This property requires NUnit 4.5 or later.
 
 ```csharp
 using Microsoft.Playwright;
@@ -325,7 +325,7 @@ namespace PlaywrightTests;
 public class MyTest : PageTest
 {
     [Test]
-    [Retry(3, RetryExceptions = [typeof(PlaywrightException), typeof(TimeoutException)])]
+    [Retry(3, RetryExceptions = [typeof(PlaywrightException), typeof(PlaywrightAssertionException), typeof(TimeoutException)])]
     public async Task TestWithRetries()
     {
         await Page.GotoAsync("https://playwright.dev");
@@ -437,7 +437,7 @@ For example, to specify the number of workers you can use `NUnit.NumberOfTestWor
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <RunSettings>
-  <!-- NUnit adapter -->  
+  <!-- NUnit adapter -->
   <NUnit>
     <NumberOfTestWorkers>24</NumberOfTestWorkers>
   </NUnit>
@@ -448,7 +448,7 @@ For example, to specify the number of workers you can use `NUnit.NumberOfTestWor
       <DEBUG>pw:api</DEBUG>
     </EnvironmentVariables>
   </RunConfiguration>
-  <!-- Playwright -->  
+  <!-- Playwright -->
   <Playwright>
     <BrowserName>chromium</BrowserName>
     <ExpectTimeout>5000</ExpectTimeout>
@@ -467,7 +467,7 @@ For example, to specify the number of workers, you can use `MSTest.Parallelize.W
 
 ```xml
 <RunSettings>
-  <!-- MSTest adapter -->  
+  <!-- MSTest adapter -->
   <MSTest>
     <Parallelize>
       <Workers>4</Workers>
@@ -481,7 +481,7 @@ For example, to specify the number of workers, you can use `MSTest.Parallelize.W
       <DEBUG>pw:api</DEBUG>
     </EnvironmentVariables>
   </RunConfiguration>
-  <!-- Playwright -->  
+  <!-- Playwright -->
   <Playwright>
     <BrowserName>chromium</BrowserName>
     <ExpectTimeout>5000</ExpectTimeout>
@@ -512,7 +512,7 @@ For example, to specify the number of workers, you can use `xUnit.MaxParallelThr
       <DEBUG>pw:api</DEBUG>
     </EnvironmentVariables>
   </RunConfiguration>
-  <!-- Playwright -->  
+  <!-- Playwright -->
   <Playwright>
     <BrowserName>chromium</BrowserName>
     <ExpectTimeout>5000</ExpectTimeout>
@@ -542,7 +542,7 @@ For example, to specify the number of workers, you can use `xUnit.MaxParallelThr
       <DEBUG>pw:api</DEBUG>
     </EnvironmentVariables>
   </RunConfiguration>
-  <!-- Playwright -->  
+  <!-- Playwright -->
   <Playwright>
     <BrowserName>chromium</BrowserName>
     <ExpectTimeout>5000</ExpectTimeout>

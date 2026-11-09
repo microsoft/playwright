@@ -109,7 +109,7 @@ tests/test_foobar.py:22: AssertionError
 ```
 
 ```bash lang=csharp
-Microsoft.Playwright.PlaywrightException : should be logged in
+Microsoft.Playwright.PlaywrightAssertionException : should be logged in
 
 Locator expected to be visible
 Call log:
