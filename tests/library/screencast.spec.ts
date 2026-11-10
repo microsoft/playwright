@@ -295,6 +295,50 @@ test('SC-015 start dispose stops recording', async ({ browser }, testInfo) => {
   await context.close();
 });
 
+test('SC-016 start should record mp4 video in Chromium', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43999' },
+}, async ({ browser, browserName, channel }, testInfo) => {
+  const context = await browser.newContext({ viewport: { width: 1000, height: 400 } });
+  const page = await context.newPage();
+  const videoPath = testInfo.outputPath('video.mp4');
+  if (browserName !== 'chromium' || channel?.startsWith('bidi-')) {
+    const error = await page.screencast.start({ path: videoPath }).catch(e => e);
+    expect(error.message).toContain('Recording mp4 video is only supported in Chromium');
+    await context.close();
+    return;
+  }
+
+  // Frames are delivered together with the mp4 recording.
+  const frames: Buffer[] = [];
+  await page.screencast.start({ path: videoPath, size: { width: 500, height: 400 }, onFrame: ({ data }) => frames.push(data) });
+  await page.evaluate(() => document.body.style.backgroundColor = 'red');
+  await ensureSomeFrames(page);
+  await page.screencast.stop();
+  expect(frames.length).toBeGreaterThan(0);
+
+  const data = fs.readFileSync(videoPath);
+  expect(data.includes('av01')).toBe(true);
+  const video = await page.evaluate(async base64 => {
+    const video = document.createElement('video');
+    video.src = 'data:video/mp4;base64,' + base64;
+    await new Promise((resolve, reject) => {
+      video.onloadedmetadata = resolve;
+      video.onerror = () => reject(new Error('Failed to load the video'));
+    });
+    return { width: video.videoWidth, height: video.videoHeight, duration: video.duration };
+  }, data.toString('base64'));
+  expect(video.width).toBe(500);
+  expect(video.height).toBe(200);
+  expect(video.duration).toBeGreaterThan(0);
+
+  // The second recording works after the first one is stopped.
+  const videoPath2 = testInfo.outputPath('video2.mp4');
+  await page.screencast.start({ path: videoPath2 });
+  await page.screencast.stop();
+  expect(fs.readFileSync(videoPath2).includes('av01')).toBe(true);
+  await context.close();
+});
+
 type Pixel = { r: number, g: number, b: number, alpha: number };
 type PixelPredicate = (pixel: Pixel) => boolean;
 

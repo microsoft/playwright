@@ -68,7 +68,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   private _screencastClient: ScreencastClient | undefined;
   private _screencastFrameId = 0;
   private _screencastFrameAcks = new Map<number, ManualPromise<void>>();
-  private _videoRecorder: VideoRecorder | undefined;
+  private _videoRecorder: { stop(): Promise<void> } | undefined;
 
   static from(parentScope: BrowserContextDispatcher, page: Page): PageDispatcher {
     return PageDispatcher.fromNullable(parentScope, page)!;
@@ -399,6 +399,15 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     if (params.fps !== undefined && params.fps <= 0)
       throw new Error(`"fps" must be a positive number, got ${params.fps}`);
 
+    let artifact: Artifact | undefined;
+    if (params.record && params.format === 'mp4') {
+      if (!this._page.delegate.startMp4Recording)
+        throw new Error('Recording mp4 video is only supported in Chromium');
+      const recorder = await this._page.delegate.startMp4Recording(params);
+      this._videoRecorder = recorder;
+      artifact = recorder.artifact;
+    }
+
     if (params.sendFrames) {
       this._screencastClient = {
         onFrame: async (frame: ScreencastFrame) => {
@@ -417,10 +426,10 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
       this._page.screencast.addClient(this._screencastClient);
     }
 
-    let artifact: Artifact | undefined;
-    if (params.record) {
-      this._videoRecorder = new VideoRecorder(this._page.screencast);
-      artifact = this._videoRecorder.start(params);
+    if (params.record && !artifact) {
+      const recorder = new VideoRecorder(this._page.screencast);
+      this._videoRecorder = recorder;
+      artifact = recorder.start(params);
     }
     return { artifact: artifact ? createVideoDispatcher(this.parentScope(), artifact) : undefined };
   }

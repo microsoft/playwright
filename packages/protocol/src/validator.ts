@@ -2700,6 +2700,7 @@ scheme.PageScreencastStartParams = tObject({
   fps: tOptional(tInt),
   sendFrames: tOptional(tBoolean),
   record: tOptional(tBoolean),
+  format: tOptional(tEnum(['webm', 'mp4'])),
 });
 scheme.PageScreencastStartResult = tObject({
   artifact: tOptional(tChannel(['Artifact'])),

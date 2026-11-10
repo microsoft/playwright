@@ -4647,6 +4647,7 @@ export type PageScreencastStartParams = {
   fps?: number,
   sendFrames?: boolean,
   record?: boolean,
+  format?: 'webm' | 'mp4',
 };
 export type PageScreencastStartOptions = {
   size?: {
@@ -4657,6 +4658,7 @@ export type PageScreencastStartOptions = {
   fps?: number,
   sendFrames?: boolean,
   record?: boolean,
+  format?: 'webm' | 'mp4',
 };
 export type PageScreencastStartResult = {
   artifact?: ArtifactChannel,
