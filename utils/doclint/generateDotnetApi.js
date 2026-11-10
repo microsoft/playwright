@@ -77,6 +77,8 @@ const classNameMap = new Map(documentation.classesArray.map(x => [x.name, `I${to
 // map some types that we know of
 classNameMap.set('Error', 'Exception');
 classNameMap.set('TimeoutError', 'TimeoutException');
+classNameMap.set('PlaywrightException', 'PlaywrightException');
+classNameMap.set('PlaywrightAssertionException', 'PlaywrightAssertionException');
 classNameMap.set('EvaluationArgument', 'object');
 classNameMap.set('boolean', 'bool');
 classNameMap.set('any', 'object');
@@ -134,6 +136,10 @@ function writeFile(kind, name, spec, body, folder, extendsName = null) {
 function renderClass(clazz) {
   const name = classNameMap.get(clazz.name);
   if (name === 'TimeoutException')
+    return;
+  if (name === 'PlaywrightException')
+    return;
+  if (name === 'PlaywrightAssertionException')
     return;
   if (name === 'IAsyncDisposable')
     return;
