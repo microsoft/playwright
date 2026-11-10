@@ -286,7 +286,7 @@ const FILE_PICKER_CONTRACT_ID = '@mozilla.org/filepicker;1';
 // WebDriver's FilePickerHandler and MockFilePicker do. Content processes always use
 // nsFilePickerProxy, which asks the parent (FilePickerParent) to create the real picker,
 // so a parent-side override covers all pages. Pages that intercept file choosers get a
-// picker that cancels immediately; everything else is forwarded to the original picker.
+// picker that completes with no files; everything else is forwarded to the original picker.
 class FilePickerOverride {
   constructor(registry) {
     this._registry = registry;
@@ -327,7 +327,9 @@ class FilePickerOverride {
         if (original)
           original.open(callback);
         else
-          callback.done(Ci.nsIFilePicker.returnCancel);
+          // Close the picker without dispatching cancel or changing the input's files.
+          // Playwright assigns the files separately after the filechooser event.
+          callback.done(Ci.nsIFilePicker.returnOK);
       },
       isModeSupported: mode => original ? original.isModeSupported(mode) : Promise.resolve(true),
       appendFilters: filterMask => original?.appendFilters(filterMask),
@@ -354,7 +356,7 @@ class FilePickerOverride {
       get mode() { return original ? original.mode : state.mode; },
       get file() { return original ? original.file : null; },
       get fileURL() { return original ? original.fileURL : null; },
-      get files() { return original ? original.files : null; },
+      get files() { return original ? original.files : [][Symbol.iterator](); },
       get domFileOrDirectory() { return original ? original.domFileOrDirectory : null; },
       get domFileOrDirectoryEnumerator() { return original ? original.domFileOrDirectoryEnumerator : null; },
       get domFilesInWebKitDirectory() { return original ? original.domFilesInWebKitDirectory : null; },
