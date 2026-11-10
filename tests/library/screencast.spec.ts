@@ -295,7 +295,7 @@ test('SC-015 start dispose stops recording', async ({ browser }, testInfo) => {
   await context.close();
 });
 
-test('SC-016 start should record mp4 video in Chromium', {
+test('SC-039 start should record mp4 video in Chromium', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43999' },
 }, async ({ browser, browserName, channel }, testInfo) => {
   const context = await browser.newContext({ viewport: { width: 1000, height: 400 } });
