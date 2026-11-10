@@ -2370,7 +2370,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
  *
  * test('basic test', async ({ page }, testInfo) => {
  *   expect(testInfo.title).toBe('basic test');
- *   await page.screenshot(testInfo.outputPath('screenshot.png'));
+ *   await page.screenshot({ path: testInfo.outputPath('screenshot.png') });
  * });
  * ```
  *
