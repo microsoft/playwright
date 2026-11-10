@@ -9042,6 +9042,10 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        */
       isPaused?: boolean;
     }
+    /**
+     * State of a debugger pause session. While it is paused, the UI process holds every page of the browsing context group: each frame is either stopped or held. Closed means the hold was released, not that no frame is stopped: a frame can stay in the debugger, so Debugger.paused and Debugger.resumed remain the source of truth for which frames are stopped.
+     */
+    export type DebuggerPauseSessionState = "paused"|"closed";
     
     export type targetCreatedPayload = {
       targetInfo: TargetInfo;
@@ -9062,6 +9066,20 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        * ID of the committed target.
        */
       newTargetId: string;
+    }
+    /**
+     * Fired when a debugger pause session opens, when the set of frames whose pause has not ended changes, and when the hold is released.
+     */
+    export type debuggerPauseSessionChangedPayload = {
+      /**
+       * Identifies the session from the event that opens it to the event that closes it.
+       */
+      sessionId: string;
+      state: DebuggerPauseSessionState;
+      /**
+       * Targets of the frames whose pause has not ended yet. A frame that has resumed stays listed until its process is idle, which can be after Debugger.resumed. Empty when the session is closed, even if a frame is still stopped.
+       */
+      stoppingTargetIds: string[];
     }
     export type dispatchMessageFromTargetPayload = {
       targetId: string;
@@ -9408,6 +9426,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Target.targetCreated": Target.targetCreatedPayload;
     "Target.targetDestroyed": Target.targetDestroyedPayload;
     "Target.didCommitProvisionalTarget": Target.didCommitProvisionalTargetPayload;
+    "Target.debuggerPauseSessionChanged": Target.debuggerPauseSessionChangedPayload;
     "Target.dispatchMessageFromTarget": Target.dispatchMessageFromTargetPayload;
     "Timeline.eventRecorded": Timeline.eventRecordedPayload;
     "Timeline.recordingStarted": Timeline.recordingStartedPayload;
@@ -9541,6 +9560,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     ["Target.targetCreated"]: [Target.targetCreatedPayload];
     ["Target.targetDestroyed"]: [Target.targetDestroyedPayload];
     ["Target.didCommitProvisionalTarget"]: [Target.didCommitProvisionalTargetPayload];
+    ["Target.debuggerPauseSessionChanged"]: [Target.debuggerPauseSessionChangedPayload];
     ["Target.dispatchMessageFromTarget"]: [Target.dispatchMessageFromTargetPayload];
     ["Timeline.eventRecorded"]: [Timeline.eventRecordedPayload];
     ["Timeline.recordingStarted"]: [Timeline.recordingStartedPayload];

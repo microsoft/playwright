@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { debugLogger } from '@utils/debugLogger';
 import { Worker } from '../page';
 import { createHandle, CRExecutionContext } from './crExecutionContext';
 import { CRNetworkManager } from './crNetworkManager';
@@ -20,7 +21,7 @@ import { BrowserContext } from '../browserContext';
 import * as network from '../network';
 import { ConsoleMessage } from '../console';
 import { stackTraceToLocation } from './crProtocolHelper';
-import { calculateUserAgentMetadata } from './crPage';
+import { calculateUserAgentMetadata, emulateTimezone } from './crPage';
 
 import type { CRBrowserContext } from './crBrowser';
 import type { CRSession } from './crConnection';
@@ -67,6 +68,8 @@ export class CRServiceWorker extends Worker {
     });
 
     session.send('Runtime.enable', {}).catch(e => {});
+    if (browserContext._options.timezoneId)
+      emulateTimezone(session, browserContext._options.timezoneId).catch(error => debugLogger.log('error', error));
     session.send('Runtime.runIfWaitingForDebugger').catch(e => {});
     session.on('Inspector.targetReloadedAfterCrash', () => {
       // Resume service worker after restart.

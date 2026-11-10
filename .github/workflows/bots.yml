@@ -1,0 +1,69 @@
+# The Playwright bot runs in microsoft/devops.playwright.dev. This workflow hands it the request
+# when a maintainer applies a label: agent-triage, agent-implement or agent-task on an issue starts
+# issue.yml there, and agent-review on a pull request starts pr.yml. Nothing else of the bot lives
+# in this repo. Apply the label again to start another run.
+#
+# The same file is in every Playwright repo, as .github/workflows/bots.yml. Its source is
+# bots/shim.yml in microsoft/devops.playwright.dev, and README.md there describes the flows.
+name: Bots
+
+on:
+  issues:
+    types: [labeled]
+  # Runs from the default branch, for PRs from forks too. It never checks out the PR.
+  pull_request_target:
+    types: [labeled]
+
+permissions: {}
+
+jobs:
+  issue:
+    name: Hand the issue to the bot
+    if: >-
+      github.repository_owner == 'microsoft' && github.event_name == 'issues' && (
+        github.event.label.name == 'agent-triage' ||
+        github.event.label.name == 'agent-implement' ||
+        github.event.label.name == 'agent-task')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+    - uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+      id: app-token
+      with:
+        client-id: ${{ vars.PLAYWRIGHT_APP_CLIENT_ID }}
+        private-key: ${{ secrets.PLAYWRIGHT_PRIVATE_KEY }}
+        owner: microsoft
+        repositories: devops.playwright.dev
+        permission-actions: write
+    - name: Start issue.yml in microsoft/devops.playwright.dev
+      env:
+        GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        NUMBER: ${{ github.event.issue.number }}
+        LABEL: ${{ github.event.label.name }}
+      run: >-
+        gh workflow run issue.yml --repo microsoft/devops.playwright.dev --ref main
+        -f repo="$GITHUB_REPOSITORY" -f issue="$NUMBER" -f label="$LABEL"
+
+  pr:
+    name: Hand the PR to the bot
+    if: >-
+      github.repository_owner == 'microsoft' && github.event_name == 'pull_request_target' &&
+      github.event.label.name == 'agent-review'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+    - uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+      id: app-token
+      with:
+        client-id: ${{ vars.PLAYWRIGHT_APP_CLIENT_ID }}
+        private-key: ${{ secrets.PLAYWRIGHT_PRIVATE_KEY }}
+        owner: microsoft
+        repositories: devops.playwright.dev
+        permission-actions: write
+    - name: Start pr.yml in microsoft/devops.playwright.dev
+      env:
+        GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        NUMBER: ${{ github.event.pull_request.number }}
+      run: >-
+        gh workflow run pr.yml --repo microsoft/devops.playwright.dev --ref main
+        -f repo="$GITHUB_REPOSITORY" -f pr="$NUMBER"
