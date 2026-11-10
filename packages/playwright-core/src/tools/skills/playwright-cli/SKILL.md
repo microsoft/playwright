@@ -403,23 +403,17 @@ playwright-cli kill-all
 
 Package installation and custom `npm` scripts may require separate approval.
 
-If global `playwright-cli` command is not available, try the project's local Playwright (1.59 or newer). From the directory that declares the Playwright dependency, such as the workspace root in a monorepo, check that it supports the CLI:
+If global `playwright-cli` command is not available, try a local version via `npx playwright cli`. It needs Playwright 1.59 or newer:
 
 ```bash
-npx --no-install playwright cli list
+npx --no-install playwright --version
 ```
 
-Do not use `--version` or `cli --help` for this check: older versions can return successfully even though they have no `cli` subcommand.
-
-When `cli list` succeeds, use `npx --no-install playwright cli <command>` in place of `playwright-cli <command>` in all commands. Keep `--no-install` to avoid downloading another version. On Playwright 1.60 or newer, `npx --no-install playwright cli --help` lists the commands supported by the installed version.
-
-If the check fails with `error: unknown command 'cli'`, the local Playwright is older than 1.59. If npx reports that Playwright is missing, there is no local version to use. In either case, install `playwright-cli` as a global command:
+When local version is available, use `npx playwright cli` in all commands. Otherwise, install `playwright-cli` as a global command:
 
 ```bash
 npm install -g @playwright/cli@latest
 ```
-
-Root commands such as `playwright open` and `playwright screenshot` have different behavior and are not substitutes for `playwright cli`.
 
 ## Example: Form submission
 
