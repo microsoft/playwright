@@ -1515,7 +1515,7 @@ test('should record custom test timeout in trace', async ({ runInlineTest }, tes
 test('should record browser name and viewport in trace', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { use: { viewport: { width: 900, height: 600 } } };
+      export default { use: { viewport: { width: 900, height: 600 } } };
     `,
     'a.spec.ts': `
       import { test, expect } from '@playwright/test';
