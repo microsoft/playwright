@@ -176,7 +176,8 @@ export abstract class APIRequestContext extends SdkObject {
     if (!agent) {
       // Aligned with the default Node.js global agent options. Connection options such as
       // `lookup` stay per-request, since agent options take precedence over request ones.
-      agent = protocol === 'https:' ? new https.Agent({ keepAlive: true }) : new http.Agent({ keepAlive: true });
+      const options = { keepAlive: true, timeout: 5000 };
+      agent = protocol === 'https:' ? new https.Agent(options) : new http.Agent(options);
       this._agentForProtocol.set(protocol, agent);
     }
     return agent;
