@@ -272,7 +272,7 @@ await page.get_by_role("button").click()
 await page.clock.fast_forward("05:00")
 
 # Check that the user was logged out automatically.
-await expect(page.getByText("You have been logged out due to inactivity.")).toBeVisible()
+await expect(page.get_by_text("You have been logged out due to inactivity.")).to_be_visible()
 ```
 
 ```python sync
