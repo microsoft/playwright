@@ -258,7 +258,7 @@ export class PageAgent {
   _filePickerShown(inputElement) {
     // Fired by HTMLInputElement::InitFilePicker right before the native picker is opened.
     // When intercepting, the parent process replaces the native picker with one that
-    // cancels immediately (see FilePickerOverride in TargetRegistry.js).
+    // completes with no files (see FilePickerOverride in TargetRegistry.js).
     if (!this._interceptFileChooserDialog)
       return;
     const frame = this._findFrameForNode(inputElement);
