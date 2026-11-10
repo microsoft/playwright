@@ -126,7 +126,7 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
     await this._exportHAR(harId);
   }
 
-  async _recordIntoHAR(har: string, page: Page | null, options: { url?: string | RegExp, updateContent?: 'attach' | 'embed' | 'omit', updateMode?: 'minimal' | 'full', resourcesDir?: string } = {}): Promise<string> {
+  async _recordIntoHAR(har: string, page: Page | null, options: { url?: string | RegExp, updateContent?: 'attach' | 'embed' | 'omit', updateMode?: 'minimal' | 'full', resourcesDir?: string, omitUnusedFields?: boolean } = {}): Promise<string> {
     const isZip = /\.zip$/i.test(har);
     const { harId } = await this._channel.harStart({
       page: page?._channel,
@@ -138,6 +138,7 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
         mode: options.updateMode ?? 'minimal',
         harPath: isZip ? undefined : har,
         resourcesDir: options.resourcesDir,
+        omitUnusedFields: options.omitUnusedFields,
       },
     }, kNoTimeout);
     this._harRecorders.set(harId, { path: har, resourcesDir: options.resourcesDir });

@@ -404,7 +404,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     if (!localUtils)
       throw new Error('Route from har is not supported in thin clients');
     if (options.update) {
-      await this.tracing._recordIntoHAR(har, null, options);
+      await this.tracing._recordIntoHAR(har, null, { ...options, omitUnusedFields: true });
       return;
     }
     const harRouter = await HarRouter.create(localUtils, har, options.notFound || 'abort', { urlMatch: options.url });

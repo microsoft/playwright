@@ -2979,6 +2979,7 @@ scheme.RecordHarOptions = tObject({
   urlRegexFlags: tOptional(tString),
   harPath: tOptional(tString),
   resourcesDir: tOptional(tString),
+  omitUnusedFields: tOptional(tBoolean),
 });
 scheme.CDPSessionInitializer = tOptional(tObject({}));
 scheme.CDPSessionEventEvent = tObject({

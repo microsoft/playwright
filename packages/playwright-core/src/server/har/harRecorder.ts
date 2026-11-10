@@ -36,13 +36,13 @@ export class HarRecorder implements HarTracerDelegate {
   private _relativeResourcesDir: string;
   private _isFlushed: boolean = false;
   private _tracer: HarTracer;
-  private _minimal: boolean;
+  private _omitUnusedFields: boolean;
   private _entries: har.Entry[] = [];
   private _writtenContentEntries = new Set<string>();
 
   constructor(context: BrowserContext | APIRequestContext, fallbackDir: string, harId: string, page: Page | null, options: channels.RecordHarOptions) {
     this._context = context;
-    this._minimal = options.mode === 'minimal';
+    this._omitUnusedFields = options.mode === 'minimal' && !!options.omitUnusedFields;
     const isServer = !!context.attribution.playwright.options.isServer;
     this._harFilePath = !isServer && options.harPath ? options.harPath : path.join(fallbackDir, `${harId}.har`);
     const harFileDir = path.dirname(this._harFilePath);
@@ -134,7 +134,7 @@ export class HarRecorder implements HarTracerDelegate {
       if (i)
         this._fs.appendFile(file, ',');
       const entry = log.entries[i];
-      this._fs.appendFile(file, JSON.stringify(this._minimal ? {
+      this._fs.appendFile(file, JSON.stringify(this._omitUnusedFields ? {
         ...entry,
         startedDateTime: undefined,
         time: undefined,

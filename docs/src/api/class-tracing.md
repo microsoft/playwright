@@ -389,7 +389,7 @@ Optional setting to control resource content management. If `omit` is specified,
 * since: v1.60
 - `mode` "HarMode" <"full"|"minimal">
 
-When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing (including request timestamps), HTTP versions, parsed query strings, page, cookies, security and other types of HAR information that are not used when replaying from HAR. Request and response headers are preserved. Defaults to `full`.
+When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page, cookies, security and other types of HAR information that are not used when replaying from HAR. Defaults to `full`.
 
 ### option: Tracing.startHar.urlFilter
 * since: v1.60

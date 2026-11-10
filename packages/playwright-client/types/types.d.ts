@@ -11615,10 +11615,8 @@ export interface Browser {
       path: string;
 
       /**
-       * When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing (including
-       * request timestamps), HTTP versions, parsed query strings, page, cookies, security and other types of HAR
-       * information that are not used when replaying from HAR. Request and response headers are preserved. Defaults to
-       * `full`.
+       * When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page,
+       * cookies, security and other types of HAR information that are not used when replaying from HAR. Defaults to `full`.
        */
       mode?: "full"|"minimal";
 
@@ -18059,10 +18057,8 @@ export interface BrowserType<Unused = {}> {
       path: string;
 
       /**
-       * When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing (including
-       * request timestamps), HTTP versions, parsed query strings, page, cookies, security and other types of HAR
-       * information that are not used when replaying from HAR. Request and response headers are preserved. Defaults to
-       * `full`.
+       * When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page,
+       * cookies, security and other types of HAR information that are not used when replaying from HAR. Defaults to `full`.
        */
       mode?: "full"|"minimal";
 
@@ -23819,10 +23815,8 @@ export interface Tracing {
     content?: "omit"|"embed"|"attach";
 
     /**
-     * When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing (including
-     * request timestamps), HTTP versions, parsed query strings, page, cookies, security and other types of HAR
-     * information that are not used when replaying from HAR. Request and response headers are preserved. Defaults to
-     * `full`.
+     * When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page,
+     * cookies, security and other types of HAR information that are not used when replaying from HAR. Defaults to `full`.
      */
     mode?: "full"|"minimal";
 
@@ -24607,10 +24601,8 @@ export interface Electron {
       path: string;
 
       /**
-       * When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing (including
-       * request timestamps), HTTP versions, parsed query strings, page, cookies, security and other types of HAR
-       * information that are not used when replaying from HAR. Request and response headers are preserved. Defaults to
-       * `full`.
+       * When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page,
+       * cookies, security and other types of HAR information that are not used when replaying from HAR. Defaults to `full`.
        */
       mode?: "full"|"minimal";
 
@@ -25364,10 +25356,8 @@ export interface AndroidDevice {
       path: string;
 
       /**
-       * When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing (including
-       * request timestamps), HTTP versions, parsed query strings, page, cookies, security and other types of HAR
-       * information that are not used when replaying from HAR. Request and response headers are preserved. Defaults to
-       * `full`.
+       * When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page,
+       * cookies, security and other types of HAR information that are not used when replaying from HAR. Defaults to `full`.
        */
       mode?: "full"|"minimal";
 
@@ -26618,10 +26608,8 @@ export interface BrowserContextOptions {
     path: string;
 
     /**
-     * When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing (including
-     * request timestamps), HTTP versions, parsed query strings, page, cookies, security and other types of HAR
-     * information that are not used when replaying from HAR. Request and response headers are preserved. Defaults to
-     * `full`.
+     * When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page,
+     * cookies, security and other types of HAR information that are not used when replaying from HAR. Defaults to `full`.
      */
     mode?: "full"|"minimal";
 

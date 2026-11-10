@@ -390,6 +390,7 @@ RecordHarOptions:
     urlRegexFlags: string?
     harPath: string?
     resourcesDir: string?
+    omitUnusedFields: boolean?
 
 CDPSession:
   type: interface

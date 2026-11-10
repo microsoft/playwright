@@ -269,6 +269,7 @@ export type RecordHarOptions = {
   urlRegexFlags?: string,
   harPath?: string,
   resourcesDir?: string,
+  omitUnusedFields?: boolean,
 };
 
 export type SerializedValue = {
