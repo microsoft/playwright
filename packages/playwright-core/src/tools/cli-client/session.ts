@@ -142,6 +142,10 @@ export class Session {
       args.push(`--idle-timeout=${cliArgs['idle-timeout']}`);
     if (cliArgs.extension)
       args.push('--extension');
+    if (cliArgs['tab-group'] === false)
+      args.push('--no-tab-group');
+    if (cliArgs['session-color'])
+      args.push(`--session-color=${cliArgs['session-color']}`);
     else if (cliArgs.cdp)
       args.push(`--cdp=${cliArgs.cdp}`);
     else if (cliArgs.endpoint)

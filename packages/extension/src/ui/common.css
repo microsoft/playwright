@@ -1,0 +1,333 @@
+/*
+  Copyright (c) Microsoft Corporation.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
+
+:root {
+  color-scheme: light dark;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--color-fg-default);
+  background-color: var(--color-canvas-subtle);
+  -webkit-font-smoothing: antialiased;
+}
+
+.page {
+  box-sizing: border-box;
+  max-width: 672px;
+  margin: 0 auto;
+  padding: 40px 16px 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 4px 8px;
+}
+
+.page-logo {
+  width: 32px;
+  height: 32px;
+  flex: none;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 20px;
+  line-height: 28px;
+  font-weight: 600;
+  flex: 1;
+}
+
+.page-header-link,
+.warning-banner a {
+  color: var(--color-accent-fg);
+}
+
+.page-header-link {
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.page-header-link:hover {
+  text-decoration: underline;
+}
+
+.section-title {
+  margin: 8px 4px -4px;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+}
+
+/* Card */
+.card {
+  background-color: var(--color-canvas-default);
+  border: 1px solid var(--color-border-default);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 20px;
+}
+
+.card-body {
+  padding: 0 20px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 20px;
+  border-top: 1px solid var(--color-border-muted);
+  background-color: var(--color-canvas-subtle);
+}
+
+.card-title {
+  margin: 0;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+}
+
+.muted {
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--color-fg-muted);
+}
+
+/* Status banner */
+.status-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 16px 20px;
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.status-banner.error,
+.status-banner.connected,
+.status-banner.empty {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 400;
+}
+
+.status-banner.empty {
+  color: var(--color-fg-muted);
+}
+
+.status-banner .octicon {
+  margin: 2px 0 0;
+}
+
+.status-banner a {
+  color: var(--color-accent-fg);
+}
+
+/* Warning */
+.warning-banner {
+  display: flex;
+  gap: 10px;
+  padding: 12px 14px;
+  background-color: var(--color-attention-subtle);
+  border: 1px solid var(--color-attention-muted);
+  border-radius: 6px;
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.warning-banner .octicon {
+  margin: 2px 0 0;
+  color: var(--color-attention-fg);
+}
+
+/* Buttons */
+.button {
+  box-sizing: border-box;
+  height: 32px;
+  min-width: 88px;
+  padding: 0 16px;
+  border-radius: 6px;
+  border: 1px solid var(--color-btn-border);
+  font: inherit;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  flex: none;
+}
+
+.button.default {
+  background-color: var(--color-btn-bg);
+  color: var(--color-btn-text);
+}
+
+.button.default:hover {
+  background-color: var(--color-btn-hover-bg);
+}
+
+.button.primary {
+  background-color: var(--color-btn-primary-bg);
+  border-color: transparent;
+  color: var(--color-btn-primary-text);
+}
+
+.button.primary:hover {
+  background-color: var(--color-btn-primary-hover-bg);
+}
+
+.button:focus-visible,
+.icon-button:focus-visible,
+.tab-item:focus-visible {
+  outline: 2px solid var(--color-accent-fg);
+  outline-offset: 1px;
+}
+
+.icon-button {
+  flex: none;
+  height: 28px;
+  width: 28px;
+  border: none;
+  color: var(--color-fg-muted);
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+}
+
+.icon-button .octicon {
+  margin: 0;
+}
+
+.icon-button:hover {
+  background-color: var(--color-neutral-muted);
+}
+
+/* List of tabs and tab groups */
+.list-title {
+  margin: 0 0 6px;
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: 600;
+  color: var(--color-fg-muted);
+}
+
+.list {
+  border: 1px solid var(--color-border-default);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.card > .list {
+  border-width: 1px 0 0;
+  border-radius: 0;
+}
+
+.tab-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 36px;
+  padding: 8px 12px;
+}
+
+.card > .list > .tab-item {
+  padding: 8px 20px;
+}
+
+.tab-item + .tab-item {
+  border-top: 1px solid var(--color-border-muted);
+}
+
+.tab-item.clickable {
+  cursor: pointer;
+}
+
+.tab-item.clickable:hover {
+  background-color: var(--color-canvas-subtle);
+}
+
+.tab-item.selected,
+.tab-item.selected:hover {
+  background-color: var(--color-accent-subtle);
+}
+
+.tab-checkbox {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  flex: none;
+  cursor: pointer;
+  accent-color: var(--color-accent-emphasis);
+}
+
+.tab-favicon {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  color: var(--color-fg-muted);
+}
+
+.group-dot {
+  width: 12px;
+  height: 12px;
+  margin: 2px;
+  border-radius: 50%;
+}
+
+.tab-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.tab-title {
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tab-url {
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--color-fg-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

@@ -46,6 +46,8 @@ type AttachOptions = {
   cdp?: string;
   endpoint?: string;
   extension?: boolean | string;
+  'session-color'?: string;
+  'tab-group'?: boolean;
 };
 
 type OpenOptions = {

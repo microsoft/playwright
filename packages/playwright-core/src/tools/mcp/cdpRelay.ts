@@ -39,12 +39,10 @@
  *        │  mirrored 1:1, plus extension.initialized
  *        ▼  ws /extension/<uuid>
  *   ┌─ Playwright extension (packages/extension/src) ────────────────────────┐
- *   │ RelayConnection: speaks extension protocol ↔ chrome.* APIs. Invokes    │
- *   │   allow-listed chrome.* commands reflectively, forwards the            │
- *   │   chrome.debugger and chrome.tabs events of attached tabs.             │
- *   │ ConnectedTabGroup: speaks chrome.tabGroups only. The Chrome tab group  │
- *   │   is the source of truth for which tabs a client controls.             │
- *   │ background.ts: one ConnectedTabGroup per client, connect page flow.    │
+ *   │ ClientSession: speaks extension protocol. Runs a chrome.* command only │
+ *   │   for a tab that its client owns, sends the events of those tabs.      │
+ *   │ TabRegistry: the owner of each tab. A tab has one client at most.      │
+ *   │ TabGroupManager: keeps the tab group of a client equal to its tabs.    │
  *   └────┬───────────────────────────────────────────────────────────────────┘
  *        │  chrome.debugger / chrome.tabs / chrome.tabGroups
  *        ▼
@@ -82,6 +80,11 @@ import type { WebSocket } from 'ws';
 const debugLogger = debug('pw:mcp:relay');
 
 const extensionConnectionTimeout = +(process.env.PWTEST_EXTENSION_CONNECT_TIMEOUT ?? 30_000);
+
+export type TabGroupOptions = {
+  title?: string;
+  color?: string;
+};
 
 type CDPCommand = {
   id: number;
@@ -152,7 +155,7 @@ export class CDPRelayServer {
     return `${this._wsHost}${this._extensionPath}`;
   }
 
-  async establishExtensionConnection(clientName: string, tabGroup = true) {
+  async establishExtensionConnection(clientName: string, tabGroup: TabGroupOptions | undefined) {
     debugLogger('Establishing extension connection');
     await this._openConnectPageInBrowser(clientName, tabGroup);
     debugLogger('Waiting for incoming extension connection');
@@ -166,7 +169,7 @@ export class CDPRelayServer {
     debugLogger('Extension connection established');
   }
 
-  private async _openConnectPageInBrowser(clientName: string, tabGroup: boolean) {
+  private async _openConnectPageInBrowser(clientName: string, tabGroup: TabGroupOptions | undefined) {
     const mcpRelayEndpoint = `${this._wsHost}${this._extensionPath}`;
     const url = new URL(`chrome-extension://${playwrightExtensionId}/connect.html`);
     url.searchParams.set('mcpRelayUrl', mcpRelayEndpoint);
@@ -179,6 +182,10 @@ export class CDPRelayServer {
     url.searchParams.set('protocolVersion', this._protocolVersion.toString());
     if (!tabGroup)
       url.searchParams.set('tabGroup', 'false');
+    if (tabGroup?.title)
+      url.searchParams.set('tabGroupTitle', tabGroup.title);
+    if (tabGroup?.color)
+      url.searchParams.set('tabGroupColor', tabGroup.color);
     if (this._background)
       url.searchParams.set('background', 'true');
     if (this._token)

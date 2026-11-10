@@ -14,152 +14,68 @@
  * limitations under the License.
  */
 
-import { debugLog } from './relayConnection';
-import { PendingConnections } from './pendingConnection';
-import { ConnectedTabGroup, cleanupStalePlaywrightGroups, isNonDebuggableUrl, ungroupTabs, uniqueGroupStyle } from './connectedTabGroup';
 
-type PageMessage = {
-  type: 'connectionRequested';
-  mcpRelayUrl: string;
-} | {
-  type: 'getTabs';
-} | {
-  type: 'connectToTab';
-  // Picked in the connect page; absent on the token-bypass path where no tab
-  // selection happens.
-  tab?: chrome.tabs.Tab;
-  clientName?: string;
-  tabGroup?: boolean;
-  background?: boolean;
-} | {
-  type: 'getConnectionStatus';
-} | {
-  type: 'disconnect';
-  connectionId: number;
-} | {
-  type: 'keepalive';
-};
+import { ChromeListeners } from './chromeListeners';
+import { ConnectionBroker } from './connectionBroker';
+import { TabGroupManager } from './tabGroupManager';
+import { TabPicker } from './tabPicker';
+import { TabRegistry } from './tabRegistry';
 
-class PlaywrightExtension {
-  private _connections = new Map<number, ConnectedTabGroup>();
-  private _lastConnectionId = 0;
-  private _pendingConnections = new PendingConnections();
-  // Service worker restarts lose all connection state, so any existing
-  // Playwright groups are stale. Connections wait on this before reconciling.
-  private _cleanupPromise: Promise<void>;
+import type { PageMessage } from './types';
+
+class Extension {
+  private _broker: ConnectionBroker;
+  private _picker: TabPicker;
+  private _ready: Promise<unknown>;
 
   constructor() {
+    const listeners = new ChromeListeners();
+    const registry = new TabRegistry(listeners);
+    const groups = new TabGroupManager(registry, listeners);
+    this._ready = Promise.all([registry.ready, groups.ready]);
+    this._picker = new TabPicker(registry, groups);
+    this._broker = new ConnectionBroker(registry, groups, this._picker, listeners);
     chrome.runtime.onMessage.addListener(this._onMessage.bind(this));
-    chrome.action.onClicked.addListener(this._onActionClicked.bind(this));
-    this._cleanupPromise = cleanupStalePlaywrightGroups();
+    chrome.action.onClicked.addListener(() => void this._showManagePage());
   }
 
-  // Promise-based message handling is not supported in Chrome: https://issues.chromium.org/issues/40753031
-  private _onMessage(message: PageMessage, sender: chrome.runtime.MessageSender, sendResponse: (response: any) => void) {
+  private async _showManagePage(): Promise<void> {
+    const url = chrome.runtime.getURL('manage.html');
+    const [tab] = await chrome.tabs.query({ url });
+    if (!tab) {
+      await chrome.tabs.create({ url });
+      return;
+    }
+    await chrome.tabs.update(tab.id!, { active: true });
+    await chrome.windows.update(tab.windowId, { focused: true });
+  }
+
+  // Chrome does not support promise-based message handlers: https://issues.chromium.org/issues/40753031
+  private _onMessage(message: PageMessage, sender: chrome.runtime.MessageSender, sendResponse: (response: object) => void): boolean {
+    this._handleMessage(message, sender.tab?.id).then(
+        result => sendResponse({ success: true, ...result }),
+        error => sendResponse({ success: false, error: error.message }));
+    return true;
+  }
+
+  private async _handleMessage(message: PageMessage, senderTabId: number | undefined): Promise<object | void> {
+    await this._ready;
     switch (message.type) {
-      case 'connectionRequested': {
-        const selectorTabId = sender.tab!.id!;
-        this._releaseConnectPage(selectorTabId).then(() => {
-          this._pendingConnections.create(selectorTabId, message.mcpRelayUrl);
-          sendResponse({ success: true });
-        });
-        return true;
-      }
-      case 'getTabs':
-        this._getTabs(sender.tab?.id).then(
-            tabs => sendResponse({ success: true, tabs, currentTabId: sender.tab?.id }),
-            (error: any) => sendResponse({ success: false, error: error.message }));
-        return true;
-      case 'connectToTab': {
-        // Token-bypass (no specific pick) falls back to the connect page itself
-        // so `ConnectedTabGroup` always has a concrete tab to start from. Both
-        // sender.tab and UI-supplied tabs come from chrome.tabs.query / runtime
-        // message sender, where `id` is always defined.
-        const selectedTab = (message.tab ?? sender.tab!) as chrome.tabs.Tab & { id: number };
-        this._connectTab(sender.tab!.id!, selectedTab, message.clientName, message.tabGroup !== false, !!message.background).then(
-            () => sendResponse({ success: true }),
-            (error: any) => sendResponse({ success: false, error: error.message }));
-        return true; // Return true to indicate that the response will be sent asynchronously
-      }
-      case 'getConnectionStatus':
-        sendResponse({
-          connections: [...this._connections].map(([id, group]) => ({
-            id,
-            clientName: group.clientName,
-            connectedTabIds: group.connectedTabIds(),
-          })),
-        });
-        return false;
+      case 'connectionRequested':
+        return await this._broker.request(senderTabId!, message.mcpRelayUrl);
+      case 'getCandidates':
+        return await this._picker.candidates();
+      case 'connect':
+        return await this._broker.connect(senderTabId!, message.options, message.selection);
+      case 'getStatus':
+        return { sessions: this._broker.status() };
       case 'disconnect':
-        this._connections.get(message.connectionId)?.close('User disconnected');
-        sendResponse({ success: true });
-        return false;
+        return this._broker.disconnect(message.sessionId);
       case 'keepalive':
-        // Connect page pings us every ~20s so receiving this message resets
-        // the MV3 service worker idle timer and keeps the relay WebSocket alive.
-        return false;
+        // The message itself resets the idle timer of the service worker.
+        return;
     }
-  }
-
-  private async _connectTab(selectorTabId: number, tab: chrome.tabs.Tab & { id: number }, clientName: string | undefined, tabGroup: boolean, background: boolean): Promise<void> {
-    try {
-      await this._cleanupPromise;
-      this._releaseTab(selectorTabId);
-      if (tab.id !== selectorTabId && this._connectedTabIds().has(tab.id))
-        throw new Error('This tab is already connected to another client');
-
-      const connection = await this._pendingConnections.take(selectorTabId);
-      if (!connection)
-        throw new Error('Pending client connection closed');
-
-      const id = ++this._lastConnectionId;
-      const taken = [...this._connections.values()].flatMap(group => group.groupStyle ? [group.groupStyle] : []);
-      const group = new ConnectedTabGroup(connection, tab, clientName, tabGroup ? uniqueGroupStyle(clientName, taken) : undefined, tabId => this._pendingConnections.has(tabId));
-      group.onclose = () => this._connections.delete(id);
-      this._connections.set(id, group);
-
-      if (!background) {
-        await Promise.all([
-          chrome.tabs.update(tab.id, { active: true }),
-          chrome.windows.update(tab.windowId, { focused: true }),
-        ]).catch(() => {});
-      }
-
-      if (tab.id !== selectorTabId)
-        await chrome.tabs.remove(selectorTabId).catch(() => {});
-    } catch (error: any) {
-      debugLog(`Failed to connect tab ${tab.id}:`, error.message);
-      throw error;
-    }
-  }
-
-  // Chrome may create the connect page inside the active client's group.
-  private async _releaseConnectPage(tabId: number): Promise<void> {
-    this._releaseTab(tabId);
-    await ungroupTabs([tabId]);
-  }
-
-  private _releaseTab(tabId: number): void {
-    for (const group of this._connections.values())
-      group.releaseTab(tabId);
-  }
-
-  private async _getTabs(selectorTabId: number | undefined): Promise<chrome.tabs.Tab[]> {
-    const tabs = await chrome.tabs.query({});
-    const connectedTabIds = this._connectedTabIds();
-    return tabs.filter(tab => !isNonDebuggableUrl(tab.url) && (tab.id === selectorTabId || !connectedTabIds.has(tab.id!)));
-  }
-
-  private _connectedTabIds(): Set<number> {
-    return new Set([...this._connections.values()].flatMap(group => group.connectedTabIds()));
-  }
-
-  private async _onActionClicked(): Promise<void> {
-    await chrome.tabs.create({
-      url: chrome.runtime.getURL('status.html'),
-      active: true
-    });
   }
 }
 
-new PlaywrightExtension();
+new Extension();

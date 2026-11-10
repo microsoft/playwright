@@ -36,13 +36,25 @@ Configure Playwright MCP server to connect to the browser using the extension by
 
 ### Browser Tab Selection
 
-When the LLM interacts with the browser for the first time, it will load a page where you can select which browser tab the LLM will connect to. This allows you to control which specific page the AI assistant will interact with during the session.
+When the LLM interacts with the browser for the first time, it will load a page where you approve the connection and select what the client can control: one tab group as a whole, or some tabs. If you select nothing, the client gets a new blank tab.
 
-### Multiple Clients
+### Tab Ownership
 
-Several clients can be connected at the same time. Each one gets its own tab group, named after the client and colored apart from the other groups, and only sees the tabs in that group — a tab can belong to a single client at a time. Drag tabs in and out of a group to change what a client can reach, and use the extension's status page to see every connection and disconnect them individually.
+Several clients can be connected at the same time. A tab belongs to a single client at a time, and a client can only reach the tabs that it owns: the tabs you selected, the tabs it opened, and the tabs you dragged into its tab group. Click the extension icon to open the Manage clients page. It shows each connected client with its tabs, and lets you disconnect a client or rotate the token.
 
-To disable automatic grouping, pass `--no-tab-group` alongside `--extension`, or set `PLAYWRIGHT_MCP_NO_TAB_GROUP=1`. Grouping stays enabled by default. With grouping disabled, the selected tab and tabs opened by the client stay in their existing groups, if any. This does not grant access to all existing tabs or change connection approval; each controlled tab still belongs to only one client. Use the status page to see controlled tabs and disconnect clients.
+Clients can read browser-wide data such as cookies, but they cannot change browser-wide state: adding or clearing cookies and granting permissions are refused.
+
+### Tab Groups
+
+Each client gets its own tab group. Drag tabs in and out of a group to change what a client can reach; dragging a tab from the group of one client to the group of another moves it between the clients. The group takes the name and the color of the session. With the MCP server, pass `--session-name` and `--session-color` (blue, red, yellow, green, pink, purple, cyan or orange), or set `PLAYWRIGHT_MCP_SESSION_NAME` and `PLAYWRIGHT_MCP_SESSION_COLOR`. Without a session name, the group is named after the client. Without a color, it takes the first color that no other client uses. With the CLI, the group is named after the session:
+
+```bash
+playwright-cli attach --extension=msedge --session="my session" --session-color=red
+```
+
+When a client disconnects, its tab group stays and turns gray. Select that group on the connect page of the next client to continue with the same tabs.
+
+To disable automatic grouping, pass `--no-tab-group` alongside `--extension`, or set `PLAYWRIGHT_MCP_NO_TAB_GROUP=1`. With the CLI, pass `--no-tab-group` to `attach`. Grouping stays enabled by default. With grouping disabled, the selected tabs and tabs opened by the client stay in their existing groups, if any. This does not grant access to all existing tabs or change connection approval; each controlled tab still belongs to only one client. Use the status page to see controlled tabs and disconnect clients.
 
 ### Bypassing the Connection Approval Dialog
 
@@ -50,7 +62,7 @@ By default, you'll need to approve each connection when the MCP server tries to 
 
 #### Using Your Unique Authentication Token
 
-1. After installing the extension, click on the extension icon or navigate to the extension's status page
+1. After installing the extension, click on the extension icon to open the Manage clients page
 2. Copy the `PLAYWRIGHT_MCP_EXTENSION_TOKEN` value displayed in the extension UI
 3. Add it to your MCP server configuration:
 
@@ -71,7 +83,7 @@ By default, you'll need to approve each connection when the MCP server tries to 
 }
 ```
 
-This token is unique to your browser profile and provides secure authentication between the MCP server and the extension. Once configured, you won't need to manually approve connections each time.
+This token is unique to your browser profile and provides secure authentication between the MCP server and the extension. Once configured, you won't need to manually approve connections each time. A client that connects with the token starts with a new blank tab.
 
 #### Working in the Background
 

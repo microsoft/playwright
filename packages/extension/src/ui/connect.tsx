@@ -14,201 +14,214 @@
  * limitations under the License.
  */
 
+
 import React, { useCallback, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Button, TabItem } from './tabItem';
-import { AuthTokenSection, getOrCreateAuthToken } from './authToken';
+import { Button, ListItem, PageHeader, TabItem } from './tabItem';
+import { getOrCreateAuthToken } from './authToken';
+import * as icons from './icons';
+
+import type { CandidateGroup, Candidates, PageMessage, Selection, SessionOptions } from '../types';
 
 type Status =
-  | { type: 'connecting'; message: string }
-  | { type: 'connected'; message: string }
-  | { type: 'error'; message: string }
-  | { type: 'error'; versionMismatch: { extensionVersion: string; } };
+  | { type: 'connecting' | 'connected' | 'error', message: string }
+  | { type: 'error', versionMismatch: { extensionVersion: string } };
 
 const SUPPORTED_PROTOCOL_VERSION = 2;
-const tabGroup = new URLSearchParams(window.location.search).get('tabGroup') !== 'false';
-const background = new URLSearchParams(window.location.search).get('background') === 'true';
+const params = new URLSearchParams(window.location.search);
+const options = sessionOptions();
 
-// Client name comes from the URL and never changes for the lifetime of this page.
-const clientInfo = (() => {
+function sessionOptions(): SessionOptions {
+  let clientName = 'unknown';
   try {
-    return JSON.parse(new URLSearchParams(window.location.search).get('client') || '{}').name || 'unknown';
+    clientName = JSON.parse(params.get('client') || '{}').name || clientName;
   } catch {
-    return 'unknown';
   }
-})();
+  const tabGroup = params.get('tabGroup') === 'false' ? undefined : {
+    title: params.get('tabGroupTitle') ?? undefined,
+    color: params.get('tabGroupColor') ?? undefined,
+  };
+  return { clientName, tabGroup, background: params.get('background') === 'true' };
+}
+
+function relayUrlError(relayUrl: string | null): string | undefined {
+  if (!relayUrl)
+    return 'Missing mcpRelayUrl parameter in URL.';
+  try {
+    const host = new URL(relayUrl).hostname;
+    if (host !== '127.0.0.1' && host !== '[::1]')
+      return `Playwright extension only allows loopback connections (127.0.0.1 or [::1]). Received host: ${host}`;
+  } catch (e) {
+    return `Invalid mcpRelayUrl parameter in URL: ${relayUrl}. ${e}`;
+  }
+}
+
+function protocolVersionError(): Status | undefined {
+  const parsedVersion = parseInt(params.get('protocolVersion') ?? '', 10);
+  const requestedVersion = isNaN(parsedVersion) ? 1 : parsedVersion;
+  if (requestedVersion > SUPPORTED_PROTOCOL_VERSION)
+    return { type: 'error', versionMismatch: { extensionVersion: chrome.runtime.getManifest().version } };
+  if (requestedVersion < SUPPORTED_PROTOCOL_VERSION)
+    return { type: 'error', message: 'The client uses an unsupported protocol version. Update Playwright MCP or CLI to the latest version.' };
+}
 
 const ConnectApp: React.FC = () => {
-  const [tabs, setTabs] = useState<chrome.tabs.Tab[]>([]);
   const [status, setStatus] = useState<Status | null>(null);
-  const [showTabList, setShowTabList] = useState(true);
+  const [candidates, setCandidates] = useState<Candidates | null>(null);
+  const [selection, setSelection] = useState<Selection>({});
 
-  const setError = useCallback((message: string) => {
-    setShowTabList(false);
-    setStatus({ type: 'error', message });
+  const connect = useCallback(async (selection: Selection) => {
+    setCandidates(null);
+    const response = await chrome.runtime.sendMessage<PageMessage>({ type: 'connect', options, selection }).catch(e => ({ error: String(e) }));
+    if (response?.success)
+      setStatus({ type: 'connected', message: `"${options.clientName}" connected.` });
+    else
+      setStatus({ type: 'error', message: response?.error || `"${options.clientName}" failed to connect.` });
   }, []);
 
   useEffect(() => {
-    const runAsync = async () => {
-      const params = new URLSearchParams(window.location.search);
+    const start = async () => {
       const relayUrl = params.get('mcpRelayUrl');
-
-      if (!relayUrl) {
-        setError('Missing mcpRelayUrl parameter in URL.');
+      const urlError = relayUrlError(relayUrl);
+      if (urlError) {
+        setStatus({ type: 'error', message: urlError });
         return;
       }
-
-      try {
-        const host = new URL(relayUrl).hostname;
-        if (host !== '127.0.0.1' && host !== '[::1]') {
-          setError(`Playwright extension only allows loopback connections (127.0.0.1 or [::1]). Received host: ${host}`);
-          return;
-        }
-      } catch (e) {
-        setError(`Invalid mcpRelayUrl parameter in URL: ${relayUrl}. ${e}`);
+      const versionError = protocolVersionError();
+      if (versionError) {
+        setStatus(versionError);
         return;
       }
+      setStatus({ type: 'connecting', message: `"${options.clientName}" is trying to connect to the Playwright Extension.` });
+      await chrome.runtime.sendMessage<PageMessage>({ type: 'connectionRequested', mcpRelayUrl: relayUrl! });
 
-      setStatus({
-        type: 'connecting',
-        message: `"${clientInfo}" is trying to connect to the Playwright Extension.`
-      });
-
-      const parsedVersion = parseInt(params.get('protocolVersion') ?? '', 10);
-      const requestedVersion = isNaN(parsedVersion) ? 1 : parsedVersion;
-      if (requestedVersion > SUPPORTED_PROTOCOL_VERSION) {
-        const extensionVersion = chrome.runtime.getManifest().version;
-        setShowTabList(false);
-        setStatus({
-          type: 'error',
-          versionMismatch: {
-            extensionVersion,
-          }
-        });
-        return;
-      }
-      if (requestedVersion < SUPPORTED_PROTOCOL_VERSION) {
-        setError('The client uses an unsupported protocol version. Update Playwright MCP or CLI to the latest version.');
-        return;
-      }
-      // The background only records the relay URL; the WS to the relay opens
-      // once the user clicks Allow.
-      await chrome.runtime.sendMessage({ type: 'connectionRequested', mcpRelayUrl: relayUrl });
-
-      const expectedToken = getOrCreateAuthToken();
       const token = params.get('token');
-      // With the token bypass, this page becomes the connected tab; do not expose the token in its URL.
-      if (token) {
-        const url = new URL(window.location.href);
-        url.searchParams.delete('token');
-        window.history.replaceState(null, '', url);
-      }
-      if (token === expectedToken) {
-        await handleConnectToTab();
+      if (!token) {
+        setCandidates(await chrome.runtime.sendMessage<PageMessage>({ type: 'getCandidates' }));
         return;
       }
-      if (token) {
-        setError('Invalid token provided.');
-        return;
-      }
-
-      // If this is a browser_navigate command, hide the tab list and show simple allow/reject
-      if (params.get('newTab') === 'true')
-        setShowTabList(false);
+      // With a token, this page becomes the blank tab of the client; keep the token out of its history.
+      const url = new URL(window.location.href);
+      url.searchParams.delete('token');
+      window.history.replaceState(null, '', url);
+      if (token === getOrCreateAuthToken())
+        await connect({});
       else
-        await loadTabs();
+        setStatus({ type: 'error', message: 'Invalid token provided.' });
     };
-    void runAsync();
-    // Ping the background every 20s so the MV3 service worker (which holds the
-    // pending connection state) stays above its 30s idle timeout while the
-    // user decides.
-    const keepalive = setInterval(() => {
-      chrome.runtime.sendMessage({ type: 'keepalive' }).catch(() => {});
-    }, 20_000);
+    void start();
+    // The service worker holds the pending request and stops after 30s without messages.
+    const keepalive = setInterval(() => void chrome.runtime.sendMessage<PageMessage>({ type: 'keepalive' }).catch(() => {}), 20_000);
     return () => clearInterval(keepalive);
-  }, []);
+  }, [connect]);
 
-  const loadTabs = useCallback(async () => {
-    const response = await chrome.runtime.sendMessage({ type: 'getTabs' });
-    if (response.success)
-      setTabs(response.tabs);
-    else
-      setStatus({ type: 'error', message: 'Failed to load tabs: ' + response.error });
-  }, []);
-
-  const handleConnectToTab = useCallback(async (tab?: chrome.tabs.Tab) => {
-    setShowTabList(false);
-
-    try {
-      const response = await chrome.runtime.sendMessage({
-        type: 'connectToTab',
-        tab,
-        clientName: clientInfo,
-        tabGroup,
-        background,
-      });
-
-      if (response?.success) {
-        setStatus({ type: 'connected', message: `"${clientInfo}" connected.` });
-      } else {
-        setStatus({
-          type: 'error',
-          message: response?.error || `"${clientInfo}" failed to connect.`
-        });
-      }
-    } catch (e) {
-      setStatus({
-        type: 'error',
-        message: `"${clientInfo}" failed to connect: ${e}`
-      });
-    }
-  }, []);
+  const toggleGroup = (groupId: number) => setSelection(selection.groupId === groupId ? {} : { groupId });
+  const toggleTab = (tabId: number) => {
+    const tabIds = selection.tabIds ?? [];
+    setSelection({ tabIds: tabIds.includes(tabId) ? tabIds.filter(id => id !== tabId) : [...tabIds, tabId] });
+  };
 
   return (
-    <div className='app-container'>
-      <div className='content-wrapper'>
-        {status && (
-          <div className='status-container'>
-            <StatusBanner status={status} />
+    <div className='page'>
+      <PageHeader>
+        <a className='page-header-link' href='manage.html' target='_blank' rel='noreferrer'>Manage clients</a>
+      </PageHeader>
+      <div className='card'>
+        {status && <StatusBanner status={status} />}
+
+        {status?.type === 'connecting' && (
+          <div className='card-body'>
+            <div className='warning-banner'>
+              {icons.alert()}
+              <div>
+                Allowing this connection exposes the entire browser to the client,
+                including any signed-in sessions, cookies, and content in other tabs and windows.
+                Once approved, the client may also be able to reconnect later without showing this dialog again,
+                unless you rotate the token on the <a href='manage.html' target='_blank' rel='noreferrer'>Manage clients</a> page and then restart the browser.
+              </div>
+            </div>
+
+            {candidates && <>
+              <div className='muted'>
+                Select one tab group or some tabs for the client.
+                {options.tabGroup && <> You can drag more tabs into the tab group of the client later.</>}
+              </div>
+              {candidates.groups.length > 0 && (
+                <div>
+                  <h2 className='list-title'>Tab groups</h2>
+                  <div className='list'>
+                    {candidates.groups.map(group => (
+                      <GroupItem
+                        key={group.id}
+                        group={group}
+                        checked={selection.groupId === group.id}
+                        onClick={() => toggleGroup(group.id)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+              {candidates.tabs.length > 0 && (
+                <div>
+                  <h2 className='list-title'>Tabs</h2>
+                  <div className='list'>
+                    {candidates.tabs.map(tab => (
+                      <TabItem
+                        key={tab.id}
+                        tab={tab}
+                        checked={!!selection.tabIds?.includes(tab.id!)}
+                        onClick={() => toggleTab(tab.id!)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>}
           </div>
         )}
 
-        {status?.type === 'connecting' && (
-          <div className='warning-banner'>
-            <strong>⚠️ Warning:</strong> Allowing this connection exposes the entire browser to the client,
-            including any signed-in sessions, cookies, and content in other tabs and windows.
-            Once approved, the client may also be able to reconnect later without showing this dialog again,
-            unless you regenerate the token below and then restart the browser.
-          </div>
-        )}
-
-        {status?.type === 'connecting' && (
-          <AuthTokenSection />
-        )}
-
-        {showTabList && (
-          <div>
-            <div className='tab-section-title'>
-              {tabGroup && <>You can drag tabs into the Playwright group later to make them accessible to the client. </>}
-              Optionally, select a tab to allow and immediately switch to it:
-            </div>
-            <div>
-              {tabs.map(tab => (
-                <TabItem
-                  key={tab.id}
-                  tab={tab}
-                  button={
-                    <Button variant='primary' onClick={() => handleConnectToTab(tab)}>
-                      Allow &amp; select
-                    </Button>
-                  }
-                />
-              ))}
-            </div>
+        {candidates && (
+          <div className='card-footer'>
+            <div className='muted'>{selectionSummary(selection)}</div>
+            <Button variant='primary' onClick={() => connect(selection)}>Allow</Button>
           </div>
         )}
       </div>
     </div>
+  );
+};
+
+function selectionSummary(selection: Selection): string {
+  if (selection.groupId !== undefined)
+    return '1 tab group selected.';
+  const count = selection.tabIds?.length ?? 0;
+  if (count)
+    return count === 1 ? '1 tab selected.' : `${count} tabs selected.`;
+  return 'Nothing selected. The client gets a new blank tab.';
+}
+
+// The colors that Chrome uses for tab groups.
+const GROUP_COLORS: Record<string, string> = {
+  grey: '#5f6368',
+  blue: '#1a73e8',
+  red: '#d93025',
+  yellow: '#f9ab00',
+  green: '#188038',
+  pink: '#d01884',
+  purple: '#a142f4',
+  cyan: '#007b83',
+  orange: '#fa903e',
+};
+
+const GroupItem: React.FC<{ group: CandidateGroup, checked: boolean, onClick: () => void }> = ({ group, checked, onClick }) => {
+  return (
+    <ListItem
+      icon={<span className='tab-favicon group-dot' style={{ backgroundColor: GROUP_COLORS[group.color] }} />}
+      title={group.title || 'Unnamed group'}
+      subtitle={`Tab group, ${group.tabs.length === 1 ? '1 tab' : `${group.tabs.length} tabs`}`}
+      checked={checked}
+      onClick={onClick}
+    />
   );
 };
 
@@ -227,20 +240,17 @@ const VersionMismatchError: React.FC<{ extensionVersion: string }> = ({ extensio
 const StatusBanner: React.FC<{ status: Status }> = ({ status }) => {
   return (
     <div className={`status-banner ${status.type}`}>
+      {status.type === 'connected' && icons.check()}
+      {status.type === 'error' && icons.cross()}
       {'versionMismatch' in status ? (
-        <VersionMismatchError
-          extensionVersion={status.versionMismatch.extensionVersion}
-        />
+        <VersionMismatchError extensionVersion={status.versionMismatch.extensionVersion} />
       ) : (
-        status.message
+        <div>{status.message}</div>
       )}
     </div>
   );
 };
 
-// Initialize the React app
 const container = document.getElementById('root');
-if (container) {
-  const root = createRoot(container);
-  root.render(<ConnectApp />);
-}
+if (container)
+  createRoot(container).render(<ConnectApp />);

@@ -65,6 +65,8 @@ export function decorateMCPCommand(command: Command) {
       .option('--no-sandbox', 'disable the sandbox for all process types that are normally sandboxed.')
       .option('--background', 'do not activate controlled tabs or focus the browser window when using --extension.')
       .option('--no-tab-group', 'do not group controlled tabs when using --extension.')
+      .option('--session-name <name>', 'name of the session. With --extension, it is the title of the tab group for controlled tabs.')
+      .option('--session-color <color>', 'color of the session: blue, red, yellow, green, pink, purple, cyan or orange. With --extension, it is the color of the tab group for controlled tabs.')
       .option('--no-webmcp', 'do not collect or expose the tools that a page registers through the WebMCP API.')
       .option('--output-dir <path>', 'path to the directory for automatically named output files, for example a screenshot taken without an explicit file name. Files with an explicit name are resolved against the workspace root instead and are not affected by this option.')
       .option('--output-max-size <bytes>', 'Threshold for evicting old output files, in bytes.', numberParser)
