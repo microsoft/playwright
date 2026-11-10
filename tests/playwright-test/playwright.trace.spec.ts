@@ -58,10 +58,12 @@ test('should stop tracing with trace: on-first-retry, when not retrying', async 
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-shared-flaky-retry1', 'trace.zip'))).toBeTruthy();
 });
 
-test('should record api trace', async ({ runInlineTest, server }, testInfo) => {
+test('should record api trace', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44027' },
+}, async ({ runInlineTest, server }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      export default { use: { trace: 'on' } };
+      export default { use: { trace: 'on', viewport: { width: 900, height: 600 } } };
     `,
     'a.spec.ts': `
       import { test, expect } from '@playwright/test';
@@ -89,6 +91,8 @@ test('should record api trace', async ({ runInlineTest, server }, testInfo) => {
   expect(result.failed).toBe(1);
   // One trace file for request context and one for each APIRequestContext
   const trace1 = await parseTrace(testInfo.outputPath('test-results', 'a-pass', 'trace.zip'));
+  expect(trace1.model.browserName).toBe('chromium');
+  expect(trace1.model.options.viewport).toEqual({ width: 900, height: 600 });
   expect(trace1.model.renderActionTree()).toEqual([
     'Before Hooks',
     '  Fixture "request"',
@@ -108,6 +112,8 @@ test('should record api trace', async ({ runInlineTest, server }, testInfo) => {
     '  Fixture "request"',
   ]);
   const trace2 = await parseTrace(testInfo.outputPath('test-results', 'a-api-pass', 'trace.zip'));
+  expect(trace2.model.browserName).toBe('');
+  expect(trace2.model.options).toEqual({});
   expect(trace2.model.renderActionTree()).toEqual([
     'Before Hooks',
     'Create request context',
