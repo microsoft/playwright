@@ -186,14 +186,53 @@ it('RO-171 should use Set-Cookie header in future requests', async ({ contextFac
   expect(cookie).toBe('name=value');
 });
 
-it('RO-172 should work with ignoreHTTPSErrors', async ({ browser, httpsServer }) => {
-  const context = await browser.newContext({ ignoreHTTPSErrors: true });
+it('RO-172 should work with ignoreHTTPSErrors', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44002' }
+}, async ({ contextFactory, httpsServer }) => {
+  const context = await contextFactory({ ignoreHTTPSErrors: true });
   const page = await context.newPage();
 
   await page.route('**/*', route => route.continue());
   const response = await page.goto(httpsServer.EMPTY_PAGE);
   expect(response!.status()).toBe(200);
-  await context.close();
+
+  httpsServer.setRoute('/sign-in', (req, res) => {
+    res.setHeader('content-type', 'text/html');
+    res.end('<form action="/session" method="post"><button>Sign in</button></form>');
+  });
+  httpsServer.setRoute('/session', (req, res) => {
+    res.writeHead(302, { 'set-cookie': 'session=logged-in; Secure; HttpOnly; SameSite=Lax', 'location': '/empty.html' });
+    res.end();
+  });
+  let writes = 0;
+  httpsServer.setRoute('/api/write', (req, res) => {
+    expect(req.method).toBe('POST');
+    expect(req.headers.cookie).toBe('session=logged-in');
+    ++writes;
+    res.end('saved');
+  });
+  await page.goto(httpsServer.PREFIX + '/sign-in');
+  await Promise.all([
+    page.waitForURL(httpsServer.EMPTY_PAGE),
+    page.getByRole('button', { name: 'Sign in' }).click(),
+  ]);
+  await page.route('**/api/write', async route => {
+    const response = await route.fetch({
+      headers: {
+        ...route.request().headers(),
+        'sec-fetch-site': 'same-origin',
+        'origin': new URL(page.url()).origin,
+      },
+    });
+    expect(await response.text()).toBe('saved');
+    await route.abort('failed');
+  }, { times: 1 });
+  expect(await page.evaluate(() => fetch('/api/write', { method: 'POST', body: 'value' }).then(() => 'unexpected response', () => 'failed'))).toBe('failed');
+  expect(writes).toBe(1);
+  expect(await page.evaluate(() => fetch('/api/write', { method: 'POST', body: 'value' }).then(r => r.text()))).toBe('saved');
+  expect(writes).toBe(2);
+  await page.reload();
+  expect(page.url()).toBe(httpsServer.EMPTY_PAGE);
 });
 
 it('RO-173 should support the times parameter with route matching', async ({ context, page, server }) => {
