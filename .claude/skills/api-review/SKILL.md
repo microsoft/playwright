@@ -130,7 +130,7 @@ For each included item, find the pages on `https://playwright.dev/docs/next/`:
 | `docs/src/<page>-js.md`, `docs/src/<page>.md` | `/docs/next/<page>` |
 | `docs/src/api/class-<x>.md` | `/docs/next/api/class-<x>#<class>-<method>` (kebab-case, options as `#<class>-<method>-option-<name>`) |
 | `docs/src/test-api/class-<x>.md`, `docs/src/test-reporter-api/class-<x>.md` | `/docs/next/api/class-<x>` |
-| `docs/src/getting-started-cli.md`, `packages/playwright-core/src/tools/skills/playwright-cli/` | `/docs/next/getting-started-cli`, the CLI skill reference |
+| `packages/playwright-core/src/tools/skills/playwright-cli/` | `https://playwright.dev/agent-cli/introduction`, the CLI skill reference |
 | MCP flags, tools and config | README in `microsoft/playwright-mcp`, regenerated at release by `update-readme.js`; fetch it with `gh api repos/microsoft/playwright-mcp/contents/README.md --jq .content \| base64 -d` and `config.d.ts` doc comments |
 
 Grep the docs for the new name. Heading anchors come from `## method:` and `### option:` lines and from
