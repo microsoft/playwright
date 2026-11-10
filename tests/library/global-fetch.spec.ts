@@ -278,7 +278,9 @@ it('FE-019 should propagate ignoreHTTPSErrors on redirects', async ({ playwright
   await request.dispose();
 });
 
-it('FE-020 should return server address from response', async ({ playwright, server }) => {
+it('FE-020 should return server address from response', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44007' },
+}, async ({ playwright, server }) => {
   const request = await playwright.request.newContext();
   // The second request reuses the keep-alive socket and should report the address as well.
   for (let i = 0; i < 2; i++) {
@@ -287,6 +289,19 @@ it('FE-020 should return server address from response', async ({ playwright, ser
     expect(addr!.ipAddress).toMatch(/^(127\.0\.0\.1|::1)$/);
     expect(addr!.port).toBe(server.PORT);
   }
+  server.setRoute('/idle', (req, res) => {
+    // Keep the server socket open beyond its advertised timeout.
+    res.on('finish', () => req.socket.setTimeout(30_000));
+    res.setHeader('Keep-Alive', 'timeout=2');
+    res.end('ok');
+  });
+  const [serverRequest] = await Promise.all([
+    server.waitForRequest('/idle'),
+    request.get(server.PREFIX + '/idle'),
+  ]);
+  await expect.poll(() => serverRequest.socket.destroyed, { timeout: 7000 }).toBe(true);
+  const response = await request.get(server.EMPTY_PAGE);
+  expect(await response.serverAddr()).toEqual({ ipAddress: expect.any(String), port: server.PORT });
   await request.dispose();
 });
 
