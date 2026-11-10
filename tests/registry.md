@@ -4592,6 +4592,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `SC-036` | `library/screencast-overlay.spec.ts` | should allow styles in overlay html |
 | `SC-037` | `library/screencast-overlay.spec.ts` | should show overlay above {dialog, popover} opened before it *(2 copies)* |
 | `SC-038` | `library/screencast-overlay.spec.ts` | should keep overlay above {dialog, popover} opened after it *(2 copies)* |
+| `SC-039` | `library/screencast.spec.ts` | start should record mp4 video in Chromium |
 
 ### SE — Selectors
 
