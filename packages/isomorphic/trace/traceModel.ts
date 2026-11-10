@@ -96,7 +96,7 @@ export class TraceModel {
   private _domSnapshots = new Set<string>();
 
   constructor(traceUri: string, contexts: ContextEntry[]) {
-    const libraryContext = contexts.find(context => context.origin === 'library');
+    const libraryContext = contexts.find(context => context.origin === 'library' && context.browserName) || contexts.find(context => context.origin === 'library');
 
     this.traceUri = traceUri;
     this.browserName = libraryContext?.browserName || '';

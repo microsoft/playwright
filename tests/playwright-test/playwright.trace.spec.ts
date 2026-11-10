@@ -1512,6 +1512,26 @@ test('should record custom test timeout in trace', async ({ runInlineTest }, tes
   expect(trace.model.testTimeout).toBe(120_000);
 });
 
+test('should record browser name and viewport in trace', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { use: { viewport: { width: 900, height: 600 } } };
+    `,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({ page }) => {
+        await page.setContent('<div>hello</div>');
+      });
+    `,
+  }, { trace: 'on' });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  const trace = await parseTrace(testInfo.outputPath('test-results', 'a-pass', 'trace.zip'));
+  expect(trace.model.browserName).toBeTruthy();
+  expect(trace.model.options.viewport).toEqual({ width: 900, height: 600 });
+});
+
 test('should record test annotations in trace', async ({ runInlineTest }, testInfo) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42035' });
 
