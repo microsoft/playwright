@@ -1172,7 +1172,7 @@ This version was also tested against the following stable channels:
   locator = page.locator("iframe[name='embedded']")
   # ...
   frame_locator = locator.content_frame
-  frame_locator.getByRole("button").click()
+  frame_locator.get_by_role("button").click()
   ```
 
 - New method [`method: FrameLocator.owner`] converts a [FrameLocator] object to a [Locator]. This can be useful when you have a [FrameLocator] object obtained somewhere, and later on would like to interact with the `iframe` element.
