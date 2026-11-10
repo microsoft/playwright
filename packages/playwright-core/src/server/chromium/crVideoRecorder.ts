@@ -17,22 +17,29 @@
 import fs from 'fs';
 import path from 'path';
 
+import { ManualPromise } from '@isomorphic/manualPromise';
 import { createGuid } from '@utils/crypto';
 import { mkdirIfNeeded } from '@utils/fileUtils';
 import { Artifact } from '../artifact';
 import { nullProgress } from '../progress';
+import { isSessionClosedError } from '../protocolError';
 
 import type { CDPSession } from './crConnection';
 import type { CRPage } from './crPage';
 import type * as types from '../types';
 import type { Protocol } from './protocol';
 
+const kPollIntervalMs = 1000;
+
 // Records the page into an mp4 file with AV1 video. Chromium captures and encodes
 // the frames itself, so this does not use the screencast frames or ffmpeg.
 export class CRVideoRecorder {
   readonly artifact: Artifact;
   private _session: CDPSession;
-  private _stopped = false;
+  private _stream: string;
+  private _stopping = false;
+  private _stopped = new ManualPromise<void>();
+  private _saveResult: Promise<Error | undefined>;
 
   static async start(crPage: CRPage, options: { size?: types.Size, fps?: number }): Promise<CRVideoRecorder> {
     const browserContext = crPage._browserContext;
@@ -45,44 +52,61 @@ export class CRVideoRecorder {
         maxHeight: options.size?.height ?? 800,
         frameRate: options.fps ?? 25,
       };
-      await session.send(nullProgress, 'Page.startScreenRecording', params);
+      const { stream } = await session.send(nullProgress, 'Page.startScreenRecording', params) as Protocol.Page.startScreenRecordingReturnValue;
+      const outputFile = path.join(browserContext._browser.options.artifactsDir, createGuid() + '.mp4');
+      return new CRVideoRecorder(session, stream, new Artifact(browserContext, outputFile));
     } catch (e) {
       await session.detach(nullProgress).catch(() => {});
       throw e;
     }
-    const outputFile = path.join(browserContext._browser.options.artifactsDir, createGuid() + '.mp4');
-    return new CRVideoRecorder(session, new Artifact(browserContext, outputFile));
   }
 
-  private constructor(session: CDPSession, artifact: Artifact) {
+  private constructor(session: CDPSession, stream: string, artifact: Artifact) {
     this._session = session;
+    this._stream = stream;
     this.artifact = artifact;
+    this._saveResult = this._saveRecording().then(() => undefined, e => e);
   }
 
   async stop() {
-    if (this._stopped)
+    if (this._stopping)
       return;
-    this._stopped = true;
-    // Fails when the page is closed, the artifact reports that error.
-    const error = await this._saveRecording().then(() => undefined, e => e);
+    this._stopping = true;
+    // Fails when the page is closed, the artifact reports the read error then.
+    await this._session.send(nullProgress, 'Page.stopScreenRecording').catch(() => {});
+    this._stopped.resolve();
+    const error = await this._saveResult;
     await this._session.detach(nullProgress).catch(() => {});
     await this.artifact.reportFinished(error);
   }
 
+  // Chromium appends a fragment of the video to the stream every few seconds.
+  // Copies the fragments to the file during the recording, so that stop() only reads the last one.
   private async _saveRecording() {
-    const { stream } = await this._session.send(nullProgress, 'Page.stopScreenRecording') as Protocol.Page.stopScreenRecordingReturnValue;
     await mkdirIfNeeded(this.artifact.localPath());
     const file = await fs.promises.open(this.artifact.localPath(), 'w');
     try {
-      let eof = false;
-      while (!eof) {
-        const response = await this._session.send(nullProgress, 'IO.read', { handle: stream }) as Protocol.IO.readReturnValue;
-        eof = response.eof;
-        await file.write(Buffer.from(response.data, response.base64Encoded ? 'base64' : undefined));
+      while (true) {
+        const stopped = this._stopped.isDone();
+        const response = await this._session.send(nullProgress, 'IO.read', { handle: this._stream }).catch(e => {
+          // The read fails until Chromium writes the first fragment.
+          if (stopped || isSessionClosedError(e))
+            throw e;
+        }) as Protocol.IO.readReturnValue | undefined;
+        if (response?.data)
+          await file.write(Buffer.from(response.data, response.base64Encoded ? 'base64' : undefined));
+        if (response && !response.eof)
+          continue;
+        // After the stop all data is in the stream, so "eof" is the end of the video.
+        if (stopped)
+          break;
+        let timer: NodeJS.Timeout;
+        await Promise.race([this._stopped, new Promise(f => timer = setTimeout(f, kPollIntervalMs))]);
+        clearTimeout(timer!);
       }
     } finally {
       await file.close();
-      await this._session.send(nullProgress, 'IO.close', { handle: stream }).catch(() => {});
+      await this._session.send(nullProgress, 'IO.close', { handle: this._stream }).catch(() => {});
     }
   }
 }
