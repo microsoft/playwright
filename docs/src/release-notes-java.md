@@ -64,9 +64,9 @@ Object result = page.webmcp().callTool("add", Map.of("a", 2, "b", 40));
 System.out.println(result); // {content=[{type=text, text=42}]}
 ```
 
-[Playwright MCP](./getting-started-mcp.md) also supports WebMCP by default, with page-defined tools offered to the agent as `webmcp_<tool>`. Pass `--no-webmcp` to opt out.
+[Playwright MCP](https://playwright.dev/mcp/introduction) also supports WebMCP by default, with page-defined tools offered to the agent as `webmcp_<tool>`. Pass `--no-webmcp` to opt out.
 
-[`playwright-cli`](./getting-started-cli.md) exposes them as well:
+[`playwright-cli`](https://playwright.dev/agent-cli/introduction) exposes them as well:
 
 ```bash
 playwright-cli webmcp-list
@@ -96,7 +96,7 @@ page.screencast().showActions(new Screencast.ShowActionsOptions()
 - The cursor stays visible at the last action point, survives navigations and travels along a natural, eased path.
 - Videos are encoded with VP9 instead of VP8, which takes less CPU and produces smaller files of the same or better
   quality.
-- All video options are also available in [Playwright MCP](./getting-started-mcp.md) and [`playwright-cli`](./getting-started-cli.md).
+- All video options are also available in [Playwright MCP](https://playwright.dev/mcp/introduction) and [`playwright-cli`](https://playwright.dev/agent-cli/introduction).
 
 ### 🪆 Locator.within()
 

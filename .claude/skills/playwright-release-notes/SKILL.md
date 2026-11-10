@@ -114,7 +114,6 @@ Each repo publishes the GitHub release for its language, with markdown converted
   | `` [`event: BrowserContext.dialogClosed`] `` | `api/class-browsercontext#browser-context-event-dialog-closed` | `browserContext.on('dialogclosed')` | `browser_context.on("dialogclosed")` | `browserContext.onDialogClosed()` | `BrowserContext.DialogClosed` |
   | `` [`method: LocatorAssertions.toBeVisible`] `` | `api/class-locatorassertions#locator-assertions-to-be-visible` | `expect(locator).toBeVisible()` | `expect(locator).to_be_visible()` | `assertThat(locator).isVisible()` | `Expect(Locator).ToBeVisibleAsync()` |
   | `` [`option: Page.content.includeShadow`] `` | `api/class-page#page-content-option-include-shadow` | `` `includeShadow` `` | `` `include_shadow` `` | `` `includeShadow` `` | `` `IncludeShadow` `` |
-  | `[Playwright MCP](./getting-started-mcp.md)` | `getting-started-mcp` | `Playwright MCP` | `Playwright MCP` | `Playwright MCP` | `Playwright MCP` |
 
 - An image `![alt](./images/foo.png)` becomes `![alt](https://github.com/microsoft/playwright/blob/main/docs/src/images/foo.png?raw=true)` in every language.
 
