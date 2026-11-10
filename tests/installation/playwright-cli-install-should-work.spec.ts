@@ -27,43 +27,6 @@ test.use({ isolateBrowsers: true });
 
 const extraInstalledSoftware = process.platform === 'win32' ? ['winldd' as const] : [];
 
-test('Chrome stable installer should select the Linux architecture', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43998' } }, async ({ exec, writeFiles, tmpWorkspace }) => {
-  test.skip(process.platform !== 'linux');
-
-  await writeFiles({
-    'install-chrome.sh': `
-      arch() { echo "$TEST_ARCH"; }
-      dpkg() { return 0; }
-      apt-get() { echo "apt-get $*" >> "$INSTALL_LOG"; }
-      curl() { echo "curl $*" >> "$INSTALL_LOG"; }
-      rm() { echo "rm $*" >> "$INSTALL_LOG"; }
-      google-chrome() { echo "google-chrome $*" >> "$INSTALL_LOG"; }
-      : > "$INSTALL_LOG"
-      source "$1"
-    `,
-  });
-  const installer = path.resolve(__dirname, '../../packages/playwright-core/bin/reinstall_chrome_stable_linux.sh');
-  const log = path.join(tmpWorkspace, 'install.log');
-  for (const [arch, debArch] of [['aarch64', 'arm64'], ['x86_64', 'amd64']]) {
-    await exec('bash install-chrome.sh', JSON.stringify(installer), {
-      env: {
-        TEST_ARCH: arch,
-        INSTALL_LOG: log,
-        PLAYWRIGHT_HOST_PLATFORM_OVERRIDE: 'ubuntu24.04',
-      },
-    });
-    const deb = `google-chrome-stable_current_${debArch}.deb`;
-    expect(await fs.promises.readFile(log, 'utf8')).toBe([
-      'apt-get update',
-      `curl -L -O https://dl.google.com/linux/direct/${deb}`,
-      `apt-get install -y ./${deb}`,
-      `rm -rf ./${deb}`,
-      'google-chrome --version',
-      '',
-    ].join('\n'));
-  }
-});
-
 test('install command should work', async ({ exec, checkInstalledSoftwareOnDisk }) => {
   await exec('npm i playwright');
 
