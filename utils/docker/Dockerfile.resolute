@@ -24,6 +24,8 @@ RUN --mount=type=secret,id=npmrc,target=/root/.npmrc,required=false \
     echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_${NODE_VERSION}.x nodistro main" >> /etc/apt/sources.list.d/nodesource.list && \
     apt-get update && \
     apt-get install -y nodejs && \
+    # Node.js links against libatomic (since Node.js 25).
+    apt-get install -y --no-install-recommends libatomic1 && \
     # Feature-parity with node.js base images.
     # zstd is used by actions/cache.
     apt-get install -y --no-install-recommends git openssh-client zstd && \
