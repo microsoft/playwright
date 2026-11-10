@@ -3,8 +3,9 @@ set -e
 set -x
 
 if [[ $(arch) == "aarch64" ]]; then
-  echo "ERROR: not supported on Linux Arm64"
-  exit 1
+  ARCH=arm64
+else
+  ARCH=amd64
 fi
 
 if [ -z "$PLAYWRIGHT_HOST_PLATFORM_OVERRIDE" ]; then
@@ -35,8 +36,8 @@ fi
 
 # 4. download chrome stable from dl.google.com and install it.
 cd /tmp
-curl -L -O https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-apt-get install -y ./google-chrome-stable_current_amd64.deb
-rm -rf ./google-chrome-stable_current_amd64.deb
+curl -L -O "https://dl.google.com/linux/direct/google-chrome-stable_current_${ARCH}.deb"
+apt-get install -y "./google-chrome-stable_current_${ARCH}.deb"
+rm -rf "./google-chrome-stable_current_${ARCH}.deb"
 cd -
 google-chrome --version
