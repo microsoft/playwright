@@ -403,7 +403,7 @@ playwright-cli kill-all
 
 Package installation and custom `npm` scripts may require separate approval.
 
-If global `playwright-cli` command is not available, try a local version via `npx playwright cli`:
+If global `playwright-cli` command is not available, try a local version via `npx playwright cli`. It needs Playwright 1.59 or newer:
 
 ```bash
 npx --no-install playwright --version
