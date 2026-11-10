@@ -628,6 +628,11 @@ Page:
         fps: int?
         sendFrames: boolean?
         record: boolean?
+        format:
+          type: enum?
+          literals:
+          - webm
+          - mp4
       returns:
         artifact: Artifact?
 

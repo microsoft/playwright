@@ -31,6 +31,7 @@ import { createHandle, CRExecutionContext } from './crExecutionContext';
 import { RawKeyboardImpl, RawMouseImpl, RawTouchscreenImpl } from './crInput';
 import { CRNetworkManager } from './crNetworkManager';
 import { CRPDF } from './crPdf';
+import { CRVideoRecorder } from './crVideoRecorder';
 import { exceptionToError, releaseObject, stackTraceToLocation } from './crProtocolHelper';
 import { platformToFontFamilies } from './defaultFontFamilies';
 import { TargetClosedError } from '../errors';
@@ -330,6 +331,10 @@ export class CRPage implements PageDelegate {
 
   stopScreencast() {
     this._mainFrameSession._client._sendMayFail('Page.stopScreencast').catch(() => {});
+  }
+
+  async startMp4Recording(options: { size?: types.Size, fps?: number }) {
+    return await CRVideoRecorder.start(this, options);
   }
 
   rafCountForStablePosition(): number {
