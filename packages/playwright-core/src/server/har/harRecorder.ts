@@ -36,11 +36,13 @@ export class HarRecorder implements HarTracerDelegate {
   private _relativeResourcesDir: string;
   private _isFlushed: boolean = false;
   private _tracer: HarTracer;
+  private _minimal: boolean;
   private _entries: har.Entry[] = [];
   private _writtenContentEntries = new Set<string>();
 
   constructor(context: BrowserContext | APIRequestContext, fallbackDir: string, harId: string, page: Page | null, options: channels.RecordHarOptions) {
     this._context = context;
+    this._minimal = options.mode === 'minimal';
     const isServer = !!context.attribution.playwright.options.isServer;
     this._harFilePath = !isServer && options.harPath ? options.harPath : path.join(fallbackDir, `${harId}.har`);
     const harFileDir = path.dirname(this._harFilePath);
@@ -131,7 +133,34 @@ export class HarRecorder implements HarTracerDelegate {
     for (let i = 0; i < log.entries.length; i++) {
       if (i)
         this._fs.appendFile(file, ',');
-      this._fs.appendFile(file, JSON.stringify(log.entries[i]));
+      const entry = log.entries[i];
+      this._fs.appendFile(file, JSON.stringify(this._minimal ? {
+        ...entry,
+        startedDateTime: undefined,
+        time: undefined,
+        timings: undefined,
+        _monotonicTime: undefined,
+        _frameref: undefined,
+        _apiRequestRef: undefined,
+        _serviceWorkerRef: undefined,
+        request: {
+          ...entry.request,
+          httpVersion: undefined,
+          queryString: undefined,
+          headersSize: undefined,
+          bodySize: undefined,
+        },
+        response: {
+          ...entry.response,
+          httpVersion: undefined,
+          headersSize: undefined,
+          bodySize: undefined,
+          content: {
+            ...entry.response.content,
+            size: undefined,
+          },
+        },
+      } : entry));
     }
     this._fs.appendFile(file, ']');
     if (log.comment !== undefined)

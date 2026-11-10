@@ -905,12 +905,12 @@ it('HA-053 should respect minimal mode for API Requests', async ({ contextFactor
   const { entries } = JSON.parse(fs.readFileSync(harPath).toString()).log as Log;
   expect(entries).toHaveLength(1);
   const [entry] = entries;
-  expect(entry.timings).toEqual({ receive: -1, send: -1, wait: -1 });
+  expect(entry.timings).toBeUndefined();
   expect(entry.serverIPAddress).toBeUndefined();
   expect(entry._serverPort).toBeUndefined();
   expect(entry.request.cookies).toEqual([]);
-  expect(entry.request.bodySize).toBe(-1);
-  expect(entry.response.bodySize).toBe(-1);
+  expect(entry.request.bodySize).toBeUndefined();
+  expect(entry.response.bodySize).toBeUndefined();
 });
 
 it('HA-054 should include redirects from API request', async ({ contextFactory, server }, testInfo) => {
@@ -1110,7 +1110,7 @@ it.describe('tracing.startHar', () => {
     const urls = log.entries.map(e => e.request.url);
     expect(urls).toEqual([server.PREFIX + '/one-style.css']);
     // Minimal mode drops body sizes.
-    expect(log.entries[0].request.bodySize).toBe(-1);
+    expect(log.entries[0].request.bodySize).toBeUndefined();
   });
 
   it('HA-061 should record a HAR for a context APIRequestContext', async ({ contextFactory, server }, testInfo) => {

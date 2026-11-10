@@ -841,7 +841,7 @@ Logger sink for Playwright logging.
     `false`. Deprecated, use `content` policy instead.
   - `content` "HarContentPolicy" ?<"omit"|"embed"|"attach"> Optional setting to control resource content management. If `omit` is specified, content is not persisted. If `attach` is specified, resources are persisted as separate files or entries in the ZIP archive. If `embed` is specified, content is stored inline the HAR file as per HAR specification. Defaults to `attach` for `.zip` output files and to `embed` for all other file extensions.
   - `path` <[path]> Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, `content: 'attach'` is used by default.
-  - `mode` "HarMode" ?<"full"|"minimal"> When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page, cookies, security and other types of HAR information that are not used when replaying from HAR. Defaults to `full`.
+  - `mode` "HarMode" ?<"full"|"minimal"> When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing (including request timestamps), HTTP versions, parsed query strings, page, cookies, security and other types of HAR information that are not used when replaying from HAR. Request and response headers are preserved. Defaults to `full`.
   - `urlFilter` ?<[string]|[RegExp]> A glob or regex pattern to filter requests that are stored in the HAR. When a [`option: Browser.newContext.baseURL`] via the context options was provided and the passed URL is a path, it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor. Defaults to none.
 
 Enables [HAR](http://www.softwareishard.com/blog/har-12-spec) recording for all pages into `recordHar.path` file. If not
@@ -876,7 +876,7 @@ Optional setting to control resource content management. If `omit` is specified,
   - alias-python: record_har_mode
 - `recordHarMode` "HarMode" ?<"full"|"minimal">
 
-When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page, cookies, security and other types of HAR information that are not used when replaying from HAR. Defaults to `full`.
+When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing (including request timestamps), HTTP versions, parsed query strings, page, cookies, security and other types of HAR information that are not used when replaying from HAR. Request and response headers are preserved. Defaults to `full`.
 
 ## context-option-recordhar-url-filter
 * langs: csharp, java, python

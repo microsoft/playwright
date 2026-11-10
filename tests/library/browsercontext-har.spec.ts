@@ -440,13 +440,34 @@ it('HA-090 should disambiguate by header', async ({ contextFactory, server }, te
   expect(await page2.evaluate(fetchFunction, 'baz4')).toBe('baz1');
 });
 
-it('HA-091 should update har.zip for context', async ({ contextFactory, server }, testInfo) => {
+it('HA-091 should update har.zip for context', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44006' },
+}, async ({ contextFactory, server }, testInfo) => {
   const harPath = testInfo.outputPath('har.zip');
   const context1 = await contextFactory();
   await context1.routeFromHAR(harPath, { update: true });
   const page1 = await context1.newPage();
   await page1.goto(server.PREFIX + '/one-style.html');
   await context1.close();
+
+  const harDir = testInfo.outputPath('har');
+  await extractZip(harPath, { dir: harDir });
+  const { log } = JSON.parse(fs.readFileSync(path.join(harDir, 'har.har'), 'utf-8'));
+  for (const entry of log.entries) {
+    expect(entry.startedDateTime).toBeUndefined();
+    expect(entry.time).toBeUndefined();
+    expect(entry.timings).toBeUndefined();
+    expect(entry._monotonicTime).toBeUndefined();
+    expect(entry._frameref).toBeUndefined();
+    expect(entry.request.httpVersion).toBeUndefined();
+    expect(entry.request.queryString).toBeUndefined();
+    expect(entry.request.headersSize).toBeUndefined();
+    expect(entry.request.bodySize).toBeUndefined();
+    expect(entry.response.httpVersion).toBeUndefined();
+    expect(entry.response.headersSize).toBeUndefined();
+    expect(entry.response.bodySize).toBeUndefined();
+    expect(entry.response.content.size).toBeUndefined();
+  }
 
   const context2 = await contextFactory();
   await context2.routeFromHAR(harPath, { notFound: 'abort' });
