@@ -98,12 +98,25 @@ jobs:
 
   triage:
     needs: merge-reports
-    if: ${{ needs.merge-reports.outputs.has_failures == 'true' && needs.merge-reports.outputs.pr_number && needs.merge-reports.outputs.triage_allowed == 'true' }}
-    permissions:
-      contents: read
-      actions: read
-      pull-requests: write
-      copilot-requests: write
-    uses: ./.github/workflows/pr-ci-triage.yml
-    with:
-      pr_number: ${{ needs.merge-reports.outputs.pr_number }}
+    name: Hand the failures to the bot
+    if: ${{ github.repository == 'microsoft/playwright' && needs.merge-reports.outputs.has_failures == 'true' && needs.merge-reports.outputs.pr_number && needs.merge-reports.outputs.triage_allowed == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+    - uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+      id: app-token
+      with:
+        client-id: ${{ vars.PLAYWRIGHT_APP_CLIENT_ID }}
+        private-key: ${{ secrets.PLAYWRIGHT_PRIVATE_KEY }}
+        owner: microsoft
+        repositories: devops.playwright.dev
+        permission-actions: write
+    # The Playwright bot comments on the PR whether the PR caused the failures.
+    - name: Start the bot
+      env:
+        GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        NUMBER: ${{ needs.merge-reports.outputs.pr_number }}
+        RUN: ${{ github.event.workflow_run.id }}
+      run: >-
+        gh workflow run failures.yml --repo microsoft/devops.playwright.dev --ref main
+        -f repo="$GITHUB_REPOSITORY" -f pr="$NUMBER" -f run="$RUN"
