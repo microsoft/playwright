@@ -90,14 +90,21 @@ it.describe('MV3', () => {
     await context.close();
   });
 
-  it('CR-037 should give access to the service worker', async ({ launchPersistentContext, asset }) => {
+  it('CR-037 should give access to the service worker', {
+    annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43983' }
+  }, async ({ launchPersistentContext, asset }) => {
     const extensionPath = asset('extension-mv3-simple');
-    const context = await launchPersistentContext(extensionPath);
+    const timezoneId = Intl.DateTimeFormat().resolvedOptions().timeZone === 'Asia/Tokyo' ? 'America/Jamaica' : 'Asia/Tokyo';
+    const context = await launchPersistentContext(extensionPath, { timezoneId });
     const serviceWorkers = context.serviceWorkers();
     const serviceWorker = serviceWorkers.length ? serviceWorkers[0] : await context.waitForEvent('serviceworker');
     expect(serviceWorker).toBeTruthy();
     expect(context.serviceWorkers()).toContain(serviceWorker);
     await expect.poll(() => serviceWorker.evaluate(() => (globalThis as any).MAGIC)).toBe(42);
+    expect(await serviceWorker.evaluate(() => (globalThis as any).initialTimezone)).toEqual({
+      timezone: timezoneId,
+      localDate: timezoneId === 'Asia/Tokyo' ? '2030-01-01T14:00:00.000Z' : '2030-01-02T04:00:00.000Z',
+    });
     await context.close();
     expect(context.backgroundPages().length).toBe(0);
   });
