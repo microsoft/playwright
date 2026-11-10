@@ -174,6 +174,13 @@ not literally named above, the answer is still no.
 
 **Never `git push` without an explicit instruction to push.** Applies even when a PR is already open for the branch — additional commits are immediately visible to reviewers. Commit locally, report what was committed, and wait. Only push when the user's message contains "push", "upload", "create PR", "ship it", or equivalent.
 
+## Browser bugs
+
+When the root cause is in a browser and the fix does not belong in this repo:
+
+- **Firefox and WebKit** are built in `microsoft/playwright-browsers`. File the bug as an issue there, labeled `browser-firefox` or `browser-webkit`, with the condensed Playwright test as the repro and a link to the Playwright issue.
+- **Chromium** bugs go upstream, to https://crbug.com/new, with a repro that needs no Playwright: a plain page or CDP commands. Only a person can file there.
+
 ## Development Guides
 
 Detailed guides for common development tasks:

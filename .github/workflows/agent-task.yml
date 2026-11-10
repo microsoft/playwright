@@ -1,0 +1,36 @@
+# Starts the Playwright bot with the task that you type. The bot does it with the skills of this
+# repo, and opens the pull request as the app. Start it from the Actions tab.
+name: "Agent: task"
+
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        description: What the bot should do
+        type: string
+        required: true
+
+permissions: {}
+
+jobs:
+  start:
+    name: Hand the task to the bot
+    if: github.repository == 'microsoft/playwright'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+    - uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+      id: app-token
+      with:
+        client-id: ${{ vars.PLAYWRIGHT_APP_CLIENT_ID }}
+        private-key: ${{ secrets.PLAYWRIGHT_PRIVATE_KEY }}
+        owner: microsoft
+        repositories: devops.playwright.dev
+        permission-actions: write
+    - name: Start the bot
+      env:
+        GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        TASK: ${{ inputs.task }}
+      run: >-
+        gh workflow run task.yml --repo microsoft/devops.playwright.dev --ref main
+        -f repo="$GITHUB_REPOSITORY" -f task="$TASK"

@@ -1,0 +1,36 @@
+# Hands the issue to the Playwright bot when a maintainer applies agent-triage or agent-implement.
+# Nothing else of the bot lives in this repo. Apply the label again to start another run.
+name: "Agent: triage"
+
+on:
+  issues:
+    types: [labeled]
+
+permissions: {}
+
+jobs:
+  issue:
+    name: Hand the issue to the bot
+    if: >-
+      github.repository_owner == 'microsoft' && (
+        github.event.label.name == 'agent-triage' ||
+        github.event.label.name == 'agent-implement')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+    - uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+      id: app-token
+      with:
+        client-id: ${{ vars.PLAYWRIGHT_APP_CLIENT_ID }}
+        private-key: ${{ secrets.PLAYWRIGHT_PRIVATE_KEY }}
+        owner: microsoft
+        repositories: devops.playwright.dev
+        permission-actions: write
+    - name: Start the bot
+      env:
+        GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        NUMBER: ${{ github.event.issue.number }}
+        LABEL: ${{ github.event.label.name }}
+      run: >-
+        gh workflow run issue.yml --repo microsoft/devops.playwright.dev --ref main
+        -f repo="$GITHUB_REPOSITORY" -f issue="$NUMBER" -f label="$LABEL"
