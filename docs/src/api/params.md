@@ -893,6 +893,7 @@ When set to `minimal`, only record information necessary for routing from HAR. T
     - `width` <[int]> Video frame width.
     - `height` <[int]> Video frame height.
   - `fps` ?<[int]> Frame rate of the recorded videos in frames per second. Defaults to `25`. Firefox and WebKit currently capture up to 25 frames per second.
+  - `format` "RecordVideoFormat" ?<"webm"|"mp4"> Format of the recorded videos. Defaults to `"webm"`. `"mp4"` records AV1 video with the built-in encoder of the browser. Only Chromium supports `"mp4"`, other browsers throw an error.
   - `showActions` ?<[Object]> If specified, enables visual annotations on interacted elements during video recording.
     - `duration` ?<[float]> How long each annotation is displayed in milliseconds. Defaults to `500`.
     - `position` "AnnotatePosition" ?<"top-left"|"top"|"top-right"|"bottom-left"|"bottom"|"bottom-right"> Position of the action title overlay. Defaults to `"top-right"`.
@@ -931,6 +932,13 @@ Actual picture of each page will be scaled down if necessary to fit the specifie
 - `recordVideoFps` <[int]>
 
 Frame rate of the recorded videos in frames per second. Defaults to `25`. Firefox and WebKit currently capture up to 25 frames per second.
+
+## context-option-recordvideo-format
+* langs: csharp, java, python
+  - alias-python: record_video_format
+- `recordVideoFormat` "RecordVideoFormat" <"webm"|"mp4">
+
+Format of the recorded videos. Defaults to `"webm"`. `"mp4"` records AV1 video with the built-in encoder of the browser. Only Chromium supports `"mp4"`, other browsers throw an error.
 
 ## context-option-proxy
 - `proxy` "Proxy" <[Object]>
