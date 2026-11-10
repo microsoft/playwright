@@ -92,7 +92,7 @@ export interface PageDelegate {
   startScreencast(options: { width: number, height: number, quality: number, fps?: number }): void;
   stopScreencast(): void;
   // Records mp4 video with the browser's own encoder.
-  startMp4Recording?: (options: { size?: types.Size, fps?: number }) => Promise<{ artifact: Artifact, stop(): Promise<void> }>;
+  startMp4Recording?: (options: { fileName?: string, size?: types.Size, fps?: number }) => { artifact: Artifact, started: Promise<void>, stop(): Promise<void> };
 
   pdf?: (options: channels.PagePdfParams) => Promise<Buffer>;
   coverage?: () => any;

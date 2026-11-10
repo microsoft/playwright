@@ -267,6 +267,9 @@ await browser.CloseAsync();
 ### option: Browser.newContext.recordVideoFps = %%-context-option-recordvideo-fps-%%
 * since: v1.64
 
+### option: Browser.newContext.recordVideoFormat = %%-context-option-recordvideo-format-%%
+* since: v1.66
+
 ### option: Browser.newContext.storageState = %%-js-python-context-option-storage-state-%%
 * since: v1.8
 
@@ -297,6 +300,9 @@ testing frameworks should explicitly create [`method: Browser.newContext`] follo
 
 ### option: Browser.newPage.recordVideoFps = %%-context-option-recordvideo-fps-%%
 * since: v1.64
+
+### option: Browser.newPage.recordVideoFormat = %%-context-option-recordvideo-format-%%
+* since: v1.66
 
 ### option: Browser.newPage.storageState = %%-js-python-context-option-storage-state-%%
 * since: v1.8

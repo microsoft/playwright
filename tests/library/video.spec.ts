@@ -498,6 +498,32 @@ it.describe('screencast', () => {
     expect(error.message).toContain('"recordVideo.fps" must be a positive number, got 0');
   });
 
+  it('VI-032 should record mp4 video in Chromium', {
+    annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43999' },
+  }, async ({ browser, browserName, channel }, testInfo) => {
+    it.skip(!!channel?.startsWith('bidi-'), 'mp4 recording uses CDP');
+    const recordVideo = { dir: testInfo.outputPath(''), format: 'mp4' as const };
+    if (browserName !== 'chromium') {
+      const error = await browser.newContext({ recordVideo }).catch(e => e);
+      expect(error.message).toContain('Recording mp4 video is only supported in Chromium');
+      return;
+    }
+
+    const context = await browser.newContext({ recordVideo });
+    const page = await context.newPage();
+    const popupPromise = page.waitForEvent('popup');
+    await page.evaluate(() => { window.open('about:blank'); });
+    const popup = await popupPromise;
+    await ensureSomeFrames(page);
+    await context.close();
+
+    for (const video of [page.video(), popup.video()]) {
+      const videoFile = await video.path();
+      expect(videoFile.endsWith('.mp4')).toBe(true);
+      expect(fs.readFileSync(videoFile).includes('av01')).toBe(true);
+    }
+  });
+
   it('VI-020 should be 800x600 with null viewport', async ({ browser, headless, browserName, isBidi }, testInfo) => {
     it.fixme(browserName === 'firefox' && headless && !isBidi, 'Fails in headless on bots');
 

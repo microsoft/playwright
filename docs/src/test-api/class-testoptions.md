@@ -772,6 +772,7 @@ export default defineConfig({
     - `width` <[int]>
     - `height` <[int]>
   - `fps` ?<[int]> Frame rate of the recorded video in frames per second. Defaults to `25`.
+  - `format` "RecordVideoFormat" ?<"webm"|"mp4"> Format of the recorded video. Defaults to `"webm"`. `"mp4"` records AV1 video with the built-in encoder of the browser. Only Chromium supports `"mp4"`, tests in other browsers fail with an error.
   - `show` ?<[Object]> If specified, visually annotates the video with test information and action highlights.
     - `actions` ?<[Object]> Controls visual annotations on interacted elements.
       - `duration` ?<[float]> How long each annotation is displayed in milliseconds. Defaults to `500`.

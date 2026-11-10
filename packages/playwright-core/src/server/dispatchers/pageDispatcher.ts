@@ -32,7 +32,7 @@ import { DisposableDispatcher } from './disposableDispatcher';
 import { SdkObject } from '../instrumentation';
 import { Recorder } from '../recorder';
 import { disposeAll } from '../disposable';
-import { VideoRecorder } from '../videoRecorder';
+import { kMp4NotSupportedError, VideoRecorder } from '../videoRecorder';
 import { nullProgress } from '../progress';
 
 import type { Artifact } from '../artifact';
@@ -402,8 +402,12 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     let artifact: Artifact | undefined;
     if (params.record && params.format === 'mp4') {
       if (!this._page.delegate.startMp4Recording)
-        throw new Error('Recording mp4 video is only supported in Chromium');
-      const recorder = await this._page.delegate.startMp4Recording(params);
+        throw new Error(kMp4NotSupportedError);
+      const recorder = this._page.delegate.startMp4Recording(params);
+      await recorder.started.catch(async e => {
+        await recorder.stop();
+        throw e;
+      });
       this._videoRecorder = recorder;
       artifact = recorder.artifact;
     }

@@ -579,6 +579,7 @@ export class CRBrowserContext extends BrowserContext<CREventsMap> {
     // We also won't get new ones since `Target.disposeBrowserContext` does not trigger
     // beforeunload.
     await this.dialogManager.closeBeforeUnloadDialogs();
+    await Promise.all(this.pages().map(page => (page.delegate as CRPage).stopVideoRecorders()));
 
     if (!this._browserContextId) {
       // Closing persistent context should close the browser.

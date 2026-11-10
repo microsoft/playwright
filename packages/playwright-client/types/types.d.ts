@@ -11664,6 +11664,12 @@ export interface Browser {
       fps?: number;
 
       /**
+       * Format of the recorded videos. Defaults to `"webm"`. `"mp4"` records AV1 video with the built-in encoder of the
+       * browser. Only Chromium supports `"mp4"`, other browsers throw an error.
+       */
+      format?: "webm"|"mp4";
+
+      /**
        * If specified, enables visual annotations on interacted elements during video recording.
        */
       showActions?: {
@@ -18104,6 +18110,12 @@ export interface BrowserType<Unused = {}> {
        * to 25 frames per second.
        */
       fps?: number;
+
+      /**
+       * Format of the recorded videos. Defaults to `"webm"`. `"mp4"` records AV1 video with the built-in encoder of the
+       * browser. Only Chromium supports `"mp4"`, other browsers throw an error.
+       */
+      format?: "webm"|"mp4";
 
       /**
        * If specified, enables visual annotations on interacted elements during video recording.
@@ -24650,6 +24662,12 @@ export interface Electron {
       fps?: number;
 
       /**
+       * Format of the recorded videos. Defaults to `"webm"`. `"mp4"` records AV1 video with the built-in encoder of the
+       * browser. Only Chromium supports `"mp4"`, other browsers throw an error.
+       */
+      format?: "webm"|"mp4";
+
+      /**
        * If specified, enables visual annotations on interacted elements during video recording.
        */
       showActions?: {
@@ -25403,6 +25421,12 @@ export interface AndroidDevice {
        * to 25 frames per second.
        */
       fps?: number;
+
+      /**
+       * Format of the recorded videos. Defaults to `"webm"`. `"mp4"` records AV1 video with the built-in encoder of the
+       * browser. Only Chromium supports `"mp4"`, other browsers throw an error.
+       */
+      format?: "webm"|"mp4";
 
       /**
        * If specified, enables visual annotations on interacted elements during video recording.
@@ -26655,6 +26679,12 @@ export interface BrowserContextOptions {
      * to 25 frames per second.
      */
     fps?: number;
+
+    /**
+     * Format of the recorded videos. Defaults to `"webm"`. `"mp4"` records AV1 video with the built-in encoder of the
+     * browser. Only Chromium supports `"mp4"`, other browsers throw an error.
+     */
+    format?: "webm"|"mp4";
 
     /**
      * If specified, enables visual annotations on interacted elements during video recording.

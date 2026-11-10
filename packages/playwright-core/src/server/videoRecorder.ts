@@ -33,6 +33,7 @@ import type { Screencast, ScreencastClient } from './screencast';
 import type { Page } from './page';
 
 const kDefaultFps = 25;
+export const kMp4NotSupportedError = 'Recording mp4 video is only supported in Chromium';
 
 export class VideoRecorder {
   private _screencast: Screencast;
@@ -85,14 +86,22 @@ export class VideoRecorder {
 
 // Note: it is important to start video recorder before sending Screencast.startScreencast,
 // and it is equally important to send Screencast.startScreencast before sending Target.resume.
-export function startAutomaticVideoRecording(page: Page) {
+// Returns a promise only when the recording starts asynchronously.
+export function startAutomaticVideoRecording(page: Page): Promise<void> | undefined {
   const recordVideo = page.browserContext._options.recordVideo;
   if (!recordVideo)
     return;
-  const recorder = new VideoRecorder(page.screencast);
   if (page.browserContext._options.recordVideo?.showActions)
     page.screencast.showActions(page.browserContext._options.recordVideo?.showActions);
   const dir = recordVideo.dir ?? page.browserContext._browser.options.artifactsDir;
+  if (recordVideo.format === 'mp4') {
+    if (!page.delegate.startMp4Recording)
+      throw new Error(kMp4NotSupportedError);
+    const mp4Recorder = page.delegate.startMp4Recording({ size: recordVideo.size, fps: recordVideo.fps, fileName: path.join(dir, page.guid + '.mp4') });
+    page.video = mp4Recorder.artifact;
+    return mp4Recorder.started;
+  }
+  const recorder = new VideoRecorder(page.screencast);
   const artifact = recorder.start({ size: recordVideo.size, fps: recordVideo.fps, fileName: path.join(dir, page.guid + '.webm') });
   page.video = artifact;
 }

@@ -35,16 +35,24 @@ const kPollIntervalMs = 1000;
 // the frames itself, so this does not use the screencast frames or ffmpeg.
 export class CRVideoRecorder {
   readonly artifact: Artifact;
-  private _session: CDPSession;
-  private _stream: string;
+  // Rejects when Chromium fails to start the recording.
+  readonly started: Promise<void>;
+  private _session: CDPSession | undefined;
+  private _saveResult: Promise<Error | undefined> | undefined;
   private _stopping = false;
   private _stopped = new ManualPromise<void>();
-  private _saveResult: Promise<Error | undefined>;
 
-  static async start(crPage: CRPage, options: { size?: types.Size, fps?: number }): Promise<CRVideoRecorder> {
+  constructor(crPage: CRPage, options: { fileName?: string, size?: types.Size, fps?: number }) {
     const browserContext = crPage._browserContext;
+    const outputFile = options.fileName ?? path.join(browserContext._browser.options.artifactsDir, createGuid() + '.mp4');
+    this.artifact = new Artifact(browserContext, outputFile);
+    this.started = this._start(crPage, options);
+    this.started.catch(() => {});
+  }
+
+  private async _start(crPage: CRPage, options: { size?: types.Size, fps?: number }) {
     // Chromium does not allow recording and screencast in the same session.
-    const rootSession = await browserContext._browser._clientRootSession();
+    const rootSession = await crPage._browserContext._browser._clientRootSession();
     const session = await rootSession.attachToTarget(crPage._targetId);
     try {
       const params: Protocol.Page.startScreenRecordingParameters = {
@@ -53,42 +61,38 @@ export class CRVideoRecorder {
         frameRate: options.fps ?? 25,
       };
       const { stream } = await session.send(nullProgress, 'Page.startScreenRecording', params) as Protocol.Page.startScreenRecordingReturnValue;
-      const outputFile = path.join(browserContext._browser.options.artifactsDir, createGuid() + '.mp4');
-      return new CRVideoRecorder(session, stream, new Artifact(browserContext, outputFile));
+      this._session = session;
+      this._saveResult = this._saveRecording(session, stream).then(() => undefined, e => e);
     } catch (e) {
       await session.detach(nullProgress).catch(() => {});
       throw e;
     }
   }
 
-  private constructor(session: CDPSession, stream: string, artifact: Artifact) {
-    this._session = session;
-    this._stream = stream;
-    this.artifact = artifact;
-    this._saveResult = this._saveRecording().then(() => undefined, e => e);
-  }
-
   async stop() {
     if (this._stopping)
       return;
     this._stopping = true;
-    // Fails when the page is closed, the artifact reports the read error then.
-    await this._session.send(nullProgress, 'Page.stopScreenRecording').catch(() => {});
-    this._stopped.resolve();
-    const error = await this._saveResult;
-    await this._session.detach(nullProgress).catch(() => {});
+    let error = await this.started.then(() => undefined, e => e);
+    if (this._session) {
+      // Fails when the page is closed, the artifact reports the read error then.
+      await this._session.send(nullProgress, 'Page.stopScreenRecording').catch(() => {});
+      this._stopped.resolve();
+      error = await this._saveResult;
+      await this._session.detach(nullProgress).catch(() => {});
+    }
     await this.artifact.reportFinished(error);
   }
 
   // Chromium appends a fragment of the video to the stream every few seconds.
   // Copies the fragments to the file during the recording, so that stop() only reads the last one.
-  private async _saveRecording() {
+  private async _saveRecording(session: CDPSession, stream: string) {
     await mkdirIfNeeded(this.artifact.localPath());
     const file = await fs.promises.open(this.artifact.localPath(), 'w');
     try {
       while (true) {
         const stopped = this._stopped.isDone();
-        const response = await this._session.send(nullProgress, 'IO.read', { handle: this._stream }).catch(e => {
+        const response = await session.send(nullProgress, 'IO.read', { handle: stream }).catch(e => {
           // The read fails until Chromium writes the first fragment.
           if (stopped || isSessionClosedError(e))
             throw e;
@@ -106,7 +110,7 @@ export class CRVideoRecorder {
       }
     } finally {
       await file.close();
-      await this._session.send(nullProgress, 'IO.close', { handle: this._stream }).catch(() => {});
+      await session.send(nullProgress, 'IO.close', { handle: stream }).catch(() => {});
     }
   }
 }

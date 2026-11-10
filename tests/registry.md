@@ -5313,6 +5313,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `VI-029` | `library/video.spec.ts` | screencast › should capture full viewport on hidpi |
 | `VI-030` | `library/video.spec.ts` | screencast › should work with video+trace |
 | `VI-031` | `library/video.spec.ts` | should saveAs video |
+| `VI-032` | `library/video.spec.ts` | screencast › should record mp4 video in Chromium |
 
 ### VP — Viewport
 
