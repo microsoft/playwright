@@ -2037,6 +2037,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `EM-025` | `library/emulation-coop.spec.ts` | emulation with COOP › should preserve context options |
 | `EM-026` | `library/emulation-coop.spec.ts` | emulation with COOP › should preserve page.emulateMedia |
 | `EM-027` | `library/emulation-coop.spec.ts` | emulation with COOP › should preserve mobile emulation |
+| `EM-028` | `library/emulation-focus.spec.ts` | should keep mouse drag when interacting with another page/context |
 
 ### ER — Page errors and crashes
 

@@ -247,3 +247,25 @@ browserTest('EM-024 should trigger hover state concurrently', async ({ browserTy
   for (const page of [page1, page2, page3])
     expect(await page.evaluate('window.clicked')).toBe(2);
 });
+
+browserTest('EM-028 should keep mouse drag when interacting with another page/context', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43969' },
+}, async ({ contextFactory }) => {
+  const page1 = await (await contextFactory()).newPage();
+  const page2 = await (await contextFactory()).newPage();
+  for (const page of [page1, page2]) {
+    await page.setContent(`
+      <body style="margin: 0">
+        <input type="range" style="margin: 0; width: 200px; height: 20px" onchange="window.changed = true">
+      </body>
+    `);
+  }
+  await page1.mouse.move(100, 10);
+  await page1.mouse.down();
+  await page1.mouse.move(150, 10);
+  await page2.mouse.move(50, 50);
+  await page1.mouse.move(180, 10);
+  await page1.mouse.up();
+  expect(await page1.evaluate(() => !!window['changed'])).toBe(true);
+  expect(+await page1.locator('input').inputValue()).toBeGreaterThan(80);
+});

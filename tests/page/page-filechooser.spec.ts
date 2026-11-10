@@ -126,20 +126,32 @@ test('FC-007 should work when file input is attached to DOM', async ({ page, ser
   expect(chooser).toBeTruthy();
 });
 
-test('FC-008 should work when file input is not attached to DOM', async ({ page, asset }) => {
-  const [, content] = await Promise.all([
-    page.waitForEvent('filechooser').then(chooser => chooser.setFiles(asset('file-to-upload.txt'))),
-    page.evaluate(async () => {
-      const el = document.createElement('input');
-      el.type = 'file';
-      el.click();
-      await new Promise(x => el.oninput = x);
-      const reader = new FileReader();
-      const promise = new Promise(fulfill => reader.onload = fulfill);
-      reader.readAsText(el.files[0]);
-      return promise.then(() => reader.result);
-    }),
+test('FC-008 should work when file input is not attached to DOM', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43994' },
+}, async ({ page, asset }) => {
+  await page.setContent(`<button>Open</button>`);
+  await page.evaluate(() => {
+    document.querySelector('button').onclick = () => {
+      const input = document.createElement('input');
+      input.type = 'file';
+      window['events'] = [];
+      for (const type of ['cancel', 'input', 'change'])
+        input.addEventListener(type, () => window['events'].push(`${type} ${input.files.length}`));
+      input.click();
+    };
+  });
+  const [chooser] = await Promise.all([
+    page.waitForEvent('filechooser'),
+    page.click('button'),
   ]);
+  await chooser.setFiles(asset('file-to-upload.txt'));
+  expect(await page.evaluate(() => window['events'])).toEqual(['input 1', 'change 1']);
+  const content = await chooser.element().evaluate(input => {
+    const reader = new FileReader();
+    const promise = new Promise(fulfill => reader.onload = fulfill);
+    reader.readAsText((input as HTMLInputElement).files[0]);
+    return promise.then(() => reader.result);
+  });
   expect(content).toBe('contents of the file');
 });
 
