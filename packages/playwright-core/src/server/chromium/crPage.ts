@@ -71,7 +71,7 @@ export class CRPage implements PageDelegate {
   readonly utilityWorldName: string;
   readonly _mainFrameSession: FrameSession;
   readonly _sessions = new Map<Protocol.Target.TargetID, FrameSession>();
-  private _videoRecorders = new Set<CRVideoRecorder>();
+  readonly _videoRecorders = new Set<CRVideoRecorder>();
   readonly _page: Page;
   readonly rawMouse: RawMouseImpl;
   readonly rawKeyboard: RawKeyboardImpl;
@@ -165,7 +165,7 @@ export class CRPage implements PageDelegate {
   }
 
   didClose() {
-    void this.stopVideoRecorders();
+    void this.stopMp4Recordings();
     for (const session of this._sessions.values())
       session.dispose();
     this._page._didClose();
@@ -266,12 +266,10 @@ export class CRPage implements PageDelegate {
   }
 
   async closePage(runBeforeUnload: boolean): Promise<void> {
-    if (runBeforeUnload) {
+    if (runBeforeUnload)
       await this._mainFrameSession._client.send('Page.close');
-    } else {
-      await this.stopVideoRecorders();
+    else
       await this._browserContext._browser._closePage(this);
-    }
   }
 
   async setBackgroundColor(color?: { r: number; g: number; b: number; a: number; }): Promise<void> {
@@ -339,15 +337,15 @@ export class CRPage implements PageDelegate {
   }
 
   startMp4Recording(options: { fileName?: string, size?: types.Size, fps?: number }) {
-    const recorder = new CRVideoRecorder(this, options);
-    this._videoRecorders.add(recorder);
-    return recorder;
+    return new CRVideoRecorder(this, options);
   }
 
-  async stopVideoRecorders() {
-    const recorders = [...this._videoRecorders];
-    this._videoRecorders.clear();
-    await Promise.all(recorders.map(recorder => recorder.stop()));
+  async stopMp4Recordings() {
+    await Promise.all([...this._videoRecorders].map(recorder => recorder.stop()));
+  }
+
+  async _mp4RecordingsStarted() {
+    await Promise.all([...this._videoRecorders].map(recorder => recorder.started.catch(e => debugLogger.log('error', e))));
   }
 
   rafCountForStablePosition(): number {
@@ -501,9 +499,8 @@ class FrameSession {
       }
     }
 
-    let videoStarted: Promise<void> | undefined;
     if (this._isMainFrame() && hasUIWindow && !this._page.isStorageStatePage)
-      videoStarted = startAutomaticVideoRecording(this._crPage._page);
+      startAutomaticVideoRecording(this._crPage._page);
 
     let lifecycleEventsEnabled: Promise<any>;
     this._addBrowserListeners();
@@ -601,12 +598,8 @@ class FrameSession {
       // and we do not stall while connecting to the browser.
       promises.push(this._client._sendMayFail('Inspector.enable'));
     }
-    if (videoStarted) {
-      // Start the mp4 recording before the page resumes.
-      promises.push(videoStarted.catch(e => debugLogger.log('error', e)).then(() => this._client.send('Runtime.runIfWaitingForDebugger')));
-    } else {
-      promises.push(this._client.send('Runtime.runIfWaitingForDebugger'));
-    }
+    // Start the automatic mp4 recording before the page resumes.
+    promises.push(this._crPage._mp4RecordingsStarted().then(() => this._client.send('Runtime.runIfWaitingForDebugger')));
     promises.push(this._firstNonInitialNavigationCommittedPromise);
     await Promise.all(promises);
 

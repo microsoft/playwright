@@ -547,6 +547,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
         this.fetchRequest.tracing().flush().catch(e => flushError = flushError ?? e),
       ]));
       await progress.race(Promise.all(this.pages().map(page => page.screencast.handlePageOrContextClose())));
+      await progress.race(Promise.all(this.pages().map(page => page.delegate.stopMp4Recordings?.())));
 
       if (this._customCloseHandler) {
         await progress.race(this._customCloseHandler());
