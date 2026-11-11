@@ -392,6 +392,29 @@ it('NE-051 should return body for image with evicted body', {
   expect(body.toString('base64')).toBe(imageBase64);
 });
 
+it('NE-145 should return source for a module script loaded from cache', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43991' },
+}, async ({ page, server }) => {
+  const source = Array.from({ length: 400 }, (_, i) => `export function f${i}() { return ${i}; }`).join('\n');
+  server.setRoute('/module.js', (req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/javascript', 'Cache-Control': 'max-age=3600' });
+    res.end(source);
+  });
+  server.setRoute('/module.html', (req, res) => {
+    res.setHeader('Content-Type', 'text/html');
+    res.end('<script type="module" src="/module.js"></script>');
+  });
+  // Firefox stores module bytecode in the HTTP cache after several loads.
+  for (let i = 0; i < 5; ++i) {
+    const [response] = await Promise.all([
+      page.waitForResponse('**/module.js'),
+      page.goto(server.PREFIX + '/module.html'),
+    ]);
+    expect((await response.body()).toString()).toBe(source);
+    await page.waitForTimeout(500);
+  }
+});
+
 it('NE-052 should bypass disk cache when page interception is enabled', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30000' });
   await page.goto(server.PREFIX + '/frames/one-frame.html');
