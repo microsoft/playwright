@@ -897,9 +897,9 @@ class ScreencastTracingRecorder {
           return;
         }
 
-        // We are throttling, but frames are coming => there is another client.
+        // Hold the dropped frame too, otherwise the browser keeps sending frames.
         if (this._pendingAck)
-          return;
+          return this._pendingAck;
 
         onFrame(frame);
         this._pendingAck = new ManualPromise<void>();
