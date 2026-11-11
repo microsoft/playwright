@@ -17,6 +17,8 @@ RUN --mount=type=secret,id=npmrc,target=/root/.npmrc,required=false \
     find /etc/apt -type f \( -name '*.list' -o -name '*.sources' \) \
       -exec sed -i "s|http://archive.ubuntu.com|http://${UBUNTU_MIRROR_PREFIX}archive.ubuntu.com|g; s|http://ports.ubuntu.com|http://${UBUNTU_MIRROR_PREFIX}ports.ubuntu.com|g" {} + && \
     apt-get update && \
+    # Pick up security fixes that the base image does not have yet.
+    apt-get upgrade -y && \
     # Install Node.js
     apt-get install -y curl wget gpg ca-certificates && \
     mkdir -p /etc/apt/keyrings && \
