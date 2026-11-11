@@ -18,7 +18,7 @@ RUN --mount=type=secret,id=npmrc,target=/root/.npmrc,required=false \
       -exec sed -i "s|http://archive.ubuntu.com|http://${UBUNTU_MIRROR_PREFIX}archive.ubuntu.com|g; s|http://ports.ubuntu.com|http://${UBUNTU_MIRROR_PREFIX}ports.ubuntu.com|g" {} + && \
     apt-get update && \
     # Pick up security fixes that the base image does not have yet.
-    apt-get upgrade -y -o Acquire::Retries=0 && \
+    apt-get upgrade -y && \
     apt-get install -y curl wget gpg ca-certificates && \
     mkdir -p /etc/apt/keyrings && \
     curl -sL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg && \
