@@ -61,7 +61,6 @@
  */
 
 import { spawn } from 'child_process';
-import os from 'os';
 
 import debug from 'debug';
 import ws from 'ws';
@@ -203,8 +202,6 @@ export class CDPRelayServer {
       args.push(`--user-data-dir=${this._customUserDataDir}`);
     if (this._profileDirectory)
       args.push(`--profile-directory=${this._profileDirectory}`);
-    if (os.platform() === 'linux' && channel === 'chromium')
-      args.push('--no-sandbox');
     // Without a token, the user must see the connect page to approve the connection.
     if (this._background && this._token)
       args.push('--open-in-background');
