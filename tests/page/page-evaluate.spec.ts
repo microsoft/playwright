@@ -269,11 +269,18 @@ it('EV-031 should include a non-error rejection value in the error message', {
   expect(nullError.message).toContain('null');
 });
 
-it('EV-032 should return complex objects', async ({ page }) => {
+it('EV-032 should return complex objects', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44060' }
+}, async ({ page }) => {
   const object = { foo: 'bar!' };
   const result = await page.evaluate(a => a, object);
   expect(result).not.toBe(object);
   expect(result).toEqual(object);
+
+  let argument: unknown = 0;
+  for (let i = 0; i < 60; i++)
+    argument = { children: [argument] };
+  expect(await page.evaluate(value => JSON.stringify(value).length, argument)).toBe(JSON.stringify(argument).length);
 });
 
 it('EV-033 should return NaN', async ({ page }) => {
