@@ -500,8 +500,8 @@ it.describe('screencast', () => {
 
   it('VI-032 should record mp4 video in Chromium', {
     annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43999' },
-  }, async ({ browser, browserName, channel }, testInfo) => {
-    it.skip(!!channel?.startsWith('bidi-'), 'mp4 recording uses CDP');
+  }, async ({ browser, browserName, isBidi }, testInfo) => {
+    it.skip(isBidi, 'mp4 recording uses CDP');
     const recordVideo = { dir: testInfo.outputPath(''), format: 'mp4' as const };
     if (browserName !== 'chromium') {
       const error = await browser.newContext({ recordVideo }).catch(e => e);

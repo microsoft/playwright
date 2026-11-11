@@ -297,11 +297,11 @@ test('SC-015 start dispose stops recording', async ({ browser }, testInfo) => {
 
 test('SC-039 start should record mp4 video in Chromium', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43999' },
-}, async ({ browser, browserName, channel }, testInfo) => {
+}, async ({ browser, browserName, isBidi }, testInfo) => {
   const context = await browser.newContext({ viewport: { width: 1000, height: 400 } });
   const page = await context.newPage();
   const videoPath = testInfo.outputPath('video.mp4');
-  if (browserName !== 'chromium' || channel?.startsWith('bidi-')) {
+  if (browserName !== 'chromium' || isBidi) {
     const error = await page.screencast.start({ path: videoPath }).catch(e => e);
     expect(error.message).toContain('Recording mp4 video is only supported in Chromium');
     await context.close();

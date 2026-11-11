@@ -399,8 +399,9 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     if (params.fps !== undefined && params.fps <= 0)
       throw new Error(`"fps" must be a positive number, got ${params.fps}`);
 
+    const mp4 = params.record && params.format === 'mp4';
     let artifact: Artifact | undefined;
-    if (params.record && params.format === 'mp4') {
+    if (mp4) {
       if (!this._page.delegate.startMp4Recording)
         throw new Error(kMp4NotSupportedError);
       const recorder = this._page.delegate.startMp4Recording(params);
@@ -430,7 +431,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
       this._page.screencast.addClient(this._screencastClient);
     }
 
-    if (params.record && !artifact) {
+    if (params.record && !mp4) {
       const recorder = new VideoRecorder(this._page.screencast);
       this._videoRecorder = recorder;
       artifact = recorder.start(params);
