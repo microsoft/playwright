@@ -23,12 +23,19 @@ import { test as base, expect } from '../mcp/fixtures';
 import { kTargetClosedErrorMessage } from '../config/errors';
 
 import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import type { BrowserContext, Page } from 'playwright';
+import type { Browser, BrowserContext, Page } from 'playwright';
 import type { StartClient } from '../mcp/fixtures';
 
 export type BrowserWithExtension = {
   userDataDir: string;
+  // Makes the relay start the Chrome stub in place of the Chrome executable.
+  chromeStubEnv: Record<string, string>;
+  launched: boolean;
   launch: (mode?: 'disable-extension', additionalExtensions?: string[]) => Promise<BrowserContext>;
+  // Connects to the browser that the Chrome stub started.
+  connect: () => Promise<BrowserContext>;
+  // The arguments of each start of the Chrome stub.
+  chromeStubArgs: () => Promise<string[][]>;
 };
 
 export type CliResult = {
@@ -59,21 +66,26 @@ export const test = base.extend<TestFixtures>({
     test.skip('chromium' !== mcpBrowser, '--load-extension is not supported for official builds of Chromium');
 
     let browserContext: BrowserContext | undefined;
+    let stubBrowser: Browser | undefined;
     const userDataDir = testInfo.outputPath('extension-user-data-dir');
     // --load-extension does not populate Default/Extensions/<id>; create the folder
     // so the relay's extension-installed check recognizes the test profile.
     await fs.mkdir(path.join(userDataDir, 'Default', 'Extensions', extensionId), { recursive: true });
-    await use({
+    const browserWithExtension: BrowserWithExtension = {
       userDataDir,
+      chromeStubEnv: {
+        PLAYWRIGHT_MCP_EXECUTABLE_PATH: path.join(__dirname, 'chrome-stub.js'),
+        PWTEST_CHROME_STUB_EXECUTABLE: chromium.executablePath(),
+        PWTEST_CHROME_STUB_EXTENSION: pathToExtension,
+      },
+      launched: false,
       launch: async (mode?: 'disable-extension', additionalExtensions: string[] = []) => {
         const extensions = [pathToExtension, ...additionalExtensions].join(',');
         browserContext = await chromium.launchPersistentContext(userDataDir, {
           channel: mcpBrowser,
-          // Opening the browser singleton only works in headed.
-          headless: false,
-          // Automation disables singleton browser process behavior, which is necessary for the extension.
-          ignoreDefaultArgs: ['--enable-automation'],
-          args: mode === 'disable-extension' ? [] : [
+          // The Chrome stub finds the browser through the port file in the profile.
+          args: mode === 'disable-extension' ? ['--remote-debugging-port=0'] : [
+            '--remote-debugging-port=0',
             `--disable-extensions-except=${extensions}`,
             `--load-extension=${extensions}`,
           ],
@@ -84,13 +96,38 @@ export const test = base.extend<TestFixtures>({
         if (!browserContext.serviceWorkers().length)
           await browserContext.waitForEvent('serviceworker');
 
+        browserWithExtension.launched = true;
         return browserContext;
-      }
-    });
+      },
+      connect: async () => {
+        let port: string | undefined;
+        await expect.poll(async () => port = await debuggingPort()).toBeTruthy();
+        stubBrowser = await chromium.connectOverCDP(`http://127.0.0.1:${port}`);
+        return stubBrowser.contexts()[0];
+      },
+      chromeStubArgs: async () => {
+        const log = await fs.readFile(path.join(userDataDir, 'chrome-stub.log'), 'utf8').catch(() => '');
+        return log.split('\n').filter(Boolean).map(line => JSON.parse(line));
+      },
+    };
+    const debuggingPort = async () => (await fs.readFile(path.join(userDataDir, 'DevToolsActivePort'), 'utf8').catch(() => '')).split('\n')[0];
+    await use(browserWithExtension);
     await browserContext?.close();
+    // The stub can start the browser in a test that fails before it connects.
+    if (!browserContext && !stubBrowser && await debuggingPort())
+      await browserWithExtension.connect().catch(() => {});
+    if (stubBrowser) {
+      const session = await stubBrowser.newBrowserCDPSession();
+      await session.send('Browser.close').catch(() => {});
+    }
 
     // Free up disk space.
     await fs.rm(userDataDir, { recursive: true, force: true }).catch(() => {});
+  },
+
+  // Headless Chrome does not hand the connect page over to the running browser, the Chrome stub does.
+  startClient: async ({ startClient, browserWithExtension }, use) => {
+    await use(options => startClient({ ...options, env: { ...chromeStubEnvIfLaunched(browserWithExtension), ...options?.env } }));
   },
 
   startExtensionClient: async ({ browserWithExtension, startClient }, use) => {
@@ -101,9 +138,9 @@ export const test = base.extend<TestFixtures>({
     });
   },
 
-  cli: async ({ mcpBrowser }, use, testInfo) => {
+  cli: async ({ mcpBrowser, browserWithExtension }, use, testInfo) => {
     await use(async (args, options) => {
-      return await runCli(args, { mcpBrowser, testInfo, env: options?.env });
+      return await runCli(args, { mcpBrowser, testInfo, env: { ...chromeStubEnvIfLaunched(browserWithExtension), ...options?.env } });
     });
 
     // Cleanup sessions
@@ -125,6 +162,10 @@ export const testWithOldExtensionVersion = test.extend({
     await use(pathToExtension);
   },
 });
+
+function chromeStubEnvIfLaunched(browserWithExtension: BrowserWithExtension): Record<string, string> {
+  return browserWithExtension.launched ? browserWithExtension.chromeStubEnv : {};
+}
 
 function cliEnv() {
   return {

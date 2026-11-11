@@ -23,7 +23,6 @@ export default defineConfig<TestOptions>({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
   reporter: process.env.CI ? [
     ['list'],
     ['../config/parquetReporter.ts'],

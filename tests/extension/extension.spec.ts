@@ -22,9 +22,11 @@ import WebSocket from 'ws';
 import { test, testWithOldExtensionVersion, expect, extensionId, clickAllowAndSelect, connectAndNavigate, readExtensionToken, startWithExtensionFlag } from './extension-fixtures';
 import { utils } from '../../packages/playwright-core/lib/coreBundle';
 
+import type { Page } from 'playwright';
+
 const { defaultUserDataDirForChannel } = utils;
 
-test(`navigate with extension`, async ({ startExtensionClient, server }) => {
+test(`navigate with extension`, async ({ browserWithExtension, startExtensionClient, server }) => {
   const { browserContext, client } = await startExtensionClient();
 
   const confirmationPagePromise = browserContext.waitForEvent('page', page => {
@@ -37,10 +39,36 @@ test(`navigate with extension`, async ({ startExtensionClient, server }) => {
   });
 
   const selectorPage = await confirmationPagePromise;
-  await clickAllowAndSelect(selectorPage, 'Welcome');
+  await clickAllowAndSelect(selectorPage!, 'Welcome');
 
   expect(await navigateResponse).toHaveResponse({
     snapshot: expect.stringContaining(`- generic [active] [ref=f1e1]: Hello, world!`),
+  });
+  expect(await browserWithExtension.chromeStubArgs()).toEqual([[
+    `--user-data-dir=${browserWithExtension.userDataDir}`,
+    '--profile-directory=Default',
+    expect.stringContaining(`chrome-extension://${extensionId}/connect.html?`),
+  ]]);
+});
+
+test(`starts the browser when it is not running`, async ({ browserWithExtension, startClient, server }) => {
+  const client = await startWithExtensionFlag(browserWithExtension, startClient, browserWithExtension.chromeStubEnv);
+
+  const navigateResponse = client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  });
+
+  const browserContext = await browserWithExtension.connect();
+  let selectorPage: Page | undefined;
+  await expect.poll(() => {
+    selectorPage = browserContext.pages().find(page => page.url().startsWith(`chrome-extension://${extensionId}/connect.html`));
+    return selectorPage;
+  }).toBeTruthy();
+  await clickAllowAndSelect(selectorPage!, 'Welcome');
+
+  expect(await navigateResponse).toHaveResponse({
+    snapshot: expect.stringContaining(`Hello, world!`),
   });
 });
 
@@ -218,7 +246,7 @@ testWithOldExtensionVersion(`works with old extension version`, async ({ startEx
   });
 
   const selectorPage = await confirmationPagePromise;
-  await clickAllowAndSelect(selectorPage, 'Welcome');
+  await clickAllowAndSelect(selectorPage!, 'Welcome');
 
   expect(await navigateResponse).toHaveResponse({
     snapshot: expect.stringContaining(`- generic [active] [ref=f1e1]: Hello, world!`),
@@ -523,6 +551,12 @@ test(`--background does not activate controlled tabs`, {
     snapshot: expect.stringContaining(`Hello, world!`),
   });
   expect(await activeTabUrls()).toEqual([server.EMPTY_PAGE]);
+  expect(await browserWithExtension.chromeStubArgs()).toEqual([[
+    `--user-data-dir=${browserWithExtension.userDataDir}`,
+    '--profile-directory=Default',
+    '--open-in-background',
+    expect.stringContaining(`chrome-extension://${extensionId}/connect.html?`),
+  ]]);
 
   await client.callTool({
     name: 'browser_tabs',
