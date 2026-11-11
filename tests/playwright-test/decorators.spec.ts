@@ -25,6 +25,7 @@ test('should decorate', {
       test('passes', () => {
         const pom = new POM();
         expect(pom.id).toBe('decorated');
+        expect(pom.secret()).toBe('decorated');
         pom.greet();
       });
 
@@ -45,6 +46,13 @@ test('should decorate', {
       class POM {
         @initializedField
         id!: string;
+
+        @initializedField
+        #secret!: string;
+
+        secret() {
+          return this.#secret;
+        }
 
         @loggedMethod
         greet() {
