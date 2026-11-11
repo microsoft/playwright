@@ -118,7 +118,10 @@ class NetworkRequest {
     this._frameId = helper.browsingContextToFrameId(browsingContext);
 
     this.requestId = httpChannel.channelId + '';
-    this.navigationId = httpChannel.isMainDocumentChannel && loadInfo ? helper.toProtocolNavigationId(loadInfo.jugglerLoadIdentifier) : undefined;
+    // Background cache revalidation inherits the document channel's load info and flags,
+    // but does not load a new document.
+    const isNavigation = httpChannel.isMainDocumentChannel && !(httpChannel.loadFlags & Ci.nsIRequest.LOAD_BACKGROUND);
+    this.navigationId = isNavigation && loadInfo ? helper.toProtocolNavigationId(loadInfo.jugglerLoadIdentifier) : undefined;
 
     this._redirectedIndex = 0;
     if (redirectedFrom) {
@@ -423,6 +426,10 @@ class NetworkRequest {
     } catch (e) {
       // Be ready to original listener exceptions.
     }
+    // Scripts cached as bytecode are delivered as such, rather than as the original
+    // response. Read the original content from the cache instead, like DevTools do.
+    if (this._pageNetwork && hasAlternativeData(aRequest))
+      this._originalBodyPromise = readOriginalCacheContent(aRequest);
   }
 
   // nsIStreamListener
@@ -442,15 +449,25 @@ class NetworkRequest {
       // For requests with internal redirect (e.g. intercepted by Service Worker),
       // we do not get onResponse normally, but we do get nsIRequestObserver notifications.
       this._sendOnResponse(false);
-      const body = this._responseBodyChunks.join('');
-      const pageNetwork = this._pageNetwork;
-      if (pageNetwork)
-        pageNetwork._responseStorage.addResponseBody(this, body);
-      this._sendOnRequestFinished();
-    } else {
-      this._sendOnRequestFailed(aStatusCode);
+      // Capture the sizes now, they change to those of the bytecode later on.
+      const finishedEvent = this._requestFinishedEvent();
+      const finish = body => {
+        this._pageNetwork?._responseStorage.addResponseBody(this, body);
+        this._sendOnRequestFinished(finishedEvent);
+        this._releaseReferences();
+      };
+      const originalBodyPromise = this._originalBodyPromise;
+      const chunks = this._responseBodyChunks;
+      delete this._originalBodyPromise;
+      delete this._responseBodyChunks;
+      if (originalBodyPromise)
+        originalBodyPromise.then(finish);
+      else
+        finish(chunks.join(''));
+      return;
     }
-
+    this._sendOnRequestFailed(aStatusCode);
+    delete this._originalBodyPromise;
     delete this._responseBodyChunks;
     this._releaseReferences();
   }
@@ -599,28 +616,34 @@ class NetworkRequest {
     this._networkObserver._channelToRequest.delete(this.httpChannel);
   }
 
-  _sendOnRequestFinished() {
+  _sendOnRequestFinished(finishedEvent = this._requestFinishedEvent()) {
     const pageNetwork = this._pageNetwork;
+    if (pageNetwork && finishedEvent)
+      pageNetwork.emit(PageNetwork.Events.RequestFinished, finishedEvent, this._frameId);
+    this._networkObserver._channelToRequest.delete(this.httpChannel);
+  }
+
+  _requestFinishedEvent() {
     // Undefined |responseEndTime| means there has been no response yet.
     // This happens when request interception API is used to redirect
     // the request to a different URL.
     // In this case, we should not emit "requestFinished" event.
-    if (pageNetwork && this.httpChannel.responseEndTime !== undefined) {
+    if (this.httpChannel.responseEndTime !== undefined) {
       let protocolVersion = undefined;
       try {
         protocolVersion = this.httpChannel.protocolVersion;
       } catch (e) {
         // protocolVersion is unavailable in certain cases.
       };
-      pageNetwork.emit(PageNetwork.Events.RequestFinished, {
+      return {
         requestId: this.requestId,
         responseEndTime: this.httpChannel.responseEndTime,
         transferSize: this.httpChannel.transferSize,
         encodedBodySize: this.httpChannel.encodedBodySize,
         protocolVersion,
-      }, this._frameId);
+      };
     }
-    this._networkObserver._channelToRequest.delete(this.httpChannel);
+    return null;
   }
 }
 
@@ -904,6 +927,43 @@ function causeTypeToString(causeType) {
   return 'TYPE_OTHER';
 }
 
+function hasAlternativeData(channel) {
+  try {
+    return channel instanceof Ci.nsICacheInfoChannel && !!channel.alternativeDataType;
+  } catch (e) {
+    // Accessing alternativeDataType throws for some service worker responses.
+    return false;
+  }
+}
+
+// Resolves with an empty string if the content cannot be read.
+function readOriginalCacheContent(channel) {
+  return new Promise(resolve => {
+    try {
+      channel.getOriginalInputStream({
+        onInputStreamReady: stream => {
+          if (!stream) {
+            resolve('');
+            return;
+          }
+          NetUtil.asyncFetch(stream, (inputStream, status) => {
+            let body = '';
+            try {
+              if (Components.isSuccessCode(status))
+                body = NetUtil.readInputStreamToString(inputStream, inputStream.available());
+            } catch (e) {
+              // Empty content is reported as a closed stream.
+            }
+            resolve(body);
+          });
+        },
+      });
+    } catch (e) {
+      resolve('');
+    }
+  });
+}
+
 function appendExtraHTTPHeaders(httpChannel, headers) {
   if (!headers)
     return;
@@ -917,6 +977,7 @@ class ResponseStorage {
     this._maxResponseSize = maxResponseSize;
     this._maxTotalSize = maxTotalSize;
     this._responses = new Map();
+    this._responsesWithBody = new Set();
   }
 
   addResponseBody(request, body) {
@@ -943,9 +1004,12 @@ class ResponseStorage {
       encodings,
       httpChannel: encodings.length ? request.httpChannel : null,
     });
+    this._responsesWithBody.add(request.requestId);
     this._totalSize += body.length;
     if (this._totalSize > this._maxTotalSize) {
-      for (let [requestId, response] of this._responses) {
+      for (const requestId of this._responsesWithBody) {
+        const response = this._responses.get(requestId);
+        this._responsesWithBody.delete(requestId);
         this._totalSize -= response.body.length;
         response.body = '';
         response.evicted = true;
