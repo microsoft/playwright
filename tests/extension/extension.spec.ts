@@ -19,7 +19,7 @@ import path from 'path';
 
 import WebSocket from 'ws';
 
-import { test, testWithOldExtensionVersion, expect, extensionId, clickAllowAndSelect, connectAndNavigate, readExtensionToken, startWithExtensionFlag } from './extension-fixtures';
+import { test, testWithOldExtensionVersion, expect, extensionId, clickAllowAndSelect, connectAndNavigate, readExtensionToken, startWithExtensionFlag, openConnectPage, openConnectPageWhenRequested } from './extension-fixtures';
 import { utils } from '../../packages/playwright-core/lib/coreBundle';
 
 const { defaultUserDataDirForChannel } = utils;
@@ -27,9 +27,7 @@ const { defaultUserDataDirForChannel } = utils;
 test(`navigate with extension`, async ({ startExtensionClient, server }) => {
   const { browserContext, client } = await startExtensionClient();
 
-  const confirmationPagePromise = browserContext.waitForEvent('page', page => {
-    return page.url().startsWith(`chrome-extension://${extensionId}/connect.html`);
-  });
+  const confirmationPagePromise = openConnectPage(browserContext, client);
 
   const navigateResponse = client.callTool({
     name: 'browser_navigate',
@@ -47,9 +45,7 @@ test(`navigate with extension`, async ({ startExtensionClient, server }) => {
 test(`connect.html requests protocol version 2`, async ({ startExtensionClient, server }) => {
   const { browserContext, client } = await startExtensionClient();
 
-  const confirmationPagePromise = browserContext.waitForEvent('page', page => {
-    return page.url().startsWith(`chrome-extension://${extensionId}/connect.html`);
-  });
+  const confirmationPagePromise = openConnectPage(browserContext, client);
 
   client.callTool({
     name: 'browser_navigate',
@@ -77,9 +73,7 @@ test(`browser_run_code_unsafe can evaluate in a web worker`, async ({ startExten
 
   const { browserContext, client } = await startExtensionClient();
 
-  const confirmationPagePromise = browserContext.waitForEvent('page', page => {
-    return page.url().startsWith(`chrome-extension://${extensionId}/connect.html`);
-  });
+  const confirmationPagePromise = openConnectPage(browserContext, client);
 
   const navigateResponse = client.callTool({
     name: 'browser_navigate',
@@ -154,9 +148,7 @@ test(`snapshot of an existing page`, async ({ browserWithExtension, startClient,
   const client = await startWithExtensionFlag(browserWithExtension, startClient);
   expect(browserContext.pages()).toHaveLength(3);
 
-  const confirmationPagePromise = browserContext.waitForEvent('page', page => {
-    return page.url().startsWith(`chrome-extension://${extensionId}/connect.html`);
-  });
+  const confirmationPagePromise = openConnectPage(browserContext, client);
 
   const navigateResponse = client.callTool({
     name: 'browser_snapshot',
@@ -185,9 +177,7 @@ test(`extension connection uses noDefaults`, {
 
   const client = await startWithExtensionFlag(browserWithExtension, startClient);
 
-  const confirmationPagePromise = browserContext.waitForEvent('page', page => {
-    return page.url().startsWith(`chrome-extension://${extensionId}/connect.html`);
-  });
+  const confirmationPagePromise = openConnectPage(browserContext, client);
 
   const snapshotResponse = client.callTool({
     name: 'browser_snapshot',
@@ -208,9 +198,7 @@ testWithOldExtensionVersion(`works with old extension version`, async ({ startEx
   // Prelaunch the browser, so that it is properly closed after the test.
   const { browserContext, client } = await startExtensionClient();
 
-  const confirmationPagePromise = browserContext.waitForEvent('page', page => {
-    return page.url().startsWith(`chrome-extension://${extensionId}/connect.html`);
-  });
+  const confirmationPagePromise = openConnectPage(browserContext, client);
 
   const navigateResponse = client.callTool({
     name: 'browser_navigate',
@@ -229,9 +217,7 @@ test(`extension needs update`, async ({ startExtensionClient, server }) => {
   // Prelaunch the browser, so that it is properly closed after the test.
   const { browserContext, client } = await startExtensionClient({ PWTEST_EXTENSION_PROTOCOL: '1000' });
 
-  const confirmationPagePromise = browserContext.waitForEvent('page', page => {
-    return page.url().startsWith(`chrome-extension://${extensionId}/connect.html`);
-  });
+  const confirmationPagePromise = openConnectPage(browserContext, client);
 
   // The call hangs as MCP server never connects to the extension.
   client.callTool({
@@ -246,9 +232,7 @@ test(`extension needs update`, async ({ startExtensionClient, server }) => {
 test(`extension rejects outdated client protocol version`, async ({ startExtensionClient, server }) => {
   const { browserContext, client } = await startExtensionClient({ PWTEST_EXTENSION_PROTOCOL: '1' });
 
-  const confirmationPagePromise = browserContext.waitForEvent('page', page => {
-    return page.url().startsWith(`chrome-extension://${extensionId}/connect.html`);
-  });
+  const confirmationPagePromise = openConnectPage(browserContext, client);
 
   // The call hangs as the extension never connects to the relay.
   client.callTool({
@@ -479,6 +463,7 @@ test(`bypass connection dialog with token`, async ({ browserWithExtension, start
       PWTEST_EXTENSION_USER_DATA_DIR: browserWithExtension.userDataDir,
     },
   });
+  openConnectPageWhenRequested(browserContext, client);
 
   const navigateResponse = await client.callTool({
     name: 'browser_navigate',
@@ -516,10 +501,14 @@ test(`--background does not activate controlled tabs`, {
       PWTEST_EXTENSION_USER_DATA_DIR: browserWithExtension.userDataDir,
     },
   });
-  expect(await client.callTool({
+  const navigatePromise = client.callTool({
     name: 'browser_navigate',
     arguments: { url: server.HELLO_WORLD },
-  })).toHaveResponse({
+  });
+  // The relay opens the connect page in the background; a page that the test opens takes the front.
+  await openConnectPage(browserContext, client);
+  await userPage.bringToFront();
+  expect(await navigatePromise).toHaveResponse({
     snapshot: expect.stringContaining(`Hello, world!`),
   });
   expect(await activeTabUrls()).toEqual([server.EMPTY_PAGE]);
@@ -550,6 +539,7 @@ test(`does not expose the token in the connect page url`, {
       PWTEST_EXTENSION_USER_DATA_DIR: browserWithExtension.userDataDir,
     },
   });
+  openConnectPageWhenRequested(browserContext, client);
 
   // With the token bypass, the connect page itself becomes the connected tab.
   const response = await client.callTool({
@@ -569,7 +559,7 @@ test(`times out when the extension rejects the token`, {
     PLAYWRIGHT_MCP_EXTENSION_TOKEN: 'wrong-token',
     PWTEST_EXTENSION_CONNECT_TIMEOUT: '500',
   });
-  const waitForConnectPage = () => browserContext.waitForEvent('page', page => page.url().startsWith(`chrome-extension://${extensionId}/connect.html`));
+  const waitForConnectPage = () => openConnectPage(browserContext, client);
 
   const connectPagePromise = waitForConnectPage();
   expect(await client.callTool({
@@ -605,6 +595,7 @@ test(`reconnects after the extension connection drops`, {
       PWTEST_EXTENSION_USER_DATA_DIR: browserWithExtension.userDataDir,
     },
   });
+  openConnectPageWhenRequested(browserContext, client);
 
   expect(await client.callTool({
     name: 'browser_navigate',
@@ -621,6 +612,7 @@ test(`reconnects after the extension connection drops`, {
   await expect.poll(() => stderr()).toContain('browser disconnected');
 
   // The next tool call reconnects transparently; the token bypasses the dialog.
+  openConnectPageWhenRequested(browserContext, client);
   expect(await client.callTool({
     name: 'browser_navigate',
     arguments: { url: server.HELLO_WORLD },
@@ -634,9 +626,7 @@ test(`relay rejects websocket upgrades with forged host or origin`, {
 }, async ({ startExtensionClient, server }) => {
   const { browserContext, client } = await startExtensionClient();
 
-  const confirmationPagePromise = browserContext.waitForEvent('page', page => {
-    return page.url().startsWith(`chrome-extension://${extensionId}/connect.html`);
-  });
+  const confirmationPagePromise = openConnectPage(browserContext, client);
   const navigateResponse = client.callTool({
     name: 'browser_navigate',
     arguments: { url: server.HELLO_WORLD },

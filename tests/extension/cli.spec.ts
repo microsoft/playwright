@@ -14,7 +14,10 @@
  * limitations under the License.
  */
 
-import { test as base, expect, extensionId, clickAllowAndSelect } from './extension-fixtures';
+import fs from 'fs';
+import path from 'path';
+
+import { test as base, expect, extensionId, clickAllowAndSelect, openConnectPage } from './extension-fixtures';
 
 import type { CliResult } from './extension-fixtures';
 import type { Page } from 'playwright';
@@ -25,9 +28,15 @@ const test = base.extend<{
   startAttach: async ({ browserWithExtension, cli }, use) => {
     await use(async () => {
       const browserContext = await browserWithExtension.launch();
-      const confirmationPagePromise = browserContext.waitForEvent('page', page =>
-        page.url().startsWith(`chrome-extension://${extensionId}/connect.html`)
-      );
+      // The relay runs in the daemon of the session, and the daemon writes its stderr to a log file.
+      const daemonDir = test.info().outputPath('daemon');
+      const daemonLogs = () => {
+        if (!fs.existsSync(daemonDir))
+          return '';
+        const logFiles = fs.readdirSync(daemonDir, { recursive: true, encoding: 'utf8' }).filter(file => file.endsWith('.err'));
+        return logFiles.map(file => fs.readFileSync(path.join(daemonDir, file), 'utf8')).join('\n');
+      };
+      const confirmationPagePromise = openConnectPage(browserContext, { output: daemonLogs, openedCount: 0 });
       const cliPromise = cli(['attach', '--extension=chromium'], {
         env: { PWTEST_EXTENSION_USER_DATA_DIR: browserWithExtension.userDataDir },
       });

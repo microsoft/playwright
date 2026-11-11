@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, extensionId, clickAllowAndSelect, readExtensionToken, startWithExtensionFlag } from './extension-fixtures';
+import { test, expect, extensionId, clickAllowAndSelect, readExtensionToken, startWithExtensionFlag, openConnectPage, openConnectPageWhenRequested } from './extension-fixtures';
 
 import type { BrowserWithExtension } from './extension-fixtures';
 import type { StartClient } from '../mcp/fixtures';
@@ -23,7 +23,7 @@ import type { BrowserContext } from 'playwright';
 
 // Connects without the approval dialog, so a test can start several clients
 // and tell them apart by name.
-async function connectWithName(browserWithExtension: BrowserWithExtension, startClient: StartClient, token: string, clientName: string): Promise<Client> {
+async function connectWithName(browserContext: BrowserContext, browserWithExtension: BrowserWithExtension, startClient: StartClient, token: string, clientName: string): Promise<Client> {
   const { client } = await startClient({
     clientName,
     args: ['--extension'],
@@ -32,15 +32,14 @@ async function connectWithName(browserWithExtension: BrowserWithExtension, start
       PWTEST_EXTENSION_USER_DATA_DIR: browserWithExtension.userDataDir,
     },
   });
+  openConnectPageWhenRequested(browserContext, client);
   return client;
 }
 
 // Starts a client and hands back its connect page, before any tab is picked.
 async function beginConnect(browserContext: BrowserContext, browserWithExtension: BrowserWithExtension, startClient: StartClient, url: string) {
   const client = await startWithExtensionFlag(browserWithExtension, startClient);
-  const connectPagePromise = browserContext.waitForEvent('page', page =>
-    page.url().startsWith(`chrome-extension://${extensionId}/connect.html`)
-  );
+  const connectPagePromise = openConnectPage(browserContext, client);
   const navigatePromise = client.callTool({ name: 'browser_navigate', arguments: { url } });
   const connectPage = await connectPagePromise;
   return { client, connectPage, navigatePromise };
@@ -70,13 +69,13 @@ test(`two clients connect at the same time, each in its own tab group`, {
   const browserContext = await browserWithExtension.launch();
   const token = await readExtensionToken(browserContext);
 
-  const clientA = await connectWithName(browserWithExtension, startClient, token, 'client-a');
+  const clientA = await connectWithName(browserContext, browserWithExtension, startClient, token, 'client-a');
   expect(await clientA.callTool({
     name: 'browser_navigate',
     arguments: { url: server.HELLO_WORLD },
   })).toHaveResponse({ snapshot: expect.stringContaining('Hello, world!') });
 
-  const clientB = await connectWithName(browserWithExtension, startClient, token, 'client-b');
+  const clientB = await connectWithName(browserContext, browserWithExtension, startClient, token, 'client-b');
   expect(await clientB.callTool({
     name: 'browser_navigate',
     arguments: { url: server.PREFIX + '/second' },
@@ -180,7 +179,7 @@ test(`status page disconnects a single client`, {
   const token = await readExtensionToken(browserContext);
 
   const connect = async (clientName: string, url: string) => {
-    const client = await connectWithName(browserWithExtension, startClient, token, clientName);
+    const client = await connectWithName(browserContext, browserWithExtension, startClient, token, clientName);
     await client.callTool({ name: 'browser_navigate', arguments: { url } });
     return client;
   };

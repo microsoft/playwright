@@ -28,6 +28,7 @@ import type { StartClient } from '../mcp/fixtures';
 
 export type BrowserWithExtension = {
   userDataDir: string;
+  launched: boolean;
   launch: (mode?: 'disable-extension', additionalExtensions?: string[]) => Promise<BrowserContext>;
 };
 
@@ -63,16 +64,13 @@ export const test = base.extend<TestFixtures>({
     // --load-extension does not populate Default/Extensions/<id>; create the folder
     // so the relay's extension-installed check recognizes the test profile.
     await fs.mkdir(path.join(userDataDir, 'Default', 'Extensions', extensionId), { recursive: true });
-    await use({
+    const browserWithExtension: BrowserWithExtension = {
       userDataDir,
+      launched: false,
       launch: async (mode?: 'disable-extension', additionalExtensions: string[] = []) => {
         const extensions = [pathToExtension, ...additionalExtensions].join(',');
         browserContext = await chromium.launchPersistentContext(userDataDir, {
           channel: mcpBrowser,
-          // Opening the browser singleton only works in headed.
-          headless: false,
-          // Automation disables singleton browser process behavior, which is necessary for the extension.
-          ignoreDefaultArgs: ['--enable-automation'],
           args: mode === 'disable-extension' ? [] : [
             `--disable-extensions-except=${extensions}`,
             `--load-extension=${extensions}`,
@@ -84,13 +82,26 @@ export const test = base.extend<TestFixtures>({
         if (!browserContext.serviceWorkers().length)
           await browserContext.waitForEvent('serviceworker');
 
+        browserWithExtension.launched = true;
         return browserContext;
       }
-    });
+    };
+    await use(browserWithExtension);
     await browserContext?.close();
 
     // Free up disk space.
     await fs.rm(userDataDir, { recursive: true, force: true }).catch(() => {});
+  },
+
+  // The relay opens the connect page by starting the browser executable, which needs a headed
+  // browser. For the test browser, the relay prints the URL instead and the test opens it
+  // with openConnectPage().
+  startClient: async ({ startClient, browserWithExtension }, use) => {
+    await use(async options => {
+      const result = await startClient({ ...options, env: { ...printConnectUrlEnv(browserWithExtension), ...options?.env } });
+      relayOutputs.set(result.client, { output: result.stderr, openedCount: 0 });
+      return result;
+    });
   },
 
   startExtensionClient: async ({ browserWithExtension, startClient }, use) => {
@@ -101,9 +112,9 @@ export const test = base.extend<TestFixtures>({
     });
   },
 
-  cli: async ({ mcpBrowser }, use, testInfo) => {
+  cli: async ({ mcpBrowser, browserWithExtension }, use, testInfo) => {
     await use(async (args, options) => {
-      return await runCli(args, { mcpBrowser, testInfo, env: options?.env });
+      return await runCli(args, { mcpBrowser, testInfo, env: { ...printConnectUrlEnv(browserWithExtension), ...options?.env } });
     });
 
     // Cleanup sessions
@@ -125,6 +136,30 @@ export const testWithOldExtensionVersion = test.extend({
     await use(pathToExtension);
   },
 });
+
+type RelayOutput = { output: () => string, openedCount: number };
+const relayOutputs = new WeakMap<Client, RelayOutput>();
+
+function printConnectUrlEnv(browserWithExtension: BrowserWithExtension): Record<string, string> {
+  return browserWithExtension.launched ? { PWTEST_EXTENSION_PRINT_CONNECT_URL: '1' } : {};
+}
+
+// Opens the next connect page that the relay of this client asked for.
+export async function openConnectPage(browserContext: BrowserContext, client: Client | RelayOutput): Promise<Page> {
+  const relay = 'output' in client ? client : relayOutputs.get(client)!;
+  const index = relay.openedCount++;
+  let url: string | undefined;
+  await expect.poll(() => url = relay.output().split('\n').filter(line => line.startsWith('Connect page URL: '))[index]).toBeTruthy();
+  const page = await browserContext.newPage();
+  // With a token, the connect page becomes the tab of the client and can navigate during the load.
+  await page.goto(url!.substring('Connect page URL: '.length)).catch(() => {});
+  return page;
+}
+
+// With a token, nobody acts on the connect page. It only has to be opened.
+export function openConnectPageWhenRequested(browserContext: BrowserContext, client: Client): void {
+  openConnectPage(browserContext, client).catch(() => {});
+}
 
 function cliEnv() {
   return {
@@ -217,6 +252,7 @@ export async function connectWithToken(browserContext: BrowserContext, startClie
       PWTEST_EXTENSION_USER_DATA_DIR: userDataDir,
     },
   });
+  openConnectPageWhenRequested(browserContext, client);
   return { client, stderr };
 }
 
@@ -235,11 +271,8 @@ export async function connectAndNavigate(
   client: Client,
   url: string,
 ): Promise<Awaited<ReturnType<Client['callTool']>>> {
-  const confirmationPagePromise = browserContext.waitForEvent('page', page =>
-    page.url().startsWith(`chrome-extension://${extensionId}/connect.html`)
-  );
   const navigatePromise = client.callTool({ name: 'browser_navigate', arguments: { url } });
-  const selectorPage = await confirmationPagePromise;
+  const selectorPage = await openConnectPage(browserContext, client);
   await clickAllowAndSelect(selectorPage, 'Welcome');
   return await navigatePromise;
 }

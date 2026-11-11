@@ -14,14 +14,12 @@
  * limitations under the License.
  */
 
-import { test, expect, extensionId, clickAllowAndSelect, startWithExtensionFlag } from './extension-fixtures';
+import { test, expect, extensionId, clickAllowAndSelect, startWithExtensionFlag, openConnectPage } from './extension-fixtures';
 
 test('connect page is not in group before selection', async ({ startExtensionClient, server }) => {
   const { browserContext, client } = await startExtensionClient();
 
-  const connectPagePromise = browserContext.waitForEvent('page', page =>
-    page.url().startsWith(`chrome-extension://${extensionId}/connect.html`)
-  );
+  const connectPagePromise = openConnectPage(browserContext, client);
 
   const navigatePromise = client.callTool({ name: 'browser_navigate', arguments: { url: server.HELLO_WORLD } });
   const connectPage = await connectPagePromise;
@@ -50,9 +48,7 @@ test('connected tab is in green Playwright group, connect page is closed', {
 
   const client = await startWithExtensionFlag(browserWithExtension, startClient);
 
-  const connectPagePromise = browserContext.waitForEvent('page', page =>
-    page.url().startsWith(`chrome-extension://${extensionId}/connect.html`)
-  );
+  const connectPagePromise = openConnectPage(browserContext, client);
 
   const navigatePromise = client.callTool({ name: 'browser_navigate', arguments: { url: server.HELLO_WORLD } });
   const connectPage = await connectPagePromise;
@@ -99,9 +95,7 @@ test('connected tab is in green Playwright group, connect page is closed', {
     args: ['--extension', '--no-tab-group'],
     env: { PWTEST_EXTENSION_USER_DATA_DIR: browserWithExtension.userDataDir },
   });
-  const nextConnectPagePromise = browserContext.waitForEvent('page', page =>
-    page.url().startsWith(`chrome-extension://${extensionId}/connect.html`)
-  );
+  const nextConnectPagePromise = openConnectPage(browserContext, ungroupedClient);
   const snapshotPromise = ungroupedClient.callTool({ name: 'browser_snapshot', arguments: {} });
   await clickAllowAndSelect(await nextConnectPagePromise, 'Title');
   expect(await snapshotPromise).toHaveResponse({ inlineSnapshot: expect.stringContaining('Hello, world!') });
@@ -140,9 +134,7 @@ test('tab added to group gets auto-attached', async ({ browserWithExtension, sta
 
   const client = await startWithExtensionFlag(browserWithExtension, startClient);
 
-  const connectPagePromise = browserContext.waitForEvent('page', p =>
-    p.url().startsWith(`chrome-extension://${extensionId}/connect.html`)
-  );
+  const connectPagePromise = openConnectPage(browserContext, client);
 
   const navigatePromise = client.callTool({ name: 'browser_navigate', arguments: { url: server.HELLO_WORLD } });
   const connectPage = await connectPagePromise;
@@ -185,9 +177,7 @@ test('chrome:// tab dragged into group stays until it navigates to a debuggable 
 
   const client = await startWithExtensionFlag(browserWithExtension, startClient);
 
-  const connectPagePromise = browserContext.waitForEvent('page', p =>
-    p.url().startsWith(`chrome-extension://${extensionId}/connect.html`)
-  );
+  const connectPagePromise = openConnectPage(browserContext, client);
 
   const navigatePromise = client.callTool({ name: 'browser_navigate', arguments: { url: server.HELLO_WORLD } });
   const connectPage = await connectPagePromise;
@@ -262,9 +252,7 @@ test('tab removed from group gets auto-detached', async ({ browserWithExtension,
 
   const client = await startWithExtensionFlag(browserWithExtension, startClient);
 
-  const connectPagePromise = browserContext.waitForEvent('page', p =>
-    p.url().startsWith(`chrome-extension://${extensionId}/connect.html`)
-  );
+  const connectPagePromise = openConnectPage(browserContext, client);
 
   const navigatePromise = client.callTool({ name: 'browser_navigate', arguments: { url: server.HELLO_WORLD } });
   const connectPage = await connectPagePromise;
@@ -315,9 +303,7 @@ test('connected tab is removed from group on disconnect', async ({ browserWithEx
 
   const client = await startWithExtensionFlag(browserWithExtension, startClient);
 
-  const connectPagePromise = browserContext.waitForEvent('page', page =>
-    page.url().startsWith(`chrome-extension://${extensionId}/connect.html`)
-  );
+  const connectPagePromise = openConnectPage(browserContext, client);
 
   const navigatePromise = client.callTool({ name: 'browser_navigate', arguments: { url: server.HELLO_WORLD } });
   const connectPage = await connectPagePromise;
@@ -346,9 +332,7 @@ test('tab is re-added to Playwright group after reconnecting', async ({ browserW
 
   const connect = async () => {
     const client = await startWithExtensionFlag(browserWithExtension, startClient);
-    const connectPagePromise = browserContext.waitForEvent('page', p =>
-      p.url().startsWith(`chrome-extension://${extensionId}/connect.html`)
-    );
+    const connectPagePromise = openConnectPage(browserContext, client);
     const navigatePromise = client.callTool({ name: 'browser_navigate', arguments: { url: server.HELLO_WORLD } });
     const connectPage = await connectPagePromise;
     await clickAllowAndSelect(connectPage, 'Title');

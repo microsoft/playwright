@@ -57,7 +57,9 @@
  *
  * The protocol version advertised to the extension can be overridden with the
  * PWTEST_EXTENSION_PROTOCOL env variable, and the connection timeout with
- * PWTEST_EXTENSION_CONNECT_TIMEOUT (both used in tests).
+ * PWTEST_EXTENSION_CONNECT_TIMEOUT. With PWTEST_EXTENSION_PRINT_CONNECT_URL the relay
+ * prints the connect page URL to stderr instead of opening it in the browser, so that
+ * a test can open it in its own browser (all used in tests).
  */
 
 import { spawn } from 'child_process';
@@ -185,6 +187,12 @@ export class CDPRelayServer {
     if (this._token)
       url.searchParams.set('token', this._token);
     const href = url.toString();
+
+    if (process.env.PWTEST_EXTENSION_PRINT_CONNECT_URL) {
+      // eslint-disable-next-line no-console
+      console.error(`Connect page URL: ${href}`);
+      return;
+    }
 
     const channel = registry.isChromiumAlias(this._browserChannel) ? 'chromium' : this._browserChannel;
     let executablePath = this._executablePath;
