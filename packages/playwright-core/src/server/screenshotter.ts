@@ -112,7 +112,7 @@ function inPagePrepareForScreenshots(screenshotStyle: string, hideCaret: boolean
       for (const animation of root.getAnimations()) {
         if (!animation.effect || animation.playbackRate === 0 || infiniteAnimationsToResume.has(animation))
           continue;
-        if (!(animation.timeline instanceof DocumentTimeline))
+        if (typeof ScrollTimeline !== 'undefined' && animation.timeline instanceof ScrollTimeline)
           continue;
         const endTime = animation.effect.getComputedTiming().endTime;
         if (Number.isFinite(endTime)) {
