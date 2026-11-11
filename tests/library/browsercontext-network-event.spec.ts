@@ -164,3 +164,28 @@ it('NE-127 should reject response.finished if context closes', async ({ page, se
   const error = await finishPromise;
   expect(error.message).toContain('closed');
 });
+
+it('NE-144 should not wait for navigation after background cache revalidation', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43995' },
+}, async ({ context, server }) => {
+  server.setRoute('/swr.html', (req, res) => {
+    const headers = {
+      'Content-Type': 'text/html',
+      'Cache-Control': 's-maxage=900, stale-while-revalidate=31535100',
+      'ETag': '"v1"',
+    };
+    if (req.headers['if-none-match'] === '"v1"') {
+      res.writeHead(304, headers);
+      res.end();
+      return;
+    }
+    res.writeHead(200, headers);
+    res.end('<h1>Hello</h1>');
+  });
+  const page1 = await context.newPage();
+  await page1.goto(server.PREFIX + '/swr.html');
+  const page2 = await context.newPage();
+  await page2.goto(server.PREFIX + '/swr.html');
+  await page2.waitForTimeout(1000);
+  await expect(page2.locator('h1')).toHaveText('Hello');
+});

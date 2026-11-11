@@ -4021,6 +4021,8 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `NE-141` | `library/ignorehttpserrors.spec.ts` | should fail with WebSocket if not ignored |
 | `NE-142` | `library/ignorehttpserrors.spec.ts` | serviceWorker should intercept document request |
 | `NE-143` | `page/page-event-network.spec.ts` | should resolve responses after a same-process navigation |
+| `NE-144` | `library/browsercontext-network-event.spec.ts` | should not wait for navigation after background cache revalidation |
+| `NE-145` | `page/page-network-response.spec.ts` | should return source for a module script loaded from cache |
 
 ### OO — OOPIF
 
