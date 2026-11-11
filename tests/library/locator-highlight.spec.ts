@@ -18,7 +18,7 @@ import { expect, browserTest as test } from '../config/browserTest';
 
 test.skip(({ mode }) => mode !== 'default', 'Highlight overlay uses an open shadow root only in default mode');
 
-test('LO-193 highlight should accept a CSS string style', async ({ browser, server, browserName, isFrozenWebkit }) => {
+test('LO-193 highlight should accept a CSS string style', async ({ browser, server, isFrozenWebkit }) => {
   test.skip(isFrozenWebkit);
 
   const context = await browser.newContext();
@@ -30,19 +30,21 @@ test('LO-193 highlight should accept a CSS string style', async ({ browser, serv
   const highlight = page.locator('x-pw-highlight');
   await expect(highlight).toBeVisible();
   const style = await highlight.evaluate((el: HTMLElement) => ({
-    outline: el.style.outline,
+    // Browsers serialize the 'outline' shorthand in different orders, check the longhands.
+    outlineWidth: el.style.outlineWidth,
+    outlineStyle: el.style.outlineStyle,
+    outlineColor: el.style.outlineColor,
     backgroundColor: el.style.backgroundColor,
   }));
-  if (browserName === 'chromium' || browserName === 'firefox')
-    expect(style.outline).toBe('rgb(255, 0, 0) solid 3px');
-  else
-    expect(style.outline).toBe('3px solid rgb(255, 0, 0)');
+  expect(style.outlineWidth).toBe('3px');
+  expect(style.outlineStyle).toBe('solid');
+  expect(style.outlineColor).toBe('rgb(255, 0, 0)');
   expect(style.backgroundColor).toBe('rgba(0, 255, 0, 0.25)');
 
   await context.close();
 });
 
-test('LO-194 highlight should accept an object style (JS only)', async ({ browser, server, browserName, isFrozenWebkit }) => {
+test('LO-194 highlight should accept an object style (JS only)', async ({ browser, server, isFrozenWebkit }) => {
   test.skip(isFrozenWebkit);
 
   const context = await browser.newContext();
@@ -59,13 +61,15 @@ test('LO-194 highlight should accept an object style (JS only)', async ({ browse
   const highlight = page.locator('x-pw-highlight');
   await expect(highlight).toBeVisible();
   const style = await highlight.evaluate((el: HTMLElement) => ({
-    outline: el.style.outline,
+    // Browsers serialize the 'outline' shorthand in different orders, check the longhands.
+    outlineWidth: el.style.outlineWidth,
+    outlineStyle: el.style.outlineStyle,
+    outlineColor: el.style.outlineColor,
     backgroundColor: el.style.backgroundColor,
   }));
-  if (browserName === 'chromium' || browserName === 'firefox')
-    expect(style.outline).toBe('rgb(0, 0, 255) dashed 2px');
-  else
-    expect(style.outline).toBe('2px dashed rgb(0, 0, 255)');
+  expect(style.outlineWidth).toBe('2px');
+  expect(style.outlineStyle).toBe('dashed');
+  expect(style.outlineColor).toBe('rgb(0, 0, 255)');
   expect(style.backgroundColor).toBe('rgba(255, 255, 0, 0.2)');
 
   await context.close();
