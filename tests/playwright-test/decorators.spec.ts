@@ -16,12 +16,16 @@
 
 import { test, expect } from './playwright-test-fixtures';
 
-test('should decorate', async ({ runInlineTest }) => {
+test('should decorate', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44065' },
+}, async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
       import { test, expect } from '@playwright/test';
       test('passes', () => {
-        new POM().greet();
+        const pom = new POM();
+        expect(pom.id).toBe('decorated');
+        pom.greet();
       });
 
       function loggedMethod(originalMethod: any, _context: any) {
@@ -34,7 +38,14 @@ test('should decorate', async ({ runInlineTest }) => {
         return replacementMethod;
       }
 
+      function initializedField(_value: undefined, _context: ClassFieldDecoratorContext) {
+        return () => 'decorated';
+      }
+
       class POM {
+        @initializedField
+        id!: string;
+
         @loggedMethod
         greet() {
           console.log('%% Hello, world!');

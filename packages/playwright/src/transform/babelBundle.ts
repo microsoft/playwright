@@ -81,6 +81,8 @@ function babelTransformOptions(isTypeScript: boolean, isModule: boolean, plugins
                       if (!member.isClassProperty())
                         continue;
                       const { declare, value, decorators } = member.node;
+                      // Decorators can add an initializer before TypeScript's transform runs.
+                      member.node.definite = false;
                       if (declare || (!useDefineForClassFields && !value && !decorators?.length))
                         member.remove();
                     }
