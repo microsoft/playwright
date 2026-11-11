@@ -276,6 +276,15 @@ it('EV-032 should return complex objects', async ({ page }) => {
   expect(result).toEqual(object);
 });
 
+it('EV-138 should transfer deeply nested objects', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44060' },
+}, async ({ page }) => {
+  let object: any = 0;
+  for (let i = 0; i < 200; i++)
+    object = { children: [object] };
+  expect(await page.evaluate(a => JSON.stringify(a), object)).toBe(JSON.stringify(object));
+});
+
 it('EV-033 should return NaN', async ({ page }) => {
   const result = await page.evaluate(() => NaN);
   expect(Object.is(result, NaN)).toBe(true);
