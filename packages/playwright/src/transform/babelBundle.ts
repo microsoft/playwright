@@ -78,6 +78,9 @@ function babelTransformOptions(isTypeScript: boolean, isModule: boolean, plugins
                 path.traverse({
                   Class(path) {
                     for (const member of path.get('body.body')) {
+                      // Decorators can add an initializer before TypeScript's transform runs.
+                      if (member.isClassProperty() || member.isClassPrivateProperty())
+                        member.node.definite = false;
                       if (!member.isClassProperty())
                         continue;
                       const { declare, value, decorators } = member.node;
