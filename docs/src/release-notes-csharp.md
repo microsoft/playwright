@@ -21,6 +21,21 @@ Console.WriteLine(normalized.ToString());
 ### New APIs
 
 - New option [`option: CDPSession.send.timeout`] in [`method: CDPSession.send`].
+- New [PlaywrightAssertionException] is thrown when a Playwright assertion is not met. It extends [PlaywrightException], so `catch (PlaywrightException)` blocks catch it as well.
+- New `ActionTimeout` and `NavigationTimeout` run settings set the default timeouts of every context that the NUnit, MSTest, xUnit and xUnit v3 base classes create. Set them in the [`.runsettings` file](./test-runners.md#using-the-runsettings-file) or on the command line:
+
+  ```xml
+  <RunSettings>
+    <Playwright>
+      <ActionTimeout>10000</ActionTimeout>
+      <NavigationTimeout>60000</NavigationTimeout>
+    </Playwright>
+  </RunSettings>
+  ```
+
+  ```bash
+  dotnet test -- Playwright.ActionTimeout=10000 Playwright.NavigationTimeout=60000
+  ```
 
 ### Breaking Changes ⚠️
 
@@ -33,6 +48,10 @@ Console.WriteLine(normalized.ToString());
 - Text that the browser does not render, such as text that is not assigned to a slot or text directly inside a closed `<details>`, is no longer part of accessible names and aria snapshots. This can change the results of [`method: Page.getByRole`] with a name, [`method: Locator.ariaSnapshot`] and [`method: LocatorAssertions.toMatchAriaSnapshot`].
 
 - The `ParamsString` option in [APIRequestContext] requests is now appended to the query that the URL already has, instead of replacing it.
+
+### Announcements
+
+* ⚠️ Playwright for .NET now bundles Node.js 26 instead of Node.js 24. On Linux, Node.js 26 needs the `libatomic1` library.
 
 ### Browser Versions
 
