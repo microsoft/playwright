@@ -1,5 +1,5 @@
 # class: PlaywrightAssertionException
-* since: v1.66
+* since: v1.65
 * langs: csharp
 * extends: [PlaywrightException]
 
