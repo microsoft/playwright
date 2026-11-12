@@ -58,6 +58,41 @@ The following assertions will retry until the assertion passes or the assertion 
 | [`method: PageAssertions.toHaveURL`] | Page has a URL |
 | [`method: APIResponseAssertions.toBeOK`] | Response has an OK status |
 
+## Expect.ToPassAsync
+* langs: csharp
+
+Prefer auto-retrying assertions whenever possible. For more complex checks, retry a block of code until it passes with [`method: FunctionAssertions.toPass`].
+
+```csharp
+await Expect(async () =>
+{
+    var response = await Page.APIRequest.GetAsync("https://api.example.com");
+    Assert.AreEqual(200, response.Status);
+}).ToPassAsync();
+```
+
+You can also specify custom timeout and retry intervals:
+
+```csharp
+await Expect(async () =>
+{
+    var response = await Page.APIRequest.GetAsync("https://api.example.com");
+    Assert.AreEqual(200, response.Status);
+}).ToPassAsync(new()
+{
+    // Probe, wait 1s, probe, wait 2s, probe, wait 10s, probe, wait 10s, probe
+    // ... Defaults to [100, 250, 500, 1000].
+    Intervals = [1_000, 2_000, 10_000],
+    Timeout = 60_000,
+});
+```
+
+By default, `ToPassAsync` retries for 30 seconds. `SetDefaultExpectTimeout` does not change this timeout, use `SetDefaultExpectToPassTimeout` instead:
+
+```csharp
+SetDefaultExpectToPassTimeout(60_000);
+```
+
 ## Soft assertions
 * langs: python
 
