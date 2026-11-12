@@ -8108,13 +8108,40 @@ export interface PlaywrightTestOptions {
    */
   locale: string | undefined;
   /**
-   * Whether to restrict all locators in this context to [visible](https://playwright.dev/docs/actionability#visible) elements. Defaults to
-   * `false`. When enabled, actions, assertions and queries behave as if
-   * [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible) were appended to the end of the
-   * locator chain, unless its last part is an explicit visibility filter. For example, `.filter({ visible: false })` at
-   * the end of a locator selects hidden elements even when this option is enabled. Intermediate locators and inner
-   * locators used in [locator.filter([options])](https://playwright.dev/docs/api/class-locator#locator-filter) are not
-   * automatically filtered. This does not change the accessibility rules of
+   * Whether locators in this context find only [visible](https://playwright.dev/docs/actionability#visible) elements. Defaults to `false`.
+   *
+   * When enabled, Playwright applies two rules:
+   * 1. The element that a locator finds must be visible. Actions, assertions and queries behave as if
+   *    [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible) was called at the end of
+   *    the locator chain.
+   * 1. [locator.first()](https://playwright.dev/docs/api/class-locator#locator-first),
+   *    [locator.last()](https://playwright.dev/docs/api/class-locator#locator-last) and
+   *    [locator.nth(index)](https://playwright.dev/docs/api/class-locator#locator-nth) select among visible
+   *    elements. They behave as if
+   *    [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible) was called immediately
+   *    before them.
+   *
+   * ```js
+   * // <div hidden>One</div> <div>Two</div> <div>Three</div>
+   * await expect(page.locator('div')).toHaveCount(2);
+   * await expect(page.locator('div').first()).toHaveText('Two');
+   * await expect(page.locator('div').last()).toHaveText('Three');
+   * ```
+   *
+   * An explicit visibility filter always has priority. Playwright does not add its own filter in a position that
+   * already has one. For example, `page.locator('div').filter({ visible: false }).first()` finds the first hidden
+   * element.
+   *
+   * All other parts of the locator chain are not filtered. In `page.locator('section').getByRole('button')`, the button
+   * must be visible, but the section can be hidden by the [visibility](https://playwright.dev/docs/actionability#visible) rules, for example
+   * because it has zero size. The same applies to the inner locators of
+   * [locator.filter([options])](https://playwright.dev/docs/api/class-locator#locator-filter),
+   *
+   * [locator.and(locator)](https://playwright.dev/docs/api/class-locator#locator-and) and
+   * [locator.or(locator)](https://playwright.dev/docs/api/class-locator#locator-or): only the second rule applies to
+   * them.
+   *
+   * This option does not change the accessibility rules of
    * [page.getByRole(role[, options])](https://playwright.dev/docs/api/class-page#page-get-by-role) or the behavior of
    * selector-based methods such as
    * [page.$(selector[, options])](https://playwright.dev/docs/api/class-page#page-query-selector).

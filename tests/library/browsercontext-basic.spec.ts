@@ -92,8 +92,12 @@ it('BC-084 should locate only visible elements when configured', {
   expect(await save.allTextContents()).toEqual(['Savemarker']);
   const [onlySave] = await save.all();
   await expect(onlySave).toHaveText('Savemarker');
-  await expect(save.first()).toHaveCount(0);
+  await expect(save.first()).toHaveText('Savemarker');
+  await expect(save.last()).toHaveText('Savemarker');
   await expect(save.visible().first()).toHaveCount(1);
+  await expect(visiblePage.locator('section').first().getByTestId('save')).toHaveCount(1);
+  await expect(visiblePage.locator('body').filter({ has: save.first().getByText('marker') })).toHaveCount(1);
+  await expect(visiblePage.locator('button >> nth=0')).toHaveText('Savemarker');
   await expect(visiblePage.locator('section').getByTestId('save')).toHaveCount(1);
   await expect(visiblePage.locator('section').locator(save)).toHaveCount(1);
   await expect(save.filter({ has: visiblePage.getByText('marker') })).toHaveCount(1);
@@ -102,12 +106,14 @@ it('BC-084 should locate only visible elements when configured', {
   await save.click();
   await expect(save).toHaveText('Saved');
   await expect(visiblePage.frameLocator('iframe').getByText('Save')).toHaveCount(1);
+  await expect(visiblePage.frameLocator('iframe').first().getByText('Save').first()).toHaveCount(1);
   await expect(visiblePage.locator('iframe').contentFrame().locator(visiblePage.getByText('Save'))).toHaveCount(1);
   await expect(visiblePage.locator('section[hidden]')).toBeHidden();
   await visiblePage.locator('section[hidden]').waitFor({ state: 'hidden' });
   expect(await visiblePage.$$('button')).toHaveLength(2);
   await expect(save.filter({ visible: false })).toHaveCount(1);
-  await expect(save.filter({ visible: false }).first()).toHaveCount(0);
+  await expect(save.filter({ visible: false }).first()).toHaveCount(1);
+  await expect(save.filter({ visible: false }).describe('hidden save').first()).toHaveCount(1);
 
   await visiblePage.setContent('<input type="file" hidden>');
   const fileInput = visiblePage.locator('input').filter({ visible: false });

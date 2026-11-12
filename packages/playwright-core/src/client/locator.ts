@@ -18,7 +18,7 @@ import { inspect } from 'util';
 
 import { asLocatorDescription, locatorCustomDescription } from '@isomorphic/locatorGenerators';
 import { getByAltTextSelector, getByLabelSelector, getByPlaceholderSelector, getByRoleSelector, getByTestIdSelector, getByTextSelector, getByTitleSelector } from '@isomorphic/locatorUtils';
-import { kAnyFrameSelector, parseSelector } from '@isomorphic/selectorParser';
+import { kAnyFrameSelector, parseSelector, stringifySelector } from '@isomorphic/selectorParser';
 import { escapeForTextSelector } from '@isomorphic/stringUtils';
 import { isString } from '@isomorphic/rtti';
 import { monotonicTime } from '@isomorphic/time';
@@ -36,6 +36,7 @@ import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
 import type { AriaSnapshotJSON } from '@isomorphic/ariaSnapshot';
 import type { ByRoleOptions } from '@isomorphic/locatorUtils';
+import type { NestedSelectorBody, ParsedSelector, ParsedSelectorPart } from '@isomorphic/selectorParser';
 import type * as channels from './channels';
 
 
@@ -46,6 +47,37 @@ export type LocatorOptions = {
   hasNot?: Locator;
   visible?: boolean;
 };
+
+function restrictToVisible(selector: ParsedSelector, restrictResult: boolean): ParsedSelector {
+  const parts: ParsedSelectorPart[] = [];
+  let capture: number | undefined;
+  const addVisibleUnlessExplicit = () => {
+    const last = parts.findLast(part => part.name !== 'internal:describe' && part.name !== 'nth');
+    if (last && last.name !== 'visible')
+      parts.push({ name: 'visible', body: 'true', source: 'true' });
+  };
+  selector.parts.forEach((part, index) => {
+    if (part.name === 'nth')
+      addVisibleUnlessExplicit();
+    if (index === selector.capture)
+      capture = parts.length;
+    parts.push(restrictNestedToVisible(part));
+  });
+  if (restrictResult)
+    addVisibleUnlessExplicit();
+  return { parts, capture };
+}
+
+function restrictNestedToVisible(part: ParsedSelectorPart): ParsedSelectorPart {
+  const body = part.body as NestedSelectorBody;
+  if (typeof body !== 'object' || !('parsed' in body))
+    return part;
+  const parsed = restrictToVisible(body.parsed, false);
+  if (parsed.parts.length === body.parsed.parts.length)
+    return part;
+  const inner = JSON.stringify(stringifySelector(parsed));
+  return { ...part, body: { ...body, parsed }, source: body.distance === undefined ? inner : `${inner}, ${body.distance}` };
+}
 
 export class Locator implements api.Locator {
   _frame: Frame;
@@ -84,9 +116,9 @@ export class Locator implements api.Locator {
   }
 
   selectorForQuery(): string {
-    if (!this._frame.page().context()._options.locateOnlyVisible || parseSelector(this._selector).parts.at(-1)?.name === 'visible')
+    if (!this._frame.page().context()._options.locateOnlyVisible)
       return this._selector;
-    return this._selector + ' >> visible=true';
+    return stringifySelector(restrictToVisible(parseSelector(this._selector), true));
   }
 
   async _wrapApiCall<R>(func: () => Promise<R>, options?: ApiCallOptions): Promise<R> {
