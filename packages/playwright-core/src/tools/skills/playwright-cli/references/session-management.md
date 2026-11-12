@@ -143,11 +143,40 @@ playwright-cli attach --cdp=http://localhost:9222
 
 ### Attach via browser extension
 
-Connect to a browser with the Playwright extension installed:
+Connect to the everyday browser profile of the user: their tabs, logins and cookies. The browser must have the Playwright Extension installed. Name the browser, because the extension can be in Edge and not in Chrome:
 
 ```bash
-playwright-cli attach --extension
+playwright-cli attach --extension=chrome
+playwright-cli attach --extension=msedge
 ```
+
+When the extension is not installed in that browser, `attach` fails with `Playwright Extension not found in "<profile path>"`. Try the other browser, or ask the user to install the extension.
+
+The session controls only its own tabs: the tabs that the user picked on the connect page, and the tabs that the session opened. The extension puts them into a tab group. Give the session a name for the task, and optionally a color:
+
+```bash
+# The tab group has the title "finance" and the color blue.
+# Colors: blue, red, yellow, green, pink, purple, cyan, orange.
+playwright-cli attach --extension=msedge --session=finance --session-color=blue
+
+# Each next command names the session
+playwright-cli -s=finance goto https://example.com
+playwright-cli -s=finance snapshot
+```
+
+Without `--session`, the session has the name of the browser (`chrome`, `msedge`). Without `--session-color`, the group takes the first color that no other session uses. Pass `--no-tab-group` to leave the tabs where the user has them.
+
+When the work is done, detach. The browser of the user keeps running:
+
+```bash
+# Leave the tabs open. The tab group stays and turns gray, and the user can continue in it.
+playwright-cli -s=finance detach
+
+# Close the tabs of the session. Use it to clean up tabs that the user does not need any more.
+playwright-cli -s=finance detach --close-tabs
+```
+
+`--close-tabs` closes all tabs of the session, also the tabs that the user picked for it. It never closes other tabs of the user.
 
 ### Detach
 
@@ -161,7 +190,7 @@ playwright-cli detach
 playwright-cli -s=msedge detach
 ```
 
-`detach` only works on sessions created via `attach`. For sessions created via `open`, use `close`.
+`detach` only works on sessions created via `attach`. For sessions created via `open`, use `close`. `detach --close-tabs` only works on sessions created via `attach --extension`.
 
 ## Default Browser Session
 

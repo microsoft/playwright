@@ -94,6 +94,9 @@ const detach = declareCommand({
   description: 'Detach from an attached browser',
   category: 'core',
   args: z.object({}),
+  options: z.object({
+    ['close-tabs']: z.boolean().optional().describe('With --extension, close the tabs of the session before detaching.'),
+  }),
   toolName: '',
   toolParams: () => ({}),
 });

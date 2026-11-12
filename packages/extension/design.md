@@ -135,7 +135,7 @@ The relay starts the browser with `connect.html` and these parameters:
 | `tabGroupColor` | Optional color: `green`, `blue`, `purple`, `orange`, `pink`, `cyan`, `yellow` or `red`. The default is the first of these, in this order, that no other client group has. `grey` is refused, because it marks a group that its client left. |
 | `background` | `true` if the tabs of the client must not become active |
 
-The MCP server has the options `--session-name`, `--session-color`, `--no-tab-group` and `--background`. The session name is the title of the group, and the session color is its color. The CLI gives the name of its session as the title, and `attach` has the options `--session-color` and `--no-tab-group`.
+The MCP server has the options `--session-name`, `--session-color`, `--no-tab-group` and `--background`. The session name is the title of the group, and the session color is its color. The CLI gives the name of its session as the title, and `attach` has the options `--session-color` and `--no-tab-group`. `detach --close-tabs` closes each page of the session with `chrome.tabs.remove` before the client stops, so the session leaves no gray group.
 
 ### Runtime messages
 

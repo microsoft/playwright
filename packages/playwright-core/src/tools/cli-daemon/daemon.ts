@@ -80,6 +80,7 @@ export async function startCliDaemonServer(
     ownership?: 'attached' | 'own',
     persistent?: boolean,
     idleTimer?: IdleTimer,
+    extension?: boolean,
   }
 ): Promise<string> {
   const sessionConfig = createSessionConfig(clientInfo, sessionName, browserInfo, options);
@@ -108,6 +109,11 @@ export async function startCliDaemonServer(
       const { id, method, params } = message;
       try {
         if (method === 'stop') {
+          if (params?.closeTabs) {
+            if (!options.extension)
+              throw new Error(`--close-tabs works only for a session attached with --extension.`);
+            await Promise.all(browserContext.pages().map(page => page.close()));
+          }
           await exit(async () => connection.send({ id, result: 'ok' }).catch(() => {}));
         } else if (method === 'run') {
           const { toolName, toolParams } = parseCliCommand(params.args);
