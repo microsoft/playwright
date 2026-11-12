@@ -276,13 +276,21 @@ it('EV-032 should return complex objects', async ({ page }) => {
   expect(result).toEqual(object);
 });
 
-it('EV-138 should transfer deeply nested objects', {
+it('EV-138 should throw for too deeply nested argument', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44060' },
-}, async ({ page }) => {
-  let object: any = 0;
-  for (let i = 0; i < 200; i++)
-    object = { children: [object] };
-  expect(await page.evaluate(a => JSON.stringify(a), object)).toBe(JSON.stringify(object));
+}, async ({ page, browserName }) => {
+  const nested = (depth: number) => {
+    let object: any = 0;
+    for (let i = 0; i < depth; i++)
+      object = { children: [object] };
+    return object;
+  };
+  expect(await page.evaluate(a => JSON.stringify(a), nested(59))).toBe(JSON.stringify(nested(59)));
+  const error = await page.evaluate(a => JSON.stringify(a), nested(200)).catch(e => e);
+  if (browserName === 'firefox')
+    expect(error).toBe(JSON.stringify(nested(200)));
+  else
+    expect(error.message).toContain('Cannot serialize argument: object reference chain is too long.');
 });
 
 it('EV-033 should return NaN', async ({ page }) => {

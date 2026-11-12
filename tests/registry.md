@@ -2246,7 +2246,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `EV-135` | `page/page-evaluate-no-stall.spec.ts` | should work |
 | `EV-136` | `page/page-evaluate-no-stall.spec.ts` | should throw while pending navigation |
 | `EV-137` | `page/page-evaluate-no-stall.spec.ts` | should throw when no main execution context |
-| `EV-138` | `page/page-evaluate.spec.ts` | should transfer deeply nested objects |
+| `EV-138` | `page/page-evaluate.spec.ts` | should throw for too deeply nested argument |
 
 ### EX — Expect
 

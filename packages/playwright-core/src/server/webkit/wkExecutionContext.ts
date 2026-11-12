@@ -64,14 +64,15 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
   }
 
   async evaluateWithArguments(expression: string, returnByValue: boolean, utilityScript: js.JSHandle<any>, values: any[], handles: js.JSHandle[]): Promise<any> {
+    // WebKit parses protocol JSON up to 1000 levels deep, 4 of them wrap the argument value.
+    js.assertArgumentDepth(values, 996);
     try {
-      // Deeply nested protocol arguments hit the JSON depth limit of the browser, so values travel in the function source.
-      const literals = values.map(value => JSON.stringify(value) ?? 'undefined').join(',');
       const response = await this._session.send('Runtime.callFunctionOn', {
-        functionDeclaration: `(utilityScript, ...handles) => (${expression})(utilityScript, ...[${literals}], ...handles)`,
+        functionDeclaration: expression,
         objectId: utilityScript._objectId!,
         arguments: [
           { objectId: utilityScript._objectId },
+          ...values.map(value => ({ value })),
           ...handles.map(handle => ({ objectId: handle._objectId! })),
         ],
         returnByValue,

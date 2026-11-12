@@ -296,6 +296,19 @@ export async function evaluateExpression(context: ExecutionContext, expression: 
   }
 }
 
+// The browser drops a protocol message that nests too deep without a response, so reject it up front.
+export function assertArgumentDepth(values: any[], maxDepth: number) {
+  const tooDeep = (value: any, depth: number): boolean => {
+    if (!value || typeof value !== 'object')
+      return false;
+    if (depth >= maxDepth)
+      return true;
+    return Object.values(value).some(child => tooDeep(child, depth + 1));
+  };
+  if (values.some(value => tooDeep(value, 0)))
+    throw new Error('Cannot serialize argument: object reference chain is too long.');
+}
+
 export function parseUnserializableValue(unserializableValue: string): any {
   if (unserializableValue === 'NaN')
     return NaN;

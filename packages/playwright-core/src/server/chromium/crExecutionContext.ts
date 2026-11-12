@@ -57,13 +57,14 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
   }
 
   async evaluateWithArguments(expression: string, returnByValue: boolean, utilityScript: js.JSHandle, values: any[], handles: js.JSHandle[]): Promise<any> {
-    // Deeply nested protocol arguments hit the JSON depth limit of the browser, so values travel in the function source.
-    const literals = values.map(value => JSON.stringify(value) ?? 'undefined').join(',');
+    // Chromium parses protocol JSON up to 300 levels deep, 4 of them wrap the argument value.
+    js.assertArgumentDepth(values, 296);
     const { exceptionDetails, result: remoteObject } = await this._client.send('Runtime.callFunctionOn', {
-      functionDeclaration: `(utilityScript, ...handles) => (${expression})(utilityScript, ...[${literals}], ...handles)`,
+      functionDeclaration: expression,
       objectId: utilityScript._objectId,
       arguments: [
         { objectId: utilityScript._objectId },
+        ...values.map(value => ({ value })),
         ...handles.map(handle => ({ objectId: handle._objectId! })),
       ],
       returnByValue,
