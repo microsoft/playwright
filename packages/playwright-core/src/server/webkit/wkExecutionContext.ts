@@ -65,12 +65,13 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
 
   async evaluateWithArguments(expression: string, returnByValue: boolean, utilityScript: js.JSHandle<any>, values: any[], handles: js.JSHandle[]): Promise<any> {
     try {
+      // Keep serialized values out of the protocol arguments to avoid WebKit's JSON depth limit.
+      const serializedValues = values.map(value => JSON.stringify(value) ?? 'undefined').join(',');
       const response = await this._session.send('Runtime.callFunctionOn', {
-        functionDeclaration: expression,
+        functionDeclaration: `(utilityScript, ...handles) => (${expression})(utilityScript, ...[${serializedValues}], ...handles)`,
         objectId: utilityScript._objectId!,
         arguments: [
           { objectId: utilityScript._objectId },
-          ...values.map(value => ({ value })),
           ...handles.map(handle => ({ objectId: handle._objectId! })),
         ],
         returnByValue,
