@@ -1,0 +1,165 @@
+name: "publish patch release - npm"
+
+# A patch release has two steps:
+# 1. Run this workflow with a release branch. It sets the next patch version on the branch, creates
+#    a draft GitHub release and publishes the packages to npm under "latest-pending".
+# 2. Wait until `utils/check_npm_packages.sh <version>` passes. Then edit the notes of the draft
+#    release and publish it. That starts this workflow again, to move "latest" to the new version.
+#
+# Step 2 runs the workflow file of the released commit, so the release branch must have this file.
+# The packages on npm must list publish_manual.yml as a trusted publisher that can run
+# "npm publish" and "npm dist-tag".
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Release branch, for example release-1.65"
+        required: true
+        type: string
+  release:
+    types: [published]
+
+jobs:
+  prepare-release:
+    name: "set version, draft release"
+    runs-on: ubuntu-24.04
+    if: github.event_name == 'workflow_dispatch' && github.repository == 'microsoft/playwright'
+    permissions:
+      contents: write      # This is required to push the version commit and to create the draft release
+      issues: read         # This is required to list the fixed issues in the release notes
+      pull-requests: read  # This is required to list the fixed issues in the release notes
+    outputs:
+      sha: ${{ steps.commit.outputs.sha }}
+    env:
+      BRANCH: ${{ inputs.branch }}
+    steps:
+    - name: Check the branch name
+      run: |
+        if [[ ! "$BRANCH" =~ ^release-[0-9]+\.[0-9]+$ ]]; then
+          echo "ERROR: '$BRANCH' is not a release branch, expected a name like release-1.65"
+          exit 1
+        fi
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        ref: ${{ inputs.branch }}
+        # The release notes need the commits since the previous release tag.
+        fetch-depth: 0
+    - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      with:
+        node-version: lts/*
+    - run: npm ci
+    - run: npm run build
+    - run: npx playwright install --with-deps
+    - name: Set the next patch version
+      id: version
+      run: |
+        PREVIOUS=$(node utils/workspace.js --get-version)
+        if [[ ! "$PREVIOUS" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+          echo "ERROR: the version of $BRANCH is $PREVIOUS, expected a released version like 1.65.1"
+          exit 1
+        fi
+        if ! git rev-parse --quiet --verify "refs/tags/v$PREVIOUS" > /dev/null; then
+          echo "ERROR: there is no v$PREVIOUS tag, so $PREVIOUS is not released yet"
+          exit 1
+        fi
+        VERSION="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}.$((BASH_REMATCH[3] + 1))"
+        ./utils/workspace.js --set-version "$VERSION"
+        npm run doc
+        echo "previous=$PREVIOUS" >> "$GITHUB_OUTPUT"
+        echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+    - name: Write the release notes
+      run: |
+        node utils/draft_patch_release_notes.js "v$PREVIOUS" > "$RUNNER_TEMP/release-notes.md"
+        cat "$RUNNER_TEMP/release-notes.md"
+      env:
+        PREVIOUS: ${{ steps.version.outputs.previous }}
+        GH_TOKEN: ${{ github.token }}
+    # The draft comes before the commit, so that it exists even when the commit fails. It targets the
+    # branch: GitHub creates the tag from the head of the branch when the release is published.
+    # The workflow token makes github-actions[bot] the author of the release. The promote-npm job
+    # below and the publish-npm job of publish_release.yml use the author to recognize this release.
+    - name: Create the draft release
+      run: |
+        if gh release view "v$VERSION" > /dev/null 2>&1; then
+          # An earlier run created the draft and failed after that.
+          gh release edit "v$VERSION" --draft --target "$BRANCH" --notes-file "$RUNNER_TEMP/release-notes.md"
+        else
+          gh release create "v$VERSION" --draft --title "v$VERSION" --target "$BRANCH" --notes-file "$RUNNER_TEMP/release-notes.md"
+        fi
+      env:
+        VERSION: ${{ steps.version.outputs.version }}
+        GH_TOKEN: ${{ github.token }}
+    # A push with the workflow token does not start other workflows, so publish_release.yml does not
+    # publish a beta version for this commit.
+    - name: Commit the version
+      id: commit
+      run: |
+        git config user.name "microsoft-playwright-automation[bot]"
+        git config user.email "203992400+microsoft-playwright-automation[bot]@users.noreply.github.com"
+        git commit --all --message "chore: mark v$VERSION"
+        git push origin "HEAD:refs/heads/$BRANCH"
+        echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      env:
+        VERSION: ${{ steps.version.outputs.version }}
+
+  # Publishes every package under "latest-pending" and leaves "latest" where it is, see
+  # utils/publish_all_packages.sh. The promote-npm job moves "latest" when the release is published.
+  publish-npm:
+    name: "publish NPM"
+    needs: prepare-release
+    runs-on: ubuntu-24.04
+    permissions:
+      id-token: write  # This is required for OIDC login (NPM publish) to succeed
+      contents: read   # This is required for actions/checkout to succeed
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        ref: ${{ needs.prepare-release.outputs.sha }}
+    - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      with:
+        node-version: lts/*
+        registry-url: 'https://registry.npmjs.org'
+    - run: npm ci
+    - run: npm run build
+    - run: utils/publish_all_packages.sh --release
+
+  # Runs when a person publishes the draft release that prepare-release created. To retry, re-run the job.
+  promote-npm:
+    name: "move the npm dist-tag"
+    if: github.event_name == 'release' && github.event.release.author.login == 'github-actions[bot]' && github.repository == 'microsoft/playwright'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 330
+    permissions:
+      id-token: write  # This is required for OIDC login (npm dist-tag) to succeed
+      contents: read   # This is required for actions/checkout to succeed
+    steps:
+    # Checks out the commit of the release tag.
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+    - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      with:
+        node-version: lts/*
+        registry-url: 'https://registry.npmjs.org'
+    # npm dist-tag supports OIDC login from npm 11.21.0.
+    - run: npm install -g npm@11.21.1
+    # Fails when npm has not made all packages live yet. Re-run the job later in that case.
+    - name: Check that all packages are live
+      run: utils/check_npm_packages.sh "${TAG#v}"
+      env:
+        TAG: ${{ github.event.release.tag_name }}
+    # The same list that utils/publish_all_packages.sh writes after it publishes the packages.
+    - name: List the published packages
+      run: |
+        node -e '
+          const { workspace } = require("./utils/workspace.js");
+          const { version } = require("./package.json");
+          if (`v${version}` !== process.env.TAG)
+            throw new Error(`The release tag is ${process.env.TAG}, but the version of its commit is ${version}`);
+          const packages = workspace.publicPackagesInDependencyOrder().map(pkg => pkg.packageJSON.name);
+          console.log(JSON.stringify({ version, tag: "latest", packages }, null, 2));
+        ' > npm-publish.json
+        cat npm-publish.json
+      env:
+        TAG: ${{ github.event.release.tag_name }}
+    - name: Move the dist-tag once all packages are live
+      run: node utils/promote_npm_packages.js npm-publish.json
