@@ -54,6 +54,12 @@ playwright-cli attach --extension=msedge --session="my session" --session-color=
 
 When a client disconnects, its tab group stays and turns gray. Select that group on the connect page of the next client to continue with the same tabs.
 
+With the CLI, `detach --close-tabs` closes the tabs of the session before it disconnects, so no group stays:
+
+```bash
+playwright-cli --session="my session" detach --close-tabs
+```
+
 To disable automatic grouping, pass `--no-tab-group` alongside `--extension`, or set `PLAYWRIGHT_MCP_NO_TAB_GROUP=1`. With the CLI, pass `--no-tab-group` to `attach`. Grouping stays enabled by default. With grouping disabled, the selected tabs and tabs opened by the client stay in their existing groups, if any. This does not grant access to all existing tabs or change connection approval; each controlled tab still belongs to only one client. Use the status page to see controlled tabs and disconnect clients.
 
 ### Bypassing the Connection Approval Dialog

@@ -52,10 +52,10 @@ export class Session {
     return await SocketConnectionClient.sendAndClose(socket, 'run', { args, cwd: process.cwd(), raw: options?.raw, json: options?.json });
   }
 
-  async stop(): Promise<{ wasOpen: boolean }> {
+  async stop(options: { closeTabs?: boolean } = {}): Promise<{ wasOpen: boolean }> {
     if (!await this.canConnect())
       return { wasOpen: false };
-    await this._stopDaemon();
+    await this._stopDaemon(options);
     return { wasOpen: true };
   }
 
@@ -195,13 +195,13 @@ export class Session {
     return { pid: child.pid, sessionName, endpoint: cliArgs.endpoint as string | undefined };
   }
 
-  private async _stopDaemon(): Promise<void> {
+  private async _stopDaemon(options: { closeTabs?: boolean }): Promise<void> {
     const { socket } = await this._connect();
     if (!socket)
       return;
 
     let error: Error | undefined;
-    await SocketConnectionClient.sendAndClose(socket, 'stop', {}).catch(e => error = e);
+    await SocketConnectionClient.sendAndClose(socket, 'stop', options).catch(e => error = e);
     if (error && !error?.message?.includes('Session closed'))
       throw error;
   }

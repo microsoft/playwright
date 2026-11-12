@@ -285,8 +285,12 @@ playwright-cli open --persistent
 # Use persistent profile with custom directory
 playwright-cli open --profile=/path/to/profile
 
-# Connect to browser via Playwright Extension
-playwright-cli attach --extension=chrome
+# Connect to the browser profile of the user via Playwright Extension (chrome, msedge, ...).
+# The session name is the title of the tab group; pick a color to tell sessions apart.
+playwright-cli attach --extension=chrome --session=finance --session-color=blue
+playwright-cli -s=finance goto https://example.com
+# Detach and close the tabs of the session, when the user does not need them
+playwright-cli -s=finance detach --close-tabs
 
 # Connect to a running Chrome or Edge by channel name
 playwright-cli attach --cdp=chrome
@@ -484,7 +488,7 @@ See [references/pr-attachments.md](references/pr-attachments.md) for alt text, i
 * **Running and Debugging Playwright tests** [references/playwright-tests.md](references/playwright-tests.md)
 * **Request mocking** [references/request-mocking.md](references/request-mocking.md)
 * **Running Playwright code** [references/running-code.md](references/running-code.md)
-* **Browser session management** [references/session-management.md](references/session-management.md)
+* **Browser session management, attaching to the browser of the user** [references/session-management.md](references/session-management.md)
 * **Storage state (cookies, localStorage)** [references/storage-state.md](references/storage-state.md)
 * **Test generation (plan / generate / heal)** [references/test-generation.md](references/test-generation.md)
 * **Tracing** [references/tracing.md](references/tracing.md)
