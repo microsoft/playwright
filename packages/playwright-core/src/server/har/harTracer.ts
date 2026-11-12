@@ -374,16 +374,24 @@ export class HarTracer {
     if (compressionCalculationBarrier)
       this._addBarrier(page || request.serviceWorker(), compressionCalculationBarrier.barrier);
 
-    const promise = response.internalBody().then(buffer => {
-      if (this._options.omitScripts && request.resourceType() === 'script') {
-        compressionCalculationBarrier?.setDecodedBodySize(0);
-        return;
-      }
+    const sizesPromise = this._options.omitSizes ? Promise.resolve() : response.internalSizes().then(sizes => {
+      harEntry.response.bodySize = sizes.responseBodySize;
+      harEntry.response.headersSize = sizes.responseHeadersSize;
+      harEntry.response._transferSize = sizes.transferSize;
+      harEntry.request.headersSize = sizes.requestHeadersSize;
+      compressionCalculationBarrier?.setEncodedBodySize(sizes.responseBodySize);
+    });
+    this._addBarrier(page || request.serviceWorker(), sizesPromise);
 
+    const omitScript = this._options.omitScripts && request.resourceType() === 'script';
+    const bodyPromise = omitScript ? sizesPromise.then(() => {
+      compressionCalculationBarrier?.setDecodedBodySize(0);
+    }) : response.internalBody().then(buffer => {
       const content = harEntry.response.content;
       compressionCalculationBarrier?.setDecodedBodySize(buffer.length);
       this._storeResponseContent(buffer, content);
-    }).catch(() => {
+    });
+    const promise = bodyPromise.catch(() => {
       compressionCalculationBarrier?.setDecodedBodySize(0);
     }).then(() => {
       if (this._started)
@@ -400,16 +408,6 @@ export class HarTracer {
     const timing = response.timing();
     harEntry.timings.receive = response.request()._responseEndTiming !== -1 ? helper.millisToRoundishMillis(response.request()._responseEndTiming - timing.responseStart) : -1;
     this._computeHarEntryTotalTime(harEntry);
-
-    if (!this._options.omitSizes) {
-      this._addBarrier(page || request.serviceWorker(), response.internalSizes().then(sizes => {
-        harEntry.response.bodySize = sizes.responseBodySize;
-        harEntry.response.headersSize = sizes.responseHeadersSize;
-        harEntry.response._transferSize = sizes.transferSize;
-        harEntry.request.headersSize = sizes.requestHeadersSize;
-        compressionCalculationBarrier?.setEncodedBodySize(sizes.responseBodySize);
-      }));
-    }
   }
 
   private async _onRequestFailed(request: network.Request) {

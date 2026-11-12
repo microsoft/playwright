@@ -25,7 +25,19 @@ import { rafraf } from '../page/pageTest';
 
 test.skip(({ trace }) => trace === 'on');
 
-test('TR-001 should collect trace with resources, but no js', async ({ context, page, server, asset }, testInfo) => {
+test('TR-001 should collect trace with resources, but no js', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44074' }
+}, async ({ context, page, server, asset, mode, toImplInWorkerScope }, testInfo) => {
+  const fetchedBodies: string[] = [];
+  if (mode === 'default') {
+    toImplInWorkerScope(context).on('response', (response: { url(): string, internalBody(): Promise<Buffer> }) => {
+      const internalBody = response.internalBody.bind(response);
+      response.internalBody = async () => {
+        fetchedBodies.push(response.url());
+        return await internalBody();
+      };
+    });
+  }
   await context.tracing.start({ screenshots: true, snapshots: true });
   await page.goto(server.PREFIX + '/frames/frame.html');
   await page.setContent('<button>Click</button>');
@@ -62,6 +74,12 @@ test('TR-001 should collect trace with resources, but no js', async ({ context, 
   const script = events.find(e => e.type === 'resource-snapshot' && e.snapshot.request.url.endsWith('script.js'));
   expect(script).toBeTruthy();
   expect(script.snapshot.response.content._file).toBe(undefined);
+  expect(script.snapshot.response.bodySize).toBeGreaterThan(0);
+  expect(script.snapshot.response.headersSize).toBeGreaterThan(0);
+  if (mode === 'default') {
+    expect(fetchedBodies.some(url => url.endsWith('style.css'))).toBeTruthy();
+    expect(fetchedBodies.some(url => url.endsWith('script.js'))).toBeFalsy();
+  }
 });
 
 test('TR-002 should use the correct title for event driven callbacks', async ({ context, page, server }, testInfo) => {
