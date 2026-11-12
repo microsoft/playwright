@@ -254,6 +254,10 @@ export async function evaluate(context: ExecutionContext, returnByValue: boolean
   return evaluateExpression(context, String(pageFunction), { returnByValue, isFunction: typeof pageFunction === 'function' }, ...args);
 }
 
+// Chromium does not answer a protocol message that nests deeper than 300 levels, 4 of them wrap the argument value.
+// Other browsers allow more, the same limit applies to all of them for consistency.
+const kMaxArgumentDepth = 296;
+
 export async function evaluateExpression(context: ExecutionContext, expression: string, options: { returnByValue?: boolean, isFunction?: boolean }, ...args: any[]): Promise<any> {
   expression = normalizeEvaluationExpression(expression, options.isFunction);
   const handles: (Promise<JSHandle>)[] = [];
@@ -276,9 +280,7 @@ export async function evaluateExpression(context: ExecutionContext, expression: 
       return { h: pushHandle(adopted) };
     }
     return { fallThrough: handle };
-  }));
-
-  assertArgumentDepth(args);
+  }, { maxDepth: kMaxArgumentDepth }));
 
   const utilityScriptObjects: JSHandle[] = [];
   for (const handle of await Promise.all(handles)) {
@@ -296,22 +298,6 @@ export async function evaluateExpression(context: ExecutionContext, expression: 
   } finally {
     toDispose.map(handlePromise => handlePromise.then(handle => handle.dispose()));
   }
-}
-
-// Chromium does not answer a protocol message that nests deeper than 300 levels, 4 of them wrap the argument value.
-// Other browsers allow more, the same limit applies to all of them for consistency.
-const kMaxArgumentDepth = 296;
-
-function assertArgumentDepth(args: any[]) {
-  const tooDeep = (value: any, depth: number): boolean => {
-    if (!value || typeof value !== 'object')
-      return false;
-    if (depth >= kMaxArgumentDepth)
-      return true;
-    return Object.values(value).some(child => tooDeep(child, depth + 1));
-  };
-  if (args.some(arg => tooDeep(arg, 0)))
-    throw new Error('Cannot serialize argument: object nesting is too deep.');
 }
 
 export function parseUnserializableValue(unserializableValue: string): any {

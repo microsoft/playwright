@@ -47,6 +47,9 @@ type VisitorInfo = {
   visited: Map<object, number>;
   lastId: number;
   extendedSerialization?: boolean;
+  // Nesting level of the serialized value that is being produced.
+  depth: number;
+  maxDepth?: number;
 };
 
 function isRegExp(obj: any): obj is RegExp {
@@ -231,8 +234,17 @@ export function parseEvaluationResultValue(value: SerializedValue, handles: any[
   return value;
 }
 
-export function serializeAsCallArgument(value: any, handleSerializer: (value: any) => HandleOrValue, options: { extendedSerialization?: boolean } = {}): SerializedValue {
-  return serialize(value, handleSerializer, { visited: new Map(), lastId: 0, extendedSerialization: options.extendedSerialization });
+export function serializeAsCallArgument(value: any, handleSerializer: (value: any) => HandleOrValue, options: { extendedSerialization?: boolean, maxDepth?: number } = {}): SerializedValue {
+  return serialize(value, handleSerializer, { visited: new Map(), lastId: 0, extendedSerialization: options.extendedSerialization, depth: 0, maxDepth: options.maxDepth });
+}
+
+function serializedDepth(value: SerializedValue): number {
+  if (!value || typeof value !== 'object')
+    return 0;
+  let depth = 0;
+  for (const child of Object.values(value))
+    depth = Math.max(depth, serializedDepth(child));
+  return depth + 1;
 }
 
 function serialize(value: any, handleSerializer: (value: any) => HandleOrValue, visitorInfo: VisitorInfo): SerializedValue {
@@ -247,7 +259,11 @@ function serialize(value: any, handleSerializer: (value: any) => HandleOrValue, 
     if (typeof globalThis.Node === 'function' && value instanceof globalThis.Node)
       return 'ref: <Node>';
   }
-  return innerSerialize(value, handleSerializer, visitorInfo);
+  const result = innerSerialize(value, handleSerializer, visitorInfo);
+  // Only values next to the limit are measured, so this does not walk large values.
+  if (visitorInfo.maxDepth !== undefined && visitorInfo.depth + 2 > visitorInfo.maxDepth && visitorInfo.depth + serializedDepth(result) > visitorInfo.maxDepth)
+    throw new Error('Cannot serialize argument: object nesting is too deep.');
+  return result;
 }
 
 function innerSerialize(value: any, handleSerializer: (value: any) => HandleOrValue, visitorInfo: VisitorInfo): SerializedValue {
@@ -313,6 +329,7 @@ function innerSerialize(value: any, handleSerializer: (value: any) => HandleOrVa
       const m: { k: SerializedValue, v: SerializedValue }[] = [];
       const id = ++visitorInfo.lastId;
       visitorInfo.visited.set(value, id);
+      visitorInfo.depth += 3;
       const iterator = value.entries();
       const next = new Map().entries().next;
       while (true) {
@@ -321,12 +338,14 @@ function innerSerialize(value: any, handleSerializer: (value: any) => HandleOrVa
           break;
         m.push({ k: serialize(entry.value[0], handleSerializer, visitorInfo), v: serialize(entry.value[1], handleSerializer, visitorInfo) });
       }
+      visitorInfo.depth -= 3;
       return { m, id };
     }
     if (isSet(value)) {
       const s: SerializedValue[] = [];
       const id = ++visitorInfo.lastId;
       visitorInfo.visited.set(value, id);
+      visitorInfo.depth += 2;
       const iterator = value.values();
       const next = new Set().values().next;
       while (true) {
@@ -335,6 +354,7 @@ function innerSerialize(value: any, handleSerializer: (value: any) => HandleOrVa
           break;
         s.push(serialize(entry.value, handleSerializer, visitorInfo));
       }
+      visitorInfo.depth -= 2;
       return { s, id };
     }
   }
@@ -343,8 +363,10 @@ function innerSerialize(value: any, handleSerializer: (value: any) => HandleOrVa
     const a = [];
     const id = ++visitorInfo.lastId;
     visitorInfo.visited.set(value, id);
+    visitorInfo.depth += 2;
     for (let i = 0; i < value.length; ++i)
       a.push(serialize(value[i], handleSerializer, visitorInfo));
+    visitorInfo.depth -= 2;
     return { a, id };
   }
 
@@ -352,6 +374,7 @@ function innerSerialize(value: any, handleSerializer: (value: any) => HandleOrVa
     const o: { k: string, v: SerializedValue }[] = [];
     const id = ++visitorInfo.lastId;
     visitorInfo.visited.set(value, id);
+    visitorInfo.depth += 3;
     for (const name of Object.keys(value)) {
       let item;
       try {
@@ -364,6 +387,7 @@ function innerSerialize(value: any, handleSerializer: (value: any) => HandleOrVa
       else
         o.push({ k: name, v: serialize(item, handleSerializer, visitorInfo) });
     }
+    visitorInfo.depth -= 3;
 
     let jsonWrapper;
     try {
