@@ -95,6 +95,30 @@ PlaywrightAssertions.assertThat(response).isOK();
 
 [APIResponse] object to use for assertions.
 
+## method: PlaywrightAssertions.expectFunction
+* since: v1.66
+* langs: csharp
+  - alias-csharp: Expect
+- returns: <[FunctionAssertions]>
+
+Creates a [FunctionAssertions] object for the given callback.
+
+**Usage**
+
+```csharp
+await Expect(async () =>
+{
+    var response = await Page.APIRequest.GetAsync("https://api.example.com");
+    Assert.AreEqual(200, response.Status);
+}).ToPassAsync();
+```
+
+### param: PlaywrightAssertions.expectFunction.callback
+* since: v1.66
+- `callback` <[Func<Task>]>
+
+Callback to retry. A synchronous `Action` is accepted as well.
+
 ## method: PlaywrightAssertions.expectGeneric
 * since: v1.9
 * langs: js
