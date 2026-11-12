@@ -260,7 +260,7 @@ test('tracing-start-stop', async ({ cli, server }, testInfo) => {
   expect(fs.existsSync(testInfo.outputPath('.playwright-cli', 'traces', `trace-${timestamp}.network`))).toBeTruthy();
 });
 
-test('video-start-stop', async ({ cli, server }) => {
+test('video-start-stop', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-cli/issues/540' } }, async ({ cli, server, mcpBrowser }, testInfo) => {
   await cli('open', server.HELLO_WORLD);
   const { output: videoStartOutput } = await cli('video-start', 'recordings/video.webm', '--size=400x300');
   expect(videoStartOutput).toContain('Video recording started.');
@@ -272,6 +272,21 @@ test('video-start-stop', async ({ cli, server }) => {
   expect(tabCloseOutput).toContain(`0: (current) [](${server.EMPTY_PAGE})`);
   const { output: videoStopOutput } = await cli('video-stop');
   expect(videoStopOutput).toContain(`### Result\n- [Video](recordings${path.sep}video.webm)\n- [Video](recordings${path.sep}video-1.webm)`);
+
+  await cli('close');
+  const emptyBrowsersPath = testInfo.outputPath('empty-browsers');
+  await fs.promises.mkdir(emptyBrowsersPath, { recursive: true });
+  await cli('open', server.HELLO_WORLD, {
+    env: {
+      PLAYWRIGHT_BROWSERS_PATH: emptyBrowsersPath,
+      PLAYWRIGHT_MCP_EXECUTABLE_PATH: registry.registry.findExecutable(mcpBrowser)!.executablePath(),
+    },
+  });
+  const { output: missingFfmpegOutput } = await cli('video-start', 'video.webm');
+  expect(missingFfmpegOutput).toContain('FFmpeg is not installed');
+  expect(missingFfmpegOutput).toContain(`expected executable at ${emptyBrowsersPath}`);
+  expect(missingFfmpegOutput).toContain('playwright-cli install-browser ffmpeg');
+  expect(missingFfmpegOutput).not.toContain('npx playwright install ffmpeg');
 });
 
 test('video-start with fps', async ({ cli, server }, testInfo) => {
