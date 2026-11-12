@@ -1,3 +1,6 @@
+[browserErrors.ts]
+"strict"
+
 [socketConnection.ts]
 "strict"
 

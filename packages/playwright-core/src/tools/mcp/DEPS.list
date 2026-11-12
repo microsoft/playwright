@@ -19,5 +19,6 @@ node_modules/ws
 [browserFactory.ts]
 ../../client/connect.ts
 ../utils/connect.ts
+../utils/browserErrors.ts
 
 [program.ts]

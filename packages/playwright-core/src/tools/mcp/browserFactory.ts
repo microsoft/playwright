@@ -27,6 +27,7 @@ import { createExtensionBrowser } from './extensionContextFactory';
 import { connectToBrowserAcrossVersions, descriptorEndpoint } from '../utils/connect';
 import { serverRegistry } from '../../serverRegistry';
 import { resolveExtensionOptions } from './config';
+import { throwIfExecutableMissing } from '../utils/browserErrors';
 // eslint-disable-next-line no-restricted-imports
 import { connectToBrowser } from '../../client/connect';
 
@@ -124,7 +125,7 @@ async function createIsolatedBrowser(config: FullConfig, clientInfo: ClientInfo)
     handleSIGINT: false,
     handleSIGTERM: false,
   }).catch(error => {
-    throwIfExecutableMissing(error, config);
+    throwIfExecutableMissing(error, config.browser.launchOptions?.channel ?? config.browser.browserName, config.skillMode);
     throw error;
   });
   return browser;
@@ -215,7 +216,7 @@ async function createPersistentBrowser(config: FullConfig, clientInfo: ClientInf
     const browser = browserContext.browser()!;
     return browser;
   } catch (error: any) {
-    throwIfExecutableMissing(error, config);
+    throwIfExecutableMissing(error, config.browser.launchOptions?.channel ?? config.browser.browserName, config.skillMode);
     if (error.message.includes('cannot open shared object file: No such file or directory')) {
       const browserName = launchOptions.channel ?? config.browser.browserName;
       throw new Error(`Missing system dependencies required to run browser ${browserName}. Install them with: sudo npx playwright install-deps ${browserName}`);
@@ -277,20 +278,4 @@ export function isProfileLocked(userDataDir: string): boolean {
   } catch {
     return false;
   }
-}
-
-function throwIfExecutableMissing(error: Error, config: FullConfig): void {
-  // The "Executable doesn't exist" prefix is shared by all managed binaries
-  // (browser, ffmpeg, winldd). Disambiguate by the path so the user is told
-  // which dependency to install, and surface the executable path itself so a
-  // version mismatch (an installed build vs. the expected build) is
-  // diagnosable rather than looking like a missing install.
-  if (!error.message.includes(`Executable doesn't exist`))
-    return;
-  const target = error.message.includes('ffmpeg') ? 'ffmpeg' : (config.browser.launchOptions?.channel ?? config.browser.browserName);
-  const label = target === 'ffmpeg' ? 'FFmpeg' : `Browser "${target}"`;
-  const command = config.skillMode ? `playwright-cli install-browser ${target}` : `npx @playwright/mcp install-browser ${target}`;
-  const match = error.message.match(/Executable doesn't exist at ([^\r\n]+)/);
-  const location = match ? `; expected executable at ${match[1].trim()}` : '';
-  throw new Error(`${label} is not installed${location}. Run \`${command}\` to install`);
 }

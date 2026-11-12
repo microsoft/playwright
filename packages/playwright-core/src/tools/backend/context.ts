@@ -27,6 +27,7 @@ import { playwright } from '../../inprocess';
 
 import { dedent, languageGeneratorId, secretCode } from './codegen';
 import { Tab } from './tab';
+import { throwIfExecutableMissing } from '../utils/browserErrors';
 
 import type { BrowserContextEx } from './browserContextEx';
 import type { CodegenLanguage } from './codegen';
@@ -365,7 +366,10 @@ export class Context {
     }
     this._video.fileNames.push(fileName);
     const { cursor, ...startParams } = this._video.params;
-    await page.screencast.start({ path: fileName, ...startParams });
+    await page.screencast.start({ path: fileName, ...startParams }).catch(error => {
+      throwIfExecutableMissing(error, 'ffmpeg', this.config.skillMode);
+      throw error;
+    });
     if (cursor) {
       // Show the cursor only, the action title is what `browser_video_show_actions` is for.
       await page.screencast.showActions({ cursor: 'pointer', duration: kCursorDuration, style: { title: 'display: none' } });
