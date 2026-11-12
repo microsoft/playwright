@@ -45,6 +45,9 @@ const runCode = defineTabTool({
   },
 
   handle: async (tab, params, response) => {
+    if (!params.code && !params.filename)
+      throw new Error('At least one of "code" or "filename" must be provided.');
+
     let code = params.code;
     if (params.filename) {
       const resolvedPath = await response.resolveClientFilename(params.filename);

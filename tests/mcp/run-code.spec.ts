@@ -19,7 +19,10 @@ import fs from 'fs';
 import { test, expect, parseResponse, consoleEntries } from './fixtures';
 
 test('browser_run_code_unsafe', {
-  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-mcp/issues/1803' },
+  annotation: [
+    { type: 'issue', description: 'https://github.com/microsoft/playwright-mcp/issues/1803' },
+    { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44080' },
+  ],
 }, async ({ client, server }) => {
   server.setContent('/', `
     <button onclick="console.log('Submit')">Submit</button>
@@ -27,6 +30,14 @@ test('browser_run_code_unsafe', {
   await client.callTool({
     name: 'browser_navigate',
     arguments: { url: server.PREFIX },
+  });
+
+  expect(await client.callTool({
+    name: 'browser_run_code_unsafe',
+    arguments: {},
+  })).toHaveResponse({
+    error: 'Error: At least one of "code" or "filename" must be provided.',
+    isError: true,
   });
 
   const code = 'async (page) => await page.getByRole("button", { name: "Submit" }).click()';
