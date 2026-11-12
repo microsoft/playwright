@@ -47,6 +47,13 @@ jobs:
         node-version: 22
     - run: npm ci
     - run: npm run build
+    # GitHub zips the directory: the downloaded archive is the extension, ready to load unpacked.
+    - name: Upload extension
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      with:
+        name: playwright-extension
+        path: packages/extension/dist
+        if-no-files-found: error
     - run: npx playwright install --with-deps chromium
     - run: npm run test-extension
     - name: Upload parquet report
