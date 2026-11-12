@@ -22,9 +22,7 @@ import { spawn } from 'child_process';
 import { test as base, expect } from '../mcp/fixtures';
 import { kTargetClosedErrorMessage } from '../config/errors';
 
-import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import type { Browser, BrowserContext, Page } from 'playwright';
-import type { StartClient } from '../mcp/fixtures';
 
 export type BrowserWithExtension = {
   userDataDir: string;
@@ -46,7 +44,6 @@ export type CliResult = {
 export type TestFixtures = {
   browserWithExtension: BrowserWithExtension,
   pathToExtension: string,
-  startExtensionClient: (env?: Record<string, string>) => Promise<{ browserContext: BrowserContext, client: Client }>,
   cli: (args: string[], options?: { env?: Record<string, string> }) => Promise<CliResult>;
 };
 
@@ -130,14 +127,6 @@ export const test = base.extend<TestFixtures>({
     await use(options => startClient({ ...options, env: { ...chromeStubEnvIfLaunched(browserWithExtension), ...options?.env } }));
   },
 
-  startExtensionClient: async ({ browserWithExtension, startClient }, use) => {
-    await use(async (env?: Record<string, string>) => {
-      const browserContext = await browserWithExtension.launch();
-      const client = await startWithExtensionFlag(browserWithExtension, startClient, env);
-      return { browserContext, client };
-    });
-  },
-
   cli: async ({ mcpBrowser, browserWithExtension }, use, testInfo) => {
     await use(async (args, options) => {
       return await runCli(args, { mcpBrowser, testInfo, env: { ...chromeStubEnvIfLaunched(browserWithExtension), ...options?.env } });
@@ -152,16 +141,6 @@ export const test = base.extend<TestFixtures>({
 });
 
 export { expect };
-
-export const testWithOldExtensionVersion = test.extend({
-  pathToExtension: async ({ pathToExtension }, use) => {
-    const manifestPath = path.join(pathToExtension, 'manifest.json');
-    const manifest = JSON.parse(await fs.readFile(manifestPath, 'utf8'));
-    manifest.version = '0.0.1';
-    await fs.writeFile(manifestPath, JSON.stringify(manifest, null, 2));
-    await use(pathToExtension);
-  },
-});
 
 function chromeStubEnvIfLaunched(browserWithExtension: BrowserWithExtension): Record<string, string> {
   return browserWithExtension.launched ? browserWithExtension.chromeStubEnv : {};
@@ -228,59 +207,15 @@ async function runCli(
   });
 }
 
-export async function startWithExtensionFlag(browserWithExtension: BrowserWithExtension, startClient: StartClient, env?: Record<string, string>): Promise<Client> {
-  const { client } = await startClient({
-    args: [`--extension`],
-    env: {
-      ...env,
-      PWTEST_EXTENSION_USER_DATA_DIR: browserWithExtension.userDataDir,
-    },
-  });
-  return client;
-}
-
-export async function readExtensionToken(browserContext: BrowserContext): Promise<string> {
-  const page = await browserContext.newPage();
-  await page.goto(`chrome-extension://${extensionId}/status.html`);
-  const token = await page.locator('.auth-token-code').textContent();
-  await page.close();
-  const [, value] = token?.split('=') || [];
-  return value;
-}
-
-export async function connectWithToken(browserContext: BrowserContext, startClient: StartClient, userDataDir: string): Promise<{ client: Client, stderr: () => string }> {
-  const token = await readExtensionToken(browserContext);
-  const { client, stderr } = await startClient({
-    args: ['--extension'],
-    env: {
-      DEBUG: 'pw:mcp:backend',
-      PLAYWRIGHT_MCP_EXTENSION_TOKEN: token,
-      PWTEST_EXTENSION_USER_DATA_DIR: userDataDir,
-    },
-  });
-  return { client, stderr };
-}
-
-// The connect page closes itself once a different tab is selected, which races
-// with the click — the request reaches the background while the page is being
-// torn down. Swallow the resulting "Target closed" error.
-export async function clickAllowAndSelect(connectPage: Page, tabTitle: RegExp | string): Promise<void> {
-  await connectPage.locator('.tab-item', { hasText: tabTitle }).getByRole('button', { name: 'Allow & select' }).click().catch(e => {
+// The connect page closes itself or becomes the blank tab of the client, which
+// races with the click. Swallow the resulting "Target closed" error.
+export async function clickAllow(connectPage: Page): Promise<void> {
+  await connectPage.getByRole('button', { name: 'Allow' }).click().catch(e => {
     if (!e?.message?.includes(kTargetClosedErrorMessage))
       throw e;
   });
 }
 
-export async function connectAndNavigate(
-  browserContext: BrowserContext,
-  client: Client,
-  url: string,
-): Promise<Awaited<ReturnType<Client['callTool']>>> {
-  const confirmationPagePromise = browserContext.waitForEvent('page', page =>
-    page.url().startsWith(`chrome-extension://${extensionId}/connect.html`)
-  );
-  const navigatePromise = client.callTool({ name: 'browser_navigate', arguments: { url } });
-  const selectorPage = await confirmationPagePromise;
-  await clickAllowAndSelect(selectorPage, 'Welcome');
-  return await navigatePromise;
+export function waitForConnectPage(browserContext: BrowserContext): Promise<Page> {
+  return browserContext.waitForEvent('page', page => page.url().startsWith(`chrome-extension://${extensionId}/connect.html`));
 }

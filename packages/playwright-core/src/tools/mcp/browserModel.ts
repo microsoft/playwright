@@ -182,8 +182,10 @@ export class BrowserModel {
       }
       case 'chrome.debugger.onDetach': {
         const [source] = event.params;
-        if (source.tabId !== undefined)
+        if (source.tabId !== undefined) {
+          this._knownTabIds.delete(source.tabId);
           this._detachTab(source.tabId);
+        }
         break;
       }
       case 'extension.initialized':

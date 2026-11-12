@@ -16,7 +16,6 @@
 
 import * as React from 'react';
 import * as icons from './icons';
-import './copyToClipboard.css';
 
 type CopyToClipboardProps = {
   value: string;
@@ -50,5 +49,5 @@ export const CopyToClipboard: React.FunctionComponent<CopyToClipboardProps> = ({
     });
   }, [value]);
   const iconElement = icon === 'check' ? icons.check() : icon === 'cross' ? icons.cross() : icons.copy();
-  return <button className='copy-icon' title='Copy to clipboard' aria-label='Copy to clipboard' onClick={handleCopy}>{iconElement}</button>;
+  return <button className='icon-button' title='Copy to clipboard' aria-label='Copy to clipboard' onClick={handleCopy}>{iconElement}</button>;
 };

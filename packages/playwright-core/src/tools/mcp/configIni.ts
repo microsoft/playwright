@@ -157,6 +157,8 @@ const longhandTypes: Record<string, LonghandType> = {
   // top-level
   'extension': 'boolean',
   'tabGroup': 'boolean',
+  'sessionName': 'string',
+  'sessionColor': 'string',
   'background': 'boolean',
   'capabilities': 'string[]',
   'saveSession': 'boolean',

@@ -16,7 +16,7 @@
 
 import React, { useCallback, useState } from 'react';
 import { CopyToClipboard } from './copyToClipboard';
-import * as icons from './icons';
+import { Button } from './tabItem';
 import './authToken.css';
 
 export const AuthTokenSection: React.FC<{}> = ({}) => {
@@ -29,14 +29,20 @@ export const AuthTokenSection: React.FC<{}> = ({}) => {
   }, []);
 
   return (
-    <div className='auth-token-section'>
-      <div className='auth-token-description'>
-        Set this environment variable to bypass the connection dialog:
+    <div className='card'>
+      <div className='card-header'>
+        <h2 className='card-title'>Token</h2>
       </div>
-      <div className='auth-token-container'>
-        <code className='auth-token-code'>{authTokenCode(authToken)}</code>
-        <button className='auth-token-refresh' title='Generate new token' aria-label='Generate new token'onClick={onRegenerateToken}>{icons.refresh()}</button>
-        <CopyToClipboard value={authTokenCode(authToken)} />
+      <div className='card-body'>
+        <div className='muted'>A client that has this token connects without the connection dialog. Set this environment variable for the client:</div>
+        <div className='auth-token-container'>
+          <code className='auth-token-code'>{authTokenCode(authToken)}</code>
+          <CopyToClipboard value={authTokenCode(authToken)} />
+        </div>
+      </div>
+      <div className='card-footer'>
+        <div className='muted'>A new token makes this one invalid. Connected clients stay connected until you disconnect them.</div>
+        <Button variant='default' onClick={onRegenerateToken}>Rotate token</Button>
       </div>
     </div>
   );

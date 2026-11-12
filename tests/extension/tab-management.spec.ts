@@ -13,201 +13,123 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { test, expect } from './harness';
 
-import { test, expect, connectAndNavigate, extensionId } from './extension-fixtures';
+test('client opens a new tab', async ({ connect }) => {
+  const client = await connect('worker');
+  await client.navigate('Alpha');
 
-test(`browser_tabs new creates a new tab`, async ({ startExtensionClient, server }) => {
-  server.setContent('/second.html', '<title>Second</title><body>Second page<body>', 'text/html');
-  const { browserContext, client } = await startExtensionClient();
-
-  const navigateResponse = await connectAndNavigate(browserContext, client, server.HELLO_WORLD);
-  expect(navigateResponse).toHaveResponse({
-    snapshot: expect.stringContaining(`- generic [active] [ref=f1e1]: Hello, world!`),
-  });
-
-  const newTabResponse = await client.callTool({
-    name: 'browser_tabs',
-    arguments: { action: 'new', url: server.PREFIX + '/second.html' },
-  });
-  expect(newTabResponse).toHaveResponse({
-    snapshot: expect.stringContaining(`- generic [active] [ref=e1]: Second page`),
-  });
-
-  const listResponse = await client.callTool({
-    name: 'browser_tabs',
-    arguments: { action: 'list' },
-  });
-  expect(listResponse).toHaveResponse({
-    result: expect.stringMatching(/- 0: \[Title\]\(.*\/hello-world\)\n- 1: \(current\) \[Second\]\(.*\/second\.html\)/),
-  });
+  await client.openTab('Beta');
+  expect(await client.tabs()).toEqual(['Alpha', 'Beta']);
+  expect(await client.currentTab()).toBe('Beta');
+  expect(await client.snapshot()).toContain('- generic [active] [ref=e1]: Page Beta');
 });
 
-test(`browser_tabs select switches the active tab`, async ({ startExtensionClient, server }) => {
-  server.setContent('/first.html', '<title>First</title><body>First page</body>', 'text/html');
-  server.setContent('/second.html', '<title>Second</title><body>Second page</body>', 'text/html');
-  const { browserContext, client } = await startExtensionClient();
+test('client selects a tab', async ({ connect }) => {
+  const client = await connect('worker');
+  await client.navigate('Alpha');
+  await client.openTab('Beta');
 
-  await connectAndNavigate(browserContext, client, server.PREFIX + '/first.html');
-
-  await client.callTool({
-    name: 'browser_tabs',
-    arguments: { action: 'new', url: server.PREFIX + '/second.html' },
-  });
-
-  const selectResponse = await client.callTool({
-    name: 'browser_tabs',
-    arguments: { action: 'select', index: 0 },
-  });
-  expect(selectResponse).toHaveResponse({
-    result: expect.stringMatching(/- 0: \(current\) \[First\]\(.*\/first\.html\)\n- 1: \[Second\]\(.*\/second\.html\)/),
-  });
-
-  const snapshotResponse = await client.callTool({
-    name: 'browser_snapshot',
-    arguments: {},
-  });
-  expect(snapshotResponse).toHaveResponse({
-    inlineSnapshot: expect.stringContaining('First page'),
-  });
+  await client.selectTab('Alpha');
+  expect(await client.tabs()).toEqual(['Alpha', 'Beta']);
+  expect(await client.currentTab()).toBe('Alpha');
+  expect(await client.snapshot()).toContain('Page Alpha');
 });
 
-test(`browser_tabs close removes a tab`, async ({ startExtensionClient, server }) => {
-  server.setContent('/first.html', '<title>First</title><body>First page</body>', 'text/html');
-  server.setContent('/second.html', '<title>Second</title><body>Second page</body>', 'text/html');
-  const { browserContext, client } = await startExtensionClient();
+test('client closes a tab', async ({ user, connect }) => {
+  const client = await connect('worker');
+  await client.navigate('Alpha');
+  await client.openTab('Beta');
 
-  await connectAndNavigate(browserContext, client, server.PREFIX + '/first.html');
-
-  await client.callTool({
-    name: 'browser_tabs',
-    arguments: { action: 'new', url: server.PREFIX + '/second.html' },
-  });
-
-  const closeResponse = await client.callTool({
-    name: 'browser_tabs',
-    arguments: { action: 'close', index: 0 },
-  });
-  expect(closeResponse).toHaveResponse({
-    result: expect.stringMatching(/^- 0: \(current\) \[Second\]\(.*\/second\.html\)$/m),
-  });
-
-  const listResponse = await client.callTool({
-    name: 'browser_tabs',
-    arguments: { action: 'list' },
-  });
-  expect(listResponse).toHaveResponse({
-    result: expect.not.stringContaining('First'),
-  });
-  expect(listResponse).toHaveResponse({
-    result: expect.stringContaining('Second'),
-  });
+  await client.closeTab('Alpha');
+  expect(await client.tabs()).toEqual(['Beta']);
+  expect(await client.currentTab()).toBe('Beta');
+  expect(await user.tabs()).not.toContain('Alpha');
 });
 
-test(`cmd+click opens new tab visible in tab list`, async ({ startExtensionClient, server }) => {
-  server.setContent('/link-page', '<title>LinkPage</title><body><a href="/target-page">click me</a></body>', 'text/html');
-  server.setContent('/target-page', '<title>TargetPage</title><body>Target content</body>', 'text/html');
-  const { browserContext, client } = await startExtensionClient();
+test('tab that the page opens with cmd+click goes to the client', async ({ user, connect }) => {
+  user.definePage('Links', `<a href="${user.urlOf('Target')}">click me</a>`);
+  const client = await connect('worker');
+  await client.navigate('Links');
 
-  const navigateResponse = await connectAndNavigate(browserContext, client, server.PREFIX + '/link-page');
-  expect(navigateResponse).toHaveResponse({
-    snapshot: expect.stringContaining(`click me`),
-  });
-
-  await client.callTool({
-    name: 'browser_click',
-    arguments: { element: 'click me', target: 'f1e2', modifiers: ['ControlOrMeta'] },
-  });
-
-  await expect.poll(async () => {
-    const listResponse = await client.callTool({
-      name: 'browser_tabs',
-      arguments: { action: 'list' },
-    });
-    return (listResponse as any).content?.[0]?.text ?? '';
-  }).toContain('TargetPage');
-
-  const listResponse = await client.callTool({
-    name: 'browser_tabs',
-    arguments: { action: 'list' },
-  });
-  expect(listResponse).toHaveResponse({
-    result: expect.stringMatching(/- 0:.*\[LinkPage\].*\n- 1:.*\[TargetPage\]/),
-  });
+  await client.click('e2', ['ControlOrMeta']);
+  await expect.poll(client.tabs).toEqual(['Links', 'Target']);
+  await client.expectControls('Target');
+  expect(await user.groups()).toEqual([{ title: 'Playwright · worker', color: 'green', tabs: ['Links', 'Target'] }]);
 });
 
-test(`window.open from tracked tab auto-attaches new tab`, async ({ startExtensionClient, server }) => {
-  server.setContent('/opener-page', `<title>Opener</title><body><button onclick="window.open('${server.PREFIX}/opened-page', '_blank', 'noopener')">open</button></body>`, 'text/html');
-  server.setContent('/opened-page', '<title>Opened</title><body>Opened content</body>', 'text/html');
-  const { browserContext, client } = await startExtensionClient();
+test('tab that the page opens with window.open goes to the client', async ({ user, connect }) => {
+  user.definePage('Opener', `<button onclick="window.open('${user.urlOf('Opened')}', '_blank', 'noopener')">open</button>`);
+  const client = await connect('worker');
+  await client.navigate('Opener');
 
-  const navigateResponse = await connectAndNavigate(browserContext, client, server.PREFIX + '/opener-page');
-  expect(navigateResponse).toHaveResponse({
-    snapshot: expect.stringContaining('open'),
-  });
-
-  await client.callTool({
-    name: 'browser_click',
-    arguments: { element: 'open', target: 'f1e2' },
-  });
-
-  await expect.poll(async () => {
-    const listResponse = await client.callTool({
-      name: 'browser_tabs',
-      arguments: { action: 'list' },
-    });
-    return (listResponse as any).content?.[0]?.text ?? '';
-  }).toContain('Opened');
-
-  const listResponse = await client.callTool({
-    name: 'browser_tabs',
-    arguments: { action: 'list' },
-  });
-  expect(listResponse).toHaveResponse({
-    result: expect.stringMatching(/- 0:.*\[Opener\].*\n- 1:.*\[Opened\]/),
-  });
+  await client.click('e2');
+  await expect.poll(client.tabs).toEqual(['Opener', 'Opened']);
+  await client.expectControls('Opened');
+  expect(await user.groups()).toEqual([{ title: 'Playwright · worker', color: 'green', tabs: ['Opened', 'Opener'] }]);
 });
 
-test(`pending attach is released when the connection closes`, {
+test('tab that the user closes leaves the client', async ({ user, connect }) => {
+  await user.openTab('Alpha');
+  await user.openTab('Beta');
+  const client = await connect('worker', { tabs: ['Alpha', 'Beta'] });
+
+  await user.closeTab('Beta');
+  await expect.poll(client.tabs).toEqual(['Alpha']);
+  await client.expectControls('Alpha');
+});
+
+test('debugger attach that is still in progress is released when the client leaves', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43005' },
-}, async ({ startExtensionClient, server }) => {
-  server.setContent('/second.html', '<title>Second</title><body>Second page</body>', 'text/html');
-  const { browserContext, client } = await startExtensionClient();
-  await connectAndNavigate(browserContext, client, server.HELLO_WORLD);
+}, async ({ user, connect }) => {
+  const client = await connect('worker');
+  await client.navigate('Alpha');
 
-  const [sw] = browserContext.serviceWorkers();
-  await sw.evaluate(() => {
+  // Hold the next chrome.debugger.attach() until the test releases it.
+  await user.chrome(async chrome => {
     const g = globalThis as any;
-    const originalAttach = g.chrome.debugger.attach.bind(g.chrome.debugger);
-    g.__originalAttach = originalAttach;
-    g.chrome.debugger.attach = (target: any, version: string) => {
+    g.__originalAttach = chrome.debugger.attach.bind(chrome.debugger);
+    chrome.debugger.attach = (target: any, version: string) => {
       g.__heldTabId = target.tabId;
-      g.__pendingAttach = new Promise(resolve => g.__releaseAttach = resolve).then(() => originalAttach(target, version));
+      g.__pendingAttach = new Promise(resolve => g.__releaseAttach = resolve).then(() => g.__originalAttach(target, version));
       return g.__pendingAttach;
     };
   });
-
-  void client.callTool({ name: 'browser_tabs', arguments: { action: 'new', url: server.PREFIX + '/second.html' } }).catch(() => {});
-  await expect.poll(() => sw.evaluate(() => (globalThis as any).__heldTabId)).toBeTruthy();
+  void client.openTab('Beta').catch(() => {});
+  await expect.poll(() => user.chrome(async () => (globalThis as any).__heldTabId)).toBeTruthy();
 
   await client.close();
-  const statusPage = await browserContext.newPage();
-  await statusPage.goto(`chrome-extension://${extensionId}/status.html`);
-  await expect(statusPage.locator('.client-info')).toHaveCount(0);
-
-  await sw.evaluate(async () => {
+  await expect.poll(user.connectedClients).toEqual([]);
+  await user.chrome(async () => {
     const g = globalThis as any;
     g.__releaseAttach();
     await g.__pendingAttach;
   });
-  const isAttached = () => sw.evaluate(async () => {
+
+  // The tab is free when another attach to it works.
+  const isAttached = () => user.chrome(async chrome => {
     const g = globalThis as any;
     try {
       await g.__originalAttach({ tabId: g.__heldTabId }, '1.3');
     } catch {
       return true;
     }
-    await g.chrome.debugger.detach({ tabId: g.__heldTabId });
+    await chrome.debugger.detach({ tabId: g.__heldTabId });
     return false;
   });
   await expect.poll(isAttached).toBe(false);
+});
+
+test('tab that goes to a chrome:// page comes back to the client on the next web page', async ({ user, connect }) => {
+  await user.openTab('Alpha');
+  await user.openTab('Beta');
+  const client = await connect('worker', { tabs: ['Alpha', 'Beta'] });
+
+  await user.chrome(async (chrome, tabOf) => chrome.tabs.update((await tabOf('Beta')).id, { url: 'chrome://version/' }));
+  await expect.poll(client.tabs).toEqual(['Alpha']);
+  await expect.poll(() => user.tab('About Version')).toEqual({ group: 'Playwright · worker', badge: '' });
+
+  await user.navigateTab('About Version', 'Gamma');
+  await client.expectControls('Gamma');
+  expect(await user.tab('Gamma')).toEqual({ group: 'Playwright · worker', badge: '✓' });
 });

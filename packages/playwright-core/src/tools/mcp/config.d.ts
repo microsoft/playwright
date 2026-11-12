@@ -120,6 +120,18 @@ export type Config = {
   tabGroup?: boolean;
 
   /**
+   * Name of the session. With the extension, it is the title of the tab group for controlled tabs,
+   * which defaults to "Playwright · <client name>".
+   */
+  sessionName?: string;
+
+  /**
+   * Color of the session: blue, red, yellow, green, pink, purple, cyan or orange. With the extension,
+   * it is the color of the tab group for controlled tabs, which defaults to the first color that no other client uses.
+   */
+  sessionColor?: string;
+
+  /**
    * Do not activate controlled tabs or focus the browser window when using the extension.
    * Defaults to false.
    */

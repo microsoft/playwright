@@ -14,129 +14,21 @@
   limitations under the License.
 */
 
-.auth-token-section {
-  margin: 16px 0;
-  padding: 16px;
-  background-color: #f6f8fa;
-  border-radius: 6px;
-}
-
-.auth-token-description {
-  font-size: 12px;
-  color: #656d76;
-  margin-bottom: 12px;
-}
-
 .auth-token-container {
   display: flex;
   align-items: center;
-  gap: 8px;
-  background-color: #ffffff;
-  padding: 8px;
+  gap: 4px;
+  padding: 6px 6px 6px 12px;
+  background-color: var(--color-canvas-subtle);
+  border: 1px solid var(--color-border-default);
+  border-radius: 6px;
 }
 
 .auth-token-code {
-  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
   font-size: 12px;
-  color: #1f2328;
-  border: none;
+  line-height: 18px;
   flex: 1;
-  padding: 0;
-  word-break: break-all;
-}
-
-.auth-token-refresh {
-  flex: none;
-  height: 24px;
-  width: 24px;
-  border: none;
-  outline: none;
-  color: var(--color-fg-muted);
-  background: transparent;
-  padding: 4px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-}
-
-.auth-token-refresh svg {
-  margin: 0;
-}
-
-.auth-token-refresh:not(:disabled):hover {
-  background-color: var(--color-btn-selected-bg);
-}
-
-.auth-token-example-section {
-  margin-top: 16px;
-}
-
-.auth-token-example-toggle {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: none;
-  border: none;
-  padding: 8px 0;
-  font-size: 12px;
-  color: #656d76;
-  cursor: pointer;
-  outline: none;
-  text-align: left;
-  width: 100%;
-}
-
-.auth-token-example-toggle:hover {
-  color: #1f2328;
-}
-
-.auth-token-chevron {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transform: rotate(-90deg);
-  flex-shrink: 0;
-}
-
-.auth-token-chevron.expanded {
-  transform: rotate(0deg);
-}
-
-.auth-token-chevron svg {
-  width: 12px;
-  height: 12px;
-}
-
-.auth-token-chevron .octicon {
-  margin: 0px;
-}
-
-.auth-token-example-content {
-  margin-top: 12px;
-  padding: 12px 0;
-}
-
-.auth-token-example-description {
-  font-size: 12px;
-  color: #656d76;
-  margin-bottom: 12px;
-}
-
-.auth-token-example-config {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  background-color: #ffffff;
-  padding: 12px;
-}
-
-.auth-token-example-code {
-  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-  font-size: 11px;
-  color: #1f2328;
-  white-space: pre;
-  flex: 1;
-  line-height: 1.4;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }

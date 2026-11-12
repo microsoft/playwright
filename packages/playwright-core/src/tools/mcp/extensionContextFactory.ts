@@ -22,11 +22,13 @@ import { playwright } from '../../inprocess';
 import { findPlaywrightExtensionProfile, isExtensionInstalledInProfile, playwrightExtensionInstallUrl } from '../utils/extension';
 import { CDPRelayServer } from './cdpRelay';
 
+import type { TabGroupOptions } from './cdpRelay';
+
 import type * as playwrightTypes from '../../..';
 
 const debugLogger = debug('pw:mcp:relay');
 
-export async function createExtensionBrowser(channel: string, executablePath: string | undefined, customUserDataDir: string | undefined, profileDirName: string | undefined, clientName: string, tabGroup = true, background = false): Promise<playwrightTypes.Browser> {
+export async function createExtensionBrowser(channel: string, executablePath: string | undefined, customUserDataDir: string | undefined, profileDirName: string | undefined, clientName: string, tabGroup: TabGroupOptions | undefined, background = false): Promise<playwrightTypes.Browser> {
   customUserDataDir ??= process.env.PWTEST_EXTENSION_USER_DATA_DIR;
   // Custom executablePath may target a browser in a different filesystem (e.g. Windows chrome.exe from WSL2), so the local profile path is not meaningful.
   const userDataDir = customUserDataDir ?? (executablePath ? undefined : defaultUserDataDirForChannel(channel));
