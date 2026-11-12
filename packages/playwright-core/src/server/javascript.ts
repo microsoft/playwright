@@ -278,6 +278,8 @@ export async function evaluateExpression(context: ExecutionContext, expression: 
     return { fallThrough: handle };
   }));
 
+  assertArgumentDepth(args);
+
   const utilityScriptObjects: JSHandle[] = [];
   for (const handle of await Promise.all(handles)) {
     if (handle._context !== context)
@@ -296,17 +298,20 @@ export async function evaluateExpression(context: ExecutionContext, expression: 
   }
 }
 
-// The browser drops a protocol message that nests too deep without a response, so reject it up front.
-export function assertArgumentDepth(values: any[], maxDepth: number) {
+// Chromium does not answer a protocol message that nests deeper than 300 levels, 4 of them wrap the argument value.
+// Other browsers allow more, the same limit applies to all of them for consistency.
+const kMaxArgumentDepth = 296;
+
+function assertArgumentDepth(args: any[]) {
   const tooDeep = (value: any, depth: number): boolean => {
     if (!value || typeof value !== 'object')
       return false;
-    if (depth >= maxDepth)
+    if (depth >= kMaxArgumentDepth)
       return true;
     return Object.values(value).some(child => tooDeep(child, depth + 1));
   };
-  if (values.some(value => tooDeep(value, 0)))
-    throw new Error('Cannot serialize argument: object reference chain is too long.');
+  if (args.some(arg => tooDeep(arg, 0)))
+    throw new Error('Cannot serialize argument: object nesting is too deep.');
 }
 
 export function parseUnserializableValue(unserializableValue: string): any {

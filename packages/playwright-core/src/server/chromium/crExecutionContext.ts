@@ -57,8 +57,6 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
   }
 
   async evaluateWithArguments(expression: string, returnByValue: boolean, utilityScript: js.JSHandle, values: any[], handles: js.JSHandle[]): Promise<any> {
-    // Chromium parses protocol JSON up to 300 levels deep, 4 of them wrap the argument value.
-    js.assertArgumentDepth(values, 296);
     const { exceptionDetails, result: remoteObject } = await this._client.send('Runtime.callFunctionOn', {
       functionDeclaration: expression,
       objectId: utilityScript._objectId,

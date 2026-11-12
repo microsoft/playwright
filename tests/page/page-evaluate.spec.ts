@@ -278,7 +278,7 @@ it('EV-032 should return complex objects', async ({ page }) => {
 
 it('EV-138 should throw for too deeply nested argument', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44060' },
-}, async ({ page, browserName }) => {
+}, async ({ page }) => {
   const nested = (depth: number) => {
     let object: any = 0;
     for (let i = 0; i < depth; i++)
@@ -286,11 +286,8 @@ it('EV-138 should throw for too deeply nested argument', {
     return object;
   };
   expect(await page.evaluate(a => JSON.stringify(a), nested(59))).toBe(JSON.stringify(nested(59)));
-  const error = await page.evaluate(a => JSON.stringify(a), nested(200)).catch(e => e);
-  if (browserName === 'firefox')
-    expect(error).toBe(JSON.stringify(nested(200)));
-  else
-    expect(error.message).toContain('Cannot serialize argument: object reference chain is too long.');
+  const error = await page.evaluate(a => JSON.stringify(a), nested(60)).catch(e => e);
+  expect(error.message).toContain('Cannot serialize argument: object nesting is too deep.');
 });
 
 it('EV-033 should return NaN', async ({ page }) => {
