@@ -254,9 +254,9 @@ export async function evaluate(context: ExecutionContext, returnByValue: boolean
   return evaluateExpression(context, String(pageFunction), { returnByValue, isFunction: typeof pageFunction === 'function' }, ...args);
 }
 
-// Chromium does not answer a protocol message that nests deeper than 300 levels, 4 of them wrap the argument value.
-// Other browsers allow more, the same limit applies to all of them for consistency.
-const kMaxArgumentDepth = 296;
+// Chromium does not answer a protocol message that nests deeper than 300 levels. 4 of them wrap the argument value,
+// and 2 are left for values like dates or errors. Other browsers allow more, the same limit applies to all of them for consistency.
+const kMaxArgumentDepth = 294;
 
 export async function evaluateExpression(context: ExecutionContext, expression: string, options: { returnByValue?: boolean, isFunction?: boolean }, ...args: any[]): Promise<any> {
   expression = normalizeEvaluationExpression(expression, options.isFunction);

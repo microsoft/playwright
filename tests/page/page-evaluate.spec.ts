@@ -285,8 +285,8 @@ it('EV-138 should throw for too deeply nested argument', {
       object = { children: [object] };
     return object;
   };
-  expect(await page.evaluate(a => JSON.stringify(a), nested(59))).toBe(JSON.stringify(nested(59)));
-  const error = await page.evaluate(a => JSON.stringify(a), nested(60)).catch(e => e);
+  expect(await page.evaluate(a => JSON.stringify(a), nested(58))).toBe(JSON.stringify(nested(58)));
+  const error = await page.evaluate(a => JSON.stringify(a), nested(59)).catch(e => e);
   expect(error.message).toContain('Cannot serialize argument: object nesting is too deep.');
 });
 
