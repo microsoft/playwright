@@ -282,6 +282,12 @@ it('EV-032 should return complex objects', {
   for (let i = 0; i < 200; i++)
     argument = { children: [argument] };
   expect(await page.evaluate(value => JSON.stringify(value).length, argument)).toBe(JSON.stringify(argument).length);
+
+  // An argument that is too deep rejects and does not hang.
+  for (let i = 0; i < 800; i++)
+    argument = { children: [argument] };
+  const error = await page.evaluate(value => JSON.stringify(value).length, argument).catch(e => e);
+  expect(error.message).toMatch(/Maximum call stack size exceeded|too much recursion/);
 });
 
 it('EV-033 should return NaN', async ({ page }) => {
