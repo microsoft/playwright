@@ -55,11 +55,12 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
   }
 
   async evaluateWithArguments(expression: string, returnByValue: boolean, utilityScript: js.JSHandle, values: any[], handles: js.JSHandle[]): Promise<any> {
+    // Keep serialized values in the function source, the same as in Chromium and WebKit.
+    const serializedValues = values.map(value => JSON.stringify(value) ?? 'undefined').join(',');
     const payload = await this._session.send('Runtime.callFunction', {
-      functionDeclaration: expression,
+      functionDeclaration: `(utilityScript, ...handles) => (${expression})(utilityScript, ...[${serializedValues}], ...handles)`,
       args: [
         { objectId: utilityScript._objectId, value: undefined },
-        ...values.map(value => ({ value })),
         ...handles.map(handle => ({ objectId: handle._objectId!, value: undefined })),
       ],
       returnByValue,

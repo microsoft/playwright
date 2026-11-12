@@ -278,7 +278,8 @@ it('EV-032 should return complex objects', {
   expect(result).toEqual(object);
 
   let argument: unknown = 0;
-  for (let i = 0; i < 60; i++)
+  // Chromium rejects protocol arguments at 60 levels, WebKit at 200.
+  for (let i = 0; i < 200; i++)
     argument = { children: [argument] };
   expect(await page.evaluate(value => JSON.stringify(value).length, argument)).toBe(JSON.stringify(argument).length);
 });
