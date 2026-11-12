@@ -246,37 +246,27 @@ export function fileIsModule(file: string): boolean {
   return folderIsModule(folder);
 }
 
-const packageJsonIsModuleCache = new Map<string, boolean>();
-
 function folderIsModule(folder: string): boolean {
   const packageJsonPath = getPackageJsonPath(folder);
   if (!packageJsonPath)
     return false;
-  // Note: do not `require()` the package.json here to avoid running
-  // our resolve hook from inside itself.
-  if (!packageJsonIsModuleCache.has(packageJsonPath)) {
-    let isModule = false;
-    try {
-      isModule = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8')).type === 'module';
-    } catch {
-    }
-    packageJsonIsModuleCache.set(packageJsonPath, isModule);
-  }
-  return packageJsonIsModuleCache.get(packageJsonPath)!;
+  return readPackageJson(packageJsonPath).type === 'module';
 }
 
-const packageJsonMainFieldCache = new Map<string, string | undefined>();
+const packageJsonCache = new Map<string, any>();
 
-function getMainFieldFromPackageJson(packageJsonPath: string) {
-  if (!packageJsonMainFieldCache.has(packageJsonPath)) {
-    let mainField: string | undefined;
+// Note: do not `require()` the package.json here to avoid running
+// our resolve hook from inside itself.
+function readPackageJson(packageJsonPath: string): any {
+  if (!packageJsonCache.has(packageJsonPath)) {
+    let json: any = {};
     try {
-      mainField = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8')).main;
+      json = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8')) ?? {};
     } catch {
     }
-    packageJsonMainFieldCache.set(packageJsonPath, mainField);
+    packageJsonCache.set(packageJsonPath, json);
   }
-  return packageJsonMainFieldCache.get(packageJsonPath);
+  return packageJsonCache.get(packageJsonPath);
 }
 
 // This method performs "file extension subsitution" to find the ts, js or similar source file
@@ -289,13 +279,15 @@ const kExtLookups = new Map([
   ['.mjs', ['.mts']],
   ['', ['.js', '.ts', '.jsx', '.tsx', '.cjs', '.mjs', '.cts', '.mts']],
 ]);
-function resolveImportSpecifierExtension(resolved: string): string | undefined {
+function resolveImportSpecifierExtension(resolved: string, implicitExtension = true): string | undefined {
   if (fileExists(resolved))
     return resolved;
 
   for (const [ext, others] of kExtLookups) {
     if (!resolved.endsWith(ext))
       continue;
+    if (!ext && !implicitExtension)
+      return;
     for (const other of others) {
       const modified = resolved.substring(0, resolved.length - ext.length) + other;
       if (fileExists(modified))
@@ -329,7 +321,7 @@ export function resolveImportSpecifierAfterMapping(resolved: string, afterPathMa
       // Only the "folder as module" Node.js behavior is respected:
       //  - consult `package.json#main`;
       //  - look for `index.js` or similar.
-      const mainField = getMainFieldFromPackageJson(packageJsonPath);
+      const mainField: string | undefined = readPackageJson(packageJsonPath).main;
       const mainFieldResolved = mainField ? resolveImportSpecifierExtension(path.resolve(resolved, mainField)) : undefined;
       return mainFieldResolved || resolveImportSpecifierExtension(path.join(resolved, 'index'));
     }
@@ -347,8 +339,69 @@ export function resolveImportSpecifierAfterMapping(resolved: string, afterPathMa
   }
 }
 
+type SubpathImportTarget = string | null | SubpathImportTarget[] | { [condition: string]: SubpathImportTarget };
+
+function matchSubpathImportPattern(key: string, specifier: string): string | undefined {
+  const [prefix, suffix, ...rest] = key.split('*');
+  if (suffix === undefined || rest.length || specifier.length < key.length || !specifier.startsWith(prefix) || !specifier.endsWith(suffix))
+    return;
+  return specifier.substring(prefix.length, specifier.length - suffix.length);
+}
+
+function flattenSubpathImportTarget(target: SubpathImportTarget, conditions: Set<string>): string[] | null {
+  if (typeof target === 'string')
+    return [target];
+  if (target === null)
+    return null;
+  const entries = Array.isArray(target) ? target : Object.entries(target).filter(([condition]) => condition === 'default' || conditions.has(condition)).map(([, value]) => value);
+  const result: string[] = [];
+  for (const entry of entries) {
+    const flat = flattenSubpathImportTarget(entry, conditions);
+    if (flat === null)
+      return result.length ? result : null;
+    result.push(...flat);
+  }
+  return result;
+}
+
+const kInvalidSubpathImportSegment = /(^|[\\/])(\.\.?|node_modules)([\\/]|$)/i;
+
+// Like tsc, list every target of the matching subpath import: existing local files as absolute paths, packages as bare specifiers.
+export function* resolveSubpathImportCandidates(filename: string, specifier: string, conditions: Set<string>): Generator<string> {
+  const packageJsonPath = getPackageJsonPath(path.dirname(filename));
+  const imports: { [key: string]: SubpathImportTarget } | undefined = packageJsonPath ? readPackageJson(packageJsonPath).imports : undefined;
+  if (!imports)
+    return;
+
+  const match = Object.hasOwn(imports, specifier) ? { key: specifier, subpath: undefined } : Object.keys(imports)
+      .map(key => ({ key, subpath: matchSubpathImportPattern(key, specifier) }))
+      .filter(match => match.subpath !== undefined)
+      .sort((a, b) => b.key.indexOf('*') - a.key.indexOf('*') || b.key.length - a.key.length)[0];
+  if (!match || (match.subpath !== undefined && kInvalidSubpathImportSegment.test(match.subpath)))
+    return;
+
+  for (const target of flattenSubpathImportTarget(imports[match.key], conditions) ?? []) {
+    if (target.startsWith('../') || target.startsWith('/'))
+      continue;
+    const mapped = match.subpath === undefined ? target : target.replaceAll('*', () => match.subpath!);
+    if (!target.startsWith('./')) {
+      yield mapped;
+      continue;
+    }
+    if (kInvalidSubpathImportSegment.test(target.substring(2)))
+      continue;
+    const resolved = resolveImportSpecifierExtension(path.resolve(path.dirname(packageJsonPath), mapped), false);
+    if (resolved)
+      yield resolved;
+  }
+}
+
 function fileExists(resolved: string) {
-  return fs.statSync(resolved, { throwIfNoEntry: false })?.isFile();
+  try {
+    return fs.statSync(resolved, { throwIfNoEntry: false })?.isFile();
+  } catch {
+    return false;
+  }
 }
 
 export async function fileExistsAsync(resolved: string) {
@@ -361,7 +414,11 @@ export async function fileExistsAsync(resolved: string) {
 }
 
 function dirExists(resolved: string) {
-  return fs.statSync(resolved, { throwIfNoEntry: false })?.isDirectory();
+  try {
+    return fs.statSync(resolved, { throwIfNoEntry: false })?.isDirectory();
+  } catch {
+    return false;
+  }
 }
 
 export async function removeDirAndLogToConsole(dir: string) {

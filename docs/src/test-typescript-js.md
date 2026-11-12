@@ -126,6 +126,32 @@ export default defineConfig({
 });
 ```
 
+## package.json subpath imports
+
+Playwright supports [subpath imports](https://nodejs.org/api/packages.html#subpath-imports) declared in the `package.json`. Node.js resolves a subpath import to the first target of its mapping, even when that file does not exist. When Node.js fails, Playwright follows TypeScript instead: it tries each target until one resolves, and a `.js` target also matches a `.ts` file with the same name.
+
+Here is an example `package.json` that works with Playwright:
+
+```json title="package.json"
+{
+  "imports": {
+    "#helpers/*": ["./src/helpers/*", "./src/helpers/*.ts", "./src/helpers/*/index.ts"]
+  }
+}
+```
+
+You can now import using the mapped paths:
+
+```js title="example.spec.ts"
+import { test, expect } from '@playwright/test';
+import { username, password } from '#helpers/credentials';
+
+test('example', async ({ page }) => {
+  await page.getByLabel('User Name').fill(username);
+  await page.getByLabel('Password').fill(password);
+});
+```
+
 ## Manually compile tests with TypeScript
 
 Sometimes, Playwright Test will not be able to transform your TypeScript code correctly, for example when you are using experimental or very recent features of TypeScript, usually configured in `tsconfig.json`.

@@ -15,11 +15,12 @@
  */
 
 import fs from 'fs';
+import path from 'path';
 import url from 'url';
 
 import { addToCompilationCache, recordResolvedFile, serializeCompilationCache, startCollectingFileDeps, stopCollectingFileDeps } from './compilationCache';
 import { PortTransport } from './portTransport';
-import { hasTransformedExtension, isStyleFile, resolveHook, setSingleTSConfig, setTransformConfig, shouldTransform, transformHook } from './transform';
+import { hasTransformedExtension, isStyleFile, resolveHook, setSingleTSConfig, setTransformConfig, shouldTransform, subpathImportCandidates, transformHook } from './transform';
 import { fileIsModule } from '../util';
 
 // Before each import of the ESM module, a preflight request with the .esm.preflight extension is issued.
@@ -28,15 +29,29 @@ const esmPreflightExtension = '.esm.preflight';
 
 // Node < 18.6: defaultResolve takes 3 arguments.
 // Node >= 18.6: nextResolve from the chain takes 2 arguments.
-async function resolve(originalSpecifier: string, context: { parentURL?: string }, defaultResolve: Function) {
+async function resolve(originalSpecifier: string, context: { parentURL?: string, conditions?: string[] }, defaultResolve: Function) {
   let specifier = originalSpecifier.replace(esmPreflightExtension, '');
-  if (context.parentURL && context.parentURL.startsWith('file://')) {
-    const filename = url.fileURLToPath(context.parentURL);
+  const filename = context.parentURL?.startsWith('file://') ? url.fileURLToPath(context.parentURL) : undefined;
+  if (filename) {
     const resolved = resolveHook(filename, specifier);
     if (resolved !== undefined)
       specifier = url.pathToFileURL(resolved).toString();
   }
-  const result = await defaultResolve(specifier, context, defaultResolve);
+  let result;
+  try {
+    result = await defaultResolve(specifier, context, defaultResolve);
+  } catch (error) {
+    const candidates = filename ? subpathImportCandidates(filename, specifier, error, context.conditions) : [];
+    for (const candidate of candidates) {
+      try {
+        result = await defaultResolve(path.isAbsolute(candidate) ? url.pathToFileURL(candidate).toString() : candidate, context, defaultResolve);
+        break;
+      } catch {
+      }
+    }
+    if (!result)
+      throw error;
+  }
   // Note: we collect dependencies here that will be sent to the main thread
   // (and optionally runner process) after the loading finishes.
   recordResolvedFile(result?.url, context.parentURL);

@@ -15,27 +15,36 @@
  */
 
 import fs from 'fs';
+import path from 'path';
 import url from 'url';
 
 import { recordResolvedFile } from './compilationCache';
-import { hasTransformedExtension, isStyleFile, resolveHook, shouldTransform, transformHook } from './transform';
+import { hasTransformedExtension, isStyleFile, resolveFirstCandidate, resolveHook, shouldTransform, subpathImportCandidates, transformHook } from './transform';
 import { fileIsModule } from '../util';
 
 export function resolve(specifier: string, context: { parentURL?: string, conditions?: string[] | Set<string> }, nextResolve: Function) {
-  if (context.parentURL && context.parentURL.startsWith('file://')) {
-    const filename = url.fileURLToPath(context.parentURL);
+  const filename = context.parentURL?.startsWith('file://') ? url.fileURLToPath(context.parentURL) : undefined;
+  // These hooks serve both require() and import. The two default resolvers disagree on
+  // what an already-resolved specifier should look like:
+  // - require()'s resolver wants an absolute path and rejects file:// specifiers;
+  // - the ESM resolver wants a file:// URL and, on Windows, mistakes an absolute path's
+  //   drive letter for a URL scheme ("Received protocol 'c:'").
+  // The `import` condition is present only for ESM resolution, so use it to pick the form.
+  const toSpecifier = (resolved: string) => new Set(context.conditions).has('import') ? url.pathToFileURL(resolved).toString() : resolved;
+  if (filename) {
     const resolved = resolveHook(filename, specifier);
-    if (resolved !== undefined) {
-      // These hooks serve both require() and import. The two default resolvers disagree on
-      // what an already-resolved specifier should look like:
-      // - require()'s resolver wants an absolute path and rejects file:// specifiers;
-      // - the ESM resolver wants a file:// URL and, on Windows, mistakes an absolute path's
-      //   drive letter for a URL scheme ("Received protocol 'c:'").
-      // The `import` condition is present only for ESM resolution, so use it to pick the form.
-      specifier = new Set(context.conditions).has('import') ? url.pathToFileURL(resolved).toString() : resolved;
-    }
+    if (resolved !== undefined)
+      specifier = toSpecifier(resolved);
   }
-  const result = nextResolve(specifier, context);
+  let result;
+  try {
+    result = nextResolve(specifier, context);
+  } catch (error) {
+    const candidates = filename ? subpathImportCandidates(filename, specifier, error, context.conditions) : [];
+    result = resolveFirstCandidate(candidates, candidate => nextResolve(path.isAbsolute(candidate) ? toSpecifier(candidate) : candidate, context));
+    if (result === undefined)
+      throw error;
+  }
   recordResolvedFile(result?.url, context.parentURL);
   return result;
 }

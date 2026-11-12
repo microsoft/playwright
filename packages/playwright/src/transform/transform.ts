@@ -22,7 +22,7 @@ import crypto from 'crypto';
 import sourceMapSupport from 'source-map-support';
 import { loadTsConfig } from './tsconfig-loader';
 import { libPath, packageJSON } from '../package';
-import { createFileMatcher, debugTest, fileIsModule, resolveImportSpecifierAfterMapping } from '../util';
+import { createFileMatcher, debugTest, fileIsModule, resolveImportSpecifierAfterMapping, resolveSubpathImportCandidates } from '../util';
 import * as cc from './compilationCache';
 import * as esmLoaderSync from './esmLoaderSync';
 import { addHook } from './pirates';
@@ -217,6 +217,25 @@ export function resolveHook(filename: string, specifier: string): string | undef
   }
 }
 
+const kRequireConditions = ['node', 'node-addons', 'module-sync', 'require'];
+const kSubpathImportErrors = new Set(['MODULE_NOT_FOUND', 'ERR_MODULE_NOT_FOUND', 'ERR_UNSUPPORTED_DIR_IMPORT', 'ERR_INVALID_MODULE_SPECIFIER']);
+
+// Node.js resolves a subpath import to its first target without checking that the file exists, tsc tries each target.
+export function subpathImportCandidates(filename: string, specifier: string, error: unknown, conditions: Iterable<string> = kRequireConditions): Iterable<string> {
+  if (!specifier.startsWith('#') || !kSubpathImportErrors.has((error as any)?.code) || !shouldTransform(filename))
+    return [];
+  return resolveSubpathImportCandidates(filename, specifier, new Set(conditions));
+}
+
+export function resolveFirstCandidate<T>(candidates: Iterable<string>, resolve: (candidate: string) => T): T | undefined {
+  for (const candidate of candidates) {
+    try {
+      return resolve(candidate);
+    } catch {
+    }
+  }
+}
+
 const kStyleExtensions = ['.css', '.less', '.scss'];
 
 export function isStyleFile(filename: string): boolean {
@@ -359,7 +378,15 @@ function installCJSHooks() {
       if (resolved !== undefined)
         specifier = resolved;
     }
-    return originalResolveFilename.call(this, specifier, parent, ...rest);
+    try {
+      return originalResolveFilename.call(this, specifier, parent, ...rest);
+    } catch (error) {
+      const candidates = parent ? subpathImportCandidates(parent.filename, specifier, error) : [];
+      const result = resolveFirstCandidate(candidates, candidate => originalResolveFilename.call(this, candidate, parent, ...rest));
+      if (result === undefined)
+        throw error;
+      return result;
+    }
   }
   (Module as any)._resolveFilename = resolveFilename;
 
