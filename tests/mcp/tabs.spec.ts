@@ -91,7 +91,7 @@ test('create new tab with url', async ({ client }) => {
   });
 });
 
-test('select tab', async ({ client }) => {
+test('select tab', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44079' } }, async ({ client }) => {
   await createTab(client, 'Tab one', 'Body one');
   await createTab(client, 'Tab two', 'Body two');
 
@@ -118,6 +118,17 @@ test('select tab', async ({ client }) => {
 - 1: [Tab one](data:text/html,<title>Tab one</title><body>Body one</body>)
 - 2: [Tab two](data:text/html,<title>Tab two</title><body>Body two</body>)`,
   });
+
+  await client.callTool({ name: 'browser_tabs', arguments: { action: 'select', index: 1 } });
+  const waiting = client.callTool({ name: 'browser_wait_for', arguments: { time: 3 } });
+  let waitFinished = false;
+  void waiting.then(() => { waitFinished = true; });
+  expect((await client.listTools()).tools.some(tool => tool.name === 'browser_tabs')).toBe(true);
+  expect(waitFinished).toBe(false);
+  await client.callTool({ name: 'browser_tabs', arguments: { action: 'select', index: 2 } });
+  const result = await waiting;
+  expect(result).toHaveResponse({ result: 'Waited for 3 seconds' });
+  expect(result).toHaveResponse({ snapshot: expect.stringContaining('Body one') });
 });
 
 test('close tab', async ({ client }) => {

@@ -45,6 +45,7 @@ export class BrowserBackend extends EventEmitter<{ disconnected: [], dynamictool
   private _browserContext: playwright.BrowserContext;
   private _disposeCallback: (() => Promise<void>) | undefined;
   private _idleTimer: IdleTimer | undefined;
+  private _toolCallQueue: Promise<void> = Promise.resolve();
 
   constructor(config: ContextConfig, browserContext: playwright.BrowserContext, tools: Tool[], options: BrowserBackendOptions = {}) {
     super();
@@ -87,6 +88,13 @@ export class BrowserBackend extends EventEmitter<{ disconnected: [], dynamictool
   }
 
   async callTool(name: string, rawArguments: mcpServer.CallToolRequest['params']['arguments'] & { _meta?: Record<string, any> } = {}, signal?: AbortSignal): Promise<mcpServer.CallToolResult> {
+    const next = this._toolCallQueue.then(() => this._callTool(name, rawArguments, signal));
+    this._toolCallQueue = next.then(() => {}, () => {});
+    return await next;
+  }
+
+  private async _callTool(name: string, rawArguments: mcpServer.CallToolRequest['params']['arguments'] & { _meta?: Record<string, any> }, signal?: AbortSignal): Promise<mcpServer.CallToolResult> {
+    signal?.throwIfAborted();
     this._idleTimer?.poke();
     const json = !!rawArguments._meta?.json;
     const formatError = (message: string): mcpServer.CallToolResult => ({
@@ -126,7 +134,6 @@ export class BrowserBackend extends EventEmitter<{ disconnected: [], dynamictool
     const cwd = rawArguments._meta?.cwd;
     const raw = !!rawArguments._meta?.raw;
     const response = new Response(context, name, parsedArguments, { relativeTo: cwd, raw, json, commandName });
-    context.setRunningTool(name);
     let responseObject: mcpServer.CallToolResult & { isClose?: boolean };
     try {
       await handle(parsedArguments, response);
@@ -138,8 +145,6 @@ export class BrowserBackend extends EventEmitter<{ disconnected: [], dynamictool
       const message = context.config.skillMode && error instanceof Error ? error.message : String(error);
       const messages = [message, ...context.drainPendingUnhandledRejections().filter(reason => reason !== error).map(formatRejectionReason)];
       responseObject = formatError(messages.join('\n\n'));
-    } finally {
-      context.setRunningTool(undefined);
     }
     if (this._disconnected || responseObject.isClose) {
       delete responseObject.isClose;
