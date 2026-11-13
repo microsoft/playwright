@@ -49,7 +49,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `CM` | Console messages | `page/page-event-console` |
 | `CN` | Channels | `library/channels` |
 | `CO` | Cookies | `library/{browsercontext-cookies, browsercontext-add-cookies, browsercontext-clearcookies, browsercontext-cookies-third-party}` |
-| `CR` | Chromium | `library/chromium/{chromium, launcher, extensions, bfcache, connect-to-worker, disable-web-security}` |
+| `CR` | Chromium | `library/chromium/{chromium, launcher, extensions, bfcache, disable-web-security}` |
 | `CS` | CSP | `library/browsercontext-csp` |
 | `CV` | Coverage | `library/chromium/{js-coverage, css-coverage}`<br>`library/coverage` |
 | `DB` | Debug | `library/{debugger, debug-controller}` |
@@ -1502,8 +1502,6 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `CR-040` | `library/chromium/extensions.spec.ts` | MV3 › should report console messages from content script |
 | `CR-041` | `library/chromium/extensions.spec.ts` | MV3 › should use custom userAgent in service worker fetch requests |
 | `CR-042` | `library/chromium/bfcache.spec.ts` | bindings should work after restoring from bfcache |
-| `CR-043` | `library/chromium/connect-to-worker.spec.ts` | should connect, evaluate, receive console and disconnect |
-| `CR-044` | `library/chromium/connect-to-worker.spec.ts` | should receive close when node process exits |
 | `CR-045` | `library/chromium/disable-web-security.spec.ts` | test utility world in popup w/ --disable-web-security |
 | `CR-046` | `library/chromium/disable-web-security.spec.ts` | test init script w/ --disable-web-security |
 

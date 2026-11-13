@@ -20,11 +20,6 @@ Worker:
 
   commands:
 
-    disconnect:
-      title: Disconnect from worker
-      parameters:
-        reason: string?
-
     evaluateExpression:
       title: Evaluate
       parameters:

@@ -1814,7 +1814,6 @@ export interface BrowserTypeChannel extends BrowserTypeEventTarget, Channel {
   launch(params: BrowserTypeLaunchParams, options: TimeoutOptions): Promise<BrowserTypeLaunchResult>;
   launchPersistentContext(params: BrowserTypeLaunchPersistentContextParams, options: TimeoutOptions): Promise<BrowserTypeLaunchPersistentContextResult>;
   connectOverCDP(params: BrowserTypeConnectOverCDPParams, options: TimeoutOptions): Promise<BrowserTypeConnectOverCDPResult>;
-  connectToWorker(params: BrowserTypeConnectToWorkerParams, options: TimeoutOptions): Promise<BrowserTypeConnectToWorkerResult>;
 }
 export type BrowserTypeLaunchParams = {
   channel?: string,
@@ -2075,15 +2074,6 @@ export type BrowserTypeConnectOverCDPOptions = {
 export type BrowserTypeConnectOverCDPResult = {
   browser: BrowserChannel,
   defaultContext?: BrowserContextChannel,
-};
-export type BrowserTypeConnectToWorkerParams = {
-  endpoint: string,
-};
-export type BrowserTypeConnectToWorkerOptions = {
-
-};
-export type BrowserTypeConnectToWorkerResult = {
-  worker: WorkerChannel,
 };
 
 export interface BrowserTypeEvents {
@@ -5320,7 +5310,6 @@ export interface WorkerEventTarget {
 }
 export interface WorkerChannel extends WorkerEventTarget, Channel {
   _type_Worker: boolean;
-  disconnect(params: WorkerDisconnectParams, options: TimeoutOptions): Promise<WorkerDisconnectResult>;
   evaluateExpression(params: WorkerEvaluateExpressionParams, options: TimeoutOptions): Promise<WorkerEvaluateExpressionResult>;
   evaluateExpressionHandle(params: WorkerEvaluateExpressionHandleParams, options: TimeoutOptions): Promise<WorkerEvaluateExpressionHandleResult>;
   updateSubscription(params: WorkerUpdateSubscriptionParams, options: TimeoutOptions): Promise<WorkerUpdateSubscriptionResult>;
@@ -5337,13 +5326,6 @@ export type WorkerConsoleEvent = {
   timestamp: number,
 };
 export type WorkerCloseEvent = {};
-export type WorkerDisconnectParams = {
-  reason?: string,
-};
-export type WorkerDisconnectOptions = {
-  reason?: string,
-};
-export type WorkerDisconnectResult = void;
 export type WorkerEvaluateExpressionParams = {
   expression: string,
   isFunction?: boolean,

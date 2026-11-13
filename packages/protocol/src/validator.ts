@@ -1128,12 +1128,6 @@ scheme.BrowserTypeConnectOverCDPResult = tObject({
   browser: tChannel(['Browser']),
   defaultContext: tOptional(tChannel(['BrowserContext'])),
 });
-scheme.BrowserTypeConnectToWorkerParams = tObject({
-  endpoint: tString,
-});
-scheme.BrowserTypeConnectToWorkerResult = tObject({
-  worker: tChannel(['Worker']),
-});
 scheme.Metadata = tObject({
   location: tOptional(tObject({
     file: tString,
@@ -3221,10 +3215,6 @@ scheme.WorkerConsoleEvent = tObject({
   timestamp: tFloat,
 });
 scheme.WorkerCloseEvent = tOptional(tObject({}));
-scheme.WorkerDisconnectParams = tObject({
-  reason: tOptional(tString),
-});
-scheme.WorkerDisconnectResult = tOptional(tObject({}));
 scheme.WorkerEvaluateExpressionParams = tObject({
   expression: tString,
   isFunction: tOptional(tBoolean),

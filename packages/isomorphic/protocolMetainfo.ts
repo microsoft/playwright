@@ -118,7 +118,6 @@ export const methodMetainfo = new Map<string, MethodMetainfo>([
   ['BrowserType.launch', { title: 'Launch browser', }],
   ['BrowserType.launchPersistentContext', { title: 'Launch persistent context', }],
   ['BrowserType.connectOverCDP', { title: 'Connect over CDP', }],
-  ['BrowserType.connectToWorker', { title: 'Connect to worker', }],
   ['Disposable.dispose', { internal: true, }],
   ['Electron.launch', { title: 'Launch electron', }],
   ['ElectronApplication.browserWindow', { internal: true, }],
@@ -348,7 +347,6 @@ export const methodMetainfo = new Map<string, MethodMetainfo>([
   ['Tracing.tracingStop', { title: 'Stop tracing', group: 'configuration', }],
   ['Tracing.harStart', { internal: true, }],
   ['Tracing.harExport', { internal: true, }],
-  ['Worker.disconnect', { title: 'Disconnect from worker', }],
   ['Worker.evaluateExpression', { title: 'Evaluate', }],
   ['Worker.evaluateExpressionHandle', { title: 'Evaluate', }],
   ['Worker.updateSubscription', { internal: true, }]
