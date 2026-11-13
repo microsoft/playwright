@@ -482,6 +482,8 @@ JUnit report supports following configuration options and environment variables:
 | `PLAYWRIGHT_JUNIT_STRIP_ANSI` | `stripANSIControlSequences` | Whether to remove ANSI control sequences from the text before writing it in the report. | By default output text is added as is.
 | `PLAYWRIGHT_JUNIT_INCLUDE_PROJECT_IN_TEST_NAME` | `includeProjectInTestName` | Whether to include Playwright project name in every test case as a name prefix. | By default not included.
 | `PLAYWRIGHT_JUNIT_OMIT_TAGS` | `omitTags` | Whether to omit test tags that are automatically appended to failure details. | `false`
+| `PLAYWRIGHT_JUNIT_ADD_FILE_ATTRIBUTE` | `addFileAttribute` | Whether to add a `file` attribute to every test case, with the path of the test file relative to `fileRoot`. | `false`
+| `PLAYWRIGHT_JUNIT_FILE_ROOT` | `fileRoot` | Directory that the `file` attribute is relative to, for example the repository root in a monorepo. The option is resolved relative to the config directory, the environment variable relative to `cwd`. | Config directory.
 | `PLAYWRIGHT_JUNIT_SUITE_ID` |  | Value of the `id` attribute on the root `<testsuites/>` report entry. | Empty string.
 | `PLAYWRIGHT_JUNIT_SUITE_NAME` |  | Value of the `name` attribute on the root `<testsuites/>` report entry. | Empty string.
 

@@ -347,6 +347,42 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       expect(xml['testsuites']['testsuite'][1]['testcase'][0]['$']['name']).toBe('[project2] one');
     });
 
+    test('should add file attribute relative to fileRoot', {
+      annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44099' },
+    }, async ({ runInlineTest }) => {
+      const files = {
+        'packages/foo/playwright.config.ts': `
+          module.exports = {
+            testDir: './src',
+            reporter: [['junit', { addFileAttribute: true, fileRoot: process.env.TEST_FILE_ROOT }]]
+          };
+        `,
+        'packages/foo/src/auth/a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('one', async ({}) => {
+            expect(1).toBe(1);
+          });
+        `,
+      };
+      const run = async (env: Record<string, string>) => {
+        const result = await runInlineTest(files, { reporter: '', config: './packages/foo/playwright.config.ts' }, env);
+        expect(result.exitCode).toBe(0);
+        return parseXML(result.output)['testsuites']['testsuite'][0]['testcase'][0]['$'];
+      };
+
+      const byDefault = await run({});
+      expect(byDefault['classname']).toBe('auth/a.test.js');
+      expect(byDefault['file']).toBe('src/auth/a.test.js');
+
+      // The option is relative to the config directory.
+      expect((await run({ TEST_FILE_ROOT: '../..' }))['file']).toBe('packages/foo/src/auth/a.test.js');
+
+      // The environment variable wins and is relative to cwd.
+      expect((await run({ TEST_FILE_ROOT: '../..', PLAYWRIGHT_JUNIT_FILE_ROOT: 'packages' }))['file']).toBe('foo/src/auth/a.test.js');
+
+      expect((await run({ PLAYWRIGHT_JUNIT_ADD_FILE_ATTRIBUTE: '0' }))['file']).toBeUndefined();
+    });
+
     test('should render existing attachments, but not missing ones', async ({ runInlineTest }) => {
       test.skip(useIntermediateMergeReport, 'Blob report hashes attachment paths');
       const result = await runInlineTest({
