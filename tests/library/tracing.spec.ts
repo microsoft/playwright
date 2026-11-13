@@ -340,15 +340,21 @@ test('TR-013 should respect tracesDir and name', {
   expect(fs.existsSync(path.join(tracesDir, 'name2.network'))).toBe(true);
 
   await context.tracing.start({ name: 'discarded', screenshots: true, snapshots: { dom: true, screen: true, aria: true } });
-  await page.goto(server.PREFIX + '/input/button.html');
-  await page.click('button');
+  await page.goto(server.PREFIX + '/har.html');
+  // A stylesheet changed through CSSOM is saved as a snapshot resource.
+  await page.evaluate(() => document.styleSheets[0].insertRule('.discarded-rule { color: red }'));
+  await page.click('body');
+  const snapshotResources = () => fs.readdirSync(path.join(tracesDir, 'resources')).filter(file => fs.readFileSync(path.join(tracesDir, 'resources', file), 'utf8').includes('.discarded-rule'));
   for (const dir of ['screencast', 'screenshots', 'aria'])
     await expect.poll(() => fs.readdirSync(path.join(tracesDir, dir)).length).toBeGreaterThan(0);
+  await expect.poll(snapshotResources).toHaveLength(1);
+  const networkResources = fs.readdirSync(path.join(tracesDir, 'resources')).filter(file => !snapshotResources().includes(file));
   await context.tracing.stopChunk();
   // Discarded files are removed in the background.
   await expect.poll(() => fs.existsSync(path.join(tracesDir, 'discarded.trace'))).toBe(false);
   for (const dir of ['screencast', 'screenshots', 'aria'])
     await expect.poll(() => fs.readdirSync(path.join(tracesDir, dir))).toEqual([]);
+  await expect.poll(() => fs.readdirSync(path.join(tracesDir, 'resources'))).toEqual(networkResources);
   expect(fs.existsSync(path.join(tracesDir, 'discarded.network'))).toBe(true);
   await context.tracing.stop();
 

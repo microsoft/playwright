@@ -496,11 +496,12 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     this._state.chunkFiles = new Set();
 
     if (params.mode === 'discard') {
-      // Removal is queued after the pending writes, the caller does not wait for it.
+      // Live traces are read from the disk in place.
+      if (this._state.options.live)
+        return undefined;
       this._fs.removeFile(this._state.traceFile);
       for (const file of chunkFiles) {
-        // Content-addressed resources can be shared with other chunks and contexts.
-        if (file.startsWith('resources/'))
+        if (this._state.crossChunkFiles.has(file))
           continue;
         this._allResources.delete(file);
         this._fs.removeFile(path.join(this._state.tracesDir, file));
