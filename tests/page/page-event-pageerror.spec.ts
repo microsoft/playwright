@@ -16,6 +16,7 @@
  */
 
 import { test as it, expect } from './pageTest';
+import type { ServerResponse } from 'http';
 
 it('ER-001 should fire', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43450' },
@@ -283,4 +284,32 @@ it('ER-013 should fire illegal character error', {
     expect(error.message).toContain('Invalid character');
   else
     expect(error.message).toContain('illegal character');
+});
+
+it('ER-022 should not fire for a caught fetch rejected by a pending navigation', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44015' },
+}, async ({ page, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  const waitResponse = new Promise<ServerResponse>(resolve => server.setRoute('/wait', (req, res) => resolve(res)));
+  const replacementResponse = new Promise<ServerResponse>(resolve => server.setRoute('/replacement', (req, res) => resolve(res)));
+  const fetchDone = page.waitForEvent('console', message => message.text() === 'fetch done');
+  // Chromium does not run evaluate during a pending navigation, so the page starts the second fetch.
+  await page.evaluate(() => {
+    void fetch('/wait').catch(() => {}).then(() => fetch('/empty.html')).catch(() => {}).then(() => console.log('fetch done'));
+  });
+  const navigation = page.goto(server.PREFIX + '/replacement');
+  const response = await replacementResponse;
+  // WebKit rejects the second fetch, because the document is about to go away.
+  (await waitResponse).end();
+  await fetchDone;
+  response.end('replacement');
+  await navigation;
+  const [error] = await Promise.all([
+    page.waitForEvent('pageerror'),
+    page.evaluate(() => setTimeout(() => { throw new Error('genuine error'); }, 0)),
+  ]);
+  expect(error.message).toBe('genuine error');
+  expect(errors).toEqual(['genuine error']);
 });

@@ -2064,6 +2064,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `ER-019` | `library/page-event-crash.spec.ts` | should be able to close context when page crashes |
 | `ER-020` | `library/page-event-crash.spec.ts` | should be able to close page after crash |
 | `ER-021` | `library/page-event-crash.spec.ts` | should reject in-flight worker.evaluate when page crashes |
+| `ER-022` | `page/page-event-pageerror.spec.ts` | should not fire for a caught fetch rejected by a pending navigation |
 
 ### ES — Eval on selector
 
