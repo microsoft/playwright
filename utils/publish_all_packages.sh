@@ -17,7 +17,7 @@ cd "$(dirname $0)"
 if [[ $1 == "--help" ]]; then
   echo "usage: $(basename $0) [--release|--alpha|--beta]"
   echo
-  echo "Publishes all packages under <tag>-pending; the promote-npm job of publish_release.yml moves <tag> to them."
+  echo "Publishes all packages under <tag>-pending; the promote-npm job of publish_release.yml or publish_manual.yml moves <tag> to them."
   echo
   echo "--release                publish the @latest version of all packages"
   echo "--alpha                  publish the @next version of all packages"
@@ -77,7 +77,8 @@ fi
 # processes it, usually within 3 minutes, but playwright-core@1.65.0 took 110 minutes, during which
 # playwright@latest depended on a missing package. So the packages are published under
 # "<tag>-pending" and <tag> stays where it is: the promote-npm job of publish_release.yml moves it once
-# all of them are live, reading the list of published packages from npm-publish.json.
+# all of them are live, reading the list of published packages from npm-publish.json. For a patch
+# release, the promote-npm job of publish_manual.yml moves it when the GitHub release is published.
 echo "==================== Publishing version ${VERSION} ================"
 node ./utils/workspace.js --ensure-consistent
 PACKAGE_PATHS=$(node ./utils/workspace.js --list-public-package-paths)
