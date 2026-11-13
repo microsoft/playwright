@@ -26301,6 +26301,14 @@ export interface ConnectOptions {
   headers?: { [key: string]: string; };
 
   /**
+   * Options used to launch the browser, as passed to
+   * [browserType.launch([options])](https://playwright.dev/docs/api/class-browsertype#browser-type-launch). Only
+   * applies when the server launches a browser for each connection. The server ignores the options that it does not
+   * allow.
+   */
+  launchOptions?: LaunchOptions;
+
+  /**
    * Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going
    * on. Defaults to 0.
    */

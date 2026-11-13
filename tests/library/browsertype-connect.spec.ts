@@ -46,11 +46,7 @@ const test = playwrightTest.extend<ExtraFixtures>({
     await use(async (wsEndpoint, options = {}, testOptions = {}): Promise<Browser> => {
       (options as any).__testHookRedirectPortForwarding = testOptions.redirectPortForTest;
       const launchOptions = { ...(browserType as any)._playwright._defaultLaunchOptions, ...testOptions.launchOptions };
-      options.headers = {
-        'x-playwright-launch-options': JSON.stringify(launchOptions),
-        ...options.headers,
-      };
-      browser = await browserType.connect(wsEndpoint, options);
+      browser = await browserType.connect(wsEndpoint, { ...options, launchOptions });
       return browser;
     });
     await browser?.close();
@@ -674,9 +670,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
     test('BT-071 should be able to connect when the wsEndpoint is passed as an option', async ({ browserType, startRemoteServer }) => {
       const remoteServer = await startRemoteServer(kind);
       const browser = await browserType.connect(remoteServer.wsEndpoint(), {
-        headers: {
-          'x-playwright-launch-options': JSON.stringify((browserType as any)._playwright._defaultLaunchOptions || {}),
-        },
+        launchOptions: (browserType as any)._playwright._defaultLaunchOptions || {},
       });
       const page = await browser.newPage();
       expect(await page.evaluate('1 + 2')).toBe(3);
