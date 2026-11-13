@@ -39,15 +39,14 @@ export const uploadFile = defineTabTool({
     if (!modalState)
       throw new Error('No file chooser visible');
 
-    const paths = params.paths ? await Promise.all(params.paths.map(filePath => response.resolveClientFilename(filePath))) : undefined;
+    const paths = params.paths ? await Promise.all(params.paths.map(filePath => response.resolveClientFilename(filePath))) : [];
 
     response.addCode(`await fileChooser.setFiles(${JSON.stringify(paths)})`);
 
     tab.clearModalState(modalState);
     try {
       await tab.waitForCompletion(async () => {
-        if (paths)
-          await modalState.fileChooser.setFiles(paths);
+        await modalState.fileChooser.setFiles(paths);
       });
     } catch (e) {
       tab.setModalState(modalState);
