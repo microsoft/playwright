@@ -78,7 +78,7 @@ async function advisoriesFor(name, version) {
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ [name]: [version] }),
   });
-  return (result[name] || []).map(advisory => advisory.url.split('/').pop());
+  return (result[name] || []).map(advisory => `${advisory.url.split('/').pop()} (${advisory.severity})`);
 }
 
 /**
