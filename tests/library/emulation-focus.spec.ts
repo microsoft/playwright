@@ -250,7 +250,8 @@ browserTest('EM-024 should trigger hover state concurrently', async ({ browserTy
 
 browserTest('EM-028 should keep mouse drag when interacting with another page/context', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43969' },
-}, async ({ contextFactory }) => {
+}, async ({ contextFactory, headless }) => {
+  browserTest.skip(!headless, 'Stray mouse events mess up the test');
   const page1 = await (await contextFactory()).newPage();
   const page2 = await (await contextFactory()).newPage();
   for (const page of [page1, page2]) {
