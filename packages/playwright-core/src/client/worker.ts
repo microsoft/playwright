@@ -17,7 +17,7 @@
 import { LongStandingScope } from '@isomorphic/manualPromise';
 import { ChannelOwner, apiCall } from './channelOwner';
 import { ConsoleMessage } from './consoleMessage';
-import { isTargetClosedError, TargetClosedError } from './errors';
+import { TargetClosedError } from './errors';
 import { Events } from './events';
 import { JSHandle, assertMaxArguments, parseResult, serializeArgument } from './jsHandle';
 import { TimeoutSettings, kNoTimeout } from './timeoutSettings';
@@ -51,7 +51,6 @@ export class Worker extends ChannelOwner<channels.WorkerChannel> implements api.
       [Events.Worker.Console, 'console'],
     ]));
     this._channel.on('console', event => {
-      // Note: we only receive console events here for workers from "chromium._connectToWorker".
       this.emit(Events.Worker.Console, new ConsoleMessage(event, null, this));
     });
     this._channel.on('close', () => {
@@ -98,16 +97,5 @@ export class Worker extends ChannelOwner<channels.WorkerChannel> implements api.
     const result = await waiter.waitForEvent(this, event, predicate as any);
     waiter.dispose();
     return result;
-  }
-
-  async _disconnect(options: { reason?: string } = {}): Promise<void> {
-    this._closeReason = options.reason;
-    try {
-      await this._channel.disconnect(options, kNoTimeout);
-    } catch (e) {
-      if (isTargetClosedError(e))
-        return;
-      throw e;
-    }
   }
 }

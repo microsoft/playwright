@@ -56,10 +56,3 @@ BrowserType:
       returns:
         browser: Browser
         defaultContext: BrowserContext?
-
-    connectToWorker:
-      title: Connect to worker
-      parameters:
-        endpoint: string
-      returns:
-        worker: Worker

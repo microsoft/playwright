@@ -991,18 +991,16 @@ export class Worker extends SdkObject<WorkerEventMap> {
   static Events = WorkerEvent;
 
   readonly url: string;
-  private _onDisconnect?: () => Promise<void>;
   private _executionContextPromise = new ManualPromise<js.ExecutionContext>();
   private _workerScriptLoaded = false;
   existingExecutionContext: js.ExecutionContext | null = null;
   readonly openScope = new LongStandingScope();
   _closeReason: string | undefined;
 
-  constructor(parent: SdkObject, url: string, onDisconnect?: () => Promise<void>) {
+  constructor(parent: SdkObject, url: string) {
     super(parent, 'worker');
     this.attribution.worker = this;
     this.url = url;
-    this._onDisconnect = onDisconnect;
   }
 
   createExecutionContext(delegate: js.ExecutionContextDelegate) {
@@ -1044,13 +1042,6 @@ export class Worker extends SdkObject<WorkerEventMap> {
   private async _executionContext(progress: Progress): Promise<js.ExecutionContext> {
     // The worker may close before its execution context is ready.
     return await progress.race(this.openScope.race(this._executionContextPromise));
-  }
-
-  async disconnect(progress: Progress, options: { reason?: string } = {}) {
-    if (!this._onDisconnect)
-      throw new Error('Cannot disconnect from this worker');
-    this._closeReason = options.reason;
-    await progress.race(this._onDisconnect());
   }
 }
 
