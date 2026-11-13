@@ -286,7 +286,7 @@ it('ER-013 should fire illegal character error', {
     expect(error.message).toContain('illegal character');
 });
 
-it('ER-014 should not fire for a caught fetch rejected by a pending navigation', {
+it('ER-022 should not fire for a caught fetch rejected by a pending navigation', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44015' },
 }, async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
