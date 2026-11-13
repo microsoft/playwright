@@ -427,8 +427,6 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       const result = this._stopChunk(params, coverageFile);
       if (coverageError)
         throw coverageError;
-      if (!result)
-        return {};
 
       // Make sure all file operations complete.
       try {
@@ -440,6 +438,9 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
           return {};
         throw error;
       }
+
+      if (!result)
+        return {};
 
       if (params.mode === 'entries')
         return { entries: result.entries };
@@ -492,10 +493,20 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     for (const file of new Set([...this._state.chunkFiles, ...this._state.crossChunkFiles]))
       entries.push({ name: file, value: path.join(this._state.tracesDir, file) });
 
+    const chunkFiles = this._state.chunkFiles;
     this._state.chunkFiles = new Set();
 
-    if (params.mode === 'discard')
+    if (params.mode === 'discard') {
+      this._fs.removeFile(this._state.traceFile);
+      for (const file of chunkFiles) {
+        // Content-addressed resources can be shared with other chunks and contexts.
+        if (file.startsWith('resources/'))
+          continue;
+        this._allResources.delete(file);
+        this._fs.removeFile(path.join(this._state.tracesDir, file));
+      }
       return undefined;
+    }
 
     this._fs.copyFile(this._state.networkFile, newNetworkFile);
 

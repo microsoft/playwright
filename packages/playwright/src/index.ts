@@ -674,7 +674,10 @@ class SnapshotRecorder {
         } catch {
         }
       }));
+    } else {
+      await Promise.all(this._temporary.map(file => fs.promises.rm(file, { force: true })));
     }
+    this._temporary = [];
   }
 
   async captureTemporary(context: BrowserContextImpl) {

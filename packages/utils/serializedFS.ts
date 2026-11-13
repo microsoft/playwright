@@ -31,6 +31,8 @@ type SerializedFSOperation = {
 } | {
   op: 'copyFile', from: string, to: string,
 } | {
+  op: 'removeFile', file: string,
+} | {
   op: 'zip', entries: NameValue[], zipFileName: string,
 };
 
@@ -84,6 +86,11 @@ export class SerializedFS {
     this._flushFile(from);
     this._buffers.delete(to); // No need to flush the buffer since we'll overwrite anyway.
     this._appendOperation({ op: 'copyFile', from, to });
+  }
+
+  removeFile(file: string) {
+    this._buffers.delete(file);
+    this._appendOperation({ op: 'removeFile', file });
   }
 
   async sync() {
@@ -160,6 +167,10 @@ export class SerializedFS {
       }
       case 'appendFile': {
         await fs.promises.appendFile(op.file, op.content);
+        return;
+      }
+      case 'removeFile': {
+        await fs.promises.rm(op.file, { force: true });
         return;
       }
       case 'zip': {

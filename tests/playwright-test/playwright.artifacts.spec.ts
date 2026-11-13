@@ -35,7 +35,15 @@ const testFiles = {
     import os from 'os';
     import path from 'path';
 
-    import { test, expect } from '@playwright/test';
+    import { test as base, expect } from '@playwright/test';
+
+    const test = base.extend({
+      inspectArtifacts: [async ({}, use, workerInfo) => {
+        await use();
+        const artifactsDir = path.join(workerInfo.project.outputDir, '.playwright-artifacts-' + workerInfo.workerIndex);
+        console.log('%%temporary screenshots: ' + JSON.stringify(fs.readdirSync(artifactsDir).filter(file => file.endsWith('.png'))));
+      }, { scope: 'worker', auto: true }],
+    });
 
     test.describe('shared', () => {
       let page;
@@ -167,7 +175,9 @@ test('should work with screenshot: on', async ({ runInlineTest }, testInfo) => {
   ]);
 });
 
-test('should work with screenshot: only-on-failure', async ({ runInlineTest }, testInfo) => {
+test('should work with screenshot: only-on-failure', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44086' }
+}, async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...testFiles,
     'playwright.config.ts': `
@@ -178,6 +188,7 @@ test('should work with screenshot: only-on-failure', async ({ runInlineTest }, t
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(5);
   expect(result.failed).toBe(5);
+  expect(result.outputLines).toEqual(Array(5).fill('temporary screenshots: []'));
   expect(listFiles(testInfo.outputPath('test-results'))).toEqual([
     '.last-run.json',
     'artifacts-failing',

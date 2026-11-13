@@ -319,7 +319,9 @@ test('TR-012 should collect two traces', async ({ context, page, server }, testI
   }
 });
 
-test('TR-013 should respect tracesDir and name', async ({ browserType, server, mode }, testInfo) => {
+test('TR-013 should respect tracesDir and name', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44086' }
+}, async ({ browserType, server, mode }, testInfo) => {
   const tracesDir = testInfo.outputPath('traces');
   const browser = await browserType.launch({ tracesDir });
   const context = await browser.newContext();
@@ -336,6 +338,18 @@ test('TR-013 should respect tracesDir and name', async ({ browserType, server, m
   await context.tracing.stop({ path: testInfo.outputPath('trace2.zip') });
   expect(fs.existsSync(path.join(tracesDir, 'name2.trace'))).toBe(true);
   expect(fs.existsSync(path.join(tracesDir, 'name2.network'))).toBe(true);
+
+  await context.tracing.start({ name: 'discarded', screenshots: true, snapshots: { dom: true, screen: true, aria: true } });
+  await page.goto(server.PREFIX + '/input/button.html');
+  await page.click('button');
+  for (const dir of ['screencast', 'screenshots', 'aria'])
+    await expect.poll(() => fs.readdirSync(path.join(tracesDir, dir)).length).toBeGreaterThan(0);
+  await context.tracing.stopChunk();
+  expect(fs.existsSync(path.join(tracesDir, 'discarded.trace'))).toBe(false);
+  for (const dir of ['screencast', 'screenshots', 'aria'])
+    expect(fs.readdirSync(path.join(tracesDir, dir))).toEqual([]);
+  expect(fs.existsSync(path.join(tracesDir, 'discarded.network'))).toBe(true);
+  await context.tracing.stop();
 
   await browser.close();
 
