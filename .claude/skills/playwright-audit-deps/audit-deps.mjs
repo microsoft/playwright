@@ -14,6 +14,9 @@
 //   --allow-major      also roll root-pinned packages across a major version
 //   --report=FILE      also write the markdown report to FILE
 //   --severity=LEVEL   lowest severity to act on: low, moderate, high, critical (default moderate)
+//   --urgent-severity=LEVEL  advisories of this severity or above do not wait for --max-age-days:
+//                      when no version that is old enough fixes them, the oldest fixed version is picked
+//   --all              also act on packages that are not in a runtime bundle; needs no build
 
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -33,6 +36,8 @@ const baseRef = args.base ?? 'HEAD';
 const allowMajor = !!args['allow-major'];
 const severities = ['low', 'moderate', 'high', 'critical'];
 const minSeverity = severities.indexOf(args.severity ?? 'moderate');
+const urgentSeverity = args['urgent-severity'] ? severities.indexOf(args['urgent-severity']) : severities.length;
+const all = !!args.all;
 const cutoff = new Date(Date.now() - maxAgeDays * 24 * 3600 * 1000);
 
 const lockPath = path.join(root, 'package-lock.json');
@@ -155,18 +160,30 @@ function constraints(lockJson) {
 // version under it, and that nested copy never reaches a bundle. A runtime
 // dependent that rejects the new version would get such a nested copy too,
 // and that one would be bundled, so it blocks.
-function chooseVersion({ name, current, nodePath, badRanges, cons, isRuntime }) {
+function chooseVersion({ name, current, nodePath, badRanges, urgentRanges = [], cons, isRuntime }) {
   const time = view(name).time;
   const rootPinned = cons.some(c => c.from === '');
   const others = cons.filter(c => c.from !== '' && (c.from.startsWith('packages/') || isRuntime(c.from)));
   const allowPrerelease = !!semver.prerelease(current);
-  const candidates = Object.keys(time)
+  const newer = Object.keys(time)
       .filter(v => semver.valid(v) && (allowPrerelease || !semver.prerelease(v)))
-      .filter(v => semver.gt(v, current))
-      .filter(v => !badRanges.some(r => semver.satisfies(v, r, { includePrerelease: true })));
-  const oldEnough = candidates.filter(v => new Date(time[v]) <= cutoff);
-  const accepted = oldEnough.filter(v => others.every(c => semver.satisfies(v, c.range, { includePrerelease: true })));
-  const pick = accepted.sort(semver.rcompare)[0];
+      .filter(v => semver.gt(v, current));
+  const outside = ranges => v => !ranges.some(r => semver.satisfies(v, r, { includePrerelease: true }));
+  const isOldEnough = v => new Date(time[v]) <= cutoff;
+  const isAccepted = v => others.every(c => semver.satisfies(v, c.range, { includePrerelease: true }));
+  const candidates = newer.filter(outside(badRanges));
+  const oldEnough = candidates.filter(isOldEnough);
+  const accepted = oldEnough.filter(isAccepted);
+  let pick = accepted.sort(semver.rcompare)[0];
+  let urgent = false;
+  if (!pick && urgentRanges.length) {
+    // An urgent advisory does not wait. A version that is old enough is still
+    // preferred, even when it leaves the less severe advisories open.
+    const fixed = newer.filter(outside(urgentRanges)).filter(isAccepted);
+    const fixedOldEnough = fixed.filter(isOldEnough);
+    pick = fixedOldEnough.sort(semver.rcompare)[0] ?? fixed.sort(semver.compare)[0];
+    urgent = !!pick && !fixedOldEnough.length;
+  }
   if (!pick) {
     if (!candidates.length)
       return { reason: 'no fixed version published' };
@@ -180,7 +197,7 @@ function chooseVersion({ name, current, nodePath, badRanges, cons, isRuntime }) 
   const major = semver.major(pick) !== semver.major(current);
   if (rootPinned && major && !allowMajor)
     return { reason: `needs a major bump to ${pick} in package.json (rerun with --allow-major)`, version: pick };
-  return { version: pick, rootPinned, major, nodePath };
+  return { version: pick, rootPinned, major, nodePath, urgent };
 }
 
 // ---------- lock file edits ----------
@@ -226,12 +243,12 @@ function checkInstalled(names) {
     throw new Error(`npm ls reports problems after the roll:\n${ls.problems.join('\n')}`);
 }
 
-function pinDownNewcomers(baseJson) {
+function pinDownNewcomers(baseJson, urgent) {
   const json = lock();
   const cons = constraints(json);
   let changed = false;
   for (const { nodePath, name, before, after } of lockDiff(baseJson, json)) {
-    if (!after || !semver.valid(after) || publishTime(name, after) <= cutoff)
+    if (!after || !semver.valid(after) || publishTime(name, after) <= cutoff || urgent.has(`${name}@${after}`))
       continue;
     const choice = chooseVersion({ name, current: before && semver.valid(before) ? before : '0.0.0', nodePath, badRanges: [], cons: (cons.get(nodePath) ?? []).filter(c => c.from !== ''), isRuntime: () => true });
     if (!choice.version || choice.version === after)
@@ -247,9 +264,9 @@ function pinDownNewcomers(baseJson) {
 
 async function main() {
   const audit = JSON.parse(npm(['audit', '--json']));
-  const inlined = bundleInlinedPaths();
+  const inlined = all ? [] : bundleInlinedPaths();
   const workspaceDeps = workspaceRuntimeDeps();
-  const isRuntime = nodePath => inlined.some(l => l.startsWith(nodePath + '/')) || (nodePath.split('node_modules/').length === 2 && workspaceDeps.has(nameOf(nodePath)));
+  const isRuntime = nodePath => all || inlined.some(l => l.startsWith(nodePath + '/')) || (nodePath.split('node_modules/').length === 2 && workspaceDeps.has(nameOf(nodePath)));
 
   const lockJson = lock();
   const cons = constraints(lockJson);
@@ -269,14 +286,15 @@ async function main() {
         continue;
       }
       const current = lockJson.packages[nodePath].version;
-      const choice = chooseVersion({ name, current, nodePath, badRanges: advisories.map(a => a.range), cons: cons.get(nodePath) ?? [], isRuntime });
+      const urgentRanges = advisories.filter(a => severities.indexOf(a.severity) >= urgentSeverity).map(a => a.range);
+      const choice = chooseVersion({ name, current, nodePath, badRanges: advisories.map(a => a.range), urgentRanges, cons: cons.get(nodePath) ?? [], isRuntime });
       plan.push({ name, nodePath, current, severity: vuln.severity, advisories: advisories.map(a => a.url.replace('https://github.com/advisories/', '')), ...choice });
     }
   }
 
-  console.log(`\n## Runtime advisories (${args.severity ?? 'moderate'} and above), versions published on or before ${fmtDate(cutoff)}\n`);
+  console.log(`\n## ${all ? 'Advisories' : 'Runtime advisories'} (${args.severity ?? 'moderate'} and above), versions published on or before ${fmtDate(cutoff)}\n`);
   for (const p of plan)
-    console.log(`- ${p.nodePath} ${p.current} [${p.severity}, ${p.advisories.join(' ')}]: ${p.version && !p.reason ? `roll to ${p.version}${p.major ? ' (major)' : ''}` : `not rolled: ${p.reason}`}`);
+    console.log(`- ${p.nodePath} ${p.current} [${p.severity}, ${p.advisories.join(' ')}]: ${p.version && !p.reason ? `roll to ${p.version}${p.major ? ' (major)' : ''}${p.urgent ? ' (urgent, newer than the age limit)' : ''}` : `not rolled: ${p.reason}`}`);
   if (!plan.length)
     console.log('- none');
   if (skipped.length)
@@ -300,7 +318,7 @@ async function main() {
   }
   for (let round = 0; round < 5; round++) {
     npm(['install', '--no-audit', '--no-fund']);
-    if (!pinDownNewcomers(baseJson))
+    if (!pinDownNewcomers(baseJson, new Set(actionable.filter(p => p.urgent).map(p => `${p.name}@${p.version}`))))
       break;
   }
   checkInstalled(actionable.map(p => p.name));

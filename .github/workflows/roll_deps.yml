@@ -1,0 +1,80 @@
+name: "PR: bump npm dependencies with advisories"
+on:
+  workflow_dispatch:
+  schedule:
+    # At 9:00am UTC (2AM PST) every day.
+    - cron: "0 9 * * *"
+jobs:
+  roll-deps:
+    name: Roll dependencies
+    runs-on: ubuntu-24.04
+    if: github.repository == 'microsoft/playwright'
+    permissions:
+      contents: write
+    env:
+      BRANCH_NAME: roll-deps
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: lts/*
+      - run: npm ci
+      # Low and moderate advisories wait until the fixed version is 7 days old.
+      # High and critical advisories do not wait.
+      - name: Roll dependencies
+        run: |
+          node .claude/skills/playwright-audit-deps/audit-deps.mjs --apply --all \
+            --severity=low --max-age-days=7 --urgent-severity=high \
+            --report="$RUNNER_TEMP/deps-report.md"
+      - run: npm run check-dependency-age
+      - name: Prepare branch
+        id: prepare-branch
+        run: |
+          if [[ "$(git status --porcelain package.json package-lock.json)" == "" ]]; then
+              echo "there are no changes";
+              exit 0;
+          fi
+          git fetch origin "$BRANCH_NAME" || true
+          if git diff --quiet FETCH_HEAD -- package.json package-lock.json 2>/dev/null; then
+              echo "the branch already has these changes";
+              exit 0;
+          fi
+          echo "HAS_CHANGES=1" >> $GITHUB_OUTPUT
+          git config --global user.name microsoft-playwright-automation[bot]
+          git config --global user.email 203992400+microsoft-playwright-automation[bot]@users.noreply.github.com
+          git checkout -b "$BRANCH_NAME"
+          git add package.json package-lock.json
+          git commit -m "chore(deps): bump dependencies with advisories" -m "$(cat "$RUNNER_TEMP/deps-report.md")"
+          git push --force origin "$BRANCH_NAME"
+      - uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        if: ${{ steps.prepare-branch.outputs.HAS_CHANGES == '1' }}
+        id: app-token
+        with:
+          client-id: ${{ vars.PLAYWRIGHT_APP_CLIENT_ID }}
+          private-key: ${{ secrets.PLAYWRIGHT_PRIVATE_KEY }}
+      - name: Create or update Pull Request
+        if: ${{ steps.prepare-branch.outputs.HAS_CHANGES == '1' }}
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          github-token: ${{ steps.app-token.outputs.token }}
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const body = fs.readFileSync(path.join(process.env.RUNNER_TEMP, 'deps-report.md'), 'utf8');
+            const params = { owner: 'microsoft', repo: 'playwright' };
+            const { data: open } = await github.rest.pulls.list({
+              ...params,
+              state: 'open',
+              head: `microsoft:${process.env.BRANCH_NAME}`,
+            });
+            if (open.length) {
+              await github.rest.pulls.update({ ...params, pull_number: open[0].number, body });
+              return;
+            }
+            await github.rest.pulls.create({
+              ...params,
+              head: `microsoft:${process.env.BRANCH_NAME}`,
+              base: 'main',
+              title: 'chore(deps): bump dependencies with advisories',
+              body,
+            });
