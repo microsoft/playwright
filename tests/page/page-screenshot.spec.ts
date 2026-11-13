@@ -742,7 +742,9 @@ declare global {
 it.describe('page screenshot animations', () => {
   it('SS-098 should preserve scroll animation progress during screenshots', {
     annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43986' },
-  }, async ({ page }) => {
+  }, async ({ page, isAndroid }) => {
+    it.skip(isAndroid, 'Returns screenshot of a different size.');
+
     await page.setContent(`
       <style>
         @keyframes reveal { from { opacity: 0 } to { opacity: 1 } }
