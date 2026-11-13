@@ -14,7 +14,9 @@ jobs:
   publish-npm:
     name: "publish NPM"
     runs-on: ubuntu-24.04
-    if: github.repository == 'microsoft/playwright'
+    # github-actions[bot] is the author of the release created by publish_manual.yml,
+    # that does not need to publish from here.
+    if: github.repository == 'microsoft/playwright' && !(github.event_name == 'release' && github.event.release.author.login == 'github-actions[bot]')
     permissions:
       id-token: write  # This is required for OIDC login (NPM publish) to succeed
       contents: read   # This is required for actions/checkout to succeed
