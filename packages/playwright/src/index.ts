@@ -418,11 +418,13 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
         ].join('\n'));
       }
       const show = typeof video === 'string' ? undefined : video.show;
+      const videoFormat = typeof video === 'string' ? undefined : video.format;
       const videoOptions: BrowserContextOptions = captureVideo ? {
         recordVideo: {
           dir: tracing().artifactsDir(),
           size: typeof video === 'string' ? undefined : video.size,
           fps: typeof video === 'string' ? undefined : video.fps,
+          format: videoFormat,
           showActions: show?.actions,
         }
       } : {};
@@ -441,10 +443,10 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
           const videos = pagesForVideo.map(p => p.video()).filter(video => !!video);
           await Promise.all(videos.map(async v => {
             try {
-              const savedPath = testInfo.outputPath(`video${counter ? '-' + counter : ''}.webm`);
+              const savedPath = testInfo.outputPath(`video${counter ? '-' + counter : ''}.${videoFormat ?? 'webm'}`);
               ++counter;
               await v.saveAs(savedPath);
-              testInfo.attachments.push({ name: 'video', path: savedPath, contentType: 'video/webm' });
+              testInfo.attachments.push({ name: 'video', path: savedPath, contentType: `video/${videoFormat ?? 'webm'}` });
             } catch (e) {
               // Silent catch empty videos.
             }

@@ -189,6 +189,7 @@ scheme.AndroidDeviceLaunchBrowserParams = tObject({
       height: tInt,
     })),
     fps: tOptional(tInt),
+    format: tOptional(tEnum(['webm', 'mp4'])),
     showActions: tOptional(tObject({
       duration: tOptional(tFloat),
       position: tOptional(tEnum(['top-left', 'top', 'top-right', 'bottom-left', 'bottom', 'bottom-right'])),
@@ -500,6 +501,7 @@ scheme.BrowserNewContextParams = tObject({
       height: tInt,
     })),
     fps: tOptional(tInt),
+    format: tOptional(tEnum(['webm', 'mp4'])),
     showActions: tOptional(tObject({
       duration: tOptional(tFloat),
       position: tOptional(tEnum(['top-left', 'top', 'top-right', 'bottom-left', 'bottom', 'bottom-right'])),
@@ -580,6 +582,7 @@ scheme.BrowserNewContextForReuseParams = tObject({
       height: tInt,
     })),
     fps: tOptional(tInt),
+    format: tOptional(tEnum(['webm', 'mp4'])),
     showActions: tOptional(tObject({
       duration: tOptional(tFloat),
       position: tOptional(tEnum(['top-left', 'top', 'top-right', 'bottom-left', 'bottom', 'bottom-right'])),
@@ -682,6 +685,7 @@ scheme.BrowserContextInitializer = tObject({
         height: tInt,
       })),
       fps: tOptional(tInt),
+      format: tOptional(tEnum(['webm', 'mp4'])),
       showActions: tOptional(tObject({
         duration: tOptional(tFloat),
         position: tOptional(tEnum(['top-left', 'top', 'top-right', 'bottom-left', 'bottom', 'bottom-right'])),
@@ -1090,6 +1094,7 @@ scheme.BrowserTypeLaunchPersistentContextParams = tObject({
       height: tInt,
     })),
     fps: tOptional(tInt),
+    format: tOptional(tEnum(['webm', 'mp4'])),
     showActions: tOptional(tObject({
       duration: tOptional(tFloat),
       position: tOptional(tEnum(['top-left', 'top', 'top-right', 'bottom-left', 'bottom', 'bottom-right'])),
@@ -2694,6 +2699,7 @@ scheme.PageScreencastStartParams = tObject({
   fps: tOptional(tInt),
   sendFrames: tOptional(tBoolean),
   record: tOptional(tBoolean),
+  format: tOptional(tEnum(['webm', 'mp4'])),
 });
 scheme.PageScreencastStartResult = tObject({
   artifact: tOptional(tChannel(['Artifact'])),

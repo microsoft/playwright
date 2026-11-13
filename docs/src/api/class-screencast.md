@@ -55,6 +55,10 @@ Callback that receives JPEG-encoded frame data along with the page viewport size
 
 Path where the video should be saved when the screencast is stopped. When provided, video recording is started.
 
+The file extension selects the video format:
+* `.webm` records VP9 video in a WebM file. All browsers support this format.
+* `.mp4` records AV1 video in an MP4 file with the built-in encoder of the browser. Only Chromium supports this format, other browsers throw an error. The video keeps the aspect ratio of the page and fits into [`option: Screencast.start.size`]. [`option: Screencast.start.quality`] does not apply to it.
+
 ### option: Screencast.start.quality
 * since: v1.59
 - `quality` <[int]>

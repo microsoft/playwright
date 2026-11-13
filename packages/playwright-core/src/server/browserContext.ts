@@ -34,6 +34,7 @@ import { Selectors } from './selectors';
 import { Tracing } from './trace/recorder/tracing';
 import * as rawStorageSource from '../generated/storageScriptSource';
 import { nullProgress } from './progress';
+import { kMp4NotSupportedError } from './videoRecorder';
 
 import type { Browser, BrowserOptions } from './browser';
 import type { ConsoleMessage } from './console';
@@ -546,6 +547,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
         this.fetchRequest.tracing().flush().catch(e => flushError = flushError ?? e),
       ]));
       await progress.race(Promise.all(this.pages().map(page => page.screencast.handlePageOrContextClose())));
+      await progress.race(Promise.all(this.pages().map(page => page.delegate.stopMp4Recordings?.())));
 
       if (this._customCloseHandler) {
         await progress.race(this._customCloseHandler());
@@ -767,6 +769,8 @@ export function validateBrowserContextOptions(options: types.BrowserContextOptio
     options.proxy = normalizeProxySettings(options.proxy);
   if (options.recordVideo?.fps !== undefined && options.recordVideo.fps <= 0)
     throw new Error(`"recordVideo.fps" must be a positive number, got ${options.recordVideo.fps}`);
+  if (options.recordVideo?.format === 'mp4' && browserOptions.name !== 'chromium')
+    throw new Error(kMp4NotSupportedError);
   verifyGeolocation(options.geolocation);
 }
 

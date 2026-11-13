@@ -91,6 +91,9 @@ export interface PageDelegate {
   scrollRectIntoViewIfNeeded(handle: dom.ElementHandle, rect?: types.Rect): Promise<'error:notvisible' | 'error:notconnected' | 'done'>;
   startScreencast(options: { width: number, height: number, quality: number, fps?: number }): void;
   stopScreencast(): void;
+  // Records mp4 video with the browser's own encoder.
+  startMp4Recording?: (options: { fileName?: string, size?: types.Size, fps?: number }) => { artifact: Artifact, started: Promise<void>, stop(): Promise<void> };
+  stopMp4Recordings?: () => Promise<void>;
 
   pdf?: (options: channels.PagePdfParams) => Promise<Buffer>;
   coverage?: () => any;
@@ -834,6 +837,7 @@ export class Page extends SdkObject<PageEventMap> {
       await this.instrumentation.onPageWillClose(this).catch(() => {});
 
     await this.screencast.handlePageOrContextClose();
+    await this.delegate.stopMp4Recordings?.();
 
     if (this._lifecycle !== 'closing') {
       this._lifecycle = 'closing';

@@ -717,6 +717,32 @@ test('should work with video fps', async ({ runInlineTest }) => {
   expect(videoPlayer.fps).toBe(60);
 });
 
+test('should work with video format mp4', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43999' },
+}, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.js': `
+      module.exports = {
+        use: { video: { mode: 'on', format: 'mp4' } },
+        name: 'chromium',
+        preserveOutput: 'always',
+      };
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({ page }) => {
+        await page.setContent('<div>PASS</div>');
+      });
+    `,
+  }, { workers: 1 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  const attachment = result.report.suites[0].specs[0].tests[0].results[0].attachments.find(a => a.name === 'video');
+  expect(attachment.contentType).toBe('video/mp4');
+  expect(path.basename(attachment.path)).toBe('video.mp4');
+  expect(fs.readFileSync(attachment.path).includes('av01')).toBe(true);
+});
+
 test('should work with video.path() throwing', async ({ runInlineTest }, testInfo) => {
   // When running remotely, video.path() is not available, so we must not use it.
   const result = await runInlineTest({
