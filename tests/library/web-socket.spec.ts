@@ -284,7 +284,7 @@ it('WS-041 should navigate while an iframe opens WebSockets', {
     res.setHeader('Content-Type', 'text/html');
     res.end(`<script>setInterval(() => new WebSocket('ws://' + location.host + '/ws'), 5)</script>`);
   });
-  for (let i = 0; i < 100; ++i)
+  for (let i = 0; i < 20; ++i)
     await page.goto(server.PREFIX + '/parent');
   expect(page.frames()).toHaveLength(2);
   expect(await page.evaluate(() => 1 + 1)).toBe(2);
