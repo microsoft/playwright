@@ -952,6 +952,50 @@ test('CD-036 should connect over CDP using a ConnectionTransport', async ({ brow
   }
 });
 
+test('CD-054 should not wait for a busy page longer than pageInitTimeout', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44052' },
+}, async ({ browserType, server }, testInfo) => {
+  const port = 9339 + testInfo.workerIndex;
+  const browserServer = await browserType.launch({
+    // The busy page should not share a renderer with the other page.
+    args: ['--remote-debugging-port=' + port, '--site-per-process']
+  });
+  try {
+    const cdpBrowser1 = await browserType.connectOverCDP({
+      endpointURL: `http://127.0.0.1:${port}/`,
+    });
+    const context1 = cdpBrowser1.contexts()[0];
+    const page1 = await context1.newPage();
+    await page1.goto(server.CROSS_PROCESS_PREFIX + '/title.html');
+    const busyPage1 = await context1.newPage();
+    await busyPage1.goto(server.EMPTY_PAGE);
+    const busyStarted = busyPage1.waitForEvent('console', message => message.text() === 'busy');
+    busyPage1.evaluate(() => {
+      console.log('busy');
+      const start = Date.now();
+      while (Date.now() - start < 5000) {}
+    }).catch(() => {});
+    await busyStarted;
+
+    const cdpBrowser2 = await browserType.connectOverCDP({
+      endpointURL: `http://127.0.0.1:${port}/`,
+      pageInitTimeout: 500,
+    } as any);
+    const context2 = cdpBrowser2.contexts()[0];
+    const pages = context2.pages();
+    expect(pages.map(page => page.url())).toEqual([server.CROSS_PROCESS_PREFIX + '/title.html']);
+    expect(await pages[0].title()).toBe('Woof-Woof');
+    // The busy page is reported when its renderer responds again.
+    const busyPage2 = await context2.waitForEvent('page');
+    expect(busyPage2.url()).toBe(server.EMPTY_PAGE);
+    expect(await busyPage2.evaluate(() => 1 + 1)).toBe(2);
+    await cdpBrowser2.close();
+    await cdpBrowser1.close();
+  } finally {
+    await browserServer.close();
+  }
+});
+
 test.fixme('CD-053 should connect when another client inspects a terminated shared worker', {
   annotation: [
     { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43638' },
