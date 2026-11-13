@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-import { utils } from '../../packages/playwright-core/lib/coreBundle';
-import { test, expect, parseResponse, consoleEntries } from './fixtures';
+import { test as testBase, expect, parseResponse, consoleEntries } from './fixtures';
+import { crashTestFixtures } from '../config/commonFixtures';
+
+const test = testBase.extend(crashTestFixtures);
 
 test.describe('crash recovery', () => {
   test.skip(({ mcpBrowser }) => mcpBrowser !== 'chromium' && mcpBrowser !== 'chrome', 'chrome://crash is chromium-specific');
-  test.skip(utils.hostPlatform.startsWith('ubuntu24.04'), 'never dispatches the crash event');
 
   test.beforeEach(async ({ client, server }) => {
     await client.callTool({
@@ -28,7 +29,9 @@ test.describe('crash recovery', () => {
     });
   });
 
-  test('reports the navigation error, then resets and logs the crash', async ({ client, server }) => {
+  test('reports the navigation error, then resets and logs the crash', {
+    annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44094' },
+  }, async ({ client, server }) => {
     expect(await client.callTool({
       name: 'browser_navigate',
       arguments: { url: 'chrome://crash' },
