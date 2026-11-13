@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-import { utils } from '../../packages/playwright-core/lib/coreBundle';
 import { contextTest as testBase, expect } from '../config/browserTest';
+import { crashTestFixtures } from '../config/commonFixtures';
 
-const test = testBase.extend<{ crash: () => void }, { dummy: string }>({
+const test = testBase.extend(crashTestFixtures).extend<{ crash: () => void }, { dummy: string }>({
   crash: async ({ page, toImpl, browserName }, run) => {
     await run(() => {
       if (browserName === 'chromium')
@@ -37,10 +37,11 @@ test.beforeEach(({ platform, browserName, channel }) => {
   test.slow(platform === 'linux' && (browserName === 'webkit'), 'WebKit/Linux tests are consistently slower on some Linux environments. Most likely WebContent process is not getting terminated properly and is causing the slowdown.');
   test.skip(!!process.env.CI && platform === 'linux' && browserName === 'webkit', 'crash event takes about a minute to arrive and often exceeds the test timeout');
   test.skip(channel === 'webkit-wsl', 'WebKit on WSL is even slower than above ^^ - skipping for now');
-  test.skip(browserName === 'chromium' && utils.hostPlatform.startsWith('ubuntu24.04'), 'never dispatches the crash event');
 });
 
-test('ER-014 should emit crash event when page crashes', async ({ page, crash }) => {
+test('ER-014 should emit crash event when page crashes', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44094' },
+}, async ({ page, crash }) => {
   await page.setContent(`<div>This page should crash</div>`);
   crash();
   const crashedPage = await new Promise(f => page.on('crash', f));
