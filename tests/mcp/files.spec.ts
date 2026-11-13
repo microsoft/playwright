@@ -19,7 +19,7 @@ import path from 'path';
 
 import { test, expect, parseResponse } from './fixtures';
 
-test('browser_file_upload', async ({ client, server }, testInfo) => {
+test('browser_file_upload', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44091' } }, async ({ client, server }, testInfo) => {
   server.setContent('/', `
     <input type="file" />
     <button>Button</button>
@@ -99,6 +99,24 @@ test('browser_file_upload', async ({ client, server }, testInfo) => {
       isError: true,
       error: `Error: Tool "browser_click" does not handle the modal state.`,
       modalState: expect.stringContaining(`- [File chooser]: can be handled by browser_file_upload`),
+    });
+  }
+
+  {
+    // Omitted paths cancel the chooser and keep the selected file.
+    expect(await client.callTool({
+      name: 'browser_file_upload',
+      arguments: {},
+    })).toHaveResponse({
+      code: undefined,
+      modalState: undefined,
+    });
+
+    expect(await client.callTool({
+      name: 'browser_evaluate',
+      arguments: { function: '() => document.querySelector("input").files.length' },
+    })).toHaveResponse({
+      result: `1`,
     });
   }
 });
