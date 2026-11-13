@@ -175,14 +175,11 @@ function chooseVersion({ name, current, nodePath, badRanges, urgentRanges = [], 
   const oldEnough = candidates.filter(isOldEnough);
   const accepted = oldEnough.filter(isAccepted);
   let pick = accepted.sort(semver.rcompare)[0];
-  let urgent = false;
   if (!pick && urgentRanges.length) {
     // An urgent advisory does not wait. A version that is old enough is still
     // preferred, even when it leaves the less severe advisories open.
     const fixed = newer.filter(outside(urgentRanges)).filter(isAccepted);
-    const fixedOldEnough = fixed.filter(isOldEnough);
-    pick = fixedOldEnough.sort(semver.rcompare)[0] ?? fixed.sort(semver.compare)[0];
-    urgent = !!pick && !fixedOldEnough.length;
+    pick = fixed.filter(isOldEnough).sort(semver.rcompare)[0] ?? fixed.sort(semver.compare)[0];
   }
   if (!pick) {
     if (!candidates.length)
@@ -197,7 +194,7 @@ function chooseVersion({ name, current, nodePath, badRanges, urgentRanges = [], 
   const major = semver.major(pick) !== semver.major(current);
   if (rootPinned && major && !allowMajor)
     return { reason: `needs a major bump to ${pick} in package.json (rerun with --allow-major)`, version: pick };
-  return { version: pick, rootPinned, major, nodePath, urgent };
+  return { version: pick, rootPinned, major, nodePath, urgent: !isOldEnough(pick) };
 }
 
 // ---------- lock file edits ----------
@@ -243,12 +240,12 @@ function checkInstalled(names) {
     throw new Error(`npm ls reports problems after the roll:\n${ls.problems.join('\n')}`);
 }
 
-function pinDownNewcomers(baseJson, urgent) {
+function pinDownNewcomers(baseJson, planned) {
   const json = lock();
   const cons = constraints(json);
   let changed = false;
   for (const { nodePath, name, before, after } of lockDiff(baseJson, json)) {
-    if (!after || !semver.valid(after) || publishTime(name, after) <= cutoff || urgent.has(`${name}@${after}`))
+    if (!after || !semver.valid(after) || publishTime(name, after) <= cutoff || planned.has(`${name}@${after}`))
       continue;
     const choice = chooseVersion({ name, current: before && semver.valid(before) ? before : '0.0.0', nodePath, badRanges: [], cons: (cons.get(nodePath) ?? []).filter(c => c.from !== ''), isRuntime: () => true });
     if (!choice.version || choice.version === after)
@@ -264,9 +261,12 @@ function pinDownNewcomers(baseJson, urgent) {
 
 async function main() {
   const audit = JSON.parse(npm(['audit', '--json']));
-  const inlined = all ? [] : bundleInlinedPaths();
-  const workspaceDeps = workspaceRuntimeDeps();
-  const isRuntime = nodePath => all || inlined.some(l => l.startsWith(nodePath + '/')) || (nodePath.split('node_modules/').length === 2 && workspaceDeps.has(nameOf(nodePath)));
+  let isRuntime = () => true;
+  if (!all) {
+    const inlined = bundleInlinedPaths();
+    const workspaceDeps = workspaceRuntimeDeps();
+    isRuntime = nodePath => inlined.some(l => l.startsWith(nodePath + '/')) || (nodePath.split('node_modules/').length === 2 && workspaceDeps.has(nameOf(nodePath)));
+  }
 
   const lockJson = lock();
   const cons = constraints(lockJson);
@@ -293,8 +293,10 @@ async function main() {
   }
 
   console.log(`\n## ${all ? 'Advisories' : 'Runtime advisories'} (${args.severity ?? 'moderate'} and above), versions published on or before ${fmtDate(cutoff)}\n`);
-  for (const p of plan)
-    console.log(`- ${p.nodePath} ${p.current} [${p.severity}, ${p.advisories.join(' ')}]: ${p.version && !p.reason ? `roll to ${p.version}${p.major ? ' (major)' : ''}${p.urgent ? ' (urgent, newer than the age limit)' : ''}` : `not rolled: ${p.reason}`}`);
+  for (const p of plan) {
+    const action = p.version && !p.reason ? `roll to ${p.version}${p.major ? ' (major)' : ''}${p.urgent ? ' (urgent, newer than the age limit)' : ''}` : `not rolled: ${p.reason}`;
+    console.log(`- ${p.nodePath} ${p.current} [${p.severity}, ${p.advisories.join(' ')}]: ${action}`);
+  }
   if (!plan.length)
     console.log('- none');
   if (skipped.length)
@@ -316,9 +318,10 @@ async function main() {
     else
       setLockVersion(p.nodePath, p.name, p.version);
   }
+  const planned = new Set(actionable.map(p => `${p.name}@${p.version}`));
   for (let round = 0; round < 5; round++) {
     npm(['install', '--no-audit', '--no-fund']);
-    if (!pinDownNewcomers(baseJson, new Set(actionable.filter(p => p.urgent).map(p => `${p.name}@${p.version}`))))
+    if (!pinDownNewcomers(baseJson, planned))
       break;
   }
   checkInstalled(actionable.map(p => p.name));
