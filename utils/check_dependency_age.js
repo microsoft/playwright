@@ -102,15 +102,16 @@ async function olderVersionHint(name, version, time, cutoff) {
       .filter(c => (c.parsed[1] - current[1] || c.parsed[2] - current[2]) < 0)
       .sort((a, b) => b.parsed[1] - a.parsed[1] || b.parsed[2] - a.parsed[2])
       .slice(0, MAX_VERSIONS_TO_CHECK);
+  const list = ids => ids.map(id => `\n    ${id}`).join('');
   const advisories = await Promise.all(candidates.map(c => advisoriesFor(name, c.version)));
   const firstVulnerable = advisories.findIndex(ids => ids.length);
   if (firstVulnerable === -1)
     return '';
   if (firstVulnerable === 0)
-    return ` No version that is at least ${MAX_AGE_DAYS} days old fixes ${advisories[0].join(', ')}.`;
+    return `\n  No version that is at least ${MAX_AGE_DAYS} days old fixes:` + list(advisories[0]);
   const fixed = candidates[firstVulnerable - 1];
   const age = Math.floor((Date.now() - fixed.published) / DAY);
-  return ` The oldest version that fixes ${advisories[firstVulnerable].join(', ')} is ${fixed.version}, published on ${new Date(fixed.published).toISOString().slice(0, 10)}, ${age} days ago.`;
+  return `\n  Version ${fixed.version}, published on ${new Date(fixed.published).toISOString().slice(0, 10)}, ${age} days ago, is the oldest one that fixes:` + list(advisories[firstVulnerable]);
 }
 
 async function main() {
