@@ -23,8 +23,10 @@
 // us before it is reported. The playwright-audit-deps skill rolls dependencies
 // with the same rule, see .claude/skills/playwright-audit-deps/SKILL.md.
 //
-// When a version is too new, the script also looks for an older version that
-// has no known advisories, and prints it with its age.
+// A version that is too new is allowed when it fixes an advisory of high or
+// critical severity, and no version that is old enough fixes it. For each
+// version that is too new, the script prints the advisories that it fixes, and
+// the oldest version that fixes them.
 //
 // Usage: node utils/check_dependency_age.js
 
@@ -37,6 +39,7 @@ const ADVISORIES = REGISTRY + '-/npm/v1/security/advisories/bulk';
 const CONCURRENCY = 16;
 const MAX_VERSIONS_TO_CHECK = 20;
 const DAY = 24 * 60 * 60 * 1000;
+const URGENT_SEVERITIES = ['high', 'critical'];
 
 /**
  * @param {string} url
@@ -70,7 +73,7 @@ function parseVersion(version) {
 /**
  * @param {string} name
  * @param {string} version
- * @returns {Promise<string[]>}
+ * @returns {Promise<{ id: string, severity: string }[]>}
  */
 async function advisoriesFor(name, version) {
   const result = await fetchJson(ADVISORIES, {
@@ -78,45 +81,53 @@ async function advisoriesFor(name, version) {
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ [name]: [version] }),
   });
-  return (result[name] || []).map(advisory => `${advisory.url.split('/').pop()} (${advisory.severity})`);
+  return (result[name] || []).map(advisory => ({ id: advisory.url.split('/').pop(), severity: advisory.severity }));
 }
 
 /**
- * Walks down from the newest version that is old enough, and stops at the
- * first version that has an advisory. The version above it is the oldest one
- * that fixes all known advisories.
+ * Walks down from the given version, and stops at the first version that has
+ * an advisory. The version above it is the oldest one that fixes the
+ * advisories.
  *
  * @param {string} name
  * @param {string} version
  * @param {Record<string, string>} time
  * @param {number} cutoff
- * @returns {Promise<string>}
+ * @returns {Promise<{ urgent: boolean, text: string }>}
  */
-async function olderVersionHint(name, version, time, cutoff) {
+async function fixedAdvisories(name, version, time, cutoff) {
   const current = parseVersion(version);
   if (!current)
-    return '';
-  const candidates = Object.keys(time)
-      .map(v => ({ version: v, parsed: parseVersion(v), published: new Date(time[v]).getTime() }))
-      .filter(c => c.parsed && c.parsed[0] === current[0] && c.published <= cutoff)
+    return { urgent: false, text: '' };
+  const older = Object.keys(time)
+      .map(v => ({ version: v, parsed: parseVersion(v) }))
+      .filter(c => c.parsed && c.parsed[0] === current[0])
       .filter(c => (c.parsed[1] - current[1] || c.parsed[2] - current[2]) < 0)
       .sort((a, b) => b.parsed[1] - a.parsed[1] || b.parsed[2] - a.parsed[2])
-      .slice(0, MAX_VERSIONS_TO_CHECK);
-  const list = ids => ids.map(id => `\n    ${id}`).join('');
-  const advisories = await Promise.all(candidates.map(c => advisoriesFor(name, c.version)));
-  const firstVulnerable = advisories.findIndex(ids => ids.length);
+      .slice(0, MAX_VERSIONS_TO_CHECK)
+      .map(c => c.version);
+  const [remaining, ...advisories] = await Promise.all([version, ...older].map(v => advisoriesFor(name, v)));
+  const firstVulnerable = advisories.findIndex(list => list.length);
   if (firstVulnerable === -1)
-    return '';
-  if (firstVulnerable === 0)
-    return `\n  No version that is at least ${MAX_AGE_DAYS} days old fixes:` + list(advisories[0]);
-  const fixed = candidates[firstVulnerable - 1];
-  const age = Math.floor((Date.now() - fixed.published) / DAY);
-  return `\n  Version ${fixed.version}, published on ${new Date(fixed.published).toISOString().slice(0, 10)}, ${age} days ago, is the oldest one that fixes:` + list(advisories[firstVulnerable]);
+    return { urgent: false, text: '' };
+  const fixed = advisories[firstVulnerable].filter(a => !remaining.some(r => r.id === a.id));
+  if (!fixed.length)
+    return { urgent: false, text: '' };
+  const oldest = firstVulnerable ? older[firstVulnerable - 1] : version;
+  const published = new Date(time[oldest]);
+  const age = Math.floor((Date.now() - published.getTime()) / DAY);
+  return {
+    urgent: published.getTime() > cutoff && fixed.some(a => URGENT_SEVERITIES.includes(a.severity)),
+    text: `\n  Version ${oldest}, published on ${published.toISOString().slice(0, 10)}, ${age} days ago, is the oldest one that fixes:` +
+        fixed.map(a => `\n    ${a.id} (${a.severity})`).join(''),
+  };
 }
 
 async function main() {
   const lock = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package-lock.json'), 'utf8'));
   const problems = [];
+  /** @type {{ nodePath: string, name: string, version: string, published: Date, time: Record<string, string> }[]} */
+  const tooNew = [];
 
   /** @type {Map<string, { nodePath: string, version: string }[]>} */
   const byName = new Map();
@@ -145,19 +156,31 @@ async function main() {
         if (!published)
           problems.push(`${nodePath}@${version} has no publish date in the registry`);
         else if (published.getTime() > cutoff)
-          problems.push(`${nodePath}@${version} was published on ${published.toISOString().slice(0, 10)}, less than ${MAX_AGE_DAYS} days ago.` + await olderVersionHint(name, version, time, cutoff));
+          tooNew.push({ nodePath, name, version, published, time });
       }
     }
   };
   await Promise.all(Array.from({ length: CONCURRENCY }, worker));
 
+  const allowed = [];
+  for (const { nodePath, name, version, published, time } of tooNew) {
+    const { urgent, text } = await fixedAdvisories(name, version, time, cutoff);
+    const message = `${nodePath}@${version} was published on ${published.toISOString().slice(0, 10)}, less than ${MAX_AGE_DAYS} days ago`;
+    if (urgent)
+      allowed.push(`${message}. It is allowed, because it fixes an advisory of high or critical severity, and no version that is old enough fixes it.${text}`);
+    else
+      problems.push(`${message}.${text}`);
+  }
+  for (const message of allowed.sort())
+    console.log(message + '\n');
+
   if (problems.length) {
     for (const problem of problems.sort())
       console.error(problem);
-    console.error(`\nEvery version in package-lock.json must be at least ${MAX_AGE_DAYS} days old. Pick an older version, or wait.`);
+    console.error(`\nEvery version in package-lock.json must be at least ${MAX_AGE_DAYS} days old, unless only a newer version fixes an advisory of high or critical severity. Pick an older version, or wait.`);
     process.exit(1);
   }
-  console.log(`All ${names.length} packages in package-lock.json are at least ${MAX_AGE_DAYS} days old.`);
+  console.log(`All ${names.length} packages in package-lock.json are at least ${MAX_AGE_DAYS} days old${allowed.length ? ', or fix an advisory of high or critical severity' : ''}.`);
 }
 
 main().catch(error => {
