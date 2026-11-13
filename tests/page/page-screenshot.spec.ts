@@ -421,7 +421,7 @@ it.describe('page screenshot', () => {
     it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42885' });
     it.skip(browserName === 'webkit' && platform === 'darwin' && os.arch() === 'x64', 'WebGL is not available on Intel macOS - https://bugs.webkit.org/show_bug.cgi?id=278277');
 
-    await page.setViewportSize({ width: 200, height: 200 });
+    await page.setViewportSize({ width: 300, height: 300 });
     await page.setContent(`<body style="margin:0"><div style="width:100px;height:100px;background:rgb(0,255,0)"></div></body>`);
     const expected = await page.screenshot();
 
