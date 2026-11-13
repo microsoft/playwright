@@ -427,6 +427,8 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       const result = this._stopChunk(params, coverageFile);
       if (coverageError)
         throw coverageError;
+      if (!result)
+        return {};
 
       // Make sure all file operations complete.
       try {
@@ -438,9 +440,6 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
           return {};
         throw error;
       }
-
-      if (!result)
-        return {};
 
       if (params.mode === 'entries')
         return { entries: result.entries };
@@ -497,6 +496,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     this._state.chunkFiles = new Set();
 
     if (params.mode === 'discard') {
+      // Removal is queued after the pending writes, the caller does not wait for it.
       this._fs.removeFile(this._state.traceFile);
       for (const file of chunkFiles) {
         // Content-addressed resources can be shared with other chunks and contexts.

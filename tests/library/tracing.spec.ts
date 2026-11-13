@@ -345,9 +345,10 @@ test('TR-013 should respect tracesDir and name', {
   for (const dir of ['screencast', 'screenshots', 'aria'])
     await expect.poll(() => fs.readdirSync(path.join(tracesDir, dir)).length).toBeGreaterThan(0);
   await context.tracing.stopChunk();
-  expect(fs.existsSync(path.join(tracesDir, 'discarded.trace'))).toBe(false);
+  // Discarded files are removed in the background.
+  await expect.poll(() => fs.existsSync(path.join(tracesDir, 'discarded.trace'))).toBe(false);
   for (const dir of ['screencast', 'screenshots', 'aria'])
-    expect(fs.readdirSync(path.join(tracesDir, dir))).toEqual([]);
+    await expect.poll(() => fs.readdirSync(path.join(tracesDir, dir))).toEqual([]);
   expect(fs.existsSync(path.join(tracesDir, 'discarded.network'))).toBe(true);
   await context.tracing.stop();
 
