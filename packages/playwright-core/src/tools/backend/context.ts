@@ -139,7 +139,6 @@ export class Context {
   private _webmcpToolsSignature = '';
   private _redactUrlParamsRegex: RegExp | undefined;
 
-  private _runningToolName: string | undefined;
   private _pendingUnhandledRejections: unknown[] = [];
   private _unhandledRejectionListeners = new Set<(reason: unknown) => void>();
   private _onUnhandledRejection = (reason: unknown) => {
@@ -432,14 +431,6 @@ export class Context {
     }
     this._routes = this._routes.filter(r => !toRemove.includes(r));
     return toRemove.length;
-  }
-
-  isRunningTool() {
-    return this._runningToolName !== undefined;
-  }
-
-  setRunningTool(name: string | undefined) {
-    this._runningToolName = name;
   }
 
   private async _setupRequestInterception(context: playwrightTypes.BrowserContext, disposables: Disposable[]) {
