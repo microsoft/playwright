@@ -492,10 +492,22 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     for (const file of new Set([...this._state.chunkFiles, ...this._state.crossChunkFiles]))
       entries.push({ name: file, value: path.join(this._state.tracesDir, file) });
 
+    const chunkFiles = this._state.chunkFiles;
     this._state.chunkFiles = new Set();
 
-    if (params.mode === 'discard')
+    if (params.mode === 'discard') {
+      // Live traces are read from the disk in place.
+      if (this._state.options.live)
+        return undefined;
+      this._fs.removeFile(this._state.traceFile);
+      for (const file of chunkFiles) {
+        if (this._state.crossChunkFiles.has(file))
+          continue;
+        this._allResources.delete(file);
+        this._fs.removeFile(path.join(this._state.tracesDir, file));
+      }
       return undefined;
+    }
 
     this._fs.copyFile(this._state.networkFile, newNetworkFile);
 

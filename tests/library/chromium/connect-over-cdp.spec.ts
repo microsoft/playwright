@@ -248,9 +248,10 @@ test('CD-007 should write traces to provided artifactsDir on connectOverCDP', as
     await context.tracing.start({ name: 'cdp-trace', snapshots: true, screenshots: true });
     const page = await context.newPage();
     await page.setContent('<button>Hello</button>');
+    // The trace file of a discarded chunk is removed, check it before the chunk stops.
+    await expect.poll(() => fs.existsSync(path.join(artifactsDir, 'cdp-trace.trace'))).toBe(true);
     await context.tracing.stopChunk();
 
-    expect(fs.existsSync(path.join(artifactsDir, 'cdp-trace.trace'))).toBe(true);
     expect(fs.existsSync(path.join(artifactsDir, 'cdp-trace.network'))).toBe(true);
     expect(fs.existsSync(path.join(artifactsDir, 'resources'))).toBe(true);
 
