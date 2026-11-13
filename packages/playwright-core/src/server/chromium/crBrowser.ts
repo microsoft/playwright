@@ -103,7 +103,7 @@ export class CRBrowser extends Browser {
         }),
         browser._defaultContext.initialize(),
       ]);
-      await browser._waitForAllPagesToBeInitialized(options.pageInitTimeout);
+      await browser._waitForAllPagesToBeInitialized(options.maxPageAttachTime);
     } finally {
       browser._isConnecting = false;
     }

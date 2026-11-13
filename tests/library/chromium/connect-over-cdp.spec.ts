@@ -952,7 +952,7 @@ test('CD-036 should connect over CDP using a ConnectionTransport', async ({ brow
   }
 });
 
-test('CD-054 should not wait for a busy page longer than pageInitTimeout', {
+test('CD-054 should not wait for a busy page longer than maxPageAttachTime', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44052' },
 }, async ({ browserType, server }, testInfo) => {
   const port = 9339 + testInfo.workerIndex;
@@ -979,7 +979,7 @@ test('CD-054 should not wait for a busy page longer than pageInitTimeout', {
 
     const cdpBrowser2 = await browserType.connectOverCDP({
       endpointURL: `http://127.0.0.1:${port}/`,
-      pageInitTimeout: 500,
+      maxPageAttachTime: 500,
     } as any);
     const context2 = cdpBrowser2.contexts()[0];
     const pages = context2.pages();

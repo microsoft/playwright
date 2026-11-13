@@ -140,7 +140,7 @@ async function createCDPBrowser(config: FullConfig, clientInfo: ClientInfo): Pro
     noDefaults: true,
     artifactsDir,
     // Do not let a page with a busy renderer block the connection.
-    pageInitTimeout: 10000,
+    maxPageAttachTime: 10000,
   } as playwrightTypes.ConnectOverCDPOptions);
   return browser;
 }

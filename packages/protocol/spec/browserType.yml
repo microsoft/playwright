@@ -51,7 +51,7 @@ BrowserType:
         isLocal: boolean?
         noDefaults: boolean?
         isWebView: boolean?
-        pageInitTimeout: float?
+        maxPageAttachTime: float?
         artifactsDir: string?
         transport: binary?
       returns:

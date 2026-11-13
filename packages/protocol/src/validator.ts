@@ -1121,7 +1121,7 @@ scheme.BrowserTypeConnectOverCDPParams = tObject({
   isLocal: tOptional(tBoolean),
   noDefaults: tOptional(tBoolean),
   isWebView: tOptional(tBoolean),
-  pageInitTimeout: tOptional(tFloat),
+  maxPageAttachTime: tOptional(tFloat),
   artifactsDir: tOptional(tString),
   transport: tOptional(tBinary),
 });
