@@ -347,6 +347,33 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       expect(xml['testsuites']['testsuite'][1]['testcase'][0]['$']['name']).toBe('[project2] one');
     });
 
+    test('should add file attribute relative to config directory', {
+      annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44099' },
+    }, async ({ runInlineTest }) => {
+      const files = {
+        'playwright.config.ts': `
+          module.exports = {
+            testDir: './e2e',
+            reporter: [['junit', { addFileAttribute: true }]]
+          };
+        `,
+        'e2e/auth/a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('one', async ({}) => {
+            expect(1).toBe(1);
+          });
+        `,
+      };
+      const result = await runInlineTest(files, { reporter: '' });
+      expect(result.exitCode).toBe(0);
+      const testcase = parseXML(result.output)['testsuites']['testsuite'][0]['testcase'][0];
+      expect(testcase['$']['classname']).toBe('auth/a.test.js');
+      expect(testcase['$']['file']).toBe('e2e/auth/a.test.js');
+
+      const disabled = await runInlineTest(files, { reporter: '' }, { PLAYWRIGHT_JUNIT_ADD_FILE_ATTRIBUTE: '0' });
+      expect(parseXML(disabled.output)['testsuites']['testsuite'][0]['testcase'][0]['$']['file']).toBeUndefined();
+    });
+
     test('should render existing attachments, but not missing ones', async ({ runInlineTest }) => {
       test.skip(useIntermediateMergeReport, 'Blob report hashes attachment paths');
       const result = await runInlineTest({

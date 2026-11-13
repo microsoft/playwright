@@ -18,6 +18,7 @@ import fs from 'fs';
 import path from 'path';
 
 import { getAsBooleanFromENV } from '@utils/env';
+import { toPosixPath } from '@utils/fileUtils';
 
 import { createTestFilter, filterTests, formatFailure, nonTerminalScreen, resolveOutputFile, visitTests } from './base';
 import { stripAnsiEscapes } from '../util';
@@ -41,6 +42,7 @@ class JUnitReporter implements ReporterV2 {
   private includeProjectInTestName = false;
   private includeRetries = false;
   private omitTags = false;
+  private addFileAttribute = false;
   private testFilter: TestFilter | undefined;
 
   constructor(options: JUnitReporterOptions & CommonReporterOptions) {
@@ -49,6 +51,7 @@ class JUnitReporter implements ReporterV2 {
     this.includeProjectInTestName = getAsBooleanFromENV('PLAYWRIGHT_JUNIT_INCLUDE_PROJECT_IN_TEST_NAME', !!options.includeProjectInTestName);
     this.includeRetries = !!this.testFilter || getAsBooleanFromENV('PLAYWRIGHT_JUNIT_INCLUDE_RETRIES', !!options.includeRetries);
     this.omitTags = getAsBooleanFromENV('PLAYWRIGHT_JUNIT_OMIT_TAGS', !!options.omitTags);
+    this.addFileAttribute = getAsBooleanFromENV('PLAYWRIGHT_JUNIT_ADD_FILE_ATTRIBUTE', !!options.addFileAttribute);
     this.configDir = options.configDir;
     this.resolvedOutputFile = resolveOutputFile('JUNIT', options)?.outputFile;
   }
@@ -160,6 +163,8 @@ class JUnitReporter implements ReporterV2 {
       },
       children: [],
     };
+    if (this.addFileAttribute)
+      entry.attributes!.file = toPosixPath(path.relative(this.configDir, test.location.file));
     entries.push(entry);
 
     // Xray Test Management supports testcase level properties, where additional metadata may be provided
