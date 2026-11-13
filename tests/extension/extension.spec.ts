@@ -21,7 +21,7 @@ import WebSocket from 'ws';
 
 import { test as base, expect } from './harness';
 import { extensionId, clickAllow } from './extension-fixtures';
-import { utils } from '../../packages/playwright-core/lib/coreBundle';
+import { inprocess, utils } from '../../packages/playwright-core/lib/coreBundle';
 
 const { defaultUserDataDirForChannel } = utils;
 
@@ -123,16 +123,28 @@ test('client controls the tab that the user picks', async ({ user, connect }) =>
 });
 
 test('client does not reset the emulation of the tab that the user picks', {
-  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42117' },
+  annotation: [
+    { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42117' },
+    { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44096' },
+  ],
 }, async ({ user, connect }) => {
+  user.definePage('Alpha', `<button onclick="this.textContent = 'Clicked'">Click me</button>`);
   const page = await user.openTab('Alpha');
   await page.emulateMedia({ media: 'print' });
+  // The fixture enables focus emulation; a normal user's tab does not have it.
+  const session = inprocess.playwright._connection.toImpl(page).delegate._mainFrameSession._client;
+  await session.send('Emulation.setFocusEmulationEnabled', { enabled: false });
   const isPrint = () => page.evaluate(() => matchMedia('print').matches);
   expect(await isPrint()).toBe(true);
 
-  const client = await connect('worker', { tabs: ['Alpha'] });
-  expect(await client.snapshot()).toContain('Page Alpha');
+  const client = await connect('worker', { tabs: ['Alpha'] }, { args: ['--background'] });
+  await (await user.openTab('Beta')).bringToFront();
+  expect(await client.runCode(`async page => {
+    await page.getByRole('button', { name: 'Click me' }).click({ timeout: 5000 });
+    return await page.getByRole('button').textContent();
+  }`)).toContain('"Clicked"');
   expect(await isPrint()).toBe(true);
+  expect(await user.activeTabs()).toEqual(['Beta']);
 });
 
 test('client evaluates in the web worker of each tab', async ({ user, connect, server }) => {
