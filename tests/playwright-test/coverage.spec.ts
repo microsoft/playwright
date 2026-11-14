@@ -30,7 +30,7 @@ const coverageHelper = `
         '0': { name: 'foo', decl: { start: { line: 1, column: 0 }, end: { line: 1, column: 3 } }, loc: { start: { line: 1, column: 0 }, end: { line: 3, column: 1 } }, line: 1 },
       },
       branchMap: {
-        '0': { loc: { start: { line: 2, column: 0 }, end: { line: 2, column: 20 } }, type: 'if', locations: [{ start: { line: 2, column: 0 }, end: { line: 2, column: 10 } }, { start: { line: 2, column: 10 }, end: { line: 2, column: 20 } }], line: 2 },
+        '0': { loc: { start: { line: 2, column: 0 }, end: { line: 2, column: 20 } }, type: 'if', locations: [{ start: { line: 2, column: 0 }, end: { line: 2, column: 10 } }, {} as any], line: 2 },
       },
       s: { '0': s0, '1': 0 },
       f: { '0': 1 },
@@ -82,7 +82,9 @@ test('should collect istanbul coverage into the trace', async ({ runInlineTest }
   expect(data['src/frame.js'].s['0']).toBe(3);
 });
 
-test('should aggregate coverage with the coverage reporter', async ({ runInlineTest }) => {
+test('should aggregate coverage with the coverage reporter', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44113' },
+}, async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       export default {
@@ -123,6 +125,7 @@ test('should aggregate coverage with the coverage reporter', async ({ runInlineT
   expect(lcov).toContain('SF:src/app.js');
   expect(lcov).toContain('DA:1,7');
   expect(lcov).toContain('FNDA:2,foo');
+  expect(lcov).toContain('BRDA:2,0,1,0');
   expect(lcov).toContain('SF:src/second.js');
 
   expect(result.output).toContain('Code coverage (2 files)');
