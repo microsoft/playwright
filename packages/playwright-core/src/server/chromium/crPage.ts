@@ -548,7 +548,11 @@ class FrameSession {
           this._crPage._browserContext === this._crPage._browserContext._browser._defaultContext;
       if (this._crPage._browserContext.needsPlaywrightBinding())
         promises.push(this.exposePlaywrightBinding());
-      if (this._isMainFrame() && !skipDefaultOverrides)
+      // Fork change: with `noDefaults` (the extension relay) focus emulation is skipped, so a tab
+      // opened in the background stays hidden and unfocused: no animation frames, and a click
+      // waits for a stable element until it times out. Opt back in with the environment variable.
+      const forceFocusEmulation = !!process.env.PLAYWRIGHT_MCP_EXTENSION_FOCUS_EMULATION;
+      if (this._isMainFrame() && (!skipDefaultOverrides || forceFocusEmulation))
         promises.push(this._client.send('Emulation.setFocusEmulationEnabled', { enabled: true }));
       const options = this._crPage._browserContext._options;
       if (options.bypassCSP)
