@@ -18,6 +18,7 @@ import path from 'path';
 
 import { assert } from '@isomorphic/assert';
 import { headersObjectToArray } from '@isomorphic/headers';
+import { jsonStringifyForceASCII } from '@utils/ascii';
 import { Browser } from './browser';
 import { BrowserContext, prepareBrowserContextParams } from './browserContext';
 import { ChannelOwner, apiCall } from './channelOwner';
@@ -69,12 +70,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
 
     const logger = options.logger || this._playwright._defaultLaunchOptions?.logger;
     options = { ...this._playwright._defaultLaunchOptions, ...options };
-    const launchOptions: channels.BrowserTypeLaunchParams = {
-      ...options,
-      ignoreDefaultArgs: Array.isArray(options.ignoreDefaultArgs) ? options.ignoreDefaultArgs : undefined,
-      ignoreAllDefaultArgs: !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),
-      env: options.env ? envObjectToArray(options.env) : undefined,
-    };
+    const launchOptions = toLaunchParams(options);
     const browser = Browser.from((await this._channel.launch(launchOptions, new TimeoutSettings().launchTimeout(options))).browser);
     browser._connectToBrowserType(this, options, logger);
     return browser;
@@ -126,7 +122,14 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
   }
 
   async _connect(params: ConnectOptions): Promise<Browser> {
-    const browser = await connectToBrowser(this._playwright, { browserName: this.name(), ...params });
+    const { launchOptions, ...connectParams } = params;
+    if (launchOptions) {
+      connectParams.headers = {
+        'x-playwright-launch-options': jsonStringifyForceASCII(toLaunchParams(launchOptions)),
+        ...connectParams.headers,
+      };
+    }
+    const browser = await connectToBrowser(this._playwright, { browserName: this.name(), ...connectParams });
     browser._connectToBrowserType(this, {}, undefined);
     return browser;
   }
@@ -176,6 +179,15 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       await this._instrumentation.runAfterCreateBrowserContext(BrowserContext.from(result.defaultContext));
     return browser;
   }
+}
+
+function toLaunchParams(options: LaunchOptions): channels.BrowserTypeLaunchParams {
+  return {
+    ...options,
+    ignoreDefaultArgs: Array.isArray(options.ignoreDefaultArgs) ? options.ignoreDefaultArgs : undefined,
+    ignoreAllDefaultArgs: !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),
+    env: options.env ? envObjectToArray(options.env) : undefined,
+  };
 }
 
 function isConnectionTransport(value: any): value is api.ConnectOverCDPTransport {
