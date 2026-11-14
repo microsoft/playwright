@@ -191,7 +191,7 @@ function lcovReport(mergedJson: IstanbulCoverage): string {
       const counts: number[] = fileCov.b[key] || [];
       branch.locations.forEach((location, i) => {
         const count = counts[i] || 0;
-        out.push(`BRDA:${location.start.line ?? branch.loc.start.line},${key},${i},${count}`);
+        out.push(`BRDA:${location.start?.line ?? branch.loc?.start?.line ?? branch.line ?? 0},${key},${i},${count}`);
         ++branchesFound;
         if (count > 0)
           ++branchesCovered;
