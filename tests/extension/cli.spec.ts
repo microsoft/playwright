@@ -48,6 +48,18 @@ test('attach --extension gives the name and the color of the session to the tab 
   await expect.poll(user.groups).toEqual([{ title: 'my session', color: 'red', tabs: ['Alpha'] }]);
 });
 
+test('attach --extension accepts a tab group title separate from the session name', async ({ user, cli, browserWithExtension }) => {
+  const connectPage = user.waitForConnectPage();
+  const attached = cli(['attach', '--extension=chromium', '--session=my session', '--tab-group-title=Research'], {
+    env: { PWTEST_EXTENSION_USER_DATA_DIR: browserWithExtension.userDataDir },
+  });
+  await user.allow(await connectPage);
+  await attached;
+
+  await cli(['--session=my session', 'goto', user.urlOf('Alpha')]);
+  await expect.poll(user.groups).toEqual([{ title: 'Research', color: 'green', tabs: ['Alpha'] }]);
+});
+
 test('detach --close-tabs closes the tabs of the session', async ({ user, cli, browserWithExtension }) => {
   await user.openTab('Alpha');
   const userTabs = await user.tabs();

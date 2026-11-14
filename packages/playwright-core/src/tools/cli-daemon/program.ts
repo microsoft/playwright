@@ -39,6 +39,7 @@ export function decorateProgram(program: Command) {
       .option('--mobile', 'emulate a generic mobile device (Pixel 10 for Chromium, iPhone 17 for WebKit)')
       .option('--extension', 'run with the extension')
       .option('--no-tab-group', 'do not group the tabs of the session when running with the extension')
+      .option('--tab-group-title <title>', 'title of the tab group when running with the extension')
       .option('--session-color <color>', 'color of the tab group of the session when running with the extension')
       .option('--browser <name>', 'browser to use (chromium, chrome, firefox, webkit)')
       .option('--persistent', 'use a persistent browser context')

@@ -133,6 +133,20 @@ test.describe('browserName and channel', () => {
   });
 });
 
+test.describe('tab group title', () => {
+  test('CLI option overrides the session name and environment value', async () => {
+    const options = await parseCLIOptions(['--session-name=Legacy', '--tab-group-title=Task']);
+    const config = await resolveCLIConfigForMCP(options, { PLAYWRIGHT_MCP_TAB_GROUP_TITLE: 'Environment title' });
+    expect(config.sessionName).toBe('Legacy');
+    expect(config.tabGroupTitle).toBe('Task');
+  });
+
+  test('environment variable sets the tab group title', async () => {
+    const config = await resolveCLIConfigForMCP({}, { PLAYWRIGHT_MCP_TAB_GROUP_TITLE: 'Task' });
+    expect(config.tabGroupTitle).toBe('Task');
+  });
+});
+
 // ---------------------------------------------------------------------------
 // Shared behavior — sandbox
 // ---------------------------------------------------------------------------

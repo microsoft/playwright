@@ -126,6 +126,11 @@ export type Config = {
   sessionName?: string;
 
   /**
+   * Title of the tab group when using the extension. Overrides `sessionName`.
+   */
+  tabGroupTitle?: string;
+
+  /**
    * Color of the session: blue, red, yellow, green, pink, purple, cyan or orange. With the extension,
    * it is the color of the tab group for controlled tabs, which defaults to the first color that no other client uses.
    */

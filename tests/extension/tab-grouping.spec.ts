@@ -72,6 +72,32 @@ test('client sets the title and the color of its tab group', {
   ]);
 });
 
+test('clients with the same custom tab group title keep separate ownership', async ({ user, connectWithToken }) => {
+  const first = await connectWithToken('first', { args: ['--session-name', 'Legacy name', '--tab-group-title', 'Task'] });
+  const second = await connectWithToken('second', { args: ['--tab-group-title', 'Task'] });
+  await first.navigate('Alpha');
+  await second.navigate('Beta');
+
+  await expect.poll(user.groups).toEqual([
+    { title: 'Task', color: 'green', tabs: ['Alpha'] },
+    { title: 'Task', color: 'blue', tabs: ['Beta'] },
+  ]);
+  expect(await first.tabs()).toEqual(['Alpha']);
+  expect(await second.tabs()).toEqual(['Beta']);
+
+  await first.close();
+  await expect.poll(user.groups).toEqual([
+    { title: 'Task', color: 'grey', tabs: ['Alpha'] },
+    { title: 'Task', color: 'blue', tabs: ['Beta'] },
+  ]);
+  expect(await second.tabs()).toEqual(['Beta']);
+  await second.close();
+  await expect.poll(user.groups).toEqual([
+    { title: 'Task', color: 'grey', tabs: ['Alpha'] },
+    { title: 'Task', color: 'grey', tabs: ['Beta'] },
+  ]);
+});
+
 test('connect page that opens inside the group of another client leaves the group', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41838' },
 }, async ({ user, connect }) => {

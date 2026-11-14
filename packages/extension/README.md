@@ -46,10 +46,10 @@ Clients can read browser-wide data such as cookies, but they cannot change brows
 
 ### Tab Groups
 
-Each client gets its own tab group. Drag tabs in and out of a group to change what a client can reach; dragging a tab from the group of one client to the group of another moves it between the clients. The group takes the name and the color of the session. With the MCP server, pass `--session-name` and `--session-color` (blue, red, yellow, green, pink, purple, cyan or orange), or set `PLAYWRIGHT_MCP_SESSION_NAME` and `PLAYWRIGHT_MCP_SESSION_COLOR`. Without a session name, the group is named after the client. Without a color, it takes the first color that no other client uses. With the CLI, the group is named after the session:
+Each client gets its own tab group. Drag tabs in and out of a group to change what a client can reach; dragging a tab from the group of one client to the group of another moves it between the clients. The group takes the name and the color of the session. With the MCP server, pass `--tab-group-title` to set the tab group title directly, or use `--session-name` as a fallback. You can also set `PLAYWRIGHT_MCP_TAB_GROUP_TITLE`, `PLAYWRIGHT_MCP_SESSION_NAME` or `PLAYWRIGHT_MCP_SESSION_COLOR`. The tab group title defaults to `Playwright · <client name>`. Without a color, it takes the first color that no other client uses. With the CLI, the group is named after the session by default; `attach` also accepts `--tab-group-title`:
 
 ```bash
-playwright-cli attach --extension=msedge --session="my session" --session-color=red
+playwright-cli attach --extension=msedge --session="my session" --tab-group-title="Research" --session-color=red
 ```
 
 When a client disconnects, its tab group stays and turns gray. Select that group on the connect page of the next client to continue with the same tabs.

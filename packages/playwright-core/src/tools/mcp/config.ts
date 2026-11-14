@@ -80,6 +80,7 @@ export type CLIOptions = {
   storageState?: string;
   tabGroup?: boolean;
   sessionName?: string;
+  tabGroupTitle?: string;
   sessionColor?: string;
   background?: boolean;
   testIdAttribute?: string;
@@ -179,6 +180,7 @@ export async function resolveCLIConfigForCLI(daemonProfilesDir: string, sessionN
     mobile: options.mobile,
     extension: options.extension,
     sessionName,
+    tabGroupTitle: options.tabGroupTitle,
     sessionColor: options.sessionColor,
     tabGroup: options.tabGroup,
     userDataDir: options.profile,
@@ -377,6 +379,7 @@ function configFromCLIOptions(cliOptions: CLIOptions): Config & { configFile?: s
     extension: cliOptions.extension,
     tabGroup: cliOptions.tabGroup === false ? false : undefined,
     sessionName: cliOptions.sessionName,
+    tabGroupTitle: cliOptions.tabGroupTitle,
     sessionColor: cliOptions.sessionColor,
     background: cliOptions.background,
     server: {
@@ -433,6 +436,7 @@ export function configFromEnv(env?: NodeJS.ProcessEnv): Config & { configFile?: 
   options.allowUnrestrictedFileAccess = envToBoolean(e.PLAYWRIGHT_MCP_ALLOW_UNRESTRICTED_FILE_ACCESS);
   options.background = envToBoolean(e.PLAYWRIGHT_MCP_BACKGROUND);
   options.sessionName = envToString(e.PLAYWRIGHT_MCP_SESSION_NAME);
+  options.tabGroupTitle = envToString(e.PLAYWRIGHT_MCP_TAB_GROUP_TITLE);
   options.sessionColor = envToString(e.PLAYWRIGHT_MCP_SESSION_COLOR);
   options.blockedOrigins = semicolonSeparatedList(e.PLAYWRIGHT_MCP_BLOCKED_ORIGINS);
   options.blockServiceWorkers = envToBoolean(e.PLAYWRIGHT_MCP_BLOCK_SERVICE_WORKERS);

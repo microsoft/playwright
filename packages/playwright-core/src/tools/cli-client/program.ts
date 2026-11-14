@@ -47,6 +47,7 @@ type AttachOptions = {
   endpoint?: string;
   extension?: boolean | string;
   'session-color'?: string;
+  'tab-group-title'?: string;
   'tab-group'?: boolean;
 };
 

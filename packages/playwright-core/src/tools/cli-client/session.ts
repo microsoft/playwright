@@ -144,6 +144,8 @@ export class Session {
       args.push('--extension');
     if (cliArgs['tab-group'] === false)
       args.push('--no-tab-group');
+    if (cliArgs['tab-group-title'])
+      args.push(`--tab-group-title=${cliArgs['tab-group-title']}`);
     if (cliArgs['session-color'])
       args.push(`--session-color=${cliArgs['session-color']}`);
     else if (cliArgs.cdp)
