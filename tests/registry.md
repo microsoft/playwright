@@ -4551,6 +4551,8 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `RO-200` | `library/unroute-behavior.spec.ts` | should not continue requests in flight (page) |
 | `RO-201` | `library/unroute-behavior.spec.ts` | should not continue requests in flight (context) |
 | `RO-202` | `page/page-route.spec.ts` | should continue a request reported while interception was disabled |
+| `RO-203` | `page/page-request-fulfill.spec.ts` | should keep header content-type when fulfilling json |
+| `RO-204` | `page/page-request-fulfill.spec.ts` | should set application/json for falsy json values |
 
 ### SC — Screencast
 

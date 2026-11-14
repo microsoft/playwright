@@ -442,6 +442,96 @@ it('RO-116 should fulfill json', async ({ page, server }) => {
   expect(body).toBe(JSON.stringify({ bar: 'baz' }));
 });
 
+it('RO-203 should keep header content-type when fulfilling json', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44109' },
+}, async ({ page, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  await page.route('**/*.json', route => {
+    const path = new URL(route.request().url()).pathname;
+    if (path === '/problem.json') {
+      void route.fulfill({
+        headers: { 'Content-Type': 'application/problem+json' },
+        json: { a: 1 },
+      });
+      return;
+    }
+    if (path === '/problem-lower.json') {
+      void route.fulfill({
+        headers: { 'content-type': 'application/problem+json' },
+        json: { a: 1 },
+      });
+      return;
+    }
+    if (path === '/plain.json') {
+      void route.fulfill({
+        headers: { 'Content-Type': 'application/problem+json' },
+        contentType: 'text/plain',
+        json: { a: 1 },
+      });
+      return;
+    }
+    void route.continue();
+  });
+
+  const contentTypes = [];
+  const bodies = [];
+  for (const path of ['/problem.json', '/problem-lower.json', '/plain.json']) {
+    const [response, body] = await Promise.all([
+      page.waitForResponse(response => response.url().endsWith(path)),
+      page.evaluate(path => fetch(path).then(r => r.text()), path),
+    ]);
+    contentTypes.push(response.headers()['content-type']);
+    bodies.push(body);
+  }
+  expect(contentTypes).toEqual([
+    'application/problem+json',
+    'application/problem+json',
+    'text/plain',
+  ]);
+  expect(bodies).toEqual([
+    JSON.stringify({ a: 1 }),
+    JSON.stringify({ a: 1 }),
+    JSON.stringify({ a: 1 }),
+  ]);
+});
+
+it('RO-204 should set application/json for falsy json values', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44109' },
+}, async ({ page, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  const cases = [
+    { path: '/json-null.json', json: null, body: 'null' },
+    { path: '/json-false.json', json: false, body: 'false' },
+    { path: '/json-zero.json', json: 0, body: '0' },
+    { path: '/json-empty.json', json: '', body: '""' },
+    { path: '/json-one.json', json: 1, body: '1' },
+  ];
+  await page.route('**/*.json', route => {
+    const path = new URL(route.request().url()).pathname;
+    const entry = cases.find(item => item.path === path);
+    void route.fulfill({ json: entry.json });
+  });
+
+  const contentTypes = [];
+  const bodies = [];
+  for (const entry of cases) {
+    const [response, body] = await Promise.all([
+      page.waitForResponse(response => response.url().endsWith(entry.path)),
+      page.evaluate(path => fetch(path).then(r => r.text()), entry.path),
+    ]);
+    contentTypes.push(response.headers()['content-type']);
+    bodies.push(body);
+  }
+  expect(contentTypes).toEqual([
+    'application/json',
+    'application/json',
+    'application/json',
+    'application/json',
+    'application/json',
+  ]);
+  expect(bodies).toEqual(cases.map(entry => entry.body));
+});
+
 it('RO-117 should fulfill with gzip and readback', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29261' },
 }, async ({ page, server, isAndroid, isElectron, electronMajorVersion }) => {
