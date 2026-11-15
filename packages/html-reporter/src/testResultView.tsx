@@ -160,7 +160,7 @@ export const TestResultView: React.FC<{
     {diffs.map((diff, index) =>
       <Anchor key={`diff-${index}`} id={diff.anchors}>
         <AutoChip dataTestId='test-results-image-diff' header={`Image mismatch: ${diff.name}`} revealOnAnchorId={diff.anchors}>
-          <ImageDiffView diff={diff}/>
+          <ImageDiffView diff={diff} enableBlink={true}/>
         </AutoChip>
       </Anchor>
     )}

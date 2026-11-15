@@ -218,6 +218,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         'Expected',
         'Side by side',
         'Slider',
+        'Blink',
       ]);
 
       for (const testId of ['test-results-image-diff', 'test-screenshot-error-view']) {
@@ -251,6 +252,12 @@ for (const useIntermediateMergeReport of [true, false] as const) {
             await expect(imageDiff.locator('img')).toHaveCount(2);
             await expect(imageDiff.locator('img').first()).toHaveAttribute('alt', 'Expected');
             await expect(imageDiff.locator('img').last()).toHaveAttribute('alt', 'Actual');
+          });
+
+          await test.step('Blink', async () => {
+            await imageDiff.getByRole('tab', { name: 'Blink' }).click();
+            await expect.poll(() => imageDiff.locator('img').getAttribute('alt')).toBe('Actual');
+            await expect.poll(() => imageDiff.locator('img').getAttribute('alt')).toBe('Expected');
           });
         });
       }
