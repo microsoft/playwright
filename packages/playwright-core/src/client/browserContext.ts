@@ -312,10 +312,10 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     return this._closingStatus !== 'none';
   }
 
-  async newPage(): Promise<Page> {
+  async newPage(options: { background?: boolean } = {}): Promise<Page> {
     if (this._ownerPage)
       throw new Error('Please use browser.newContext()');
-    return Page.from((await this._channel.newPage({}, kNoTimeout)).page);
+    return Page.from((await this._channel.newPage({ background: options.background }, kNoTimeout)).page);
   }
 
   async cookies(urls?: string | string[]): Promise<network.NetworkCookie[]> {

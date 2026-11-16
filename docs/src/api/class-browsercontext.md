@@ -1025,6 +1025,13 @@ named `page`, but it can be a `Page` or `Frame` type.
 
 Creates a new page in the browser context.
 
+### option: BrowserContext.newPage.background
+* since: v1.66
+- `background` <[boolean]>
+
+Whether to open the page in the background, without making its tab the selected one. Defaults to `false`. Only
+supported in Chromium.
+
 ## method: BrowserContext.pages
 * since: v1.8
 - returns: <[Array]<[Page]>>

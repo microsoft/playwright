@@ -817,7 +817,9 @@ scheme.BrowserContextGrantPermissionsParams = tObject({
   origin: tOptional(tString),
 });
 scheme.BrowserContextGrantPermissionsResult = tOptional(tObject({}));
-scheme.BrowserContextNewPageParams = tOptional(tObject({}));
+scheme.BrowserContextNewPageParams = tObject({
+  background: tOptional(tBoolean),
+});
 scheme.BrowserContextNewPageResult = tObject({
   page: tChannel(['Page']),
 });

@@ -923,6 +923,28 @@ test('CD-035 noDefaults should not affect new contexts', async ({ browserType, m
   }
 });
 
+test('CD-054 should open a page in the background', async ({ browserType, isHeadlessShell }, testInfo) => {
+  test.skip(isHeadlessShell, 'Headless shell does not have tabs');
+  const port = 9339 + testInfo.workerIndex;
+  const browserServer = await browserType.launch({
+    args: ['--remote-debugging-port=' + port]
+  });
+  try {
+    const browser = await browserType.connectOverCDP({
+      endpointURL: `http://127.0.0.1:${port}/`,
+      noDefaults: true,
+    });
+    const defaultContext = browser.contexts()[0];
+    const page1 = await defaultContext.newPage();
+    const page2 = await defaultContext.newPage({ background: true });
+    expect(await page1.evaluate(() => document.visibilityState)).toBe('visible');
+    expect(await page2.evaluate(() => document.visibilityState)).toBe('hidden');
+    await browser.close();
+  } finally {
+    await browserServer.close();
+  }
+});
+
 test('CD-036 should connect over CDP using a ConnectionTransport', async ({ browserType, mode, server }, testInfo) => {
   test.skip(mode !== 'default', 'Passing a transport to connectOverCDP is only available in-process');
 

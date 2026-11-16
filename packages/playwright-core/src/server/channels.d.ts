@@ -1503,8 +1503,12 @@ export type BrowserContextGrantPermissionsOptions = {
   origin?: string,
 };
 export type BrowserContextGrantPermissionsResult = void;
-export type BrowserContextNewPageParams = {};
-export type BrowserContextNewPageOptions = {};
+export type BrowserContextNewPageParams = {
+  background?: boolean,
+};
+export type BrowserContextNewPageOptions = {
+  background?: boolean,
+};
 export type BrowserContextNewPageResult = {
   page: PageChannel,
 };
