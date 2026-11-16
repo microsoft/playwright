@@ -72,6 +72,31 @@ test('cdp connection uses noDefaults', async ({ cdpServer, startClient }) => {
   expect(await page.evaluate(() => matchMedia('print').matches)).toBe(true);
 });
 
+test('cdp connection does not wait for a busy page', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44052' },
+}, async ({ cdpServer, startClient, server }) => {
+  const browserContext = await cdpServer.start();
+  const [busyPage] = browserContext.pages();
+  await busyPage.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
+  const page = await browserContext.newPage();
+  await page.goto(server.HELLO_WORLD);
+  const busyStarted = busyPage.waitForEvent('console', message => message.text() === 'busy');
+  busyPage.evaluate(() => {
+    console.log('busy');
+    for (;;) {}
+  }).catch(() => {});
+  await busyStarted;
+
+  const { client } = await startClient({ args: [`--cdp-endpoint=${cdpServer.endpoint}`] });
+  expect(await client.callTool({
+    name: 'browser_snapshot',
+  })).toHaveResponse({
+    page: `- Page URL: ${server.HELLO_WORLD}
+- Page Title: Title`,
+    inlineSnapshot: `- generic [active] [ref=e1]: Hello, world!`,
+  });
+});
+
 test('should throw connection error and allow re-connecting', async ({ cdpServer, startClient, server }) => {
   const { client } = await startClient({ args: [`--cdp-endpoint=${cdpServer.endpoint}`] });
 

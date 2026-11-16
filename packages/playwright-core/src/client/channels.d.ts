@@ -2058,6 +2058,7 @@ export type BrowserTypeConnectOverCDPParams = {
   isLocal?: boolean,
   noDefaults?: boolean,
   isWebView?: boolean,
+  maxPageAttachTime?: number,
   artifactsDir?: string,
   transport?: Binary,
 };
@@ -2068,6 +2069,7 @@ export type BrowserTypeConnectOverCDPOptions = {
   isLocal?: boolean,
   noDefaults?: boolean,
   isWebView?: boolean,
+  maxPageAttachTime?: number,
   artifactsDir?: string,
   transport?: Binary,
 };
