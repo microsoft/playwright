@@ -413,10 +413,12 @@ it('RO-021 should chain fallback w/ dynamic URL', async ({ page, server }) => {
   expect(intercepted).toEqual([3, 2, 1]);
 });
 
-it('RO-022 should work with redirects for subresources', async ({ page, server }) => {
+it('RO-022 should work with redirects for subresources', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44117' },
+}, async ({ page, server }) => {
   const intercepted = [];
   await page.route('**/*', route => {
-    void route.continue();
+    void route.continue(route.request().url().endsWith('/fetch-redirect') ? { method: 'POST', postData: 'overridden' } : {});
     intercepted.push(route.request());
   });
   server.setRedirect('/one-style.css', '/two-style.css');
@@ -439,6 +441,28 @@ it('RO-022 should work with redirects for subresources', async ({ page, server }
     r = r.redirectedTo();
   }
   expect(r).toBe(null);
+
+  server.setRoute('/fetch-redirect', (request, response) => {
+    // Large headers make Fetch.requestPaused arrive before Network.requestWillBeSent.
+    for (let i = 0; i < 100; ++i)
+      response.setHeader(`x-padding-${i}`, 'a'.repeat(1024));
+    response.writeHead(302, { location: server.CROSS_PROCESS_PREFIX + '/fetch-target' });
+    response.end();
+  });
+  server.setRoute('/fetch-target', (request, response) => {
+    response.setHeader('Access-Control-Allow-Origin', '*');
+    response.end(request.method);
+  });
+  const events: string[] = [];
+  page.on('request', request => events.push(`request ${new URL(request.url()).pathname}${request.redirectedFrom() ? ' (redirected)' : ''}`));
+  page.on('response', response => events.push(`response ${response.status()} ${new URL(response.url()).pathname}`));
+  expect(await page.evaluate(() => fetch('/fetch-redirect').then(response => response.text()))).toBe('GET');
+  expect(events).toEqual([
+    'request /fetch-redirect',
+    'response 302 /fetch-redirect',
+    'request /fetch-target (redirected)',
+    'response 200 /fetch-target',
+  ]);
 });
 
 it('RO-023 should work with equal requests', async ({ page, server }) => {

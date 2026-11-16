@@ -264,7 +264,9 @@ export class CRNetworkManager {
     } else {
       const existingRequest = this._requestIdToRequest.get(requestId);
       const alreadyContinuedParams = existingRequest?._originalRequestRoute?._alreadyContinuedParams;
-      if (alreadyContinuedParams && !event.redirectedRequestId) {
+      // Cross-origin redirects can start a new interception job without redirectedRequestId.
+      const isRedirect = !!event.redirectedRequestId || (!!existingRequest && event.request.url !== existingRequest.request.url());
+      if (alreadyContinuedParams && !isRedirect) {
         // Sometimes Chromium network stack restarts the request internally.
         // For example, when no-cors request hits a "less public address space", it should be resent with cors.
         // There are some more examples here: https://source.chromium.org/chromium/chromium/src/+/main:services/network/url_loader.cc;l=1205-1234;drc=d5dd931e0ad3d9ffe74888ec62a3cc106efd7ea6
@@ -280,7 +282,7 @@ export class CRNetworkManager {
         });
         return;
       }
-      if (existingRequest && !existingRequest._interceptionId && !event.redirectedRequestId) {
+      if (existingRequest && !existingRequest._interceptionId && !isRedirect) {
         // The request was reported while interception was disabled, so it has no route.
         // It can still be paused if interception is enabled again before the request
         // reaches the network, for example when a service worker holds it. Nothing else
