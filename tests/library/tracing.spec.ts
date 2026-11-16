@@ -158,9 +158,21 @@ test('TR-004 should not collect snapshots by default', async ({ context, page, s
   expect(events.some(e => e.type === 'resource-snapshot')).toBeFalsy();
 });
 
-test('TR-005 should not collect action screenshots and aria snapshots by default', async ({ context, page, server }, testInfo) => {
+test('TR-005 should not collect action screenshots and aria snapshots by default', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44119' }
+}, async ({ context, page, server, browserName }, testInfo) => {
+  await page.addInitScript(() => {
+    document.addEventListener('mousemove', () => console.log(`user-activation:${navigator.userActivation.hasBeenActive}`), { once: true });
+  });
   await context.tracing.start({ snapshots: true });
   await page.goto(server.PREFIX + '/input/button.html');
+  // Firefox's Runtime.evaluate always grants user activation, even for raw evaluations.
+  if (browserName !== 'firefox') {
+    // Observe activation without page.evaluate, which itself grants a user gesture.
+    const activation = page.waitForEvent('console', message => message.text().startsWith('user-activation:'));
+    await page.mouse.move(10, 10);
+    expect((await activation).text()).toBe('user-activation:false');
+  }
   await page.click('button');
   await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
 

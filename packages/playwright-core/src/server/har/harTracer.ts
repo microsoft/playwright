@@ -32,7 +32,6 @@ import { APIRequestContext } from '../fetch';
 import { Frame } from '../frames';
 import { helper } from '../helper';
 import * as network from '../network';
-import { nullProgress } from '../progress';
 
 import { Page } from '../page';
 
@@ -174,12 +173,12 @@ export class HarTracer {
   }
 
   private _onDOMContentLoaded(page: Page, pageEntry: har.Page) {
-    const promise = page.mainFrame().evaluateExpression(nullProgress, String(() => {
+    const promise = page.mainFrame().utilityContext().then(context => context.rawEvaluateJSON(`(${() => {
       return {
         title: document.title,
         domContentLoaded: performance.timing.domContentLoadedEventStart,
       };
-    }), { isFunction: true, world: 'utility' }).then(result => {
+    }})()`)).then(result => {
       pageEntry.title = result.title;
       if (!this._options.omitTiming)
         pageEntry.pageTimings.onContentLoad = result.domContentLoaded;
@@ -188,12 +187,12 @@ export class HarTracer {
   }
 
   private _onLoad(page: Page, pageEntry: har.Page) {
-    const promise = page.mainFrame().evaluateExpression(nullProgress, String(() => {
+    const promise = page.mainFrame().utilityContext().then(context => context.rawEvaluateJSON(`(${() => {
       return {
         title: document.title,
         loaded: performance.timing.loadEventStart,
       };
-    }), { isFunction: true, world: 'utility' }).then(result => {
+    }})()`)).then(result => {
       pageEntry.title = result.title;
       if (!this._options.omitTiming)
         pageEntry.pageTimings.onLoad = result.loaded;
