@@ -22,7 +22,7 @@ import debug from 'debug';
 import { escapeRegExp, escapeWithQuotes } from '@isomorphic/stringUtils';
 import { disposeAll } from '@isomorphic/disposable';
 import { eventsHelper } from '@utils/eventsHelper';
-import { isPathInside, isSystemDirectory, isWritable, resolveSymlinks, sanitizeForFilePath } from '@utils/fileUtils';
+import { isPathInside, isSystemDirectory, isWritableDirectory, resolveSymlinks, sanitizeForFilePath } from '@utils/fileUtils';
 import { playwright } from '../../inprocess';
 
 import { dedent, languageGeneratorId, secretCode } from './codegen';
@@ -566,9 +566,13 @@ export function outputDir(options: ContextOptions): string {
   if (options.config.outputDir)
     return path.resolve(options.config.outputDir);
   const baseName = options.config.skillMode ? '.playwright-cli' : '.playwright-mcp';
-  if (isSystemDirectory(options.cwd) || !isWritable(options.cwd))
+  if (!isSuitableOutputDirectory(options.cwd))
     return path.join(os.tmpdir(), baseName);
   return path.join(options.cwd, baseName);
+}
+
+export function isSuitableOutputDirectory(dir: string): boolean {
+  return !isSystemDirectory(dir) && isWritableDirectory(dir);
 }
 
 export async function outputFile(options: ContextOptions, fileName: string, flags: { origin: 'code' | 'llm' }): Promise<string> {
