@@ -279,7 +279,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
 
   // BrowserContext methods.
   abstract possiblyUninitializedPages(): Page[];
-  abstract doCreateNewPage(): Promise<Page>;
+  abstract doCreateNewPage(options: { background?: boolean }): Promise<Page>;
   abstract addCookies(cookies: channels.SetNetworkCookie[]): Promise<void>;
   abstract setGeolocation(geolocation?: types.Geolocation): Promise<void>;
   abstract setUserAgent(userAgent: string | undefined): Promise<void>;
@@ -572,11 +572,11 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
       throw flushError;
   }
 
-  async newPage(progress: Progress, forStorageState?: boolean): Promise<Page> {
+  async newPage(progress: Progress, options: { background?: boolean, forStorageState?: boolean } = {}): Promise<Page> {
     let page: Page | undefined;
     try {
-      this._creatingStorageStatePage = !!forStorageState;
-      page = await progress.race(this.doCreateNewPage());
+      this._creatingStorageStatePage = !!options.forStorageState;
+      page = await progress.race(this.doCreateNewPage({ background: options.background }));
       const pageOrError = await progress.race(page.waitForInitializedOrError());
       if (pageOrError instanceof Page) {
         if (pageOrError.isClosed())
@@ -644,7 +644,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
   }
 
   async visitOrigins(progress: Progress, origins: Set<string>, callback: (frame: frames.Frame, origin: string) => Promise<void>) {
-    const page = await this.newPage(progress, true /* forStorageState */);
+    const page = await this.newPage(progress, { forStorageState: true });
     try {
       await page.addRequestInterceptor(progress, route => {
         route.fulfill({ body: '<html></html>' }).catch(() => {});
@@ -691,7 +691,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
         if (mode === 'resetForReuse')
           page = this.pages()[0];
         if (!page)
-          page = await this.newPage(progress, mode !== 'resetForReuse' /* forStorageState */);
+          page = await this.newPage(progress, { forStorageState: mode !== 'resetForReuse' });
 
         interceptor = (route: network.Route) => {
           route.fulfill({ body: '<html></html>' }).catch(() => {});

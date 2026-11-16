@@ -99,6 +99,8 @@ BrowserContext:
 
     newPage:
       title: Create page
+      parameters:
+        background: boolean?
       returns:
         page: Page
 

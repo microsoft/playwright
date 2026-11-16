@@ -96,7 +96,7 @@ export class BidiBrowser extends Browser {
       browser._defaultContext = context;
       await context.initialize();
       // Create default page as we cannot get access to the existing one.
-      const page = await browser._defaultContext.doCreateNewPage();
+      const page = await browser._defaultContext.doCreateNewPage({});
       await page.waitForInitializedOrError();
     }
     return browser;
@@ -280,9 +280,10 @@ export class BidiBrowserContext extends BrowserContext {
     return this._bidiPages().map(bidiPage => bidiPage._page);
   }
 
-  override async doCreateNewPage(): Promise<Page> {
+  override async doCreateNewPage(options: { background?: boolean }): Promise<Page> {
     const { context } = await this._browser._browserSession.send('browsingContext.create', {
       type: bidi.BrowsingContext.CreateType.Window,
+      background: options.background,
       userContext: this._browserContextId,
     });
     const page = this._browser._bidiPages.get(context)!._page;

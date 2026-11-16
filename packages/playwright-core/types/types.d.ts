@@ -10393,8 +10393,15 @@ export interface BrowserContext {
 
   /**
    * Creates a new page in the browser context.
+   * @param options
    */
-  newPage(): Promise<Page>;
+  newPage(options?: {
+    /**
+     * Whether to open the page in the background, without making its tab the selected one. Defaults to `false`. Only
+     * supported in Chromium.
+     */
+    background?: boolean;
+  }): Promise<Page>;
 
   /**
    * Returns all open pages in the context.
@@ -11314,8 +11321,8 @@ export interface Browser {
    * This is a convenience API that should only be used for the single-page scenarios and short snippets. Production
    * code and testing frameworks should explicitly create
    * [browser.newContext([options])](https://playwright.dev/docs/api/class-browser#browser-new-context) followed by the
-   * [browserContext.newPage()](https://playwright.dev/docs/api/class-browsercontext#browser-context-new-page) to
-   * control their exact life times.
+   * [browserContext.newPage([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-new-page)
+   * to control their exact life times.
    * @param options
    */
   newPage(options?: {
