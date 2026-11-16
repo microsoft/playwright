@@ -1276,10 +1276,14 @@ test('TV-056 should not treat synthetic shadow root as a shadow root', async ({ 
   await expect(frame.locator('#native .icon')).toHaveCSS('fill', 'rgb(46, 139, 87)');
 });
 
-test('TV-057 should highlight target elements', async ({ page, runAndTrace, browserName }) => {
+test('TV-057 should highlight target elements', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44127' } }, async ({ page, runAndTrace, browserName }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.setContent(`
-      <div>t1</div>
+      <style>body { height: 2000px; }</style>
+      <section style="height: 150px; overflow: auto">
+        <div style="margin-top: 60px">t1</div>
+        <div style="height: 300px"></div>
+      </section>
       <div>t2</div>
       <div id=div3>t3</div>
       <div>t4</div>
@@ -1316,14 +1320,19 @@ test('TV-057 should highlight target elements', async ({ page, runAndTrace, brow
 
   const framePageClick = await traceViewer.snapshotFrame('Click');
   await expect.poll(() => highlightedDivs(framePageClick)).toEqual(['t1']);
-  const box1 = await framePageClick.getByText('t1').boundingBox();
-  const box2 = await framePageClick.locator('x-pw-pointer').boundingBox();
-  const x1 = box1!.x + box1!.width / 2;
-  const y1 = box1!.y + box1!.height / 2;
-  const x2 = box2!.x + box2!.width / 2;
-  const y2 = box2!.y + box2!.height / 2;
-  expect(Math.abs(x1 - x2) < 2).toBeTruthy();
-  expect(Math.abs(y1 - y2) < 2).toBeTruthy();
+  for (const scroll of [0, 20, 0]) {
+    await framePageClick.locator('section').evaluate((element, scroll) => {
+      element.scrollTop = scroll;
+      window.scrollTo(0, scroll);
+    }, scroll);
+    await expect.poll(async () => {
+      const box1 = await framePageClick.getByText('t1').boundingBox();
+      const box2 = await framePageClick.locator('x-pw-pointer').boundingBox();
+      return Math.max(
+          Math.abs(box1!.x + box1!.width / 2 - box2!.x - box2!.width / 2),
+          Math.abs(box1!.y + box1!.height / 2 - box2!.y - box2!.height / 2));
+    }).toBeLessThan(2);
+  }
 
   const framePageInnerText = await traceViewer.snapshotFrame('Inner text');
   await expect.poll(() => highlightedDivs(framePageInnerText)).toEqual(['t2']);
