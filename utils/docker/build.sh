@@ -27,6 +27,7 @@ cd "$(dirname "$0")"
 # image.
 node ../../utils/pack_package.js playwright-core ./playwright-core.tar.gz
 PLAYWRIGHT_VERSION=$(node ../../utils/workspace.js --get-version)
+NODE_VERSION=$(node -p "require('../../packages/playwright-core/package.json').playwright.nodeVersion")
 
 PLATFORM=""
 if [[ "$1" == "--arm64" ]]; then
@@ -58,6 +59,7 @@ for ((attempt = 1; attempt <= MAX_ATTEMPTS; attempt++)); do
       --build-arg ACR_CACHE_PREFIX="${ACR_CACHE_PREFIX}" \
       --build-arg UBUNTU_MIRROR_PREFIX="${UBUNTU_MIRROR_PREFIX}" \
       --build-arg PLAYWRIGHT_VERSION="${PLAYWRIGHT_VERSION}" \
+      --build-arg NODE_VERSION="${NODE_VERSION}" \
       "${SECRET_ARGS[@]}" \
       -t "$3" -f "Dockerfile.$2" .; then
     exit 0
