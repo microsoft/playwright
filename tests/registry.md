@@ -766,6 +766,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `CD-051` | `library/chromium/session.spec.ts` | should emit close event when page closes |
 | `CD-052` | `library/chromium/session.spec.ts` | should work with newBrowserCDPSession |
 | `CD-053` | `library/chromium/connect-over-cdp.spec.ts` | should connect when another client inspects a terminated shared worker |
+| `CD-054` | `library/chromium/connect-over-cdp.spec.ts` | should connect to an existing page that activated a prerender |
 
 ### CF — Code frame
 
@@ -4057,6 +4058,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `OO-027` | `library/chromium/oopif.spec.ts` | should navigate a local frame to oopif with frame.goto |
 | `OO-028` | `library/chromium/oopif.spec.ts` | should allow to re-connect to OOPIFs with CDP when iframes were there already |
 | `OO-029` | `library/chromium/oopif.spec.ts` | should report the whole frame tree when connecting over CDP to nested OOPIFs |
+| `OO-030` | `library/chromium/oopif.spec.ts` | should detach an oopif that was removed right after it went cross-process |
 
 ### PA — Page
 
