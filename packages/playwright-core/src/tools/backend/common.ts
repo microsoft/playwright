@@ -24,7 +24,7 @@ const close = defineTool({
   schema: {
     name: 'browser_close',
     title: 'Close browser',
-    description: 'Close the browser and all open tabs. Use browser_tabs with action "close" to close a single tab.',
+    description: 'Close the browser and all open tabs.',
     inputSchema: z.object({}),
     type: 'action',
   },
