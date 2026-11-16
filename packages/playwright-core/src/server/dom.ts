@@ -977,7 +977,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         const point = data[i].pointInFrame;
         // Hit target in the parent frame should hit the child frame element.
         const hitTargetResult = await progress.race(element.evaluateInUtility(([injected, element, hitPoint]) => {
-          return injected.expectHitTarget(hitPoint, element);
+          return injected.expectHitTarget(hitPoint, element, 'viewport');
         }, point));
         if (hitTargetResult !== 'done')
           return hitTargetResult;

@@ -198,12 +198,25 @@ async function trackEvents(target: ElementHandle) {
 }
 
 it.describe('locators', () => {
-  it('TA-009 should send all of the correct events', async ({ page }) => {
+  it('TA-009 should send all of the correct events', {
+    annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44121' },
+  }, async ({ contextFactory, browserName }) => {
+    const context = await contextFactory({
+      hasTouch: true,
+      isMobile: browserName !== 'firefox',
+      viewport: { width: 1200, height: 900 },
+    });
+    const page = await context.newPage();
     await page.setContent(`
-      <div id="a" style="background: lightblue; width: 50px; height: 50px">a</div>
-      <div id="b" style="background: pink; width: 50px; height: 50px">b</div>
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <main style="width: 1534px; height: 1800px; position: relative">
+        <button id="a">a</button>
+        <button id="b" style="position: absolute; left: 1200px; top: 1000px; width: 50px; height: 50px"
+          onclick="this.textContent = 'tapped'">b</button>
+      </main>
     `);
     await page.locator('#a').tap();
     await page.locator('#b').tap();
+    await expect(page.locator('#b')).toHaveText('tapped');
   });
 });

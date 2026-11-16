@@ -1034,7 +1034,15 @@ export class InjectedScript {
     input.dispatchEvent(new Event('change', { bubbles: true }));
   }
 
-  expectHitTarget(hitPoint: { x: number, y: number }, targetElement: Element) {
+  expectHitTarget(hitPoint: { x: number, y: number }, targetElement: Element, coordinateSystem: 'viewport' | 'client') {
+    // Chromium protocol coordinates are relative to the visual viewport, but DOM hit testing uses the layout viewport.
+    const viewport = this.window.visualViewport;
+    if (coordinateSystem === 'viewport' && this._browserName === 'chromium' && viewport) {
+      hitPoint = {
+        x: hitPoint.x + viewport.offsetLeft,
+        y: hitPoint.y + viewport.offsetTop,
+      };
+    }
     const roots: (Document | ShadowRoot)[] = [];
 
     // Get all component roots leading to the target element.
@@ -1158,7 +1166,7 @@ export class InjectedScript {
     if (hitPoint) {
       // First do a preliminary check, to reduce the possibility of some iframe
       // intercepting the action.
-      const preliminaryResult = this.expectHitTarget(hitPoint, element);
+      const preliminaryResult = this.expectHitTarget(hitPoint, element, 'viewport');
       if (preliminaryResult !== 'done')
         return preliminaryResult.hitTargetDescription;
     }
@@ -1194,7 +1202,7 @@ export class InjectedScript {
       // Check that we hit the right element at the first event, and assume all
       // subsequent events will be fine.
       if (result === undefined && point)
-        result = this.expectHitTarget({ x: point.clientX, y: point.clientY }, element);
+        result = this.expectHitTarget({ x: point.clientX, y: point.clientY }, element, 'client');
 
       if (blockAllEvents || (result !== 'done' && result !== undefined)) {
         event.preventDefault();
