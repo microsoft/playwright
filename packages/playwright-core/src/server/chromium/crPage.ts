@@ -151,10 +151,9 @@ export class CRPage implements PageDelegate {
     // can be replaced by another one (for example, a prerendered page swapping in).
     // In this case, the target id stays the same, while all the frame ids,
     // including the main frame id, can change, and break the invariant.
-    if (frameId === this._targetId)
-      return true;
-    const frame = this._page.frameManager.frame(frameId);
-    return !!frame && frame === this._page.mainFrame();
+    // Therefore, never compare the frame id with the target id.
+    const mainFrame = this._page.frameManager.mainFrame();
+    return !!mainFrame && mainFrame._id === frameId;
   }
 
   isLocalRoot(frameId: string): boolean {
@@ -162,8 +161,6 @@ export class CRPage implements PageDelegate {
   }
 
   localRootSession(frameId: string): FrameSession | undefined {
-    // Note: so far, oopif frame id always equals its target id. For now,
-    // there isn't a more robust way to detect it. See also isMainFrame().
     if (this.isMainFrame(frameId))
       return this._mainFrameSession;
     return this._sessions.get(frameId);
