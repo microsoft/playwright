@@ -24,7 +24,7 @@ const close = defineTool({
   schema: {
     name: 'browser_close',
     title: 'Close browser',
-    description: 'Close the page',
+    description: 'Close the browser and all open tabs.',
     inputSchema: z.object({}),
     type: 'action',
   },
@@ -34,7 +34,7 @@ const close = defineTool({
       throw new Error('The browser context is shared between clients and cannot be closed.');
     const result = renderTabsMarkdown([]);
     response.addTextResult(result.join('\n'));
-    response.addCode(`await page.close()`);
+    response.addCode(`await browser.close();`);
     response.setClose();
   },
 });
