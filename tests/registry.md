@@ -5534,6 +5534,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `WO-029` | `library/browsercontext-service-worker-policy.spec.ts` | block › blocks service worker registration |
 | `WO-030` | `library/browsercontext-service-worker-policy.spec.ts` | block › should not throw error on about:blank |
 | `WO-031` | `library/browsercontext-service-worker-policy.spec.ts` | block › should not throw error in opaque sandboxed iframe |
+| `WO-032` | `page/workers.spec.ts` | should run a shared worker after redirected dedicated workers |
 
 ### WS — WebSocket
 

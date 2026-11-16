@@ -301,6 +301,37 @@ it('WO-018 should report worker script as network request after redirect', {
   expect(text).toContain(`console.log('hello from the worker');`);
 });
 
+it('WO-032 should run a shared worker after redirected dedicated workers', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44134' },
+}, async ({ page, server }) => {
+  for (const name of ['classic', 'module', 'shared']) {
+    server.setRedirect(`/${name}/worker.js`, 'v2/worker.js');
+    server.setRoute(`/${name}/v2/helper.js`, (req, res) => {
+      res.setHeader('Content-Type', 'text/javascript');
+      res.end(name === 'module' ? `export const value = 'v2';` : `self.value = 'v2';`);
+    });
+    server.setRoute(`/${name}/v2/worker.js`, (req, res) => {
+      res.setHeader('Content-Type', 'text/javascript');
+      if (name === 'module')
+        res.end(`import { value } from './helper.js'; postMessage(value);`);
+      else if (name === 'shared')
+        res.end(`importScripts('helper.js'); onconnect = event => event.ports[0].postMessage(self.value);`);
+      else
+        res.end(`importScripts('helper.js'); postMessage(self.value);`);
+    });
+  }
+  await page.goto(server.EMPTY_PAGE);
+  for (const name of ['classic', 'module', 'shared']) {
+    expect(await page.evaluate(name => new Promise((resolve, reject) => {
+      const url = `/${name}/worker.js`;
+      const worker = name === 'shared' ? new SharedWorker(url) : new Worker(url, { type: name === 'module' ? 'module' : 'classic' });
+      worker.onerror = event => reject(new Error(event.message));
+      const port = worker instanceof SharedWorker ? worker.port : worker;
+      port.onmessage = event => resolve(event.data);
+    }), name)).toBe('v2');
+  }
+});
+
 it('WO-019 should dispatch console messages when page has workers', async function({ page, server }) {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/15550' });
   await page.goto(server.EMPTY_PAGE);
