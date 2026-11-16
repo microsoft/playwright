@@ -5114,6 +5114,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `TR-047` | `library/chromium/tracing.spec.ts` | should return a buffer |
 | `TR-048` | `library/chromium/tracing.spec.ts` | should work without options |
 | `TR-049` | `library/chromium/tracing.spec.ts` | should support a buffer without a path |
+| `TR-050` | `library/tracing.spec.ts` | should report when tracing stops while starting |
 
 ### TV — Trace viewer
 

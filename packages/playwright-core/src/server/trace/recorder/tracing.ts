@@ -239,11 +239,18 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     if (this._state.options.screencast)
       this._startScreencast();
     this._harTracer.setOmitWebSocketFrames(!!process.env.PLAYWRIGHT_TRACING_NO_WEBSOCKET_FRAMES);
-    if (this._state.options.snapshotDom)
+    const state = this._state;
+    if (state.options.snapshotDom) {
       await this._snapshotter?.start(progress);
-    if (this._state.options.coverage)
+      if (this._state !== state || !state.recording || this._isStopping)
+        throw new Error('Tracing was stopped while starting');
+    }
+    if (state.options.coverage) {
       await this._coverageRecorder?.install(progress);
-    return { traceName: this._state.traceName };
+      if (this._state !== state || !state.recording || this._isStopping)
+        throw new Error('Tracing was stopped while starting');
+    }
+    return { traceName: state.traceName };
   }
 
   private _currentGroupId(): string | undefined {

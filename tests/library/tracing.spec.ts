@@ -22,6 +22,9 @@ import { parseTraceRaw } from '../config/utils';
 import type { StackFrame, ActionTraceEvent } from '../../packages/isomorphic/trace/trace';
 import { artifactsFolderName } from '../../packages/playwright/src/isomorphic/folders';
 import { rafraf } from '../page/pageTest';
+import { iso } from '../../packages/playwright-core/lib/coreBundle';
+
+const { ManualPromise } = iso;
 
 test.skip(({ trace }) => trace === 'on');
 
@@ -675,6 +678,28 @@ test('TR-026 should throw when stopping without start', async ({ context }, test
 
 test('TR-027 should not throw when stopping without start but not exporting', async ({ context }, testInfo) => {
   await context.tracing.stop();
+});
+
+test('TR-050 should report when tracing stops while starting', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44144' }
+}, async ({ context, page, toImpl }) => {
+  await page.setContent('<iframe srcdoc="<p>hello</p>"></iframe>');
+  const snapshotter = toImpl(context).tracing._snapshotter;
+  const startSnapshotter = snapshotter.start.bind(snapshotter);
+  const snapshotterStarted = new ManualPromise();
+  const resumeStart = new ManualPromise();
+  snapshotter.start = async progress => {
+    await startSnapshotter(progress);
+    snapshotterStarted.resolve();
+    await resumeStart;
+  };
+
+  const start = context.tracing.start({ snapshots: true }).catch(e => e);
+  await snapshotterStarted;
+  await context.tracing.stop();
+  resumeStart.resolve();
+  const error = await start;
+  expect(error.message).toContain('Tracing was stopped while starting');
 });
 
 test('TR-028 start should return a disposable that discards the trace', async ({ context, page, server }, testInfo) => {
