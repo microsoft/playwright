@@ -1112,12 +1112,13 @@ export class InitScript extends DisposableObject {
 }
 
 export async function ariaSnapshotJSONForFrame(progress: Progress, frame: frames.Frame, selector: string | undefined, options: { mode?: 'ai' | 'default', doNotRenderActive?: boolean, depth?: number, boxes?: boolean, strict?: boolean } = {}): Promise<AriaSnapshotJSON> {
+  const documentRootSelector = 'body,frameset,:root:not(html)';
   const snapshot = await frame.retryWithProgressAndTimeouts(progress, [1000, 2000, 4000, 8000], async (progress, continuePolling) => {
     try {
       // Note: the resolved frame might differ from the original |frame|.
       // See https://developer.mozilla.org/en-US/docs/Web/API/Document/body for body/frameset explanation.
       // Non-strict, because pages with nested framesets have multiple "frameset" elements.
-      const resolved = await progress.race(frame.selectors.callOnSelector({ selector: selector || 'body,frameset', strict: options.strict ?? !!selector }, ({ injected, elements }, ariaOptions) => {
+      const resolved = await progress.race(frame.selectors.callOnSelector({ selector: selector || documentRootSelector, strict: options.strict ?? !!selector }, ({ injected, elements }, ariaOptions) => {
         return injected.ariaSnapshotJSON(elements[0], ariaOptions);
       }, {
         mode: options.mode ?? 'default',
@@ -1145,7 +1146,7 @@ export async function ariaSnapshotJSONForFrame(progress: Progress, frame: frames
   const childSnapshotPromises = renderedIframeRefs.map(async ref => {
     const childDepth = options.depth ? options.depth - snapshot.iframeDepths[ref] - 1 : undefined;
     // Non-strict, because child frameset documents have multiple "frameset" elements.
-    const frameRootSelector = `aria-ref=${ref} >> internal:control=enter-frame >> body,frameset`;
+    const frameRootSelector = `aria-ref=${ref} >> internal:control=enter-frame >> ${documentRootSelector}`;
     try {
       return await ariaSnapshotJSONForFrame(progress, snapshot.resolvedFrame, frameRootSelector, { ...options, depth: childDepth, strict: false });
     } catch {

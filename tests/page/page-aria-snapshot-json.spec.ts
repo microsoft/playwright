@@ -31,7 +31,7 @@ function findNode(nodes: (NodeJSON | string)[], predicate: (node: NodeJSON) => b
   return undefined;
 }
 
-it('AR-096 should snapshot roles, names and text', async ({ page }) => {
+it('AR-096 should snapshot roles, names and text', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44124' } }, async ({ page, server }) => {
   await page.setContent(`
     <h1>title</h1>
     <ul aria-label="my list">
@@ -50,6 +50,17 @@ it('AR-096 should snapshot roles, names and text', async ({ page }) => {
       ],
     },
   ]);
+
+  server.setRoute('/snapshot.svg', (req, res) => {
+    res.setHeader('Content-Type', 'image/svg+xml');
+    res.end('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="200"><text x="10" y="30">hello</text></svg>');
+  });
+  await page.goto(server.PREFIX + '/snapshot.svg');
+  expect(await page.evaluate(() => document.body)).toBeNull();
+  expect(await page.ariaSnapshotJSON({ timeout: 2000 })).toEqual([
+    { role: 'img', text: 'hello' },
+  ]);
+  expect(await page.ariaSnapshot({ mode: 'ai', timeout: 2000 })).toBe(await page.locator(':root').ariaSnapshot({ mode: 'ai' }));
 });
 
 it('AR-097 should snapshot flags as properties', async ({ page }) => {
