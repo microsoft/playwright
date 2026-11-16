@@ -114,7 +114,7 @@ export class CRPage implements PageDelegate {
     this.updateExtraHTTPHeaders();
     this.updateHttpCredentials();
     this.updateRequestInterception();
-    this._mainFrameSession = new FrameSession(this, client, targetId, null);
+    this._mainFrameSession = new FrameSession(this, client, targetId, null, undefined);
     this._sessions.set(targetId, this._mainFrameSession);
     if (opener && !browserContext._options.noDefaultViewport) {
       const features = opener._nextWindowOpenPopupFeatures.shift() || [];
@@ -145,25 +145,16 @@ export class CRPage implements PageDelegate {
     }));
   }
 
-  isMainFrame(frameId: string): boolean {
-    // Chromium used to hold the invariant "local root frame id equals the target id".
-    // However, with multiple frame trees per tab introduced in ~2024, a frame tree
-    // can be replaced by another one (for example, a prerendered page swapping in).
-    // In this case, the target id stays the same, while all the frame ids,
-    // including the main frame id, can change, and break the invariant.
-    // Therefore, never compare the frame id with the target id.
-    const mainFrame = this._page.frameManager.mainFrame();
-    return !!mainFrame && mainFrame._id === frameId;
-  }
-
   isLocalRoot(frameId: string): boolean {
     return !!this.localRootSession(frameId);
   }
 
   localRootSession(frameId: string): FrameSession | undefined {
-    if (this.isMainFrame(frameId))
-      return this._mainFrameSession;
-    return this._sessions.get(frameId);
+    for (const session of this._sessions.values()) {
+      if (session._localRootFrame?._id === frameId)
+        return session;
+    }
+    return undefined;
   }
 
   _sessionForFrame(frame: frames.Frame): FrameSession {
@@ -439,17 +430,27 @@ class FrameSession {
   // Marks the oopif session that remote -> local transition has happened in the parent.
   // See Target.detachedFromTarget handler for details.
   private _swappedIn = false;
+  // Chromium used to hold the invariant "local root frame id equals the target id".
+  // However, with multiple frame trees per tab introduced in ~2024, a frame tree
+  // can be replaced by another one (for example, a prerendered page swapping in).
+  // In this case, the target id stays the same, while all the frame ids,
+  // including the main frame id, can change, and break the invariant.
+  // Therefore, we never compare the frame id with the target id, and instead hold
+  // the reference to a local root frame.
+  _localRootFrame: frames.Frame | undefined;
+  private readonly _parentFrameId: string | undefined;
   _metricsOverride: Protocol.Emulation.setDeviceMetricsOverrideParameters | undefined;
   private _workerSessions = new Map<string, CRSession>();
   private _initScriptIds = new Map<InitScript, string>();
   private _bufferedAttachedToTargetEvents: Protocol.Target.attachedToTargetPayload[] | undefined;
 
-  constructor(crPage: CRPage, client: CRSession, targetId: string, parentSession: FrameSession | null) {
+  constructor(crPage: CRPage, client: CRSession, targetId: string, parentSession: FrameSession | null, oopifParentFrameId: string | undefined) {
     this._client = client;
     this._crPage = crPage;
     this._page = crPage._page;
     this._targetId = targetId;
     this._parentSession = parentSession;
+    this._parentFrameId = oopifParentFrameId;
     if (parentSession)
       parentSession._childSessions.add(this);
     this._firstNonInitialNavigationCommittedPromise = new Promise((f, r) => {
@@ -465,10 +466,12 @@ class FrameSession {
     return this._targetId === this._crPage._targetId;
   }
 
-  localRoot(): frames.Frame | null {
-    if (this._isMainFrame())
-      return this._page.frameManager.mainFrame() ?? null;
-    return this._page.frameManager.frame(this._targetId);
+  private _localRoot(): frames.Frame | null {
+    const frame = this._localRootFrame;
+    // Our frame/subtree may be gone already.
+    if (!frame || this._page.frameManager.frame(frame._id) !== frame)
+      return null;
+    return frame;
   }
 
   private _addRendererListeners() {
@@ -531,7 +534,7 @@ class FrameSession {
       this._client.send('Page.enable'),
       this._client.send('Page.getFrameTree').then(({ frameTree }) => {
         const localFrames: frames.Frame[] = [];
-        this._handleFrameTree(frameTree, localFrames);
+        this._handleLocalRootFrameTree(frameTree, localFrames);
         this._addRendererListeners();
 
         // Now that we have the frame tree, it is possible to insert oopif targets at the right place.
@@ -664,16 +667,45 @@ class FrameSession {
       this._page.frameManager.frameLifecycleEvent(event.frameId, 'domcontentloaded');
   }
 
-  _handleFrameTree(frameTree: Protocol.Page.FrameTree, collectedLocalFrames: frames.Frame[]) {
-    const isOopif = !this._isMainFrame() && this._crPage.isLocalRoot(frameTree.frame.id);
-    // Note: OOPIF frame has been already attached in the parent session, so skip it.
-    if (!isOopif)
-      this._onFrameAttached(frameTree.frame.id, frameTree.frame.parentId || null);
+  private _handleLocalRootFrameTree(frameTree: Protocol.Page.FrameTree, collectedLocalFrames: frames.Frame[]) {
+    const frameId = frameTree.frame.id;
+    if (this._isMainFrame()) {
+      // Note: this keeps the existing main frame object, and only updates its id.
+      this._localRootFrame = this._page.frameManager.frameAttached(frameId, null);
+    } else {
+      let frame = this._page.frameManager.frame(frameId);
+      if (frame) {
+        // This is a local -> remote frame transition. The frame has been attached in the parent session,
+        // and we take it over from the parent session.
+        this._page.frameManager.removeChildFramesRecursively(frame);
+        this._parentSession?._destroyExecutionContextsForFrame(frame);
+      } else {
+        // When connecting to an existing page with an iframe, there is an "iframe" target,
+        // but no local frame is reported in the parent session. We create the frame here.
+        const parentFrameId = frameTree.frame.parentId ?? this._parentFrameId;
+        const parentFrame = parentFrameId ? this._page.frameManager.frame(parentFrameId) : null;
+        // Parent frame may be gone already because some ancestor frame navigated and
+        // destroyed the whole subtree of this oopif.
+        if (!parentFrame)
+          return;
+        frame = this._page.frameManager.frameAttached(frameId, parentFrame._id);
+      }
+      this._localRootFrame = frame;
+    }
 
-    const isInitialOopifDocument = isOopif && (frameTree.frame.url === '' || frameTree.frame.url === ':');
+    const isInitialOopifDocument = !this._isMainFrame() && (frameTree.frame.url === '' || frameTree.frame.url === ':');
     // Note: do not fake an empty document commit in a newly created OOPIF.
     if (!isInitialOopifDocument)
       this._onFrameNavigated(frameTree.frame, true);
+
+    collectedLocalFrames.push(this._localRootFrame);
+    for (const child of frameTree.childFrames || [])
+      this._handleFrameTree(child, collectedLocalFrames);
+  }
+
+  private _handleFrameTree(frameTree: Protocol.Page.FrameTree, collectedLocalFrames: frames.Frame[]) {
+    this._onFrameAttached(frameTree.frame.id, frameTree.frame.parentId || null);
+    this._onFrameNavigated(frameTree.frame, true);
 
     const frame = this._page.frameManager.frame(frameTree.frame.id);
     if (!frame)
@@ -682,6 +714,13 @@ class FrameSession {
     collectedLocalFrames.push(frame);
     for (const child of frameTree.childFrames || [])
       this._handleFrameTree(child, collectedLocalFrames);
+  }
+
+  _destroyExecutionContextsForFrame(frame: frames.Frame) {
+    for (const [contextId, context] of this._contextIdToContext) {
+      if (context.frame === frame)
+        this._onExecutionContextDestroyed(contextId);
+    }
   }
 
   private _eventBelongsToStaleFrame(frameId: string)  {
@@ -799,23 +838,8 @@ class FrameSession {
     const session = parentSession.createChildSession(event.sessionId);
 
     if (event.targetInfo.type === 'iframe') {
-      // Frame id equals target id.
       const targetId = event.targetInfo.targetId;
-      let frame = this._page.frameManager.frame(targetId);
-      if (!frame && event.targetInfo.parentFrameId) {
-        // When connecting to an existing page with an iframe, there is an "iframe" target,
-        // but no local frame is reported in getFrameTree. We can create a remote frame here.
-        const parentFrame = this._page.frameManager.frame(event.targetInfo.parentFrameId) ?? this._page.mainFrame();
-        frame = this._page.frameManager.frameAttached(targetId, parentFrame._id);
-      }
-      if (!frame)
-        return; // Subtree may be already gone due to renderer/browser race.
-      this._page.frameManager.removeChildFramesRecursively(frame);
-      for (const [contextId, context] of this._contextIdToContext) {
-        if (context.frame === frame)
-          this._onExecutionContextDestroyed(contextId);
-      }
-      const frameSession = new FrameSession(this._crPage, session, targetId, this);
+      const frameSession = new FrameSession(this._crPage, session, targetId, this, event.targetInfo.parentFrameId);
       this._crPage._sessions.set(targetId, frameSession);
       frameSession._initialize(false).catch(e => e);
       return;
@@ -857,7 +881,7 @@ class FrameSession {
     const options = this._crPage._browserContext._options;
     if (options.userAgent || options.locale)
       this._updateUserAgent(session).catch(() => {});
-    const workerFrame = event.targetInfo.parentFrameId ? this._page.frameManager.frame(event.targetInfo.parentFrameId) : this.localRoot();
+    const workerFrame = event.targetInfo.parentFrameId ? this._page.frameManager.frame(event.targetInfo.parentFrameId) : this._localRoot();
     this._crPage._networkManager.addSession(session, workerFrame ?? undefined).catch(() => {});
     session._sendMayFail('Runtime.runIfWaitingForDebugger');
     session._sendMayFail('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true });
@@ -907,8 +931,9 @@ class FrameSession {
     this._client.send('Page.enable').catch(e => null).then(() => {
       // Child was not swapped in - that means frameAttached did not happen and
       // this is remote detach rather than remote -> local swap.
-      if (!childFrameSession._swappedIn)
-        this._page.frameManager.frameDetached(event.targetId!);
+      const frame = childFrameSession._localRoot();
+      if (!childFrameSession._swappedIn && frame)
+        this._page.frameManager.frameDetached(frame._id);
       childFrameSession.dispose();
     });
   }
@@ -951,7 +976,7 @@ class FrameSession {
   }
 
   _onDialog(event: Protocol.Page.javascriptDialogOpeningPayload) {
-    if (!this.localRoot())
+    if (!this._localRoot())
       return; // Our frame/subtree may be gone already.
     this._page.browserContext.dialogManager.dialogDidOpen(new dialog.Dialog(
         this._page,
@@ -1217,7 +1242,7 @@ class FrameSession {
   }
 
   private async _framePosition(): Promise<types.Point | null> {
-    const frame = this.localRoot();
+    const frame = this._localRoot();
     if (!frame)
       return null;
     if (frame === this._page.mainFrame())

@@ -431,6 +431,9 @@ it('OO-028 should allow to re-connect to OOPIFs with CDP when iframes were there
 
   const browser = await browserType.connectOverCDP(`http://localhost:${cdpPort}`);
   const page = browser.contexts()[0].pages()[0];
+  // Oopif frames are reported asynchronously.
+  while (page.frames().length < 2)
+    await page.waitForEvent('frameattached');
   expect(page.frames().length).toBe(2);
   await assertOOPIFCount(browser, 1);
   expect(await page.frames()[1].evaluate(() => '' + location.href)).toBe(server.CROSS_PROCESS_PREFIX + '/grid.html');
@@ -467,6 +470,9 @@ it('OO-029 should report the whole frame tree when connecting over CDP to nested
   const browser = await browserType.connectOverCDP(`http://localhost:${cdpPort}`);
   await assertOOPIFCount(browser, 2);
   const page = browser.contexts()[0].pages()[0];
+  // Oopif frames are reported asynchronously.
+  while (page.frames().length < 4)
+    await page.waitForEvent('frameattached');
 
   const expectedTree = [
     server.PREFIX + '/nested-top.html',
@@ -491,6 +497,22 @@ it('OO-029 should report the whole frame tree when connecting over CDP to nested
 
   await browser.close();
   await hostBrowser.close();
+});
+
+it('OO-030 should detach an oopif that was removed right after it went cross-process', async ({ page, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  await page.evaluate(async url => {
+    for (let delay = 0; delay < 20; delay += 0.5) {
+      const iframe = document.createElement('iframe');
+      iframe.src = url;
+      document.body.appendChild(iframe);
+      await new Promise(f => setTimeout(f, 0));
+      const start = performance.now();
+      while (performance.now() - start < delay) {}
+      iframe.remove();
+    }
+  }, server.CROSS_PROCESS_PREFIX + '/grid.html');
+  await expect.poll(() => page.frames().length).toBe(1);
 });
 
 async function assertOOPIFCount(browser: Browser, count: number) {

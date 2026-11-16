@@ -4059,6 +4059,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `OO-027` | `library/chromium/oopif.spec.ts` | should navigate a local frame to oopif with frame.goto |
 | `OO-028` | `library/chromium/oopif.spec.ts` | should allow to re-connect to OOPIFs with CDP when iframes were there already |
 | `OO-029` | `library/chromium/oopif.spec.ts` | should report the whole frame tree when connecting over CDP to nested OOPIFs |
+| `OO-030` | `library/chromium/oopif.spec.ts` | should detach an oopif that was removed right after it went cross-process |
 
 ### PA — Page
 
