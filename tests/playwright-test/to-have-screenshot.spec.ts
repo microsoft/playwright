@@ -1807,9 +1807,12 @@ test('should trim+sanitize attachment names and paths', async ({ runInlineTest }
 });
 
 test.describe('update-snapshots', () => {
-  test('should rebase non-matching image', async ({ runInlineTest }) => {
+  test('should rebase non-matching image', {
+    annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44128' },
+  }, async ({ runInlineTest }) => {
     const BAD_PIXELS = 10;
     const EXPECTED_SNAPSHOT = paintBlackPixels(whiteImage, BAD_PIXELS);
+    const infiniteAnimationURL = pathToFileURL(path.join(__dirname, '../assets/rotate-z.html'));
 
     const result = await runInlineTest({
       ...playwrightConfig({
@@ -1820,10 +1823,13 @@ test.describe('update-snapshots', () => {
         const { test, expect } = require('@playwright/test');
         test('is a test', async ({ page }) => {
           await expect(page).toHaveScreenshot('snapshot.png', { timeout: 2000 });
+          await page.goto('${infiniteAnimationURL}');
+          await expect(page).toHaveScreenshot('snapshot.png', { animations: 'allow', timeout: 2000 });
         });
       `
     }, { 'update-snapshots': 'changed' });
-    expect(result.exitCode).toBe(0);
+    expect(result.exitCode).toBe(1);
+    expect(result.output).toContain('Failed to take two consecutive stable screenshots.');
     const newBaseline = fs.readFileSync(test.info().outputPath('__screenshots__/a.spec.js/snapshot.png'));
     expect(comparePNGs(newBaseline, whiteImage)).toBe(null);
     expect(comparePNGs(newBaseline, EXPECTED_SNAPSHOT)).not.toBe(null);

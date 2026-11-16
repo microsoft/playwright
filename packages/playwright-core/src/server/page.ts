@@ -731,6 +731,7 @@ export class Page extends SdkObject<PageEventMap> {
       errorMessage: string,
       diff?: Buffer,
     } | undefined;
+    let isStable = false;
 
     try {
       if (!options.expected && options.isNot)
@@ -792,6 +793,7 @@ export class Page extends SdkObject<PageEventMap> {
         progress.log(`screenshot matched expectation`);
         return {};
       }
+      isStable = true;
       throw new Error(intermediateResult!.errorMessage);
     } catch (e) {
       // Q: Why not throw upon isNonRetriableError(e) as in other places?
@@ -807,6 +809,7 @@ export class Page extends SdkObject<PageEventMap> {
         previous: intermediateResult?.previous,
         diff: intermediateResult?.diff,
         timedOut: (e instanceof TimeoutError),
+        isStable,
         customErrorMessage: errorMessage,
       };
       const error = new Error('Expect failed');

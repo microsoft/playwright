@@ -415,7 +415,7 @@ export async function toHaveScreenshot(
     const expected = await fs.promises.readFile(helper.expectedPath);
     expectScreenshotOptions.expected = helper.updateSnapshots === 'all' ? undefined : expected;
 
-    const { actual, previous, diff, errorMessage, log, timedOut } = await page._expectScreenshot(expectScreenshotOptions);
+    const { actual, previous, diff, errorMessage, log, timedOut, isStable } = await page._expectScreenshot(expectScreenshotOptions);
     const writeFiles = (actualBuffer: Buffer) => {
       writeFileSync(helper.expectedPath, actualBuffer);
       writeFileSync(helper.actualPath, actualBuffer);
@@ -434,7 +434,7 @@ export async function toHaveScreenshot(
     }
 
     if (helper.updateSnapshots === 'changed' || helper.updateSnapshots === 'all') {
-      if (actual)
+      if (actual && isStable)
         return writeFiles(actual);
       let header = formatMatcherMessage(this.utils, { promise: this.promise, isNot: this.isNot, matcherName: 'toHaveScreenshot', locator: locator?.toString(), expectation: 'expected', timeout, timedOut });
       header += '  Failed to re-generate expected.\n';

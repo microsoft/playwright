@@ -205,6 +205,7 @@ Page:
         actual: binary?
         previous: binary?
         timedOut: boolean?
+        isStable: boolean?
         log:
           type: array?
           items: string
