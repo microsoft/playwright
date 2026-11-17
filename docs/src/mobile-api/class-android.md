@@ -49,7 +49,7 @@ const { _android: android } = require('playwright');
 
     // Work with WebView's page as usual.
     const page = await webview.page();
-    await page.waitForNavigation({ url: /.*microsoft\/playwright.*/ });
+    await page.waitForURL(/.*microsoft\/playwright.*/);
     console.log(await page.title());
   }
 
