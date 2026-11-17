@@ -50,7 +50,7 @@ export const TestScreenshotErrorView: React.FC<{
   diff: ImageDiff,
 }> = ({ diff }) => {
   return <div data-testid='test-screenshot-error-view' className='test-error-view'>
-    <ImageDiffView key='image-diff' diff={diff} hideDetails={true} enableBlink={true}></ImageDiffView>
+    <ImageDiffView key='image-diff' diff={diff} hideDetails={true}></ImageDiffView>
   </div>;
 };
 

@@ -63,8 +63,7 @@ export const ImageDiffView: React.FC<{
   diff: ImageDiff,
   noTargetBlank?: boolean,
   hideDetails?: boolean,
-  enableBlink?: boolean,
-}> = ({ diff, noTargetBlank, hideDetails, enableBlink }) => {
+}> = ({ diff, noTargetBlank, hideDetails }) => {
   const [mode, setMode] = React.useState<'diff' | 'actual' | 'expected' | 'slider' | 'sxs' | 'blink'>(diff.diff ? 'diff' : 'actual');
   const [blinkExpected, setBlinkExpected] = React.useState(false);
   const [showSxsDiff, setShowSxsDiff] = React.useState<boolean>(false);
@@ -85,11 +84,11 @@ export const ImageDiffView: React.FC<{
   }, [diff]);
 
   React.useEffect(() => {
-    if (!enableBlink || mode !== 'blink')
+    if (mode !== 'blink')
       return;
     const interval = window.setInterval(() => setBlinkExpected(expected => !expected), 500);
     return () => window.clearInterval(interval);
-  }, [enableBlink, mode]);
+  }, [mode]);
 
   const isLoaded = expectedImage && actualImage && diffImage;
 
@@ -114,7 +113,7 @@ export const ImageDiffView: React.FC<{
         {modeTab('expected', expectedImageTitle)}
         {modeTab('sxs', 'Side by side')}
         {modeTab('slider', 'Slider')}
-        {enableBlink && modeTab('blink', 'Blink')}
+        {modeTab('blink', 'Blink')}
       </div>
       <div style={{ display: 'flex', justifyContent: 'center', flex: 'auto', minHeight: fitHeight + 60 }}>
         {diff.diff && mode === 'diff' && <ImageWithSize image={diffImage} alt='Diff' hideSize={hideDetails} canvasWidth={fitWidth} canvasHeight={fitHeight} scale={scale}/>}
