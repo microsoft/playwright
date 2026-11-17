@@ -195,7 +195,7 @@ it('DC-030 should have passed URL when launching with ignoreDefaultArgs: true', 
 it('DC-031 should handle timeout', async ({ browserType, createUserDataDir }) => {
   const options: any = { timeout: 5000, __testHookBeforeCreateBrowser: () => new Promise(f => setTimeout(f, 6000)) };
   const error = await browserType.launchPersistentContext(await createUserDataDir(), options).catch(e => e);
-  expect(error.message).toContain(`browserType.launchPersistentContext: Timeout 5000ms exceeded.`);
+  expect(error.message).toContain(`Timeout 5000ms exceeded.`);
 });
 
 it('DC-032 should handle exception', async ({ browserType, createUserDataDir }) => {

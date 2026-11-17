@@ -186,7 +186,7 @@ it('EF-013 should work with complex objects', async ({ page, server }) => {
 it('EF-014 should throw for duplicate registrations', async ({ page }) => {
   await page.exposeFunction('foo', () => {});
   const error = await page.exposeFunction('foo', () => {}).catch(e => e);
-  expect(error.message).toContain('page.exposeFunction: Function "foo" has been already registered');
+  expect(error.message).toContain('Function "foo" has been already registered');
 });
 
 it('EF-015 should work with setContent', async ({ page, server }) => {

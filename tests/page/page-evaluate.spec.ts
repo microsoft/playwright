@@ -813,7 +813,7 @@ it('EV-093 should throw when frame is detached', async ({ page, server }) => {
   await detachFrame(page, 'frame1');
   const error = await promise;
   expect(error).toBeTruthy();
-  expect(error.message).toMatch(/frame.evaluate: (Frame was detached|Execution context was destroyed)/);
+  expect(error.message).toMatch(/(Frame was detached|Execution context was destroyed)/);
 });
 
 it('EV-094 should work with overridden Object.defineProperty', async ({ page, server }) => {

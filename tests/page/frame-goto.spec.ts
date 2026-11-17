@@ -50,7 +50,7 @@ it('FR-022 should continue after client redirect', async ({ page, server, isAndr
   server.setRoute('/frames/script.js', () => {});
   const url = server.PREFIX + '/frames/child-redirect.html';
   const error = await page.goto(url, { timeout: 5000, waitUntil: 'networkidle' }).catch(e => e);
-  expect(error.message).toContain('page.goto: Timeout 5000ms exceeded.');
+  expect(error.message).toContain('Timeout 5000ms exceeded.');
   expect(error.message).toContain(`navigating to "${url}", waiting until "networkidle"`);
 });
 

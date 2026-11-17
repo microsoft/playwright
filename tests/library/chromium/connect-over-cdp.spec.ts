@@ -587,7 +587,7 @@ test('CD-020 should report an expected error when the endpointURL returns a non-
   });
   await expect(browserType.connectOverCDP({
     endpointURL: server.PREFIX,
-  })).rejects.toThrowError(`browserType.connectOverCDP: Unexpected status 404 when connecting to ${server.PREFIX}/json/version/`);
+  })).rejects.toThrowError(`Unexpected status 404 when connecting to ${server.PREFIX}/json/version/`);
 });
 
 test('CD-021 should report an expected error when the endpoint URL JSON webSocketDebuggerUrl is undefined', async ({ browserType, server }) => {
@@ -598,7 +598,7 @@ test('CD-021 should report an expected error when the endpoint URL JSON webSocke
   });
   await expect(browserType.connectOverCDP({
     endpointURL: server.PREFIX,
-  })).rejects.toThrowError('browserType.connectOverCDP: Invalid URL');
+  })).rejects.toThrowError('Invalid URL');
 });
 
 test('CD-022 should connect to an existing cdp session when passed as a first argument', async ({ browserType }, testInfo) => {

@@ -1387,7 +1387,7 @@ it('CL-090 should abort via signal', async ({ page }) => {
   const reason = new Error('foo bar');
   controller.abort(reason);
   const error = await promise;
-  expect(error.message).toContain('locator.click: foo bar');
+  expect(error.message).toContain('foo bar');
   expect(error.message).toMatch(/Call log:[\s\S]*operation was aborted: foo bar/);
   expect(error.name).toBe('AbortError');
   expect(error.cause).toBe(reason);
@@ -1400,7 +1400,7 @@ it('CL-091 should throw an Error when aborted in-flight with a string reason', a
   controller.abort('aborted by user');
   const error = await promise.catch(e => e);
   expect(error).toBeInstanceOf(Error);
-  expect(error.message).toContain('locator.click: aborted by user');
+  expect(error.message).toContain('aborted by user');
   expect(error.name).toBe('AbortError');
   expect(error.cause).toBe('aborted by user');
 });

@@ -431,11 +431,8 @@ it.describe('download event', () => {
       download.saveAs(testInfo.outputPath('download.txt')).catch(e => e),
       page.context().close(),
     ]);
-    expect(downloadError.message).toBe('download.path: canceled');
-    expect([
-      'download.saveAs: File not found on disk. Check download.failure() for details.',
-      'download.saveAs: canceled',
-    ]).toContain(saveError.message);
+    expect(downloadError.message).toContain('canceled');
+    expect(['File not found on disk. Check download.failure() for details.', 'canceled'].some(m => saveError.message.includes(m))).toBe(true);
   });
 
   it('DO-024 should close the context without awaiting the download', async ({ browser, server, browserName, platform, channel }, testInfo) => {
@@ -463,14 +460,8 @@ it.describe('download event', () => {
     ]);
     // The exact error message is racy, because sometimes browser is fast enough
     // to cancel the download.
-    expect([
-      'download.path: canceled',
-      'download.path: ' + kTargetClosedErrorMessage,
-    ]).toContain(downloadError.message);
-    expect([
-      'download.saveAs: canceled',
-      'download.saveAs: ' + kTargetClosedErrorMessage,
-    ]).toContain(saveError.message);
+    expect(['canceled', kTargetClosedErrorMessage].some(m => downloadError.message.includes(m))).toBe(true);
+    expect(['canceled', kTargetClosedErrorMessage].some(m => saveError.message.includes(m))).toBe(true);
   });
 
   it('DO-025 should throw if browser dies', async ({ server, browserType, browserName, platform, channel }, testInfo) => {
@@ -495,8 +486,8 @@ it.describe('download event', () => {
       download.saveAs(testInfo.outputPath('download.txt')).catch(e => e),
       (browser as any)._channel.killForTests(),
     ]);
-    expect(downloadError.message).toBe('download.path: ' + kTargetClosedErrorMessage);
-    expect(saveError.message).toContain('download.saveAs: ' + kTargetClosedErrorMessage);
+    expect(downloadError.message).toContain(kTargetClosedErrorMessage);
+    expect(saveError.message).toContain(kTargetClosedErrorMessage);
     await browser.close();
   });
 

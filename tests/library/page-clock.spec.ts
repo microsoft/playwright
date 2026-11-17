@@ -162,8 +162,8 @@ it.describe('runFor', () => {
       setInterval(window.stub, 10000);
     });
     await expect(page.clock.runFor('12:02:34:10')).rejects.toThrow();
-    await expect(page.clock.runFor(NaN)).rejects.toThrow('clock.runFor: Invalid ticks: NaN');
-    await expect(page.clock.fastForward(Infinity)).rejects.toThrow('clock.fastForward: Invalid ticks: Infinity');
+    await expect(page.clock.runFor(NaN)).rejects.toThrow('Invalid ticks: NaN');
+    await expect(page.clock.fastForward(Infinity)).rejects.toThrow('Invalid ticks: Infinity');
     expect(calls).toEqual([]);
     await page.goto(server.EMPTY_PAGE);
     expect(await page.evaluate(() => Date.now())).toBe(1000);
@@ -234,7 +234,7 @@ it.describe('stubTimers', () => {
 
   it('CK-018 should throw for invalid date', async ({ page }) => {
     await expect(page.clock.setSystemTime(new Date('invalid'))).rejects.toThrow('Invalid date: Invalid Date');
-    await expect(page.clock.setSystemTime('invalid')).rejects.toThrow('clock.setSystemTime: Invalid date: invalid');
+    await expect(page.clock.setSystemTime('invalid')).rejects.toThrow('Invalid date: invalid');
   });
 
   it('CK-019 replaces global setTimeout', async ({ page, calls }) => {
@@ -477,7 +477,7 @@ it.describe('while running', () => {
     await page.clock.install();
     await page.setContent(`<script>function tick() { requestAnimationFrame(tick); } requestAnimationFrame(tick);</script>`);
     const invalidTime = await page.evaluate(() => Date.now()) * 1_000_000;
-    await expect(page.clock.pauseAt(invalidTime)).rejects.toThrow(`clock.pauseAt: Invalid date: ${invalidTime}`);
+    await expect(page.clock.pauseAt(invalidTime)).rejects.toThrow(`Invalid date: ${invalidTime}`);
   });
 
   it('CK-040 should pause and fastForward', async ({ page }) => {

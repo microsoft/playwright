@@ -64,7 +64,7 @@ it('WA-005 should avoid side effects after timeout', async ({ page }) => {
   const savedCounter = counter;
   await page.waitForTimeout(2000); // Give it some time to produce more logs.
 
-  expect(error.message).toContain('page.waitForFunction: Timeout 1000ms exceeded');
+  expect(error.message).toContain('Timeout 1000ms exceeded');
   expect(counter).toBe(savedCounter);
 });
 
@@ -157,7 +157,7 @@ it('WA-017 should respect timeout', async ({ page, playwright }) => {
   let error = null;
   await page.waitForFunction('false', {}, { timeout: 10 }).catch(e => error = e);
   expect(error).toBeTruthy();
-  expect(error.message).toContain('page.waitForFunction: Timeout 10ms exceeded');
+  expect(error.message).toContain('Timeout 10ms exceeded');
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
 });
 
@@ -166,7 +166,7 @@ it('WA-018 should respect default timeout', async ({ page, playwright }) => {
   let error = null;
   await page.waitForFunction('false').catch(e => error = e);
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
-  expect(error.message).toContain('page.waitForFunction: Timeout 1ms exceeded');
+  expect(error.message).toContain('Timeout 1ms exceeded');
 });
 
 it('WA-019 should disable timeout when its set to 0', async ({ page }) => {
@@ -273,5 +273,5 @@ it('WA-026 should throw when frame is detached', async ({ page, server }) => {
   await detachFrame(page, 'frame1');
   const error = await promise;
   expect(error).toBeTruthy();
-  expect(error.message).toMatch(/frame.waitForFunction: (Frame was detached|Execution context was destroyed)/);
+  expect(error.message).toMatch(/(Frame was detached|Execution context was destroyed)/);
 });

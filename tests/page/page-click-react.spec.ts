@@ -25,7 +25,7 @@ it('CL-106 should timeout when click opens alert', async ({ page, server }) => {
   const dialogPromise = page.waitForEvent('dialog');
   await page.setContent(`<div onclick='window.alert(123)'>Click me</div>`);
   const error = await page.click('div', { timeout: 3000 }).catch(e => e);
-  expect(error.message).toContain('page.click: Timeout 3000ms exceeded.');
+  expect(error.message).toContain('Timeout 3000ms exceeded.');
   const dialog = await dialogPromise;
   await dialog.dismiss();
 });

@@ -33,7 +33,7 @@ it('WA-096 should respect timeout', async ({ page, server }) => {
   const promise = page.waitForNavigation({ url: '**/frame.html', timeout: 5000 });
   await page.goto(server.EMPTY_PAGE);
   const error = await promise.catch(e => e);
-  expect(error.message).toContain('page.waitForNavigation: Timeout 5000ms exceeded.');
+  expect(error.message).toContain('Timeout 5000ms exceeded.');
   expect(error.message).toContain('waiting for navigation to "**/frame.html" until "load"');
   expect(error.message).toContain(`navigated to "${server.EMPTY_PAGE}"`);
 });

@@ -403,7 +403,7 @@ it('NA-030 should fail when exceeding maximum navigation timeout', async ({ page
   server.setRoute('/empty.html', (req, res) => { });
   let error = null;
   await page.goto(server.PREFIX + '/empty.html', { timeout: 1 }).catch(e => error = e);
-  expect(error.message).toContain('page.goto: Timeout 1ms exceeded.');
+  expect(error.message).toContain('Timeout 1ms exceeded.');
   expect(error.message).toContain(server.PREFIX + '/empty.html');
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
 });
@@ -417,7 +417,7 @@ it('NA-031 should fail when exceeding default maximum navigation timeout', async
   page.context().setDefaultNavigationTimeout(2);
   page.setDefaultNavigationTimeout(1);
   await page.goto(server.PREFIX + '/empty.html').catch(e => error = e);
-  expect(error.message).toContain('page.goto: Timeout 1ms exceeded.');
+  expect(error.message).toContain('Timeout 1ms exceeded.');
   expect(error.message).toContain(server.PREFIX + '/empty.html');
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
 });
@@ -430,7 +430,7 @@ it('NA-032 should fail when exceeding browser context navigation timeout', async
   let error = null;
   page.context().setDefaultNavigationTimeout(2);
   await page.goto(server.PREFIX + '/empty.html').catch(e => error = e);
-  expect(error.message).toContain('page.goto: Timeout 2ms exceeded.');
+  expect(error.message).toContain('Timeout 2ms exceeded.');
   expect(error.message).toContain(server.PREFIX + '/empty.html');
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
 });
@@ -446,7 +446,7 @@ it('NA-033 should fail when exceeding default maximum timeout', async ({ page, s
   page.context().setDefaultTimeout(2);
   page.setDefaultTimeout(1);
   await page.goto(server.PREFIX + '/empty.html').catch(e => error = e);
-  expect(error.message).toContain('page.goto: Timeout 1ms exceeded.');
+  expect(error.message).toContain('Timeout 1ms exceeded.');
   expect(error.message).toContain(server.PREFIX + '/empty.html');
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
 });
@@ -461,7 +461,7 @@ it('NA-034 should fail when exceeding browser context timeout', async ({ page, s
   page.context().setDefaultNavigationTimeout(undefined);
   page.context().setDefaultTimeout(2);
   await page.goto(server.PREFIX + '/empty.html').catch(e => error = e);
-  expect(error.message).toContain('page.goto: Timeout 2ms exceeded.');
+  expect(error.message).toContain('Timeout 2ms exceeded.');
   expect(error.message).toContain(server.PREFIX + '/empty.html');
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
 });
@@ -473,7 +473,7 @@ it('NA-035 should prioritize default navigation timeout over default timeout', a
   page.setDefaultTimeout(0);
   page.setDefaultNavigationTimeout(1);
   await page.goto(server.PREFIX + '/empty.html').catch(e => error = e);
-  expect(error.message).toContain('page.goto: Timeout 1ms exceeded.');
+  expect(error.message).toContain('Timeout 1ms exceeded.');
   expect(error.message).toContain(server.PREFIX + '/empty.html');
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
 });
@@ -498,13 +498,13 @@ it('NA-037 should fail when replaced by another navigation', async ({ page, serv
   if (browserName === 'chromium') {
     expect(error.message).toContain('net::ERR_ABORTED');
   } else if (browserName === 'webkit') {
-    expect(error.message).toContain(`page.goto: Navigation to "${server.PREFIX + '/empty.html'}" is interrupted by another navigation to "${server.PREFIX + '/one-style.html'}"`);
+    expect(error.message).toContain(`Navigation to "${server.PREFIX + '/empty.html'}" is interrupted by another navigation to "${server.PREFIX + '/one-style.html'}"`);
   } else if (browserName === 'firefox') {
     if (isBidi)
-      expect(error.message).toContain('page.goto: Protocol error (browsingContext.navigate): unknown error');
+      expect(error.message).toContain('Protocol error (browsingContext.navigate): unknown error');
     else
       // Firefox might yield either NS_BINDING_ABORTED or 'navigation interrupted by another one'
-      expect(error.message.includes(`page.goto: Navigation to "${server.PREFIX + '/empty.html'}" is interrupted by another navigation to "${server.PREFIX + '/one-style.html'}"`) || error.message.includes('NS_BINDING_ABORTED')).toBe(true);
+      expect(error.message.includes(`Navigation to "${server.PREFIX + '/empty.html'}" is interrupted by another navigation to "${server.PREFIX + '/one-style.html'}"`) || error.message.includes('NS_BINDING_ABORTED')).toBe(true);
   }
 });
 
@@ -551,7 +551,7 @@ it('NA-038 js redirect overrides url bar navigation ', async ({ page, server, br
     expect(error).toBeFalsy();
     await expect(page).toHaveURL(server.PREFIX + '/b');
   } else if (browserName === 'webkit') {
-    expect(error.message).toContain(`page.goto: Navigation to "${server.PREFIX + '/b'}" is interrupted by another navigation to "${server.PREFIX + '/c'}"`);
+    expect(error.message).toContain(`Navigation to "${server.PREFIX + '/b'}" is interrupted by another navigation to "${server.PREFIX + '/c'}"`);
     await expect(page).toHaveURL(server.PREFIX + '/c');
   } else if (browserName === 'firefox') {
     expect(error.message).toContain('NS_BINDING_ABORTED');

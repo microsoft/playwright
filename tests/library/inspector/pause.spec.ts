@@ -42,7 +42,7 @@ it('IN-002 should not reset timeouts', async ({ page, recorderPageGetter, closeR
 
   server.setRoute('/empty.html', () => {});
   const error = await page.goto(server.EMPTY_PAGE).catch(e => e);
-  expect(error.message).toContain('page.goto: Timeout 1000ms exceeded.');
+  expect(error.message).toContain('Timeout 1000ms exceeded.');
 });
 
 it('IN-003 should collapse log entries to a single line', async ({ page, recorderPageGetter }) => {

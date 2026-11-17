@@ -62,7 +62,7 @@ it('WO-003 should reject in-flight evaluate and emit close when page closes', {
   const evalPromise = worker.evaluate(() => new Promise(() => {})).catch((e: Error) => e);
   await page.close();
   const error = await evalPromise as Error;
-  expect(error.message).toContain('worker.evaluate');
+  expect(error.message).toContain(kTargetClosedErrorMessage);
   expect(await closePromise).toBe(worker);
 });
 

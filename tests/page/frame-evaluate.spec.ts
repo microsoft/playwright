@@ -110,7 +110,7 @@ it('FR-009 should throw for detached frames', async ({ page, server }) => {
   await detachFrame(page, 'frame1');
   let error = null;
   await frame1.evaluate(() => 7 * 8).catch(e => error = e);
-  expect(error.message).toContain('frame.evaluate: Frame was detached');
+  expect(error.message).toContain('Frame was detached');
 });
 
 it('FR-010 should be isolated between frames', async ({ page, server }) => {

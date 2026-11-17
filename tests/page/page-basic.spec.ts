@@ -195,3 +195,8 @@ it('PA-019 should iterate over page properties', async ({ page }) => {
       props.push(page[prop][Symbol.iterator]);
   }
 });
+
+it('PA-057 should prefix the error message with the api name', async ({ page, server }) => {
+  const error = await page.goto(server.PREFIX + '/empty.html', { timeout: 1 }).catch(e => e);
+  expect(error.message).toContain('page.goto: Timeout 1ms exceeded.');
+});
