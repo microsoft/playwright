@@ -30,11 +30,12 @@ const coverageHelper = `
         '0': { name: 'foo', decl: { start: { line: 1, column: 0 }, end: { line: 1, column: 3 } }, loc: { start: { line: 1, column: 0 }, end: { line: 3, column: 1 } }, line: 1 },
       },
       branchMap: {
-        '0': { loc: { start: { line: 2, column: 0 }, end: { line: 2, column: 20 } }, type: 'if', locations: [{ start: { line: 2, column: 0 }, end: { line: 2, column: 10 } }, { start: { line: 2, column: 10 }, end: { line: 2, column: 20 } }], line: 2 },
+        '0': { loc: { start: { line: 2, column: 0 }, end: { line: 2, column: 20 } }, type: 'if', locations: [{ start: { line: 2, column: 0 }, end: { line: 2, column: 10 } }, {} as any], line: 2 },
+        '1': { type: 'if', locations: [{} as any], line: 3 },
       },
       s: { '0': s0, '1': 0 },
       f: { '0': 1 },
-      b: { '0': [1, 0] },
+      b: { '0': [1, 0], '1': [1] },
     },
   });
   const coverageScript = (file, s0) => '<script>window.__coverage__ = ' + JSON.stringify(makeCoverage(file, s0)) + '</script>';
@@ -79,10 +80,13 @@ test('should collect istanbul coverage into the trace', async ({ runInlineTest }
   expect(data['src/app.js'].s['1']).toBe(0);
   expect(data['src/app.js'].f['0']).toBe(2);
   expect(data['src/app.js'].b['0']).toEqual([2, 0]);
+  expect(data['src/app.js'].b['1']).toEqual([2]);
   expect(data['src/frame.js'].s['0']).toBe(3);
 });
 
-test('should aggregate coverage with the coverage reporter', async ({ runInlineTest }) => {
+test('should aggregate coverage with the coverage reporter', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44113' },
+}, async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       export default {
@@ -117,12 +121,15 @@ test('should aggregate coverage with the coverage reporter', async ({ runInlineT
   expect(final['src/app.js'].s['1']).toBe(0);
   expect(final['src/app.js'].f['0']).toBe(2);
   expect(final['src/app.js'].b['0']).toEqual([2, 0]);
+  expect(final['src/app.js'].b['1']).toEqual([2]);
   expect(final['src/second.js'].s['0']).toBe(4);
 
   const lcov = fs.readFileSync(test.info().outputPath('coverage-report', 'lcov.info'), 'utf8');
   expect(lcov).toContain('SF:src/app.js');
   expect(lcov).toContain('DA:1,7');
   expect(lcov).toContain('FNDA:2,foo');
+  expect(lcov).toContain('BRDA:2,0,1,0');
+  expect(lcov).toContain('BRDA:3,1,0,2');
   expect(lcov).toContain('SF:src/second.js');
 
   expect(result.output).toContain('Code coverage (2 files)');
