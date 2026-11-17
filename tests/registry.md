@@ -583,7 +583,6 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `BT-076` | `library/browsertype-connect.spec.ts` | {launchServer, run-server} › should upload large file *(2 copies)* |
 | `BT-077` | `library/browsertype-connect.spec.ts` | {launchServer, run-server} › should upload a folder *(2 copies)* |
 | `BT-078` | `library/browsertype-connect.spec.ts` | {launchServer, run-server} › setInputFiles should preserve lastModified timestamp *(2 copies)* |
-| `BT-079` | `library/browsertype-connect.spec.ts` | {launchServer, run-server} › should connect over http *(2 copies)* |
 | `BT-080` | `library/browsertype-connect.spec.ts` | {launchServer, run-server} › socks proxy › should forward non-forwarded requests *(2 copies)* |
 | `BT-081` | `library/browsertype-connect.spec.ts` | {launchServer, run-server} › socks proxy › should proxy localhost requests @smoke *(2 copies)* |
 | `BT-082` | `library/browsertype-connect.spec.ts` | {launchServer, run-server} › socks proxy › should proxy ipv6 localhost requests @smoke *(2 copies)* |
@@ -599,7 +598,6 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `BT-092` | `library/browsertype-connect.spec.ts` | launchServer only › cannot launch another browser |
 | `BT-093` | `library/browsertype-connect.spec.ts` | should refuse connecting when versions do not match |
 | `BT-094` | `library/browsertype-connect.spec.ts` | should filter local paths from unsafe launch options |
-| `BT-095` | `library/browsertype-connect.spec.ts` | should timeout after redirect when connecting over http |
 | `BT-096` | `library/browsertype-connect.spec.ts` | should not retain closed browsers in launch mode |
 | `BT-097` | `library/browsertype-launch-selenium.spec.ts` | selenium grid 3.141.59 standalone chromium |
 | `BT-098` | `library/browsertype-launch-selenium.spec.ts` | selenium grid 3.141.59 hub + node chromium |
