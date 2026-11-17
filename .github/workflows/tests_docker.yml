@@ -45,24 +45,7 @@ jobs:
     - run: npm run build
     - run: ./utils/docker/build.sh --${{ matrix.docker_arch }} ${{ matrix.docker_tag }} playwright:localbuild
       shell: bash
-    - name: Check that check_layers.sh finds a file in a lower layer
-      # The images that we build are clean, so the build above never sees the check fail.
-      # Give it an image with a .npmrc in a lower layer, to know that it still detects one.
-      run: |
-        mkdir "${RUNNER_TEMP}/bad-image"
-        cd "${RUNNER_TEMP}/bad-image"
-        echo "placeholder" > npmrc
-        echo "top layer" > readme
-        printf 'FROM scratch\nCOPY npmrc /root/.npmrc\nCOPY readme /readme\n' > Dockerfile
-        docker build -t playwright:bad-image .
-        if "${GITHUB_WORKSPACE}/utils/docker/check_layers.sh" playwright:bad-image > output.txt 2>&1; then
-          cat output.txt
-          echo "ERROR: check_layers.sh passed for an image with /root/.npmrc in a layer"
-          exit 1
-        fi
-        cat output.txt
-        grep -q '^  root/\.npmrc$' output.txt
-        docker rmi playwright:bad-image
+    - run: ./utils/docker/test_check_layers.sh
       shell: bash
     - name: Launch container
       run: |
