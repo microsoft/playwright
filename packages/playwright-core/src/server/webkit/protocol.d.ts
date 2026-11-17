@@ -9038,13 +9038,17 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
       targetId: string;
       type: "page"|"frame"|"service-worker"|"worker";
       /**
-       * True value indicates that this is a provisional page target i.e. Such target may be created when current page starts cross-origin navigation. Eventually each provisional target is either committed and swaps with the current target or gets destroyed, e.g. in case of load request failure.
+       * Whether this is a provisional page or frame target.
        */
       isProvisional?: boolean;
       /**
        * Whether the target is paused on start and has to be explicitely resumed by inspector.
        */
       isPaused?: boolean;
+      /**
+       * Opaque identifier, assigned by the UI process, of the process that runs this target. Not an OS process ID. Targets with the same value run in the same process. Absent when the backend does not know the process.
+       */
+      processIdentifier?: string;
     }
     /**
      * State of a debugger pause session. While it is paused, the UI process holds every page of the browsing context group: each frame is either stopped or held. Closed means the hold was released, not that no frame is stopped: a frame can stay in the debugger, so Debugger.paused and Debugger.resumed remain the source of truth for which frames are stopped.
