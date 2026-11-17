@@ -52,7 +52,6 @@ jobs:
       with:
         image-ref: playwright:localbuild
         scanners: secret
-        version: v0.76.2
         exit-code: '1'
         # The secret scan needs no vulnerability database.
         cache: 'false'
