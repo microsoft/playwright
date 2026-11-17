@@ -170,16 +170,20 @@ test('session stops when browser or last headed page is closed', {
   await page.evaluate(() => { window.open('about:blank'); });
   const popup = await popupPromise;
   await page.close();
+  await cli('tab-new', server.HELLO_WORLD, '--isolated-context=other');
   const closed = popup.waitForEvent('close');
   await popup.evaluate(() => { setTimeout(() => window.close(), 0); });
   await closed;
   expect((await cli('list')).output).toContain('- default:');
 
-  await cli('tab-new', server.HELLO_WORLD);
-  await cli('tab-new', server.HELLO_WORLD, '--isolated-context=other');
-  await browser.contexts()[0].pages()[0].close();
-  expect((await cli('list')).output).toContain('- default:');
-  await browser.contexts().find(context => context.pages().length)!.pages()[0].close();
+  const lastPage = browser.contexts().find(context => context.pages().length)!.pages()[0];
+  const lastPopupPromise = lastPage.waitForEvent('popup');
+  await lastPage.evaluate(() => { window.open('about:blank'); });
+  const lastPopup = await lastPopupPromise;
+  await lastPage.close();
+  const lastClosed = lastPopup.waitForEvent('close');
+  await lastPopup.evaluate(() => { setTimeout(() => window.close(), 0); });
+  await lastClosed;
   await expect.poll(() => isProcessAlive(daemonPid)).toBe(false);
   expect((await cli('list')).output).toContain('(no browsers)');
 });
