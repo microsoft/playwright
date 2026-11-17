@@ -63,7 +63,7 @@ export type CaptureOptions = {
   paperFormat?: string;
 };
 
-async function launchContext(options: Options, extraOptions: LaunchOptions): Promise<{ browser: Browser, browserName: string, launchOptions: LaunchOptions, contextOptions: BrowserContextOptions, context: BrowserContext, closeBrowser: () => Promise<void> }> {
+async function launchContext(options: Options, extraOptions: LaunchOptions, useNativeViewport = false): Promise<{ browser: Browser, browserName: string, launchOptions: LaunchOptions, contextOptions: BrowserContextOptions, context: BrowserContext, closeBrowser: () => Promise<void> }> {
   validateOptions(options);
   const browserType = lookupBrowserType(options);
   const launchOptions: LaunchOptions = extraOptions;
@@ -78,7 +78,8 @@ async function launchContext(options: Options, extraOptions: LaunchOptions): Pro
   // In headful mode, use host device scale factor for things to look nice.
   // In headless, keep things the way it works in Playwright by default.
   // Assume high-dpi on MacOS. TODO: this is not perfect.
-  if (!extraOptions.headless)
+  const useBrowserWindowSize = useNativeViewport && !extraOptions.headless && !options.device && !options.viewportSize;
+  if (!extraOptions.headless && !useBrowserWindowSize)
     contextOptions.deviceScaleFactor = os.platform() === 'darwin' ? 2 : 1;
 
   // Work around the WebKit GTK scrolling issue.
@@ -108,6 +109,8 @@ async function launchContext(options: Options, extraOptions: LaunchOptions): Pro
     } catch (e) {
       throw new Error('Invalid viewport size format: use "width,height", for example --viewport-size="800,600"');
     }
+  } else if (useBrowserWindowSize) {
+    contextOptions.viewport = null;
   }
 
   // Geolocation
@@ -253,7 +256,14 @@ export async function codegen(options: Options & { target: string, output?: stri
     headless: !!process.env.PWTEST_CLI_HEADLESS,
     executablePath: process.env.PWTEST_CLI_EXECUTABLE_PATH,
     tracesDir,
-  });
+  }, true);
+  if (contextOptions.viewport === null) {
+    const page = await openPage(context, undefined);
+    contextOptions.viewport = await page.evaluate(() => ({
+      width: window.innerWidth,
+      height: window.innerHeight,
+    }));
+  }
   const donePromise = new ManualPromise<void>();
   maybeSetupTestHooks(browser, closeBrowser, donePromise);
   dotenv.config({ path: 'playwright.env', quiet: true });

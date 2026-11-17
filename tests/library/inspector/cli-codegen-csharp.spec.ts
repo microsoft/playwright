@@ -40,6 +40,28 @@ var context = await browser.NewContextAsync();`;
   await cli.waitFor(expectedResult);
 });
 
+test('CG-164 should use the browser window size as the viewport in headed mode', async ({ headless, runCLI, server }) => {
+  test.skip(headless);
+
+  server.setRoute('/viewport.html', (_, res) => {
+    res.setHeader('Content-Type', 'text/html');
+    res.end(`<script>fetch('/viewport', { method: 'POST', body: JSON.stringify({ width: innerWidth, height: innerHeight }) })</script>`);
+  });
+  const viewportPromise = new Promise<{ width: number, height: number }>(resolve => {
+    server.setRoute('/viewport', async (req, res) => {
+      const viewport = JSON.parse((await req.postBody).toString());
+      res.end();
+      resolve(viewport);
+    });
+  });
+
+  const cli = runCLI(['--target=csharp', server.PREFIX + '/viewport.html']);
+  const [, viewport] = await Promise.all([cli.waitFor('ViewportSize = new()'), viewportPromise]);
+  const code = await cli.text();
+  expect(code).toContain(`Height = ${viewport.height},`);
+  expect(code).toContain(`Width = ${viewport.width},`);
+});
+
 test('CG-151 should print the correct context options for custom settings', async ({ browserName, channel, runCLI, server, proxyServer }) => {
   proxyServer.forwardTo(server.PORT);
   const cli = runCLI([

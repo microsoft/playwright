@@ -161,7 +161,7 @@ You can use the test generator to generate tests using emulation so as to genera
 
 ### Emulate viewport size
 
-Playwright opens a browser window with its viewport set to a specific width and height and is not responsive as tests need to be run under the same conditions. Use the `--viewport` option to generate tests with a different viewport size.
+In headed mode, Codegen uses the browser window size as the viewport and includes that size in the generated code. In headless mode, the default viewport is 1280x720. Use `--viewport-size` to set a specific viewport size. To use Microsoft Edge, pass `--channel=msedge`.
 
 ```bash js
 npx playwright codegen --viewport-size="800,600" playwright.dev
