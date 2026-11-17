@@ -5255,6 +5255,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `TV-134` | `library/snapshot-renderer.spec.ts` | stripAnsiEscapes should not exhibit polynomial backtracking |
 | `TV-135` | `library/snapshot-renderer.spec.ts` | stripAnsiEscapes handles common ANSI sequences after fix |
 | `TV-136` | `library/snapshot-renderer.spec.ts` | snapshot renderer selects the nearest out-of-order screencast frame |
+| `TV-137` | `library/snapshot-renderer.spec.ts` | snapshot renderer neutralizes declarative shadow roots |
 
 ### TZ — Timezone
 

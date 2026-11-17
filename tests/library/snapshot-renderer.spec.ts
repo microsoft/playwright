@@ -128,6 +128,14 @@ test('TV-128 snapshot renderer neutralizes iframe sandbox', () => {
   expect(html).toContain('__playwright_sandbox__');
 });
 
+test('TV-137 snapshot renderer neutralizes declarative shadow roots', () => {
+  const renderer = new SnapshotRenderer(new LRUCache(1_000_000), [], [makeSnapshot({
+    html: ['HTML', {}, ['BODY', {}, ['DIV', {}, ['TEMPLATE', { 'shadowrootmode': 'closed', 'SHADOWROOT': 'closed' }, ['A', { href: 'x' }, 'link']]]]],
+  })], [], 0);
+  const { html } = renderer.render();
+  expect(html).toContain('<TEMPLATE _shadowrootmode="closed" _SHADOWROOT="closed">');
+});
+
 test('TV-129 snapshot renderer neutralizes object data attribute', () => {
   const renderer = new SnapshotRenderer(new LRUCache(1_000_000), [], [makeSnapshot({
     html: ['HTML', {}, ['BODY', {}, ['OBJECT', { 'data': '/sha1/malicious', 'type': 'text/html' }]]],
