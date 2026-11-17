@@ -120,6 +120,12 @@ Start the Playwright Server in Docker:
 docker run -p 3000:3000 --rm --init -it --workdir /home/pwuser --user pwuser mcr.microsoft.com/playwright:v%%VERSION%%-noble /bin/sh -c "npx -y playwright@%%VERSION%% run-server --port 3000 --host 0.0.0.0"
 ```
 
+:::warning
+The Playwright Server has no authentication. Any client that can reach the port gets full control of the browsers and can act as the user that runs the server. The server is intended to run in an environment where the network configuration restricts access to the port. Publish the port only to trusted clients, for example with `-p 127.0.0.1:3000:3000` when the tests run on the same machine, or with a firewall, a private network or an authenticating proxy otherwise.
+
+If other local users or processes must not connect, for example on a shared development machine, serve the endpoint at an unguessable path with `--path /<secret>` and connect to `ws://127.0.0.1:3000/<secret>`.
+:::
+
 #### Connecting to the Server
 * langs: js
 

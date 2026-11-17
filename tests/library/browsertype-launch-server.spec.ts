@@ -66,6 +66,10 @@ it.describe('launch server', () => {
   it('BT-028 should default to random wsPath', async ({ browserType }) => {
     const browserServer = await browserType.launchServer();
     expect(browserServer.wsEndpoint()).toMatch(/:\d+\/[a-f\d]{32}$/);
+    // The path is the only secret of the server, plain HTTP requests must not reveal it.
+    const url = new URL(browserServer.wsEndpoint());
+    const response = await fetch(`http://${url.host}/json`);
+    expect(await response.text()).not.toContain(url.pathname.substring(1));
     await browserServer.close();
   });
 

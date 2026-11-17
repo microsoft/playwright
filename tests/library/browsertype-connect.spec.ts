@@ -868,15 +868,6 @@ for (const kind of ['launchServer', 'run-server'] as const) {
         expect(Math.abs(timestamps[i] - expectedTimestamps[i]), `expected: ${expectedTimestamps}; actual: ${timestamps}`).toBeLessThanOrEqual(1000);
     });
 
-    test('BT-079 should connect over http', async ({ connect, startRemoteServer }) => {
-      const remoteServer = await startRemoteServer(kind);
-
-      const url = new URL(remoteServer.wsEndpoint());
-      const browser = await connect(`http://localhost:${url.port}`);
-      expect(browser.version()).toBeTruthy();
-      await browser.close();
-    });
-
     test.describe('socks proxy', () => {
       test.skip(kind === 'launchServer', 'not supported yet');
 
@@ -1199,17 +1190,6 @@ test('BT-094 should filter local paths from unsafe launch options', async ({ con
 
   const { actions } = await parseTraceRaw(tracePath);
   expect(actions).toContain('Set content');
-});
-
-test('BT-095 should timeout after redirect when connecting over http', async ({ connect, server }) => {
-  server.setRedirect('/connect/json', '/connect/slow');
-  let aborted = false;
-  server.setRoute('/connect/slow', (req, res) => {
-    req.socket.on('close', () => aborted = true);
-  });
-  const error = await connect(`${server.PREFIX}/connect`, { timeout: 2000, headers: { 'Connection': 'Close' } }).catch(e => e);
-  expect(error.message).toContain('Timeout 2000ms exceeded.');
-  await expect.poll(() => aborted).toBe(true);
 });
 
 test('BT-096 should not retain closed browsers in launch mode', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43421' } }, async ({ connect }) => {
