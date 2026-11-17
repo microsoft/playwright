@@ -25,9 +25,8 @@ const dockerfilePaths = await getDockerfilePaths(dockerDirectory);
 const latestNodeJsLts = await getLatestNodeJsVersion();
 
 for (const dockerfilePath of dockerfilePaths) {
-  const nodeMajorVersion = latestNodeJsLts.split('.')[0];
-  if (refreshDockerfileVersionNumber(nodeMajorVersion, dockerfilePath))
-    console.log(`Updated Dockerfile ${path.relative(process.cwd(), dockerfilePath)} to Node.js ${nodeMajorVersion}.x`);
+  if (refreshDockerfileVersionNumber(latestNodeJsLts, dockerfilePath))
+    console.log(`Updated Dockerfile ${path.relative(process.cwd(), dockerfilePath)} to Node.js ${latestNodeJsLts}`);
 }
 
 async function getDockerfilePaths(directory) {
