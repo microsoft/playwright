@@ -31,7 +31,9 @@ export function toMcpTool(tool: ToolSchema<any>): mcpServer.Tool {
   return {
     name: tool.name,
     description: tool.description,
-    inputSchema: zod.toJSONSchema(tool.inputSchema) as mcpServer.Tool['inputSchema'],
+    // Input mode: defaulted fields stay optional and keep their `default`, which is
+    // what an MCP client needs. Output mode (zod's default) marks them required.
+    inputSchema: zod.toJSONSchema(tool.inputSchema, { io: 'input' }) as mcpServer.Tool['inputSchema'],
     annotations: {
       title: tool.title,
       readOnlyHint: readOnly,

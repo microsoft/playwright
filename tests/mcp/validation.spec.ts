@@ -43,3 +43,21 @@ test('reports invalid tool argument types', async ({ client }) => {
   expect(parsed.error).toContain('Invalid input: expected string, received number');
   expect(parsed.error).toContain('at url');
 });
+
+test('advertises arguments with defaults as optional', async ({ client }) => {
+  const { tools } = await client.listTools();
+  const screenshot = tools.find(tool => tool.name === 'browser_take_screenshot')!;
+  const properties = screenshot.inputSchema.properties as Record<string, { default?: unknown }>;
+  const required = (screenshot.inputSchema.required as string[] | undefined) ?? [];
+
+  // `scale` carries a default, so a caller must be able to omit it.
+  expect(properties.scale).toMatchObject({ default: 'css' });
+  expect(required).not.toContain('scale');
+
+  // Omitting it must be accepted end-to-end, not just declared optional.
+  const response = await client.callTool({
+    name: 'browser_take_screenshot',
+    arguments: {},
+  });
+  expect(parseResponse(response).isError).toBeFalsy();
+});
