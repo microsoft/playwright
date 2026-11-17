@@ -45,6 +45,8 @@ jobs:
     - run: npm run build
     - run: ./utils/docker/build.sh --${{ matrix.docker_arch }} ${{ matrix.docker_tag }} playwright:localbuild
       shell: bash
+    - run: ./utils/docker/test_check_layers.sh
+      shell: bash
     - name: Launch container
       run: |
         docker run \
