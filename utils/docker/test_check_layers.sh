@@ -25,29 +25,35 @@ trap cleanup EXIT
 cd "${TMP_DIR}"
 echo "placeholder" > file
 
-# 1. A .npmrc in a lower layer must fail the check.
+# 1. Forbidden files in a lower layer must fail the check.
 cat > Dockerfile.bad <<'DOCKERFILE'
 FROM scratch
 COPY file /root/.npmrc
+COPY file /certs/server.key
+COPY file /home/pwuser/id_ed25519
 COPY file /readme
 DOCKERFILE
 docker build -q -t playwright:check-layers-bad -f Dockerfile.bad . > /dev/null
 if node "${SCRIPT_DIR}/check_layers.js" playwright:check-layers-bad > output.txt 2>&1; then
   cat output.txt
-  echo "FAILED: check_layers.js passed for an image with /root/.npmrc in a layer"
+  echo "FAILED: check_layers.js passed for an image with forbidden files in its layers"
   exit 1
 fi
-# The check must fail because it found the file, not because it crashed.
-if ! grep -q '^  root/\.npmrc$' output.txt; then
-  cat output.txt
-  echo "FAILED: check_layers.js did not report root/.npmrc"
-  exit 1
-fi
+# The check must fail because it found the files, not because it crashed.
+for FORBIDDEN_FILE in root/.npmrc certs/server.key home/pwuser/id_ed25519; do
+  if ! grep -q -x -F "  ${FORBIDDEN_FILE}" output.txt; then
+    cat output.txt
+    echo "FAILED: check_layers.js did not report ${FORBIDDEN_FILE}"
+    exit 1
+  fi
+done
 
 # 2. An image with only allowed files must pass the check.
 cat > Dockerfile.good <<'DOCKERFILE'
 FROM scratch
 COPY file /usr/local/lib/node_modules/npm/.npmrc
+COPY file /etc/ssl/certs/ca.pem
+COPY file /home/pwuser/.ssh-notes/id_ed25519.pub
 COPY file /readme
 DOCKERFILE
 docker build -q -t playwright:check-layers-good -f Dockerfile.good . > /dev/null

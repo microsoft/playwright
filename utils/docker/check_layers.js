@@ -51,6 +51,11 @@ const FORBIDDEN = [
   /(^|\/)\.kube\//,
   /(^|\/)\.docker\//,
   /(^|\/)\.config\/gcloud\//,
+  // Private keys and key stores. Certificates (.pem, .crt) are public, and the
+  // image needs the CA certificates, so they are not in this list.
+  /\.key$/,
+  /\.(p12|pfx|jks|keystore)$/,
+  /(^|\/)id_(rsa|dsa|ecdsa|ed25519)$/,
   // Local environment files.
   /(^|\/)\.env(\.[^/]*)?$/,
 ];
@@ -65,7 +70,7 @@ function usage() {
   return `usage: ${SCRIPT_NAME} [--list-files] playwright:localbuild-noble
 
 Check that no layer of the docker image contains files that can hold
-tokens or credentials, such as the npm cache, .npmrc or a .git directory.
+tokens or credentials, such as the npm cache, .npmrc, a .git directory or a private key.
 
   --list-files  also print every file that the layers of our Dockerfile add.
                 Layers of the base image are not listed.
