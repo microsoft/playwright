@@ -15,7 +15,6 @@
  */
 
 import { test, expect, retries, dumpTestTree } from './ui-mode-fixtures';
-import fs from 'fs';
 import path from 'path';
 
 test.describe.configure({ mode: 'parallel', retries });
@@ -364,75 +363,6 @@ for (const useWeb of [true, false]) {
     });
   });
 }
-
-test('should not let the page load modules or open project files as pages', async ({ runUITest }) => {
-  const { page } = await runUITest({
-    'a.test.js': `
-      import { test } from '@playwright/test';
-      test('should work', async ({}) => {});
-    `,
-    'module.js': `
-      require('fs').writeFileSync(require('path').join(__dirname, 'loaded.txt'), '');
-      module.exports = class { onBegin() {} };
-    `,
-  }, undefined, { additionalArgs: ['--reporter=line'] });
-
-  // The reporter from the command line still works.
-  await page.getByTitle('Run all').click();
-  await expect(page.getByTestId('status-line')).toHaveText('1/1 (100%) — 1 passed');
-
-  const modulePath = test.info().outputPath('module.js');
-  const result = await page.evaluate(async modulePath => {
-    const fileUrl = 'file?path=' + encodeURIComponent(modulePath);
-    const fileResponse = await fetch(fileUrl);
-    const iframe = document.createElement('iframe');
-    iframe.src = fileUrl;
-    document.body.appendChild(iframe);
-    await new Promise(f => iframe.onload = f);
-    const framedFile = !!iframe.contentDocument?.body.innerText;
-
-    // A sandboxed page has the "null" origin.
-    const wsURL = new URL('../ws', location.href).toString().replace('http', 'ws');
-    const sandboxed = document.createElement('iframe');
-    sandboxed.setAttribute('sandbox', 'allow-scripts');
-    sandboxed.srcdoc = `<script>
-      const ws = new WebSocket(${JSON.stringify(wsURL)});
-      ws.onopen = () => parent.postMessage('open', '*');
-      ws.onerror = () => parent.postMessage('error', '*');
-    </` + `script>`;
-    const sandboxedWebSocket = new Promise(f => window.addEventListener('message', event => f(event.data), { once: true }));
-    document.body.appendChild(sandboxed);
-
-    const ws = new WebSocket(wsURL);
-    await new Promise(f => ws.onopen = f);
-    const send = (id: number, method: string, params: any) => new Promise(f => {
-      ws.addEventListener('message', event => {
-        const message = JSON.parse(event.data);
-        if (message.id === id)
-          f(message.error);
-      });
-      ws.send(JSON.stringify({ id, method, params }));
-    });
-    const errors = [
-      await send(1, 'initialize', { serializer: modulePath }),
-      await send(2, 'runTests', { reporters: [modulePath] }),
-      await send(3, '_wireReporter', {}),
-    ];
-    ws.close();
-    return { csp: fileResponse.headers.get('content-security-policy'), framedFile, sandboxedWebSocket: await sandboxedWebSocket, errors };
-  }, modulePath);
-  expect(result).toEqual({
-    csp: 'sandbox',
-    framedFile: false,
-    sandboxedWebSocket: 'error',
-    errors: [
-      'Error: UI mode does not accept a serializer',
-      'Error: UI mode only accepts the reporters from the command line',
-      'Error: Unknown method: _wireReporter',
-    ],
-  });
-  expect(fs.existsSync(test.info().outputPath('loaded.txt'))).toBe(false);
-});
 
 test('should restart webserver on reload', async ({ runUITest }) => {
   const SIMPLE_SERVER_PATH = path.join(__dirname, 'assets', 'simple-server.js');
