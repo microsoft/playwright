@@ -260,7 +260,10 @@ test('tracing-start-stop', async ({ cli, server }, testInfo) => {
   expect(fs.existsSync(testInfo.outputPath('.playwright-cli', 'traces', `trace-${timestamp}.network`))).toBeTruthy();
 });
 
-test('video-start-stop', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-cli/issues/540' } }, async ({ cli, server, mcpBrowser }, testInfo) => {
+test('video-start-stop', { annotation: [
+  { type: 'issue', description: 'https://github.com/microsoft/playwright-cli/issues/540' },
+  { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44175' },
+] }, async ({ cli, server, mcpBrowser }, testInfo) => {
   await cli('open', server.HELLO_WORLD);
   const { output: videoStartOutput } = await cli('video-start', 'recordings/video.webm', '--size=400x300');
   expect(videoStartOutput).toContain('Video recording started.');
@@ -272,6 +275,15 @@ test('video-start-stop', { annotation: { type: 'issue', description: 'https://gi
   expect(tabCloseOutput).toContain(`0: (current) [](${server.EMPTY_PAGE})`);
   const { output: videoStopOutput } = await cli('video-stop');
   expect(videoStopOutput).toContain(`### Result\n- [Video](recordings${path.sep}video.webm)\n- [Video](recordings${path.sep}video-1.webm)`);
+
+  await cli('tab-new');
+  await cli('run-code', 'page => page.screencast.start()');
+  const { output: partialStartOutput } = await cli('video-start', 'partial.webm');
+  expect(partialStartOutput).toContain('Screencast is already started');
+  const { output: retryStartOutput } = await cli('video-start', 'retry.webm');
+  expect(retryStartOutput).toContain('Video recording started.');
+  const { output: retryStopOutput } = await cli('video-stop');
+  expect(retryStopOutput).toContain(`### Result\n- [Video](./retry.webm)\n- [Video](./retry-1.webm)`);
 
   await cli('close');
   const emptyBrowsersPath = testInfo.outputPath('empty-browsers');
@@ -287,6 +299,10 @@ test('video-start-stop', { annotation: { type: 'issue', description: 'https://gi
   expect(missingFfmpegOutput).toContain(`expected executable at ${emptyBrowsersPath}`);
   expect(missingFfmpegOutput).toContain('playwright-cli install-browser ffmpeg');
   expect(missingFfmpegOutput).not.toContain('npx playwright install ffmpeg');
+  const { output: missingFfmpegRetryOutput } = await cli('video-start', 'retry.webm');
+  expect(missingFfmpegRetryOutput).toContain('FFmpeg is not installed');
+  expect(missingFfmpegRetryOutput).toContain(`expected executable at ${emptyBrowsersPath}`);
+  expect((await cli('video-stop')).output).toContain('No videos were recorded.');
 });
 
 test('video-start with fps', async ({ cli, server }, testInfo) => {

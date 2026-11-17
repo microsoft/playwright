@@ -268,8 +268,14 @@ export class Context {
       throw new Error('Video recording has already been started.');
     await this.ensureBrowserContext();
     this._video = { params, fileName, fileNames: [] };
-    for (const tab of this._tabs)
-      await this._startPageVideo(tab.page);
+    try {
+      for (const tab of this._tabs)
+        await this._startPageVideo(tab.page);
+    } catch (error) {
+      this._video = undefined;
+      await Promise.all(this._tabs.map(tab => tab.page.screencast.stop().catch(e => debug('pw:tools:error')(e))));
+      throw error;
+    }
   }
 
   async stopVideoRecording(): Promise<string[]> {
