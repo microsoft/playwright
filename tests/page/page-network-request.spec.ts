@@ -475,6 +475,32 @@ it('NE-026 should report all cookies in one header', async ({ page, server, isEl
   expect(cookie).toBe('myCookie=myValue; myOtherCookie=myOtherValue');
 });
 
+it('should report cookies in request headers when routing is enabled', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44170' } }, async ({ page, server }) => {
+  const expectedCookie = 'myCookie=myValue';
+  await page.goto(server.EMPTY_PAGE);
+  await page.evaluate(() => document.cookie = 'myCookie=myValue');
+
+  page.route('**/never-match', route => route.continue());
+
+  let serverCookie;
+  server.setRoute('/headers', async (request, response) => {
+    serverCookie = request.headers.cookie;
+    await new Promise(f => setTimeout(f, 100));
+    response.end();
+  });
+  const requestPromise = page.waitForRequest(server.PREFIX + '/headers');
+  const navigationPromise = page.goto(server.PREFIX + '/headers');
+  const request = await requestPromise;
+  await request.allHeaders();
+  const response = await navigationPromise;
+
+  expect(serverCookie).toBe(expectedCookie);
+  expect(response.request()).toBe(request);
+  expect((await request.allHeaders())['cookie']).toBe(expectedCookie);
+  expect(await request.headerValue('cookie')).toBe(expectedCookie);
+  expect((await request.headersArray()).find(header => header.name.toLowerCase() === 'cookie')?.value).toBe(expectedCookie);
+});
+
 it('NE-027 should not allow to access frame on popup main request', async ({ page, server }) => {
   await page.setContent(`<a target=_blank href="${server.EMPTY_PAGE}">click me</a>`);
   const requestPromise = page.context().waitForEvent('request');

@@ -197,6 +197,11 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
     return await this._actualHeadersPromise;
   }
 
+  _setResponse(response: Response) {
+    this._response = response;
+    this._actualHeadersPromise = undefined;
+  }
+
   @internal
   async allHeaders(): Promise<Headers> {
     return (await this._actualHeaders()).headers();
@@ -680,7 +685,7 @@ export class Response extends ChannelOwner<channels.ResponseChannel> implements 
     super(parent, type, guid, initializer);
     this._provisionalHeaders = new RawHeaders(initializer.headers);
     this._request = Request.from(this._initializer.request);
-    this._request._response = this;
+    this._request._setResponse(this);
     Object.assign(this._request._timing, this._initializer.timing);
   }
 
