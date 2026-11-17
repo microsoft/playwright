@@ -260,3 +260,39 @@ test('calling custom matcher on expect.poll should return Promise', { annotation
   });
   expect(result.exitCode).toBe(0);
 });
+
+test('custom matcher should preserve generic argument types', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44163' } }, async ({ runTSC }) => {
+  const result = await runTSC({
+    'a.spec.ts': `
+      import { test, expect as baseExpect } from '@playwright/test';
+      export const expect = baseExpect.extend({
+        toVerifySomething<T>(received: T, predicate: (it: T) => boolean) {
+          return {
+            pass: predicate(received),
+            message: () => '',
+          };
+        },
+        toMatchString(received: string, expected: string) {
+          return {
+            pass: received === expected,
+            message: () => '',
+          };
+        },
+      });
+
+      test('generic matcher type inference', () => {
+        expect('hello').toVerifySomething(it => {
+          const str: string = it;
+          // @ts-expect-error
+          const num: number = it;
+          return str.length > 0;
+        });
+        expect('hello').toVerifySomething<string>(it => it.length > 0);
+        expect('hello').toMatchString('hello');
+        // @ts-expect-error
+        expect('hello').toMatchString<string>('hello');
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+});

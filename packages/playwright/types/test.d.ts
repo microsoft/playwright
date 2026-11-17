@@ -9427,9 +9427,17 @@ type AllMatchers<R, T> = PageAssertions & LocatorAssertions & APIResponseAsserti
 
 type IfAny<T, Y, N> = 0 extends (1 & T) ? Y : N;
 type Awaited<T> = T extends PromiseLike<infer U> ? U : T;
-type ToUserMatcher<F, DefaultReturnType> = F extends (first: any, ...args: infer Rest) => infer R ? (...args: Rest) => (R extends PromiseLike<infer U> ? Promise<void> : DefaultReturnType) : never;
+type IsUnknown<T> = unknown extends T ? [keyof T] extends [never] ? true : false : false;
+type ToUserMatcherArgument<T, ArgType> = IsUnknown<T> extends true ? ArgType : T extends (...args: infer Args) => infer R ? (...args: ToUserMatcherArguments<Args, ArgType>) => R : T;
+type ToUserMatcherArguments<Args extends any[], ArgType> = { [K in keyof Args]: ToUserMatcherArgument<Args[K], ArgType> };
+type ToUserMatcher<F, DefaultReturnType, ArgType> =
+  F extends <T>(first: T, ...args: infer Rest) => infer R
+    ? <T extends ArgType = ArgType>(...args: ToUserMatcherArguments<Rest, T>) => (R extends PromiseLike<infer U> ? Promise<void> : DefaultReturnType)
+    : F extends (first: ArgType, ...args: infer Rest) => infer R
+      ? (...args: Rest) => (R extends PromiseLike<infer U> ? Promise<void> : DefaultReturnType)
+      : never;
 type ToUserMatcherObject<T, DefaultReturnType, ArgType> = {
-  [K in keyof T as T[K] extends (arg: ArgType, ...rest: any[]) => any ? K : never]: ToUserMatcher<T[K], DefaultReturnType>;
+  [K in keyof T as T[K] extends (arg: ArgType, ...rest: any[]) => any ? K : never]: ToUserMatcher<T[K], DefaultReturnType, ArgType>;
 };
 
 type MatcherHintColor = (arg: string) => string;
