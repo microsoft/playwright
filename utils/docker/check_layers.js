@@ -14,8 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * The same file is in microsoft/playwright, microsoft/playwright-python and
- * microsoft/playwright-mcp, in utils/docker/. Keep the copies the same.
+ * The same file is in microsoft/playwright, microsoft/playwright-python,
+ * microsoft/playwright-java and microsoft/playwright-mcp, in utils/docker/.
+ * Keep the copies the same.
  */
 
 const fs = require('fs');
@@ -43,6 +44,8 @@ const FORBIDDEN = [
   /(^|\/)node-compile-cache\//,
   // yarn.
   /(^|\/)\.yarn\//,
+  // Maven: the local repository.
+  /(^|\/)\.m2\//,
   // The cache directory of a user: pip, virtualenv, yarn and other tools write here.
   /(^|\/)\.cache\//,
   // Source control.

@@ -31,6 +31,7 @@ FORBIDDEN_FILES=(
   root/.npm/_logs/2026-01-01T00_00_00_000Z-debug-0.log
   tmp/node-compile-cache/v26.0.0-x64/aabbcc
   root/.yarn/berry/cache/a.zip
+  root/.m2/repository/com/example/a/1.0/a-1.0.jar
   root/.cache/pip/http-v2/a/b/c
   home/pwuser/.cache/virtualenv/a
   src/.git/config
