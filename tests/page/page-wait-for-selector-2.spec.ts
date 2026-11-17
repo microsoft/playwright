@@ -47,10 +47,10 @@ it('WA-045 should wait for visible', async ({ page, server }) => {
 it('WA-046 should not consider visible when zero-sized', async ({ page, server }) => {
   await page.setContent(`<div style='width: 0; height: 0;'>1</div>`);
   let error = await page.waitForSelector('div', { timeout: 1000 }).catch(e => e);
-  expect(error.message).toContain('page.waitForSelector: Timeout 1000ms exceeded');
+  expect(error.message).toContain('Timeout 1000ms exceeded');
   await page.evaluate(() => document.querySelector('div')!.style.width = '10px');
   error = await page.waitForSelector('div', { timeout: 1000 }).catch(e => e);
-  expect(error.message).toContain('page.waitForSelector: Timeout 1000ms exceeded');
+  expect(error.message).toContain('Timeout 1000ms exceeded');
   await page.evaluate(() => document.querySelector('div')!.style.height = '10px');
   expect(await page.waitForSelector('div', { timeout: 1000 })).toBeTruthy();
 });
@@ -130,7 +130,7 @@ it('WA-053 should respect timeout', async ({ page, playwright }) => {
   let error: Error | undefined;
   await page.waitForSelector('div', { timeout: 3000, state: 'attached' }).catch(e => error = e);
   expect(error).toBeTruthy();
-  expect(error!.message).toContain('page.waitForSelector: Timeout 3000ms exceeded');
+  expect(error!.message).toContain('Timeout 3000ms exceeded');
   expect(error!.message).toContain('waiting for locator(\'div\')');
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
 });
@@ -140,7 +140,7 @@ it('WA-054 should have an error message specifically for awaiting an element to 
   let error: Error | undefined;
   await page.waitForSelector('div', { state: 'hidden', timeout: 1000 }).catch(e => error = e);
   expect(error).toBeTruthy();
-  expect(error!.message).toContain('page.waitForSelector: Timeout 1000ms exceeded');
+  expect(error!.message).toContain('Timeout 1000ms exceeded');
   expect(error!.message).toContain('waiting for locator(\'div\') to be hidden');
 });
 
@@ -232,7 +232,7 @@ it('WA-066 should respect timeout xpath', async ({ page, playwright }) => {
   let error: Error | undefined;
   await page.waitForSelector('//div', { state: 'attached', timeout: 3000 }).catch(e => error = e);
   expect(error).toBeTruthy();
-  expect(error!.message).toContain('page.waitForSelector: Timeout 3000ms exceeded');
+  expect(error!.message).toContain('Timeout 3000ms exceeded');
   expect(error!.message).toContain('waiting for locator(\'//div\')');
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
 });
@@ -257,7 +257,7 @@ it('WA-068 should throw when frame is detached xpath', async ({ page, server }) 
   await detachFrame(page, 'frame1');
   await waitPromise;
   expect(waitError).toBeTruthy();
-  expect(waitError!.message).toContain('frame.waitForSelector: Frame was detached');
+  expect(waitError!.message).toContain('Frame was detached');
 });
 
 it('WA-069 should return the element handle xpath', async ({ page, server }) => {

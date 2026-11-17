@@ -136,7 +136,7 @@ it('AW-010 should report navigation in the log when clicking anchor', async ({ p
   await page.setContent(`<a href="${server.PREFIX + '/frames/one-frame.html'}">click me</a>`);
   const __testHookAfterPointerAction = () => new Promise(f => setTimeout(f, 6000));
   const error = await page.click('a', { timeout: 5000, __testHookAfterPointerAction } as any).catch(e => e);
-  expect(error.message).toContain('page.click: Timeout 5000ms exceeded.');
+  expect(error.message).toContain('Timeout 5000ms exceeded.');
   expect(error.message).toContain('waiting for scheduled navigations to finish');
   expect(error.message).toContain(`navigated to "${server.PREFIX + '/frames/one-frame.html'}"`);
 });

@@ -4119,6 +4119,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `PA-054` | `library/page-close.spec.ts` | should reject response.finished if page closes |
 | `PA-055` | `library/page-close.spec.ts` | should not throw when continuing while page is closing |
 | `PA-056` | `library/page-close.spec.ts` | should not throw when continuing after page is closed |
+| `PA-057` | `page/page-basic.spec.ts` | should prefix the error message with the api name |
 
 ### PC — Playwright client
 

@@ -110,7 +110,7 @@ it('FE-092 should throw on network error', async ({ context, server }) => {
     req.socket.destroy();
   });
   const error = await context.request.get(server.PREFIX + '/test').catch(e => e);
-  expect(error.message).toContain('apiRequestContext.get: socket hang up');
+  expect(error.message).toContain('socket hang up');
 });
 
 it('FE-093 should throw on network error after redirect', async ({ context, server }) => {
@@ -119,7 +119,7 @@ it('FE-093 should throw on network error after redirect', async ({ context, serv
     req.socket.destroy();
   });
   const error = await context.request.get(server.PREFIX + '/redirect').catch(e => e);
-  expect(error.message).toContain('apiRequestContext.get: socket hang up');
+  expect(error.message).toContain('socket hang up');
 });
 
 it('FE-094 should throw on network error when sending body', async ({ context, server }) => {
@@ -133,7 +133,7 @@ it('FE-094 should throw on network error when sending body', async ({ context, s
     req.socket.destroy();
   });
   const error = await context.request.get(server.PREFIX + '/test').catch(e => e);
-  expect(error.message).toContain('apiRequestContext.get: aborted');
+  expect(error.message).toContain('aborted');
 });
 
 it('FE-095 should throw on network error when sending body after redirect', async ({ context, server }) => {
@@ -148,7 +148,7 @@ it('FE-095 should throw on network error when sending body after redirect', asyn
     req.socket.destroy();
   });
   const error = await context.request.get(server.PREFIX + '/redirect').catch(e => e);
-  expect(error.message).toContain('apiRequestContext.get: aborted');
+  expect(error.message).toContain('aborted');
 });
 
 it('FE-096 should add session cookies to request', async ({ context, server }) => {
@@ -1018,7 +1018,7 @@ it('FE-148 should support timeout option', async function({ context, server }) {
   });
 
   const error = await context.request.get(server.PREFIX + '/slow', { timeout: 10 }).catch(e => e);
-  expect(error.message).toContain(`apiRequestContext.get: Timeout 10ms exceeded`);
+  expect(error.message).toContain(`Timeout 10ms exceeded`);
 });
 
 it('FE-149 should support a timeout of 0', async function({ context, server }) {
@@ -1049,7 +1049,7 @@ it('FE-150 should respect timeout after redirects', async function({ context, se
 
   context.setDefaultTimeout(100);
   const error = await context.request.get(server.PREFIX + '/redirect').catch(e => e);
-  expect(error.message).toContain(`apiRequestContext.get: Timeout 100ms exceeded`);
+  expect(error.message).toContain(`Timeout 100ms exceeded`);
 });
 
 it('FE-151 should not hang on a brotli encoded Range request', async ({ context, server, nodeVersion }) => {

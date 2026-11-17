@@ -112,7 +112,7 @@ it('ST-003 should report good error if the url is not valid', async ({ contextFa
       ]
     }
   }).catch(e => e);
-  expect(error.message).toContain('browser.newContext: Error setting storage state:');
+  expect(error.message).toContain('Error setting storage state:');
   expect(error.message).toContain('foo');
 });
 

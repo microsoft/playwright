@@ -132,7 +132,7 @@ it('WA-036 should report logs while waiting for visible', async ({ page, server 
   await giveItTimeToLog(frame);
 
   const error = await watchdog.catch(e => e);
-  expect(error.message).toContain(`frame.waitForSelector: Timeout 5000ms exceeded.`);
+  expect(error.message).toContain(`Timeout 5000ms exceeded.`);
   expect(error.message).toContain(`waiting for locator(\'div\') to be visible`);
   expect(error.message).toContain(`locator resolved to hidden <div id="mydiv" class="foo bar" foo=\"123456789012345678901234567890123456789012345678901234567890\">abcdefghijklmnopqrstuvwyxzabcdefghijklmnopqrstuvw…</div>`);
   expect(error.message).toContain(`locator resolved to hidden <div class="another"></div>`);
@@ -162,7 +162,7 @@ it('WA-037 should report logs while waiting for hidden', async ({ page, server }
   await giveItTimeToLog(frame);
 
   const error = await watchdog.catch(e => e);
-  expect(error.message).toContain(`frame.waitForSelector: Timeout 5000ms exceeded.`);
+  expect(error.message).toContain(`Timeout 5000ms exceeded.`);
   expect(error.message).toContain(`waiting for locator(\'div\') to be hidden`);
   expect(error.message).toContain(`locator resolved to visible <div id="mydiv" class="foo bar">hello</div>`);
   expect(error.message).toContain(`locator resolved to visible <div class="another">hello</div>`);
@@ -237,5 +237,5 @@ it('WA-043 should throw when frame is detached', async ({ page, server }) => {
   await detachFrame(page, 'frame1');
   await waitPromise;
   expect(waitError).toBeTruthy();
-  expect(waitError!.message).toContain('frame.waitForSelector: Frame was detached');
+  expect(waitError!.message).toContain('Frame was detached');
 });

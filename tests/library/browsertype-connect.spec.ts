@@ -141,7 +141,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
         });
       });
       const error = await connect(`ws://localhost:${server.PORT}/ws`).catch(e => e);
-      expect(error.message).toContain('browserType.connect: Oh my!');
+      expect(error.message).toContain('Oh my!');
     });
 
     test('BT-038 should be able to reconnect to a browser', async ({ connect, startRemoteServer, server }) => {
@@ -245,14 +245,14 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       const e = await connect(`ws://localhost:${server.PORT}/ws-slow`, {
         timeout: 1000,
       }).catch(e => e);
-      expect(e.message).toContain('browserType.connect: Timeout 1000ms exceeded');
+      expect(e.message).toContain('Timeout 1000ms exceeded');
     });
 
     test('BT-045 should timeout in connect while connecting', async ({ connect, server }) => {
       const e = await connect(`ws://localhost:${server.PORT}/ws`, {
         timeout: 100,
       }).catch(e => e);
-      expect(e.message).toContain('browserType.connect: Timeout 100ms exceeded');
+      expect(e.message).toContain('Timeout 100ms exceeded');
     });
 
     test('BT-046 should send extra headers with connect request', async ({ connect, server }) => {

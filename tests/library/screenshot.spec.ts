@@ -221,7 +221,7 @@ browserTest.describe('page screenshot', () => {
       }).catch(() => {});
       await page.waitForEvent('console', e => e.text() === 'blocked');
     };
-    await expect(page.screenshot({ fullPage: true, timeout: 200, __testHookBeforeScreenshot } as any)).rejects.toThrow(/page.screenshot: Timeout 200ms exceeded/);
+    await expect(page.screenshot({ fullPage: true, timeout: 200, __testHookBeforeScreenshot } as any)).rejects.toThrow(/Timeout 200ms exceeded/);
   });
 });
 
@@ -320,7 +320,7 @@ browserTest.describe('element screenshot', () => {
     await page.goto(server.PREFIX + '/grid.html');
     const __testHookAfterScreenshot = () => new Promise(f => setTimeout(f, 5000));
     const error = await page.screenshot({ fullPage: true, __testHookAfterScreenshot, timeout: 3000 } as any).catch(e => e);
-    expect(error.message).toContain('page.screenshot: Timeout 3000ms exceeded');
+    expect(error.message).toContain('Timeout 3000ms exceeded');
     await verifyViewport(page, 350, 360);
     await page.setViewportSize({ width: 400, height: 400 });
     await page.waitForTimeout(3000); // Give it some time to wrongly restore previous viewport.

@@ -27,7 +27,7 @@ it('CL-120 should timeout waiting for stable position', async ({ page, server })
   // rafraf for Firefox to kick in the animation.
   await rafraf(page);
   const error = await button.click({ timeout: 3000 }).catch(e => e);
-  expect(error.message).toContain('elementHandle.click: Timeout 3000ms exceeded.');
+  expect(error.message).toContain('Timeout 3000ms exceeded.');
   expect(error.message).toContain('waiting for element to be visible, enabled and stable');
   expect(error.message).toContain('element is not stable');
   expect(error.message).toContain('retrying click action');
@@ -39,7 +39,7 @@ it('CL-121 should click for the second time after first timeout', async ({ page,
   await page.goto(server.PREFIX + '/input/button.html');
   const __testHookBeforePointerAction = () => new Promise(f => setTimeout(f, 1500));
   const error = await page.click('button', { timeout: 1000, __testHookBeforePointerAction } as any).catch(e => e);
-  expect(error.message).toContain('page.click: Timeout 1000ms exceeded.');
+  expect(error.message).toContain('Timeout 1000ms exceeded.');
 
   expect(await page.evaluate('result')).toBe('Was not clicked');
   await page.waitForTimeout(2000);

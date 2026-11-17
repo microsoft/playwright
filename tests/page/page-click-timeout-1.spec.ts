@@ -24,14 +24,14 @@ it('CL-110 should avoid side effects after timeout', async ({ page, server, mode
   const error = await page.click('button', { timeout: 2000, __testHookBeforePointerAction: () => new Promise(f => setTimeout(f, 2500)) } as any).catch(e => e);
   await page.waitForTimeout(5000);  // Give it some time to click after the test hook is done waiting.
   expect(await page.evaluate('result')).toBe('Was not clicked');
-  expect(error.message).toContain('page.click: Timeout 2000ms exceeded.');
+  expect(error.message).toContain('Timeout 2000ms exceeded.');
 });
 
 it('CL-111 should timeout waiting for button to be enabled', async ({ page }) => {
   await page.setContent('<button onclick="javascript:window.__CLICKED=true;" disabled><span>Click target</span></button>');
   const error = await page.click('text=Click target', { timeout: 3000 }).catch(e => e);
   expect(await page.evaluate('window.__CLICKED')).toBe(undefined);
-  expect(error.message).toContain('page.click: Timeout 3000ms exceeded.');
+  expect(error.message).toContain('Timeout 3000ms exceeded.');
   expect(error.message).toContain('element is not enabled');
   expect(error.message).toContain('retrying click action');
 });
@@ -40,7 +40,7 @@ it('CL-112 should timeout waiting for inert element to become non-inert', async 
   await page.setContent('<div inert><button onclick="javascript:window.__CLICKED=true;">Click target</button></div>');
   const error = await page.click('text=Click target', { timeout: 3000 }).catch(e => e);
   expect(await page.evaluate('window.__CLICKED')).toBe(undefined);
-  expect(error.message).toContain('page.click: Timeout 3000ms exceeded.');
+  expect(error.message).toContain('Timeout 3000ms exceeded.');
   expect(error.message).toContain('element is inert');
   expect(error.message).toContain('retrying click action');
 });

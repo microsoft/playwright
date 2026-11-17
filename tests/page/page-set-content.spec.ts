@@ -77,7 +77,7 @@ it('PA-027 should respect default navigation timeout', async ({ page, server, pl
   // stall for image
   server.setRoute(imgPath, (req, res) => {});
   const error = await page.setContent(`<img src="${server.PREFIX + imgPath}"></img>`).catch(e => e);
-  expect(error.message).toContain('page.setContent: Timeout 1ms exceeded.');
+  expect(error.message).toContain('Timeout 1ms exceeded.');
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
 });
 
@@ -148,7 +148,7 @@ it('PA-036 should handle timeout properly', async ({ page, toImpl, browserName }
     console.debug = () => {};
   }), { isFunction: true, world: 'utility' });
   const error = await page.setContent(`<div>hello</div>`, { timeout: 1000 }).catch(e => e);
-  expect(error.message).toContain('page.setContent: Timeout 1000ms exceeded');
+  expect(error.message).toContain('Timeout 1000ms exceeded');
 
   // Should recover after timeout.
   await toImpl(page).mainFrame().evaluateExpression(nullProgress, String(() => {
@@ -167,5 +167,5 @@ it('PA-037 should handle timeout properly 2', async ({ page, toImpl, trace }) =>
     };
   }), { isFunction: true, world: 'utility' });
   const error = await page.setContent(`<div>hello</div>`, { timeout: 1000 }).catch(e => e);
-  expect(error.message).toContain('page.setContent: Timeout 1000ms exceeded');
+  expect(error.message).toContain('Timeout 1000ms exceeded');
 });
