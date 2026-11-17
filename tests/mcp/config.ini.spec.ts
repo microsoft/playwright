@@ -88,19 +88,24 @@ test('ini config sets context options', async ({ startClient }) => {
   expect(config.browser.contextOptions.timezoneId).toBe('Europe/Paris');
 });
 
-test('ini config sets server and network options', async ({ startClient }) => {
+test('ini config sets server and network options', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44173' },
+}, async ({ startClient }) => {
   const { client } = await startClient({
     config: `
       capabilities = config
       server.host = localhost
       network.allowedOrigins = https://example.com
+      redactUrlParams = token
     `,
   });
 
   const result = await client.callTool({ name: 'browser_get_config' });
+  expect(result).toHaveResponse({ result: expect.any(String) });
   const config = JSON.parse(parseResponse(result).result);
   expect(config.server.host).toBe('localhost');
   expect(config.network.allowedOrigins).toEqual(['https://example.com']);
+  expect(config.redactUrlParams).toEqual(['token']);
 });
 
 test('ini config boolean values', async ({ startClient }) => {
