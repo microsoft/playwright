@@ -11,3 +11,4 @@ node_modules/zod
 
 [context.ts]
 ../utils/browserErrors.ts
+../../client/page.ts
