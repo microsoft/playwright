@@ -181,7 +181,7 @@ export function urlMatches(baseURL: string | undefined, urlString: string, match
   if (match === undefined || match === '')
     return true;
   if (isString(match))
-    match = new RegExp(resolveGlobToRegexPattern(baseURL, match, webSocketUrl));
+    match = globRegex(baseURL, match, webSocketUrl);
   if (isRegExp(match)) {
     match.lastIndex = 0;
     return match.test(urlString);
@@ -194,6 +194,21 @@ export function urlMatches(baseURL: string | undefined, urlString: string, match
   if (typeof match !== 'function')
     throw new Error('url parameter should be string, RegExp, URLPattern or function');
   return match(url);
+}
+
+const globRegexCache = new Map<string, RegExp>();
+const kMaxGlobRegexCacheSize = 1000;
+
+function globRegex(baseURL: string | undefined, glob: string, webSocketUrl?: boolean): RegExp {
+  const key = JSON.stringify([baseURL, glob, !!webSocketUrl]);
+  let regex = globRegexCache.get(key);
+  if (regex === undefined) {
+    if (globRegexCache.size >= kMaxGlobRegexCacheSize)
+      globRegexCache.clear();
+    regex = new RegExp(resolveGlobToRegexPattern(baseURL, glob, webSocketUrl));
+    globRegexCache.set(key, regex);
+  }
+  return regex;
 }
 
 export function resolveGlobToRegexPattern(baseURL: string | undefined, glob: string, webSocketUrl?: boolean): string {

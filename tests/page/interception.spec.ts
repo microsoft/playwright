@@ -137,6 +137,8 @@ it('RO-153 should work with glob', async () => {
   expect(urlMatches(undefined, 'http://playwright.dev/foo/bar', '**/foo/**')).toBeTruthy();
   expect(urlMatches('http://playwright.dev', 'http://playwright.dev/?x=y', '?x=y')).toBeTruthy();
   expect(urlMatches('http://playwright.dev/foo/', 'http://playwright.dev/foo/bar?x=y', './bar?x=y')).toBeTruthy();
+  expect(urlMatches('http://first.test/path/', 'http://first.test/path/bar', './bar')).toBeTruthy();
+  expect(urlMatches('http://second.test/path/', 'http://second.test/path/bar', './bar')).toBeTruthy();
 
   // '$$', '$&', '$`' and "$'" are special in String.prototype.replace with a string argument.
   expect(urlMatches(undefined, 'http://playwright.dev/foo$$bar', 'http://playwright.dev/foo$$bar')).toBeTruthy();

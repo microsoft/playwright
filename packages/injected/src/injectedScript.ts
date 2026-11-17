@@ -1023,7 +1023,7 @@ export class InjectedScript {
       return 'Not an input[type=file] element';
 
     const files = payloads.map(file => {
-      const bytes = Uint8Array.from(atob(file.buffer), c => c.charCodeAt(0));
+      const bytes = decodeBase64(file.buffer);
       return new File([bytes], file.name, { type: file.mimeType, lastModified: file.lastModifiedMs });
     });
     const dt = new DataTransfer();
@@ -1939,4 +1939,12 @@ function deepEquals(a: any, b: any): boolean {
     return isNaN(a) && isNaN(b);
 
   return false;
+}
+
+function decodeBase64(base64: string): Uint8Array {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; ++i)
+    bytes[i] = binary.charCodeAt(i);
+  return bytes;
 }
