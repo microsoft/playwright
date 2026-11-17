@@ -3,8 +3,8 @@
 name: "Agent: review"
 
 on:
-  # Runs from the default branch, for PRs from forks too. It never checks out the PR.
-  pull_request_target:
+  # A PR from a fork gets no secrets here, and the bot cannot push to a fork: the job skips it.
+  pull_request:
     types: [labeled]
 
 permissions: {}
@@ -12,7 +12,9 @@ permissions: {}
 jobs:
   pr:
     name: Hand the PR to the bot
-    if: github.repository_owner == 'microsoft' && github.event.label.name == 'agent-review'
+    if: >-
+      github.repository_owner == 'microsoft' && github.event.label.name == 'agent-review'
+      && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
