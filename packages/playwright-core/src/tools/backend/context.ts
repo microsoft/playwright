@@ -36,6 +36,8 @@ import type { SessionLog } from './sessionLog';
 import type { Disposable } from '@isomorphic/disposable';
 import type { ToolCapability } from './tool';
 import type { WebMCPToolDefinition } from './webmcp';
+// eslint-disable-next-line no-restricted-imports
+import type { Page as ClientPage } from '../../client/page';
 
 const testDebug = debug('pw:mcp:test');
 
@@ -82,6 +84,7 @@ type ContextOptions = {
   sessionLog?: SessionLog;
   cwd: string;
   onWebMCPToolsChanged?: () => void;
+  onLastPageClosed?: () => void;
 };
 
 export type RouteEntry = {
@@ -135,6 +138,7 @@ export class Context {
   } | undefined;
   private _disposables: Disposable[] = [];
   private _outputFiles = new Set<string>();
+  private _scriptClosedPages = new WeakSet<playwrightTypes.Page>();
 
   private _webmcpToolsSignature = '';
   private _redactUrlParamsRegex: RegExp | undefined;
@@ -391,6 +395,9 @@ export class Context {
 
     if (this._currentTab === tab)
       this._setCurrentTab(this._tabs[Math.min(index, this._tabs.length - 1)]);
+
+    if (!this._tabs.length && this.options.onLastPageClosed && !(tab.page as ClientPage)._closeWasCalled && !this._scriptClosedPages.has(tab.page))
+      this.options.onLastPageClosed();
   }
 
   currentWebMCPTools(): WebMCPToolDefinition[] {
@@ -483,6 +490,36 @@ export class Context {
         debug('pw:tools:error')(error);
     }));
     await this._setupRequestInterception(browserContext, disposables);
+
+    if (this.options.onLastPageClosed) {
+      disposables.push(await browserContext.exposeBinding('__pwNotifyWindowClose', ({ page, frame }, closing: boolean) => {
+        if (frame !== page.mainFrame())
+          return;
+        if (closing)
+          this._scriptClosedPages.add(page);
+        else
+          this._scriptClosedPages.delete(page);
+      }));
+      const installWindowCloseListener = () => {
+        const notify = (window as typeof window & { __pwNotifyWindowClose: (closing: boolean) => Promise<void> }).__pwNotifyWindowClose;
+        window.close = new Proxy(window.close, {
+          apply(target, receiver, args) {
+            if (receiver !== undefined && receiver !== null && receiver !== window)
+              return Reflect.apply(target, receiver, args);
+            // Firefox destroys the execution context inside window.close().
+            void notify(true);
+            try {
+              return Reflect.apply(target, receiver, args);
+            } finally {
+              if (!window.closed)
+                void notify(false);
+            }
+          },
+        });
+      };
+      disposables.push(await browserContext.addInitScript(installWindowCloseListener));
+      await Promise.all(browserContext.pages().map(page => page.evaluate(installWindowCloseListener)));
+    }
 
     for (const initScript of this.config.browser?.initScript || [])
       disposables.push(await browserContext.addInitScript({ path: path.resolve(this.options.cwd, initScript) }));
