@@ -13,6 +13,9 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * The same file is in microsoft/playwright, microsoft/playwright-python and
+ * microsoft/playwright-mcp, in utils/docker/. Keep the copies the same.
  */
 
 const fs = require('fs');
@@ -22,55 +25,35 @@ const { execFileSync, spawnSync } = require('child_process');
 
 const SCRIPT_NAME = path.basename(__filename);
 
-// A file that a later layer deletes is still in the layer that created it, and
-// everyone who pulls the image can read it there. So the check reads every layer,
-// not the file system of the final image.
+// A file that a later layer deletes is still in the layer that created it. It makes
+// the image larger, and everyone who pulls the image can read it there. So the check
+// reads every layer, not the file system of the final image.
+//
+// This check looks only at the paths of the files. It does not look for secrets:
+// the Trivy scan in the Docker tests does that, by content.
 //
 // Each pattern is matched against the path of a file in a layer, for example
 // "root/.npm/_logs/2026-01-01-debug-0.log".
 const FORBIDDEN = [
-  // npm and yarn: the cache index and the debug logs record download URLs,
-  // including signed URLs of a private registry.
+  // npm: the cache and the debug logs.
   /(^|\/)\.npm\//,
   /(^|\/)_cacache\//,
   /(^|\/)_logs\/.*-debug-\d+\.log$/,
+  // Node.js: the compile cache that npm turns on. It is in the temporary directory.
+  /(^|\/)node-compile-cache\//,
+  // yarn.
   /(^|\/)\.yarn\//,
-  /(^|\/)\.cache\/yarn\//,
-  // Registry and package manager credentials.
-  /(^|\/)\.npmrc$/,
-  /(^|\/)\.yarnrc(\.yml)?$/,
-  /(^|\/)\.pypirc$/,
-  /(^|\/)\.netrc$/,
+  // The cache directory of a user: pip, virtualenv, yarn and other tools write here.
+  /(^|\/)\.cache\//,
   // Source control.
   /(^|\/)\.git\//,
-  /(^|\/)\.git-credentials$/,
-  // Cloud, container and ssh credentials.
-  /(^|\/)\.ssh\//,
-  /(^|\/)\.aws\//,
-  /(^|\/)\.azure\//,
-  /(^|\/)\.kube\//,
-  /(^|\/)\.docker\//,
-  /(^|\/)\.config\/gcloud\//,
-  // Private keys and key stores. Certificates (.pem, .crt) are public, and the
-  // image needs the CA certificates, so they are not in this list.
-  /\.key$/,
-  /\.(p12|pfx|jks|keystore)$/,
-  /(^|\/)id_(rsa|dsa|ecdsa|ed25519)$/,
-  // Local environment files.
-  /(^|\/)\.env(\.[^/]*)?$/,
-];
-
-// Files that match a pattern above, but are a part of a package and hold no secret.
-const ALLOWED = [
-  // The npm package has its own .npmrc with settings for npm development.
-  /(^|\/)node_modules\/npm\/\.npmrc$/,
 ];
 
 function usage() {
   return `usage: ${SCRIPT_NAME} [--list-files] playwright:localbuild-noble
 
-Check that no layer of the docker image contains files that can hold
-tokens or credentials, such as the npm cache, .npmrc, a .git directory or a private key.
+Check that no layer of the docker image contains files that a build step
+must not leave behind, such as a package manager cache or a .git directory.
 
   --list-files  also print every file that the layers of our Dockerfile add.
                 Layers of the base image are not listed.
@@ -93,7 +76,7 @@ const image = images[0];
 const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'check-layers-'));
 process.on('exit', () => fs.rmSync(tmpDir, { recursive: true, force: true }));
 
-console.log(`Checking the layers of ${image} for files that can hold credentials...`);
+console.log(`Checking the layers of ${image} for caches and other files that must not be in the image...`);
 // Unpack the image without a copy of the archive on disk. With pipefail, a
 // failure of "docker save" fails the command too.
 const saved = spawnSync('bash', ['-o', 'pipefail', '-c', 'docker save "$0" | tar -x -C "$1"', image, tmpDir], { stdio: 'inherit' });
@@ -115,7 +98,7 @@ layers.forEach((layer, index) => {
     console.log(`=== ${files.length} file(s). A ".wh." name marks a file that the layer deletes.`);
     console.log(files.join('\n'));
   }
-  const matches = files.filter(file => FORBIDDEN.some(re => re.test(file)) && !ALLOWED.some(re => re.test(file)));
+  const matches = files.filter(file => FORBIDDEN.some(re => re.test(file)));
   if (!matches.length)
     return;
   failed = true;
@@ -162,7 +145,6 @@ function listLayerFiles(layerFile) {
   return output.split('\n')
       // Paths in a layer can start with "./".
       .map(line => line.replace(/^\.\//, ''))
-      // Skip directory entries: an empty directory, such as the ~/.ssh that a
-      // package creates, holds no secret.
+      // Skip directory entries: an empty directory is not a problem.
       .filter(line => line && !line.endsWith('/'));
 }

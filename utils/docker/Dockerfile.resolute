@@ -10,6 +10,8 @@ ARG PLAYWRIGHT_VERSION
 # npm writes its cache and logs here during the build. /dev/shm is a tmpfs,
 # so no image layer keeps them. The image itself uses the default ~/.npm.
 ARG npm_config_cache=/dev/shm/npm
+# npm turns on the Node.js compile cache, which writes to /tmp. Turn it off during the build.
+ARG NODE_DISABLE_COMPILE_CACHE=1
 
 ENV LANG=C.UTF-8
 ENV LC_ALL=C.UTF-8

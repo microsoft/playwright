@@ -11,7 +11,7 @@ if [[ ($1 == '--help') || ($1 == '-h') ]]; then
 fi
 
 # The images that we publish are clean, so a build never sees check_layers.js fail.
-# This test gives it an image with a forbidden file, to know that it still finds one.
+# This test gives it an image with forbidden files, to know that it still finds them.
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd -P)"
 TMP_DIR="$(mktemp -d)"
@@ -26,13 +26,20 @@ cd "${TMP_DIR}"
 echo "placeholder" > file
 
 # 1. Forbidden files in a lower layer must fail the check.
-cat > Dockerfile.bad <<'DOCKERFILE'
-FROM scratch
-COPY file /root/.npmrc
-COPY file /certs/server.key
-COPY file /home/pwuser/id_ed25519
-COPY file /readme
-DOCKERFILE
+FORBIDDEN_FILES=(
+  root/.npm/_cacache/index-v5/aa/bb/cc
+  root/.npm/_logs/2026-01-01T00_00_00_000Z-debug-0.log
+  tmp/node-compile-cache/v26.0.0-x64/aabbcc
+  root/.yarn/berry/cache/a.zip
+  root/.cache/pip/http-v2/a/b/c
+  home/pwuser/.cache/virtualenv/a
+  src/.git/config
+)
+echo "FROM scratch" > Dockerfile.bad
+for FORBIDDEN_FILE in "${FORBIDDEN_FILES[@]}"; do
+  echo "COPY file /${FORBIDDEN_FILE}" >> Dockerfile.bad
+done
+echo "COPY file /readme" >> Dockerfile.bad
 docker build -q -t playwright:check-layers-bad -f Dockerfile.bad . > /dev/null
 if node "${SCRIPT_DIR}/check_layers.js" playwright:check-layers-bad > output.txt 2>&1; then
   cat output.txt
@@ -40,7 +47,7 @@ if node "${SCRIPT_DIR}/check_layers.js" playwright:check-layers-bad > output.txt
   exit 1
 fi
 # The check must fail because it found the files, not because it crashed.
-for FORBIDDEN_FILE in root/.npmrc certs/server.key home/pwuser/id_ed25519; do
+for FORBIDDEN_FILE in "${FORBIDDEN_FILES[@]}"; do
   if ! grep -q -x -F "  ${FORBIDDEN_FILE}" output.txt; then
     cat output.txt
     echo "FAILED: check_layers.js did not report ${FORBIDDEN_FILE}"
@@ -48,12 +55,13 @@ for FORBIDDEN_FILE in root/.npmrc certs/server.key home/pwuser/id_ed25519; do
   fi
 done
 
-# 2. An image with only allowed files must pass the check.
+# 2. An image with no forbidden files must pass the check. Files that can hold
+#    a secret, such as .npmrc, pass too: the Trivy scan looks for secrets.
 cat > Dockerfile.good <<'DOCKERFILE'
 FROM scratch
 COPY file /usr/local/lib/node_modules/npm/.npmrc
 COPY file /etc/ssl/certs/ca.pem
-COPY file /home/pwuser/.ssh-notes/id_ed25519.pub
+COPY file /var/cache/fontconfig/aabbcc.cache-9
 COPY file /readme
 DOCKERFILE
 docker build -q -t playwright:check-layers-good -f Dockerfile.good . > /dev/null
@@ -63,4 +71,4 @@ if ! node "${SCRIPT_DIR}/check_layers.js" playwright:check-layers-good > output.
   exit 1
 fi
 
-echo "PASSED: check_layers.js finds a forbidden file and accepts a clean image"
+echo "PASSED: check_layers.js finds forbidden files and accepts a clean image"
