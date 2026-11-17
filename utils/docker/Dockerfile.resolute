@@ -33,6 +33,8 @@ RUN --mount=type=secret,id=npmrc,target=/root/.npmrc,required=false \
     # zstd is used by actions/cache.
     apt-get install -y --no-install-recommends git openssh-client zstd && \
     npm install -g yarn && \
+    # Remove the npm cache and logs in the layer that creates them.
+    rm -rf ~/.npm/ && \
     # clean apt cache
     rm -rf /var/lib/apt/lists/* && \
     # Create the pwuser
