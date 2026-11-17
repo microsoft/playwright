@@ -19,7 +19,7 @@ import path from 'path';
 import url from 'url';
 
 import open from 'open';
-import { HttpServer } from '@utils/httpServer';
+import { HttpServer, isFrameNavigation } from '@utils/httpServer';
 import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
 import { isUnderTest } from '@utils/debug';
 import { isCodingAgent } from '@utils/env';
@@ -94,6 +94,15 @@ export async function startTraceViewerServer(options: TraceViewerServerOptions &
   const serveTraceDataRoute = (request: http.IncomingMessage, response: http.ServerResponse, relativePath: string): boolean => {
     if (!relativePath.startsWith('/file'))
       return false;
+    // These files can have content from the pages under test. Do not run them as pages in the trace viewer origin.
+    response.setHeader('Content-Security-Policy', 'sandbox');
+    response.setHeader('X-Content-Type-Options', 'nosniff');
+    // The trace viewer never shows these files in a frame. Only a snapshot that navigates itself does.
+    if (isFrameNavigation(request)) {
+      response.statusCode = 403;
+      response.end();
+      return true;
+    }
     const url = new URL('http://localhost' + request.url!);
     try {
       const filePath = path.resolve(url.searchParams.get('path')!);

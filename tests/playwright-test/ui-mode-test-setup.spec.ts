@@ -360,6 +360,28 @@ for (const useWeb of [true, false]) {
         expect(root.headers.get('location')).toBe(`./${prefix}/trace/uiMode.html${url.search}`);
       expect((await fetch(url.origin + '/trace/file?path=' + encodeURIComponent(test.info().outputPath('a.test.js')))).status).toBe(404);
       expect((await fetch(`${url.origin}/${prefix}/trace/uiMode.html`)).status).toBe(200);
+
+      // Project files do not run as pages in the UI mode origin, and do not load in frames.
+      const fileUrl = `${url.origin}/${prefix}/trace/file?path=` + encodeURIComponent(test.info().outputPath('a.test.js'));
+      const fileResponse = await fetch(fileUrl);
+      expect(fileResponse.status).toBe(200);
+      expect(fileResponse.headers.get('content-security-policy')).toBe('sandbox');
+      expect((await fetch(fileUrl, { headers: { 'sec-fetch-dest': 'iframe' } })).status).toBe(403);
+
+      // A sandboxed page has the "null" origin and cannot connect to the WebSocket.
+      const sandboxedWebSocket = await page.evaluate(async () => {
+        const iframe = document.createElement('iframe');
+        iframe.setAttribute('sandbox', 'allow-scripts');
+        iframe.srcdoc = `<script>
+          const ws = new WebSocket(${JSON.stringify(new URL('../ws', location.href).toString().replace('http', 'ws'))});
+          ws.onopen = () => parent.postMessage('open', '*');
+          ws.onerror = () => parent.postMessage('error', '*');
+        </` + `script>`;
+        const result = new Promise(f => window.addEventListener('message', event => f(event.data), { once: true }));
+        document.body.appendChild(iframe);
+        return await result;
+      });
+      expect(sandboxedWebSocket).toBe('error');
     });
   });
 }

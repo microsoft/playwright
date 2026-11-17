@@ -104,7 +104,7 @@ export class HttpServer {
           socket.destroy();
         return;
       }
-      if (!isAllowedHost(request, this._allowedHosts)) {
+      if (!isAllowedHost(request, this._allowedHosts) || !isSameOriginUpgrade(request)) {
         socket.write(`HTTP/${request.httpVersion} 403 Forbidden\r\n\r\n`);
         socket.destroy();
         return;
@@ -355,6 +355,29 @@ export function isAllowedHost(request: http.IncomingMessage, allowedHosts: Set<s
   return !!hostname && allowedHosts.has(hostname);
 }
 
+// Browsers always send Origin with a WebSocket handshake, and a page cannot change it or add headers.
+// Accept only pages of this server. This also rejects sandboxed pages, which have the "null" origin.
+// Clients that are not browsers send no Origin. A proxy can pass the public host in X-Forwarded-Host.
+function isSameOriginUpgrade(request: http.IncomingMessage): boolean {
+  const origin = request.headers.origin;
+  if (origin === undefined)
+    return true;
+  let originHost: string;
+  try {
+    originHost = new URL(origin).host.toLowerCase();
+  } catch {
+    return false;
+  }
+  const forwardedHost = request.headers['x-forwarded-host'];
+  const hosts = [request.headers.host, ...(Array.isArray(forwardedHost) ? forwardedHost : (forwardedHost ?? '').split(','))];
+  return !!originHost && hosts.some(host => host?.trim().toLowerCase() === originHost);
+}
+
+// A page must never show a file with content from the pages under test inside a frame.
+export function isFrameNavigation(request: http.IncomingMessage): boolean {
+  return ['iframe', 'frame', 'embed', 'object'].includes(String(request.headers['sec-fetch-dest']));
+}
+
 // Bracket IPv6 literals so they can be used as the host part of a URL.
 export function urlHostFromAddress(address: { address: string, family: string }): string {
   return address.family === 'IPv6' ? `[${address.address}]` : address.address;
@@ -378,9 +401,15 @@ export function serveFolder(folder: string): HttpServer {
       const requested = url.searchParams.get('path');
       if (!requested)
         return false;
+      if (isFrameNavigation(request)) {
+        response.statusCode = 403;
+        response.end();
+        return true;
+      }
       const resolved = path.resolve(requested);
       try {
-        return server.serveFile(request, response, resolved);
+        // These files can have content from the pages under test. Do not run them as pages in the trace viewer origin.
+        return server.serveFile(request, response, resolved, { 'Content-Security-Policy': 'sandbox', 'X-Content-Type-Options': 'nosniff' });
       } catch (e) {
         return false;
       }
