@@ -20,7 +20,6 @@ import path from 'path';
 import * as playwrightLibrary from 'playwright-core';
 import { getActionGroup, renderParamsForCall, renderSubtitleForCall, renderTitleForCall, truncateParam } from '@isomorphic/protocolFormatter';
 import { escapeHTML } from '@isomorphic/stringUtils';
-import { jsonStringifyForceASCII } from '@utils/ascii';
 import { createGuid } from '@utils/crypto';
 import { debugMode } from '@utils/debug';
 import { debugLogger } from '@utils/debugLogger';
@@ -242,12 +241,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
     if (connectOptions) {
       const browser = await playwright[browserName].connect(connectOptions.wsEndpoint, {
         ...connectOptions,
-        exposeNetwork: connectOptions.exposeNetwork,
-        headers: {
-          // HTTP headers are ASCII only (not UTF-8).
-          'x-playwright-launch-options': jsonStringifyForceASCII(_browserOptions),
-          ...connectOptions.headers,
-        },
+        launchOptions: _browserOptions,
       });
       await use(browser);
       await browser.close({ reason: 'Test ended.' });

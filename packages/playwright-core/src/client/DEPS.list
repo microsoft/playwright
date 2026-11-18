@@ -1,6 +1,7 @@
 [*]
 @isomorphic/**
 @protocol/**
+@utils/ascii.ts
 @utils/crypto.ts
 @utils/debug.ts
 @utils/debugLogger.ts

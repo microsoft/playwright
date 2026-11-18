@@ -107,6 +107,14 @@ A Playwright browser websocket endpoint to connect to. You obtain this endpoint 
 
 Additional HTTP headers to be sent with web socket connect request. Optional.
 
+### option: BrowserType.connect.launchOptions
+* since: v1.66
+* langs: js
+- `launchOptions` <[LaunchOptions]>
+
+Options used to launch the browser, as passed to [`method: BrowserType.launch`]. Only applies when the server
+launches a browser for each connection. The server ignores the options that it does not allow.
+
 ### option: BrowserType.connect.slowMo
 * since: v1.10
 - `slowMo` <[float]>
