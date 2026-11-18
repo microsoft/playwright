@@ -43,6 +43,7 @@ export type AriaTreeOptions = {
   doNotRenderActive?: boolean;
   depth?: number;
   boxes?: boolean;
+  hideValues?: string[];
 };
 
 type InternalOptions = {
@@ -53,6 +54,7 @@ type InternalOptions = {
   renderCursorPointer?: boolean,
   renderActive?: boolean,
   renderBoxes?: boolean,
+  hideValues?: string[],
 };
 
 function toInternalOptions(options: AriaTreeOptions): InternalOptions {
@@ -67,15 +69,16 @@ function toInternalOptions(options: AriaTreeOptions): InternalOptions {
       renderActive: !options.doNotRenderActive,
       renderCursorPointer: true,
       renderBoxes,
+      hideValues: options.hideValues,
     };
   }
   if (options.mode === 'autoexpect') {
     // To auto-generate assertions on visible elements.
-    return { visibility: 'ariaAndVisible', refs: 'none', renderBoxes };
+    return { visibility: 'ariaAndVisible', refs: 'none', renderBoxes, hideValues: options.hideValues };
   }
   // To match aria snapshot. In 'codegen' mode, the generated tree is the same,
   // strings are converted to regexes when serializing to yaml.
-  return { visibility: 'aria', refs: 'none', renderBoxes };
+  return { visibility: 'aria', refs: 'none', renderBoxes, hideValues: options.hideValues };
 }
 
 export function generateAriaTree(rootElement: Element, publicOptions: AriaTreeOptions): AriaSnapshot {
@@ -302,8 +305,16 @@ function toAriaNode(element: Element, options: InternalOptions, nameSourceElemen
     result.selected = roleUtils.getAriaSelected(element);
 
   if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement) {
-    if (element.type !== 'checkbox' && element.type !== 'radio' && element.type !== 'file')
-      result.children = [element.value];
+    if (element.type !== 'checkbox' && element.type !== 'radio' && element.type !== 'file') {
+      // Only the control value is masked; identical text in names or surrounding page content is not redacted.
+      const type = element.getAttribute('type')?.toLowerCase() || undefined;
+      const autocomplete = element.getAttribute('autocomplete')?.toLowerCase().split(/\s+/).filter(Boolean) || [];
+      const shouldHideValue = options.hideValues?.some(value => {
+        const normalizedValue = value.toLowerCase();
+        return normalizedValue === type || autocomplete.includes(normalizedValue);
+      });
+      result.children = [shouldHideValue ? '••••••' : element.value];
+    }
   }
 
   return result;

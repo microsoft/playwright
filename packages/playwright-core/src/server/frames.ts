@@ -1852,17 +1852,17 @@ export class Frame extends SdkObject<FrameEventMap> {
     }, { source, arg });
   }
 
-  async ariaSnapshot(progress: Progress, options: { mode?: 'ai' | 'default', doNotRenderActive?: boolean, selector?: string, depth?: number, boxes?: boolean } = {}): Promise<{ snapshot: string }> {
+  async ariaSnapshot(progress: Progress, options: { mode?: 'ai' | 'default', doNotRenderActive?: boolean, selector?: string, depth?: number, boxes?: boolean, hideValues?: string[] } = {}): Promise<{ snapshot: string }> {
     // Serialize to yaml at the last moment, before returning to the client.
     const { snapshot } = await this.ariaSnapshotJSON(progress, options);
     return { snapshot: renderAriaSnapshotAsYaml(snapshot) };
   }
 
-  async ariaSnapshotJSON(progress: Progress, options: { mode?: 'ai' | 'default', doNotRenderActive?: boolean, selector?: string, depth?: number, boxes?: boolean } = {}): Promise<{ snapshot: AriaSnapshotJSON }> {
+  async ariaSnapshotJSON(progress: Progress, options: { mode?: 'ai' | 'default', doNotRenderActive?: boolean, selector?: string, depth?: number, boxes?: boolean, hideValues?: string[] } = {}): Promise<{ snapshot: AriaSnapshotJSON }> {
     if (options.selector && options.mode !== 'ai') {
       // Non-ai locator snapshot is auto-waiting and does not include iframes.
       const snapshot = await this._retryWithProgressIfNotConnected(progress, { selector: options.selector, strict: true }, { waitForFrameVisible: false }, async (progress, handle) => {
-        return await progress.race(handle.evaluateInUtility(([injected, element, opts]) => injected.ariaSnapshotJSON(element, opts).json, { mode: 'default' as const, depth: options.depth, boxes: options.boxes }));
+        return await progress.race(handle.evaluateInUtility(([injected, element, opts]) => injected.ariaSnapshotJSON(element, opts).json, { mode: 'default' as const, depth: options.depth, boxes: options.boxes, hideValues: options.hideValues }));
       });
       return { snapshot };
     }

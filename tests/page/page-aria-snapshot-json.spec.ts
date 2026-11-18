@@ -180,3 +180,22 @@ it('AR-106 should snapshot a locator', async ({ page }) => {
     },
   ]);
 });
+
+it('AR-107 should mask selected input values in JSON snapshots', async ({ page }) => {
+  await page.setContent(`
+    <input type="password" aria-label="Password" value="password-secret">
+    <input autocomplete="ONE-TIME-CODE" aria-label="OTP" value="otp-secret">
+    <input autocomplete="cc-number" aria-label="Card" value="card-secret">
+    <input type="text" aria-label="Text" value="plain-text">
+  `);
+
+  const hideValues = ['PASSWORD', 'one-time-code', 'CC-NUMBER'];
+  const snapshot = await page.ariaSnapshotJSON({ hideValues }) as NodeJSON[];
+  expect(findNode(snapshot, node => node.name === 'Password')).toMatchObject({ text: '••••••' });
+  expect(findNode(snapshot, node => node.name === 'OTP')).toMatchObject({ text: '••••••' });
+  expect(findNode(snapshot, node => node.name === 'Card')).toMatchObject({ text: '••••••' });
+  expect(findNode(snapshot, node => node.name === 'Text')).toMatchObject({ text: 'plain-text' });
+
+  const locatorSnapshot = await page.locator('[aria-label="Password"]').ariaSnapshotJSON({ hideValues }) as NodeJSON[];
+  expect(findNode(locatorSnapshot, node => node.name === 'Password')).toMatchObject({ text: '••••••' });
+});

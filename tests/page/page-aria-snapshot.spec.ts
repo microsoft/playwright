@@ -475,6 +475,32 @@ it('AR-023 should treat input value as text in templates, but not for checkbox/r
   `);
 });
 
+it('AR-046 should mask selected input values when requested', async ({ page }) => {
+  await page.setContent(`
+    <input type="password" aria-label="Password" value="password-secret">
+    <input autocomplete="ONE-TIME-CODE" aria-label="OTP" value="otp-secret">
+    <input autocomplete="cc-number" aria-label="Card" value="card-secret">
+    <input type="text" aria-label="Text" value="plain-text">
+  `);
+
+  const hideValues = ['PASSWORD', 'one-time-code', 'CC-NUMBER'];
+  expect(await page.ariaSnapshot({ hideValues })).toContainYaml(`
+    - textbox "Password": ••••••
+    - textbox "OTP": ••••••
+    - textbox "Card": ••••••
+    - textbox "Text": plain-text
+  `);
+  expect(await page.locator('[aria-label="Password"]').ariaSnapshot({ hideValues })).toContainYaml(`
+    - textbox "Password": ••••••
+  `);
+  expect(await page.ariaSnapshot()).toContainYaml(`
+    - textbox "Password": password-secret
+    - textbox "OTP": otp-secret
+    - textbox "Card": card-secret
+    - textbox "Text": plain-text
+  `);
+});
+
 it('AR-024 should not use on as checkbox value', async ({ page }) => {
   await page.setContent(`
     <input type='checkbox'>

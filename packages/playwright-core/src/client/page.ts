@@ -938,13 +938,13 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return result.pdf;
   }
 
-  async ariaSnapshot(options: TimeoutOptions & { mode?: 'ai' | 'default', depth?: number, boxes?: boolean } = {}): Promise<string> {
-    const result = await this.mainFrame()._channel.ariaSnapshot({ mode: options.mode, depth: options.depth, boxes: options.boxes }, this._timeoutSettings.timeout(options));
+  async ariaSnapshot(options: TimeoutOptions & { mode?: 'ai' | 'default', depth?: number, boxes?: boolean, hideValues?: string[] } = {}): Promise<string> {
+    const result = await this.mainFrame()._channel.ariaSnapshot({ mode: options.mode, depth: options.depth, boxes: options.boxes, hideValues: options.hideValues }, this._timeoutSettings.timeout(options));
     return result.snapshot;
   }
 
-  async ariaSnapshotJSON(options: TimeoutOptions & { mode?: 'ai' | 'default', depth?: number, boxes?: boolean } = {}): Promise<AriaSnapshotJSON> {
-    const result = await this.mainFrame()._channel.ariaSnapshotJSON({ mode: options.mode, depth: options.depth, boxes: options.boxes }, this._timeoutSettings.timeout(options));
+  async ariaSnapshotJSON(options: TimeoutOptions & { mode?: 'ai' | 'default', depth?: number, boxes?: boolean, hideValues?: string[] } = {}): Promise<AriaSnapshotJSON> {
+    const result = await this.mainFrame()._channel.ariaSnapshotJSON({ mode: options.mode, depth: options.depth, boxes: options.boxes, hideValues: options.hideValues }, this._timeoutSettings.timeout(options));
     return result.snapshot;
   }
 
