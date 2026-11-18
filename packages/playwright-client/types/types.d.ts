@@ -2113,6 +2113,13 @@ export interface Page {
     depth?: number;
 
     /**
+     * When specified, masks the values of input and textarea elements whose `type` attribute or `autocomplete` token
+     * matches one of the values, case-insensitively. Only control values are masked; copies of the same text in labels or
+     * other page content are not redacted.
+     */
+    hideValues?: Array<string>;
+
+    /**
      * When set to `"ai"`, returns a snapshot optimized for AI consumption: including element references like `[ref=e2]`
      * and snapshots of `<iframe>`s. Defaults to `"default"`.
      */
@@ -2159,6 +2166,13 @@ export interface Page {
      * When specified, limits the depth of the snapshot.
      */
     depth?: number;
+
+    /**
+     * When specified, masks the values of input and textarea elements whose `type` attribute or `autocomplete` token
+     * matches one of the values, case-insensitively. Only control values are masked; copies of the same text in labels or
+     * other page content are not redacted.
+     */
+    hideValues?: Array<string>;
 
     /**
      * When set to `"ai"`, returns a snapshot optimized for AI consumption: including element references like `[ref=e2]`
@@ -14678,6 +14692,13 @@ export interface Locator {
     depth?: number;
 
     /**
+     * When specified, masks the values of input and textarea elements whose `type` attribute or `autocomplete` token
+     * matches one of the values, case-insensitively. Only control values are masked; copies of the same text in labels or
+     * other page content are not redacted.
+     */
+    hideValues?: Array<string>;
+
+    /**
      * When set to `"ai"`, returns a snapshot optimized for AI consumption. Defaults to `"default"`. See details for more
      * information.
      */
@@ -14744,6 +14765,13 @@ export interface Locator {
      * When specified, limits the depth of the snapshot.
      */
     depth?: number;
+
+    /**
+     * When specified, masks the values of input and textarea elements whose `type` attribute or `autocomplete` token
+     * matches one of the values, case-insensitively. Only control values are masked; copies of the same text in labels or
+     * other page content are not redacted.
+     */
+    hideValues?: Array<string>;
 
     /**
      * When set to `"ai"`, returns a snapshot optimized for AI consumption. Defaults to `"default"`. See details in

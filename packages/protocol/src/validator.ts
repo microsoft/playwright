@@ -1303,6 +1303,7 @@ scheme.FrameAriaSnapshotParams = tObject({
   selector: tOptional(tString),
   depth: tOptional(tInt),
   boxes: tOptional(tBoolean),
+  hideValues: tOptional(tArray(tString)),
 });
 scheme.FrameAriaSnapshotResult = tObject({
   snapshot: tString,
@@ -1312,6 +1313,7 @@ scheme.FrameAriaSnapshotJSONParams = tObject({
   selector: tOptional(tString),
   depth: tOptional(tInt),
   boxes: tOptional(tBoolean),
+  hideValues: tOptional(tArray(tString)),
 });
 scheme.FrameAriaSnapshotJSONResult = tObject({
   snapshot: tAny,

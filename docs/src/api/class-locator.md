@@ -240,6 +240,14 @@ When `true`, appends each element's bounding box as `[box=x,y,width,height]` to 
 relative to the viewport, in CSS pixels, as returned by [`Element.getBoundingClientRect()`](https://developer.mozilla.org/en-US/docs/Web/API/Element/getBoundingClientRect).
 Defaults to `false`.
 
+### option: Locator.ariaSnapshot.hideValues
+* since: v1.66
+- `hideValues` <[Array]<[string]>>
+
+When specified, masks the values of input and textarea elements whose `type` attribute or `autocomplete` token matches
+one of the values, case-insensitively. Only control values are masked; copies of the same text in labels or other page
+content are not redacted.
+
 ## async method: Locator.ariaSnapshotJSON
 * since: v1.63
 * langs: js
@@ -294,6 +302,14 @@ When specified, limits the depth of the snapshot.
 When `true`, includes each element's bounding box as a `box` property with `x`, `y`, `width` and `height`. Coordinates are
 relative to the viewport, in CSS pixels, as returned by [`Element.getBoundingClientRect()`](https://developer.mozilla.org/en-US/docs/Web/API/Element/getBoundingClientRect).
 Defaults to `false`.
+
+### option: Locator.ariaSnapshotJSON.hideValues
+* since: v1.66
+- `hideValues` <[Array]<[string]>>
+
+When specified, masks the values of input and textarea elements whose `type` attribute or `autocomplete` token matches
+one of the values, case-insensitively. Only control values are masked; copies of the same text in labels or other page
+content are not redacted.
 
 ## async method: Locator.blur
 * since: v1.28

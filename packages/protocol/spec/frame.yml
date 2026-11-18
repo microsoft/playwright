@@ -94,6 +94,9 @@ Frame:
         selector: string?
         depth: int?
         boxes: boolean?
+        hideValues:
+          type: array?
+          items: string
       returns:
         snapshot: string
 
@@ -110,6 +113,9 @@ Frame:
         selector: string?
         depth: int?
         boxes: boolean?
+        hideValues:
+          type: array?
+          items: string
       returns:
         snapshot: json
 

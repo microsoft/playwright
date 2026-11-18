@@ -1111,7 +1111,7 @@ export class InitScript extends DisposableObject {
   }
 }
 
-export async function ariaSnapshotJSONForFrame(progress: Progress, frame: frames.Frame, selector: string | undefined, options: { mode?: 'ai' | 'default', doNotRenderActive?: boolean, depth?: number, boxes?: boolean, strict?: boolean } = {}): Promise<AriaSnapshotJSON> {
+export async function ariaSnapshotJSONForFrame(progress: Progress, frame: frames.Frame, selector: string | undefined, options: { mode?: 'ai' | 'default', doNotRenderActive?: boolean, depth?: number, boxes?: boolean, hideValues?: string[], strict?: boolean } = {}): Promise<AriaSnapshotJSON> {
   const snapshot = await frame.retryWithProgressAndTimeouts(progress, [1000, 2000, 4000, 8000], async (progress, continuePolling) => {
     try {
       // Note: the resolved frame might differ from the original |frame|.
@@ -1124,6 +1124,7 @@ export async function ariaSnapshotJSONForFrame(progress: Progress, frame: frames
         doNotRenderActive: options.doNotRenderActive,
         depth: options.depth,
         boxes: options.boxes,
+        hideValues: options.hideValues,
       }));
       if (!resolved) {
         if (selector)

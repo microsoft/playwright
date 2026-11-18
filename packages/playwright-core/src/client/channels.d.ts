@@ -2408,12 +2408,14 @@ export type FrameAriaSnapshotParams = {
   selector?: string,
   depth?: number,
   boxes?: boolean,
+  hideValues?: string[],
 };
 export type FrameAriaSnapshotOptions = {
   mode?: 'ai' | 'default',
   selector?: string,
   depth?: number,
   boxes?: boolean,
+  hideValues?: string[],
 };
 export type FrameAriaSnapshotResult = {
   snapshot: string,
@@ -2423,12 +2425,14 @@ export type FrameAriaSnapshotJSONParams = {
   selector?: string,
   depth?: number,
   boxes?: boolean,
+  hideValues?: string[],
 };
 export type FrameAriaSnapshotJSONOptions = {
   mode?: 'ai' | 'default',
   selector?: string,
   depth?: number,
   boxes?: boolean,
+  hideValues?: string[],
 };
 export type FrameAriaSnapshotJSONResult = {
   snapshot: any,

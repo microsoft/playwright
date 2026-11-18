@@ -385,13 +385,13 @@ export class Locator implements api.Locator {
     return await this._withElement((h, timeout) => h.screenshot({ ...options, mask, timeout }), { timeout: options.timeout, signal: options.signal });
   }
 
-  async ariaSnapshot(options: TimeoutOptions & { mode?: 'ai' | 'default', depth?: number, boxes?: boolean } = {}): Promise<string> {
-    const result = await this._frame._channel.ariaSnapshot({ mode: options.mode, selector: this.selectorForQuery(), depth: options.depth, boxes: options.boxes }, this._frame._timeout(options));
+  async ariaSnapshot(options: TimeoutOptions & { mode?: 'ai' | 'default', depth?: number, boxes?: boolean, hideValues?: string[] } = {}): Promise<string> {
+    const result = await this._frame._channel.ariaSnapshot({ mode: options.mode, selector: this.selectorForQuery(), depth: options.depth, boxes: options.boxes, hideValues: options.hideValues }, this._frame._timeout(options));
     return result.snapshot;
   }
 
-  async ariaSnapshotJSON(options: TimeoutOptions & { mode?: 'ai' | 'default', depth?: number, boxes?: boolean } = {}): Promise<AriaSnapshotJSON> {
-    const result = await this._frame._channel.ariaSnapshotJSON({ mode: options.mode, selector: this.selectorForQuery(), depth: options.depth, boxes: options.boxes }, this._frame._timeout(options));
+  async ariaSnapshotJSON(options: TimeoutOptions & { mode?: 'ai' | 'default', depth?: number, boxes?: boolean, hideValues?: string[] } = {}): Promise<AriaSnapshotJSON> {
+    const result = await this._frame._channel.ariaSnapshotJSON({ mode: options.mode, selector: this.selectorForQuery(), depth: options.depth, boxes: options.boxes, hideValues: options.hideValues }, this._frame._timeout(options));
     return result.snapshot;
   }
 
