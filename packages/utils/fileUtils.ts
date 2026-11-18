@@ -18,7 +18,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { calculateSha1 } from './crypto';
+import { calculateSha1, createGuid } from './crypto';
 
 export const existsAsync = (path: string): Promise<boolean> => new Promise(resolve => fs.stat(path, err => resolve(!err)));
 
@@ -45,9 +45,16 @@ export function canAccessFile(file: string) {
   }
 }
 
-export function isWritable(file: string): boolean {
+export function isWritableDirectory(dir: string): boolean {
   try {
-    fs.accessSync(file, fs.constants.W_OK);
+    if (process.platform === 'win32') {
+      // fs.accessSync does not check Windows ACLs.
+      const probe = path.join(dir, `.playwright-write-test-${createGuid()}`);
+      fs.writeFileSync(probe, '', { flag: 'wx' });
+      fs.unlinkSync(probe);
+    } else {
+      fs.accessSync(dir, fs.constants.W_OK);
+    }
     return true;
   } catch {
     return false;

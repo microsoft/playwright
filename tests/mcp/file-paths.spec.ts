@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import { execFileSync } from 'child_process';
+import fs from 'fs';
 import path from 'path';
 import { test, expect, parseResponse } from './fixtures';
 
@@ -43,4 +45,45 @@ test('--file-paths=absolute', async ({ startClient, server }, testInfo) => {
   })).toHaveResponse({
     result: expect.stringContaining(`[Screenshot of viewport](${testInfo.outputPath('screenshot.png')})`),
   });
+});
+
+test('explicit filenames fall back from an unwritable workspace', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44138' },
+}, async ({ startClient, server }, testInfo) => {
+  const cwd = testInfo.outputPath('readonly');
+  const outputDir = testInfo.outputPath('output');
+  await fs.promises.mkdir(cwd);
+  if (process.platform === 'win32')
+    execFileSync('icacls', [cwd, '/deny', '*S-1-1-0:(WD,AD)']);
+  else
+    await fs.promises.chmod(cwd, 0o555);
+  let canWrite = false;
+  try {
+    await fs.promises.writeFile(path.join(cwd, 'probe'), '');
+    canWrite = true;
+  } catch (e) {
+    if (e.code !== 'EPERM' && e.code !== 'EACCES')
+      throw e;
+  }
+  test.skip(canWrite, 'The current account can bypass directory permissions.');
+
+  const { client } = await startClient({
+    cwd,
+    args: ['--file-paths=absolute', `--output-dir=${outputDir}`],
+  });
+
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  })).toHaveResponse({
+    code: expect.stringContaining(`page.goto('http://localhost`),
+  });
+
+  expect(await client.callTool({
+    name: 'browser_take_screenshot',
+    arguments: { filename: 'sub/screenshot.png' },
+  })).toHaveResponse({
+    result: expect.stringContaining(`[Screenshot of viewport](${path.join(outputDir, 'sub', 'screenshot.png')})`),
+  });
+  expect(fs.existsSync(path.join(outputDir, 'sub', 'screenshot.png'))).toBe(true);
 });

@@ -22,7 +22,7 @@ import debug from 'debug';
 import { escapeRegExp, escapeWithQuotes } from '@isomorphic/stringUtils';
 import { disposeAll } from '@isomorphic/disposable';
 import { eventsHelper } from '@utils/eventsHelper';
-import { isPathInside, isSystemDirectory, isWritable, resolveSymlinks, sanitizeForFilePath } from '@utils/fileUtils';
+import { isPathInside, isSystemDirectory, isWritableDirectory, resolveSymlinks, sanitizeForFilePath } from '@utils/fileUtils';
 import { playwright } from '../../inprocess';
 
 import { dedent, languageGeneratorId, secretCode } from './codegen';
@@ -566,9 +566,25 @@ export function outputDir(options: ContextOptions): string {
   if (options.config.outputDir)
     return path.resolve(options.config.outputDir);
   const baseName = options.config.skillMode ? '.playwright-cli' : '.playwright-mcp';
-  if (isSystemDirectory(options.cwd) || !isWritable(options.cwd))
+  if (!isSuitableOutputDirectory(options, options.cwd))
     return path.join(os.tmpdir(), baseName);
   return path.join(options.cwd, baseName);
+}
+
+const outputDirectorySuitability = new WeakMap<ContextOptions, Map<string, boolean>>();
+
+export function isSuitableOutputDirectory(options: ContextOptions, dir: string): boolean {
+  let directories = outputDirectorySuitability.get(options);
+  if (!directories) {
+    directories = new Map();
+    outputDirectorySuitability.set(options, directories);
+  }
+  let suitable = directories.get(dir);
+  if (suitable === undefined) {
+    suitable = !isSystemDirectory(dir) && isWritableDirectory(dir);
+    directories.set(dir, suitable);
+  }
+  return suitable;
 }
 
 export async function outputFile(options: ContextOptions, fileName: string, flags: { origin: 'code' | 'llm' }): Promise<string> {

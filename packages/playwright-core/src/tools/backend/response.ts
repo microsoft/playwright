@@ -22,7 +22,7 @@ import { actionInContext, codeframeForLanguage, renderCode, substituteSecrets } 
 import { renderModalStates } from './tab';
 import { renderWebMCPToolsYaml, webmcpToolsJSON } from './webmcp';
 
-import { outputDir as resolveOutputDir } from './context';
+import { isSuitableOutputDirectory, outputDir as resolveOutputDir } from './context';
 
 import type * as playwright from '../../..';
 import type * as actions from '@isomorphic/codegen/actions';
@@ -93,7 +93,7 @@ export class Response {
 
   async resolveClientOutputFile(template: FilenameTemplate, title: string): Promise<ResolvedFile> {
     let fileName: string;
-    if (template.suggestedFilename)
+    if (template.suggestedFilename && (path.isAbsolute(template.suggestedFilename) || isSuitableOutputDirectory(this._context.options, this._clientWorkspace)))
       fileName = await this.resolveClientFilename(template.suggestedFilename);
     else
       fileName = await this._context.outputFile(template, { origin: 'llm' });

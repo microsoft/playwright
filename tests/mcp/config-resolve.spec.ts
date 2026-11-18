@@ -17,6 +17,7 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+import { mock } from 'node:test';
 
 import { Command } from 'commander';
 
@@ -501,6 +502,25 @@ test.describe('validation', () => {
 // ---------------------------------------------------------------------------
 // Output directory — fallback for unsuitable cwd, throw on explicit system dir
 // ---------------------------------------------------------------------------
+
+test('outputDir checks Windows directory writability once per session', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44138' },
+}, ({}, testInfo) => {
+  test.skip(process.platform !== 'win32', 'Windows directory permissions require a write probe.');
+  const cwd = testInfo.outputPath('workspace');
+  fs.mkdirSync(cwd);
+  const options = { config: {}, cwd };
+  const writeFile = mock.method(fs, 'writeFileSync');
+  try {
+    expect(outputDir(options)).toBe(path.join(cwd, '.playwright-mcp'));
+    expect(outputDir(options)).toBe(path.join(cwd, '.playwright-mcp'));
+    expect(writeFile.mock.callCount()).toBe(1);
+    expect(outputDir({ config: {}, cwd })).toBe(path.join(cwd, '.playwright-mcp'));
+    expect(writeFile.mock.callCount()).toBe(2);
+  } finally {
+    writeFile.mock.restore();
+  }
+});
 
 test.describe('outputDir', () => {
   test.skip(process.platform === 'win32', 'POSIX-specific cases');
