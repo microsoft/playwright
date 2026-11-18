@@ -5054,6 +5054,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `TA-008` | `library/tap.spec.ts` | should wait until an element is visible to tap it |
 | `TA-009` | `library/tap.spec.ts` | locators › should send all of the correct events |
 | `TA-010` | `library/locator-dispatchevent-touch.spec.ts` | should support touch points in touch event arguments |
+| `TA-011` | `library/tap.spec.ts` | locators › should tap outside the initial visual viewport |
 
 ### TO — Timeout runner
 
