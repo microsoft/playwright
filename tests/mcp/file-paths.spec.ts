@@ -50,11 +50,13 @@ test('--file-paths=absolute', async ({ startClient, server }, testInfo) => {
 test('explicit filenames fall back from an unwritable workspace', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44138' },
 }, async ({ startClient, server }, testInfo) => {
-  test.skip(process.platform !== 'win32', 'Windows directory permissions require an ACL check.');
   const cwd = testInfo.outputPath('readonly');
   const outputDir = testInfo.outputPath('output');
   await fs.promises.mkdir(cwd);
-  execFileSync('icacls', [cwd, '/deny', '*S-1-1-0:(WD,AD)']);
+  if (process.platform === 'win32')
+    execFileSync('icacls', [cwd, '/deny', '*S-1-1-0:(WD,AD)']);
+  else
+    await fs.promises.chmod(cwd, 0o555);
   let canWrite = false;
   try {
     await fs.promises.writeFile(path.join(cwd, 'probe'), '');
@@ -63,7 +65,7 @@ test('explicit filenames fall back from an unwritable workspace', {
     if (e.code !== 'EPERM' && e.code !== 'EACCES')
       throw e;
   }
-  test.skip(canWrite, 'The current account can bypass Windows directory ACLs.');
+  test.skip(canWrite, 'The current account can bypass directory permissions.');
 
   const { client } = await startClient({
     cwd,
