@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { LRUCache } from './lruCache';
 import { isString } from './stringUtils';
 
 export function isHttpUrl(url: string, base?: string): boolean {
@@ -177,11 +178,19 @@ export function urlMatchesEqual(match1: URLMatch, match2: URLMatch) {
   return match1 === match2;
 }
 
+const globRegexCache = new LRUCache<string, RegExp>(1000);
+
 export function urlMatches(baseURL: string | undefined, urlString: string, match: URLMatch | undefined, webSocketUrl?: boolean): boolean {
   if (match === undefined || match === '')
     return true;
-  if (isString(match))
-    match = new RegExp(resolveGlobToRegexPattern(baseURL, match, webSocketUrl));
+  if (isString(match)) {
+    const glob = match;
+    const key = JSON.stringify([baseURL, glob, !!webSocketUrl]);
+    match = globRegexCache.getOrCompute(key, () => ({
+      value: new RegExp(resolveGlobToRegexPattern(baseURL, glob, webSocketUrl)),
+      size: 1,
+    }));
+  }
   if (isRegExp(match)) {
     match.lastIndex = 0;
     return match.test(urlString);

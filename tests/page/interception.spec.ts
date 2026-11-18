@@ -88,7 +88,9 @@ it('RO-152 should intercept after a service worker', {
   }
 });
 
-it('RO-153 should work with glob', async () => {
+it('RO-153 should work with glob', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44186' },
+}, async () => {
   function globToRegex(glob: string): RegExp {
     return new RegExp(globToRegexPattern(glob));
   }
@@ -194,6 +196,31 @@ it('RO-153 should work with glob', async () => {
     expect(urlMatches(undefined, `${prefix}:blank`, `${prefix}:*`)).toBeTruthy();
     expect(urlMatches(undefined, `not${prefix}:blank`, `${prefix}:*`)).toBeFalsy();
   }
+
+  const originalRegExp = globalThis.RegExp;
+  let compilations = 0;
+  const matches: boolean[] = [];
+  try {
+    globalThis.RegExp = new Proxy(originalRegExp, {
+      construct(target, args) {
+        ++compilations;
+        return Reflect.construct(target, args);
+      }
+    });
+    for (const host of ['first.test', 'second.test']) {
+      for (const webSocketUrl of [false, true]) {
+        const baseURL = `http://${host}/cached/`;
+        const url = `${webSocketUrl ? 'ws' : 'http'}://${host}/cached/file`;
+        matches.push(urlMatches(baseURL, url, './*', webSocketUrl));
+        matches.push(!urlMatches(baseURL, url + '/nested', './*', webSocketUrl));
+        matches.push(urlMatches(baseURL, url, './*', webSocketUrl));
+      }
+    }
+  } finally {
+    globalThis.RegExp = originalRegExp;
+  }
+  expect(matches).toEqual(Array(12).fill(true));
+  expect(compilations).toBe(4);
 });
 
 it('RO-154 should throw on unbalanced glob braces', async () => {

@@ -1023,7 +1023,10 @@ export class InjectedScript {
       return 'Not an input[type=file] element';
 
     const files = payloads.map(file => {
-      const bytes = Uint8Array.from(atob(file.buffer), c => c.charCodeAt(0));
+      const binary = atob(file.buffer);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; ++i)
+        bytes[i] = binary.charCodeAt(i);
       return new File([bytes], file.name, { type: file.mimeType, lastModified: file.lastModifiedMs });
     });
     const dt = new DataTransfer();

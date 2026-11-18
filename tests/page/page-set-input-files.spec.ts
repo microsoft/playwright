@@ -286,15 +286,34 @@ test('IF-013 should work @smoke', async ({ page, asset }) => {
   expect(await page.$eval('input', input => input.files[0].name)).toBe('file-to-upload.txt');
 });
 
-test('IF-014 should set from memory', async ({ page }) => {
-  await page.setContent(`<input type=file>`);
-  await page.setInputFiles('input', {
+test('IF-014 should set from memory', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44186' },
+}, async ({ page }) => {
+  await page.setContent(`<input type=file multiple>`);
+  const binary = Buffer.from(Array.from({ length: 256 }, (_, i) => i));
+  const payloads = [{
     name: 'test.txt',
     mimeType: 'text/plain',
     buffer: Buffer.from('this is a test')
-  });
-  expect(await page.$eval('input', input => input.files.length)).toBe(1);
-  expect(await page.$eval('input', input => input.files[0].name)).toBe('test.txt');
+  }, {
+    name: 'binary.bin',
+    mimeType: 'application/octet-stream',
+    buffer: binary
+  }, {
+    name: 'empty.txt',
+    mimeType: 'text/plain',
+    buffer: Buffer.alloc(0)
+  }];
+  await page.setInputFiles('input', payloads);
+  expect(await page.$eval('input', input => Promise.all([...input.files].map(async file => ({
+    name: file.name,
+    mimeType: file.type,
+    bytes: Array.from(new Uint8Array(await file.arrayBuffer())),
+  }))))).toEqual(payloads.map(file => ({
+    name: file.name,
+    mimeType: file.mimeType,
+    bytes: Array.from(file.buffer),
+  })));
 });
 
 test('IF-015 should work with CSP', async ({ page, server, asset }) => {
