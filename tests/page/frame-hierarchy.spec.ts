@@ -101,7 +101,7 @@ it('FR-028 should not send attach/detach events for main frame', async ({ page, 
   expect(hasEvents).toBe(false);
 });
 
-it('FR-029 should detach child frames on navigation', async ({ page, server }) => {
+it('FR-029 should detach child frames on navigation', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44207' } }, async ({ page, server }) => {
   let attachedFrames = [];
   let detachedFrames = [];
   let navigatedFrames = [];
@@ -120,6 +120,32 @@ it('FR-029 should detach child frames on navigation', async ({ page, server }) =
   expect(attachedFrames.length).toBe(0);
   expect(detachedFrames.length).toBe(4);
   expect(navigatedFrames.length).toBe(1);
+
+  for (const [path, next] of [['/redirect1.html', '/redirect2.html'], ['/redirect2.html', '/empty.html']]) {
+    server.setRoute(path, (req, res) => {
+      res.writeHead(200, { 'Content-Type': 'text/html' });
+      res.end(`
+        <script>
+          addEventListener('message', () => location.href = ${JSON.stringify(server.PREFIX + next)}, { once: true });
+        </script>
+        <iframe src="${server.CROSS_PROCESS_PREFIX}/navigating-child.html"></iframe>
+      `);
+    });
+  }
+  server.setRoute('/navigating-child.html', (req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end(`
+      <iframe src="/frames/frame.html"></iframe>
+      <script>
+        parent.postMessage('redirect', '*');
+        location.href = '/frames/two-frames.html';
+      </script>
+    `);
+  });
+  await page.goto(server.PREFIX + '/redirect1.html', { waitUntil: 'commit' });
+  await page.waitForURL(server.EMPTY_PAGE);
+  expect(page.frames()).toEqual([page.mainFrame()]);
+  await expect(page.locator('iframe')).toHaveCount(0);
 });
 
 it('FR-030 should support framesets', async ({ page, server }) => {
