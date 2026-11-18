@@ -162,7 +162,7 @@ const webmcpList = defineTabTool({
   },
 
   handle: async (tab, params, response) => {
-    // Tools are collected with the page snapshot, this only reports what was collected.
+    await tab.updateWebMCPTools();
     const listing = tab.webmcpTools();
     if (!listing) {
       response.addTextResult('No WebMCP tools have been collected for the page yet. They are collected with the page snapshot.');
