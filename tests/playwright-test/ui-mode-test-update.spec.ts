@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, retries, dumpTestTree } from './ui-mode-fixtures';
+import { test, expect, retries, dumpTestTree, traceFrame } from './ui-mode-fixtures';
 
 test.describe.configure({ mode: 'parallel', retries });
 
@@ -148,8 +148,8 @@ test('should not loose run information after execution if test wrote into testDi
   await page.getByTitle('passes').click();
   await page.getByTitle('Run all').click();
   await page.waitForTimeout(5_000);
-  await expect(page.getByText('Did not run')).toBeHidden();
-  const listItem = page.getByTestId('actions-tree').getByRole('treeitem');
+  await expect(traceFrame(page).getByText('Did not run')).toBeHidden();
+  const listItem = traceFrame(page).getByTestId('actions-tree').getByRole('treeitem');
   await expect(
       listItem,
       'action list'
@@ -218,9 +218,9 @@ test('should update test locations', async ({ runUITest, writeFiles }) => {
   const passesItemLocator = page.getByRole('treeitem', { name: 'passes' });
   await passesItemLocator.hover();
   await passesItemLocator.getByTitle('Show source').click();
-  await page.getByTitle('Open in VS Code').click();
+  await traceFrame(page).getByTitle('Open in VS Code').click();
 
-  expect(messages).toEqual([{
+  await expect.poll(() => messages).toEqual([{
     method: 'open',
     params: {
       location: {
@@ -249,9 +249,9 @@ test('should update test locations', async ({ runUITest, writeFiles }) => {
   messages.length = 0;
   await passesItemLocator.hover();
   await passesItemLocator.getByTitle('Show source').click();
-  await page.getByTitle('Open in VS Code').click();
+  await traceFrame(page).getByTitle('Open in VS Code').click();
 
-  expect(messages).toEqual([{
+  await expect.poll(() => messages).toEqual([{
     method: 'open',
     params: {
       location: {
@@ -263,7 +263,7 @@ test('should update test locations', async ({ runUITest, writeFiles }) => {
   }]);
 
   await expect(
-      page.getByTestId('source-code').locator('.source-tab-file-name')
+      traceFrame(page).getByTestId('source-code').locator('.source-tab-file-name')
   ).toHaveText('a.test.ts');
-  await expect(page.locator('.CodeMirror-code')).toContainText(`3      test('new-test', () => {});`);
+  await expect(traceFrame(page).locator('.CodeMirror-code')).toContainText(`3      test('new-test', () => {});`);
 });

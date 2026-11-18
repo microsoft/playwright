@@ -36,11 +36,13 @@ export type AriaModeTargets = {
   after?: AriaModeTarget;
 };
 
-export function canToggleAriaMode(model: TraceModel | undefined): boolean {
+export type AriaModeInfo = Pick<TraceModel, 'hasDomSnapshots' | 'hasAriaSnapshots'>;
+
+export function canToggleAriaMode(model: AriaModeInfo | undefined): boolean {
   return !!model?.hasDomSnapshots && !!model?.hasAriaSnapshots;
 }
 
-export function shouldDisplayAriaMode(model: TraceModel | undefined, setting: boolean): boolean {
+export function shouldDisplayAriaMode(model: AriaModeInfo | undefined, setting: boolean): boolean {
   return canToggleAriaMode(model) ? setting : !!model?.hasAriaSnapshots;
 }
 

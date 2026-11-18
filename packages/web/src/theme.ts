@@ -54,6 +54,9 @@ export function applyTheme() {
   prefersDarkScheme.addEventListener('change', () => {
     updateDocumentTheme(currentTheme());
   });
+  settings.onChangeEmitter.addEventListener(kThemeSettingsKey, () => {
+    updateDocumentTheme(currentTheme());
+  });
 }
 
 const listeners = new Set<(theme: DocumentTheme) => void>();

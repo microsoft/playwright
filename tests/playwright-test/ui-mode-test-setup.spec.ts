@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, retries, dumpTestTree } from './ui-mode-fixtures';
+import { test, expect, retries, dumpTestTree, traceFrame } from './ui-mode-fixtures';
 import path from 'path';
 
 test.describe.configure({ mode: 'parallel', retries });
@@ -361,12 +361,31 @@ for (const useWeb of [true, false]) {
       expect((await fetch(url.origin + '/trace/file?path=' + encodeURIComponent(test.info().outputPath('a.test.js')))).status).toBe(404);
       expect((await fetch(`${url.origin}/${prefix}/trace/uiMode.html`)).status).toBe(200);
 
-      // Project files do not run as pages in the UI mode origin, and do not load in frames.
-      const fileUrl = `${url.origin}/${prefix}/trace/file?path=` + encodeURIComponent(test.info().outputPath('a.test.js'));
-      const fileResponse = await fetch(fileUrl);
+      // The trace viewer is in a frame from a different server, so it has a different origin.
+      const traceViewer = traceFrame(page).locator('body');
+      const traceViewerUrl = new URL(await traceViewer.evaluate(() => window.location.href));
+      expect(traceViewerUrl.hostname).toBe(url.hostname);
+      expect(traceViewerUrl.port).not.toBe(url.port);
+      const traceViewerPrefix = traceViewerUrl.pathname.split('/')[1];
+
+      // Only the trace viewer server gives project files. They do not run as pages in its origin, and do not load in frames.
+      const filePath = '/trace/file?path=' + encodeURIComponent(test.info().outputPath('a.test.js'));
+      expect((await fetch(`${url.origin}/${prefix}${filePath}`)).status).toBe(403);
+      const fileResponse = await fetch(`${traceViewerUrl.origin}/${traceViewerPrefix}${filePath}`);
       expect(fileResponse.status).toBe(200);
       expect(fileResponse.headers.get('content-security-policy')).toBe('sandbox');
-      expect((await fetch(fileUrl, { headers: { 'sec-fetch-dest': 'iframe' } })).status).toBe(403);
+      expect((await fetch(`${traceViewerUrl.origin}/${traceViewerPrefix}${filePath}`, { headers: { 'sec-fetch-dest': 'iframe' } })).status).toBe(403);
+
+      // UI mode has no service worker, and the trace viewer origin cannot connect to the WebSocket.
+      expect(await page.evaluate(() => navigator.serviceWorker.getRegistrations().then(r => r.length))).toBe(0);
+      const webSocket = await traceViewer.evaluate(async (body, wsUrl) => {
+        return await new Promise(f => {
+          const ws = new WebSocket(wsUrl);
+          ws.onopen = () => f('open');
+          ws.onerror = () => f('error');
+        });
+      }, `${url.origin.replace('http', 'ws')}/${prefix}/ws`);
+      expect(webSocket).toBe('error');
 
       // A sandboxed page has the "null" origin and cannot connect to the WebSocket.
       const sandboxedWebSocket = await page.evaluate(async () => {
@@ -377,7 +396,10 @@ for (const useWeb of [true, false]) {
           ws.onopen = () => parent.postMessage('open', '*');
           ws.onerror = () => parent.postMessage('error', '*');
         </` + `script>`;
-        const result = new Promise(f => window.addEventListener('message', event => f(event.data), { once: true }));
+        const result = new Promise(f => window.addEventListener('message', event => {
+          if (event.source === iframe.contentWindow)
+            f(event.data);
+        }));
         document.body.appendChild(iframe);
         return await result;
       });

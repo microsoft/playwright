@@ -174,15 +174,30 @@ async function launchApp(appName: string, options?: { onClose?: () => void }) {
   return { context, page };
 }
 
+// The settings file is data. Only an object with string values gets into the page.
+function parseSettings(text: string): Record<string, string> {
+  try {
+    const parsed = JSON.parse(text);
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed))
+      return {};
+    return Object.fromEntries(Object.entries(parsed).filter(([, value]) => typeof value === 'string')) as Record<string, string>;
+  } catch {
+    return {};
+  }
+}
+
 export async function syncLocalStorageWithSettings(page: api.Page, appName: string) {
   const settingsFile = process.env.PWTEST_DASHBOARD_SETTINGS_FILE ?? path.join(registryDirectory, '.settings', `${appName}.json`);
 
-  await page.exposeBinding('_saveSerializedSettings', (_, settings) => {
+  await page.exposeBinding('_saveSerializedSettings', (source, settings) => {
+    // Only the application saves settings. A frame can have content from a different origin.
+    if (source.frame !== page.mainFrame())
+      return;
     fs.mkdirSync(path.dirname(settingsFile), { recursive: true });
-    fs.writeFileSync(settingsFile, settings);
+    fs.writeFileSync(settingsFile, JSON.stringify(parseSettings(String(settings))));
   });
 
-  const settings = await fs.promises.readFile(settingsFile, 'utf-8').catch(() => ('{}'));
+  const settings = JSON.stringify(parseSettings(await fs.promises.readFile(settingsFile, 'utf-8').catch(() => ('{}'))));
   await page.addInitScript(
       `(${String((settings: any) => {
         // iframes w/ snapshots, etc.

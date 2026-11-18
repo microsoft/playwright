@@ -229,7 +229,8 @@ async function doFetch(event: FetchEvent): Promise<Response> {
 
     if (relativePath.startsWith('/file/')) {
       // The trace viewer never shows these files in a frame. Only a snapshot that navigates itself does.
-      if (['iframe', 'frame', 'embed', 'object'].includes(request.destination))
+      // A trace viewer that is in a frame itself still downloads attachments, and a download has a file name.
+      if (['iframe', 'frame', 'embed', 'object'].includes(request.destination) && !url.searchParams.has('dn'))
         return new Response(null, { status: 403 });
       const blob = await loadedTrace!.traceLoader.resourceEntry(relativePath.slice('/file/'.length));
       if (blob)

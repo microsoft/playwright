@@ -152,3 +152,8 @@ async function waitForLatch(latchFile: string) {
   while (!fs.existsSync(latchFile))
     await new Promise(f => setTimeout(f, 250));
 }
+
+// UI mode shows the trace viewer in a frame.
+export function traceFrame(page: Page) {
+  return page.frameLocator('iframe[name=trace-viewer]');
+}

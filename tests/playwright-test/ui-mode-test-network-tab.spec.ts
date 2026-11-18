@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { expect, test } from './ui-mode-fixtures';
+import { expect, test, traceFrame } from './ui-mode-fixtures';
 
 test('should filter network requests by resource type', async ({ runUITest, server }) => {
   server.setRoute('/api/endpoint', (_, res) => res.setHeader('Content-Type', 'application/json').end());
@@ -30,33 +30,33 @@ test('should filter network requests by resource type', async ({ runUITest, serv
   });
 
   await page.getByText('network tab test').dblclick();
-  await expect(page.getByTestId('workbench-run-status')).toContainText('Passed');
+  await expect(traceFrame(page).getByTestId('workbench-run-status')).toContainText('Passed');
 
-  await page.getByText('Network', { exact: true }).click();
+  await traceFrame(page).getByText('Network', { exact: true }).click();
 
-  const networkItems = page.getByRole('listbox', { name: 'Network requests' }).getByRole('option');
+  const networkItems = traceFrame(page).getByRole('listbox', { name: 'Network requests' }).getByRole('option');
 
-  await page.getByText('JS', { exact: true }).click();
+  await traceFrame(page).getByText('JS', { exact: true }).click();
   await expect(networkItems).toHaveCount(1);
   await expect(networkItems.getByText('script.js')).toBeVisible();
 
-  await page.getByText('CSS', { exact: true }).click();
+  await traceFrame(page).getByText('CSS', { exact: true }).click();
   await expect(networkItems).toHaveCount(1);
   await expect(networkItems.getByText('style.css')).toBeVisible();
 
-  await page.getByText('Image', { exact: true }).click();
+  await traceFrame(page).getByText('Image', { exact: true }).click();
   await expect(networkItems).toHaveCount(1);
   await expect(networkItems.getByText('image.png')).toBeVisible();
 
-  await page.getByText('Fetch', { exact: true }).click();
+  await traceFrame(page).getByText('Fetch', { exact: true }).click();
   await expect(networkItems).toHaveCount(1);
   await expect(networkItems.getByText('endpoint')).toBeVisible();
 
-  await page.getByText('HTML', { exact: true }).click();
+  await traceFrame(page).getByText('HTML', { exact: true }).click();
   await expect(networkItems).toHaveCount(1);
   await expect(networkItems.getByText('network.html')).toBeVisible();
 
-  await page.getByText('Font', { exact: true }).click();
+  await traceFrame(page).getByText('Font', { exact: true }).click();
   await expect(networkItems).toHaveCount(1);
   await expect(networkItems.getByText('font.woff2')).toBeVisible();
 });
@@ -75,32 +75,32 @@ test('should filter network requests by multiple resource types', async ({ runUI
   });
 
   await page.getByText('network tab test').dblclick();
-  await expect(page.getByTestId('workbench-run-status')).toContainText('Passed');
+  await expect(traceFrame(page).getByTestId('workbench-run-status')).toContainText('Passed');
 
-  await page.getByText('Network', { exact: true }).click();
+  await traceFrame(page).getByText('Network', { exact: true }).click();
 
-  const networkItems = page.getByRole('listbox', { name: 'Network requests' }).getByRole('option');
+  const networkItems = traceFrame(page).getByRole('listbox', { name: 'Network requests' }).getByRole('option');
   await expect(networkItems).toHaveCount(10);
 
-  await page.getByText('JS', { exact: true }).click();
+  await traceFrame(page).getByText('JS', { exact: true }).click();
   await expect(networkItems).toHaveCount(1);
   await expect(networkItems.getByText('script.js')).toBeVisible();
 
-  await page.getByText('CSS', { exact: true }).click({ modifiers: ['ControlOrMeta'] });
+  await traceFrame(page).getByText('CSS', { exact: true }).click({ modifiers: ['ControlOrMeta'] });
   await expect(networkItems.getByText('script.js')).toBeVisible();
   await expect(networkItems.getByText('style.css')).toBeVisible();
   await expect(networkItems).toHaveCount(2);
 
-  await page.getByText('Image', { exact: true }).click({ modifiers: ['ControlOrMeta'] });
+  await traceFrame(page).getByText('Image', { exact: true }).click({ modifiers: ['ControlOrMeta'] });
   await expect(networkItems.getByText('image.png')).toBeVisible();
   await expect(networkItems).toHaveCount(3);
 
-  await page.getByText('CSS', { exact: true }).click({ modifiers: ['ControlOrMeta'] });
+  await traceFrame(page).getByText('CSS', { exact: true }).click({ modifiers: ['ControlOrMeta'] });
   await expect(networkItems).toHaveCount(2);
   await expect(networkItems.getByText('script.js')).toBeVisible();
   await expect(networkItems.getByText('image.png')).toBeVisible();
 
-  await page.getByText('All', { exact: true }).click();
+  await traceFrame(page).getByText('All', { exact: true }).click();
   await expect(networkItems).toHaveCount(10);
 });
 
@@ -116,29 +116,29 @@ test('should filter network requests by url', async ({ runUITest, server }) => {
   });
 
   await page.getByText('network tab test').dblclick();
-  await expect(page.getByTestId('workbench-run-status')).toContainText('Passed');
+  await expect(traceFrame(page).getByTestId('workbench-run-status')).toContainText('Passed');
 
-  await page.getByText('Network', { exact: true }).click();
+  await traceFrame(page).getByText('Network', { exact: true }).click();
 
-  const networkItems = page.getByRole('listbox', { name: 'Network requests' }).getByRole('option');
+  const networkItems = traceFrame(page).getByRole('listbox', { name: 'Network requests' }).getByRole('option');
 
-  await page.getByPlaceholder('Filter network').fill('script.');
+  await traceFrame(page).getByPlaceholder('Filter network').fill('script.');
   await expect(networkItems).toHaveCount(1);
   await expect(networkItems.getByText('script.js')).toBeVisible();
 
-  await page.getByPlaceholder('Filter network').fill('png');
+  await traceFrame(page).getByPlaceholder('Filter network').fill('png');
   await expect(networkItems).toHaveCount(1);
   await expect(networkItems.getByText('image.png')).toBeVisible();
 
-  await page.getByPlaceholder('Filter network').fill('api/');
+  await traceFrame(page).getByPlaceholder('Filter network').fill('api/');
   await expect(networkItems).toHaveCount(1);
   await expect(networkItems.getByText('endpoint')).toBeVisible();
 
-  await page.getByPlaceholder('Filter network').fill('End');
+  await traceFrame(page).getByPlaceholder('Filter network').fill('End');
   await expect(networkItems).toHaveCount(1);
   await expect(networkItems.getByText('endpoint')).toBeVisible();
 
-  await page.getByPlaceholder('Filter network').fill('FON');
+  await traceFrame(page).getByPlaceholder('Filter network').fill('FON');
   await expect(networkItems).toHaveCount(1);
   await expect(networkItems.getByText('font.woff2')).toBeVisible();
 });
@@ -155,13 +155,13 @@ test('should pretty-print JSON request body', async ({ runUITest, server }) => {
   });
 
   await page.getByText('network tab test').dblclick();
-  await expect(page.getByTestId('workbench-run-status')).toContainText('Passed');
+  await expect(traceFrame(page).getByTestId('workbench-run-status')).toContainText('Passed');
 
-  await page.getByText('Network', { exact: true }).click();
+  await traceFrame(page).getByText('Network', { exact: true }).click();
 
-  await page.getByText('post-data-1').click();
-  await page.getByRole('tabpanel', { name: 'Network' }).getByRole('tab', { name: 'Payload' }).click();
-  const payloadPanel = page.getByRole('tabpanel', { name: 'Payload' });
+  await traceFrame(page).getByText('post-data-1').click();
+  await traceFrame(page).getByRole('tabpanel', { name: 'Network' }).getByRole('tab', { name: 'Payload' }).click();
+  const payloadPanel = traceFrame(page).getByRole('tabpanel', { name: 'Payload' });
   await expect(payloadPanel.locator('.CodeMirror-code .CodeMirror-line')).toHaveText([
     '{',
     '  "data": {',
@@ -174,7 +174,7 @@ test('should pretty-print JSON request body', async ({ runUITest, server }) => {
     '}',
   ], { useInnerText: true });
 
-  await page.getByText('post-data-2').click();
+  await traceFrame(page).getByText('post-data-2').click();
 
   await expect(payloadPanel.locator('.CodeMirror-code .CodeMirror-line')).toHaveText([
     '{',
@@ -207,12 +207,12 @@ test('should pretty-print XML request body', async ({ runUITest, server }) => {
   });
 
   await page.getByText('network tab test').dblclick();
-  await expect(page.getByTestId('workbench-run-status')).toContainText('Passed');
+  await expect(traceFrame(page).getByTestId('workbench-run-status')).toContainText('Passed');
 
-  await page.getByText('Network', { exact: true }).click();
-  await page.getByText('post-xml-data').click();
-  await page.getByRole('tabpanel', { name: 'Network' }).getByRole('tab', { name: 'Payload' }).click();
-  const payloadPanel = page.getByRole('tabpanel', { name: 'Payload' });
+  await traceFrame(page).getByText('Network', { exact: true }).click();
+  await traceFrame(page).getByText('post-xml-data').click();
+  await traceFrame(page).getByRole('tabpanel', { name: 'Network' }).getByRole('tab', { name: 'Payload' }).click();
+  const payloadPanel = traceFrame(page).getByRole('tabpanel', { name: 'Payload' });
   await expect(payloadPanel.locator('.CodeMirror-code .CodeMirror-line')).toHaveText([
     '<?xml version="1.0"?>',
     '<note to="Alice" from="Bob">',
@@ -244,15 +244,15 @@ test('should pretty-print response bodies and show formatting errors', async ({ 
   });
 
   await page.getByText('network response tab').dblclick();
-  await expect(page.getByTestId('workbench-run-status')).toContainText('Passed');
-  await page.getByRole('tab', { name: 'Network' }).click();
+  await expect(traceFrame(page).getByTestId('workbench-run-status')).toContainText('Passed');
+  await traceFrame(page).getByRole('tab', { name: 'Network' }).click();
 
-  const networkList = page.getByRole('listbox', { name: 'Network requests' }).getByRole('option');
-  const responsePanel = page.getByRole('tabpanel', { name: 'Response' });
+  const networkList = traceFrame(page).getByRole('listbox', { name: 'Network requests' }).getByRole('option');
+  const responsePanel = traceFrame(page).getByRole('tabpanel', { name: 'Response' });
 
   // Pretty printed by default
   await networkList.filter({ hasText: 'response-json-good' }).click();
-  await page.getByRole('tabpanel', { name: 'Network' }).getByRole('tab', { name: 'Response' }).click();
+  await traceFrame(page).getByRole('tabpanel', { name: 'Network' }).getByRole('tab', { name: 'Response' }).click();
   await expect(responsePanel.locator('.CodeMirror-code .CodeMirror-line')).toHaveText([
     '{',
     '  "ok": true,',
@@ -296,13 +296,13 @@ test('should pretty-print JSON without losing number precision', async ({ runUIT
   });
 
   await page.getByText('network response tab').dblclick();
-  await expect(page.getByTestId('workbench-run-status')).toContainText('Passed');
-  await page.getByRole('tab', { name: 'Network' }).click();
+  await expect(traceFrame(page).getByTestId('workbench-run-status')).toContainText('Passed');
+  await traceFrame(page).getByRole('tab', { name: 'Network' }).click();
 
-  await page.getByRole('listbox', { name: 'Network requests' }).getByRole('option').filter({ hasText: 'response-bigint' }).click();
-  await page.getByRole('tabpanel', { name: 'Network' }).getByRole('tab', { name: 'Response' }).click();
+  await traceFrame(page).getByRole('listbox', { name: 'Network requests' }).getByRole('option').filter({ hasText: 'response-bigint' }).click();
+  await traceFrame(page).getByRole('tabpanel', { name: 'Network' }).getByRole('tab', { name: 'Response' }).click();
 
-  const responsePanel = page.getByRole('tabpanel', { name: 'Response' });
+  const responsePanel = traceFrame(page).getByRole('tabpanel', { name: 'Response' });
   await expect(responsePanel.locator('.CodeMirror-code .CodeMirror-line')).toHaveText([
     '{',
     '  "id": 12345678901234567890,',
@@ -332,13 +332,13 @@ test('should display list of query parameters (only if present)', async ({ runUI
   });
 
   await page.getByText('network tab test').dblclick();
-  await expect(page.getByTestId('workbench-run-status')).toContainText('Passed');
+  await expect(traceFrame(page).getByTestId('workbench-run-status')).toContainText('Passed');
 
-  await page.getByText('Network', { exact: true }).click();
+  await traceFrame(page).getByText('Network', { exact: true }).click();
 
-  await page.getByText('call-with-query-params').click();
-  await page.getByRole('tabpanel', { name: 'Network' }).getByRole('tab', { name: 'Payload' }).click();
-  const payloadPanel = page.getByRole('tabpanel', { name: 'Payload' });
+  await traceFrame(page).getByText('call-with-query-params').click();
+  await traceFrame(page).getByRole('tabpanel', { name: 'Network' }).getByRole('tab', { name: 'Payload' }).click();
+  const payloadPanel = traceFrame(page).getByRole('tabpanel', { name: 'Payload' });
   const region = payloadPanel.getByRole('region', { name: 'Query String Parameters × 3' });
   await expect(region).toMatchAriaSnapshot(
       `- table:
@@ -349,7 +349,7 @@ test('should display list of query parameters (only if present)', async ({ runUI
       `
   );
 
-  await page.getByText('endpoint').click();
+  await traceFrame(page).getByText('endpoint').click();
 
   await expect(region).toBeHidden();
 });
@@ -386,10 +386,10 @@ test('should not duplicate network entries from beforeAll', {
   });
 
   await page.getByText('first test').dblclick();
-  await expect(page.getByTestId('workbench-run-status')).toContainText('Passed');
+  await expect(traceFrame(page).getByTestId('workbench-run-status')).toContainText('Passed');
 
-  await page.getByText('Network', { exact: true }).click();
-  await expect(page.getByRole('listbox', { name: 'Network requests' }).getByText('empty.html')).toHaveCount(1);
+  await traceFrame(page).getByText('Network', { exact: true }).click();
+  await expect(traceFrame(page).getByRole('listbox', { name: 'Network requests' }).getByText('empty.html')).toHaveCount(1);
 });
 
 test('should toggle sections inside network details', async ({ runUITest, server }) => {
@@ -404,11 +404,11 @@ test('should toggle sections inside network details', async ({ runUITest, server
   });
 
   await page.getByRole('treeitem', { name: 'network tab test' }).dblclick();
-  await expect(page.getByTestId('workbench-run-status')).toContainText('Passed');
+  await expect(traceFrame(page).getByTestId('workbench-run-status')).toContainText('Passed');
 
-  await page.getByRole('tab', { name: 'Network' }).click();
-  await page.getByRole('option').filter({ hasText: 'post-data-1' }).click();
-  const headersPanel = page.getByRole('tabpanel', { name: 'Headers' });
+  await traceFrame(page).getByRole('tab', { name: 'Network' }).click();
+  await traceFrame(page).getByRole('option').filter({ hasText: 'post-data-1' }).click();
+  const headersPanel = traceFrame(page).getByRole('tabpanel', { name: 'Headers' });
 
   await headersPanel.getByRole('button', { name: 'Request Headers × 16' }).click();
   await expect(headersPanel.getByRole('region', { name: 'Request Headers × 16' })).toBeHidden();
@@ -423,8 +423,8 @@ test('should toggle sections inside network details', async ({ runUITest, server
   await expect(headersPanel.getByRole('region', { name: 'General' })).toContainText(/Start.+Duration\d+ms/);
 
   // Re-opening should preserve open state
-  await page.getByRole('tabpanel', { name: 'Network' }).getByRole('button', { name: 'Close' }).click();
-  await page.getByRole('option').filter({ hasText: 'post-data-1' }).click();
+  await traceFrame(page).getByRole('tabpanel', { name: 'Network' }).getByRole('button', { name: 'Close' }).click();
+  await traceFrame(page).getByRole('option').filter({ hasText: 'post-data-1' }).click();
   await expect(headersPanel.getByRole('region', { name: 'Request Headers × 16' })).toBeHidden();
   await expect(headersPanel.getByRole('region', { name: 'General' })).toContainText(/Start.+Duration\d+ms/);
 });
@@ -443,11 +443,11 @@ test('should toggle sections inside network details with keyboard', {
   });
 
   await page.getByRole('treeitem', { name: 'network tab test' }).dblclick();
-  await expect(page.getByTestId('workbench-run-status')).toContainText('Passed');
+  await expect(traceFrame(page).getByTestId('workbench-run-status')).toContainText('Passed');
 
-  await page.getByRole('tab', { name: 'Network' }).click();
-  await page.getByRole('option').filter({ hasText: 'post-data-1' }).click();
-  const headersPanel = page.getByRole('tabpanel', { name: 'Headers' });
+  await traceFrame(page).getByRole('tab', { name: 'Network' }).click();
+  await traceFrame(page).getByRole('option').filter({ hasText: 'post-data-1' }).click();
+  const headersPanel = traceFrame(page).getByRole('tabpanel', { name: 'Headers' });
 
   const header = headersPanel.getByRole('button', { name: 'Request Headers × 16' });
   await header.focus();
@@ -469,7 +469,7 @@ test('should copy network request', async ({ runUITest, server }) => {
     `,
   });
 
-  await page.evaluate(() => {
+  await traceFrame(page).locator('body').evaluate(() => {
     (window as any).__clipboardCall = '';
     navigator.clipboard.writeText = async (text: string) => {
       (window as any).__clipboardCall = text;
@@ -477,17 +477,17 @@ test('should copy network request', async ({ runUITest, server }) => {
   });
 
   await page.getByRole('treeitem', { name: 'network tab test' }).dblclick();
-  await expect(page.getByTestId('workbench-run-status')).toContainText('Passed');
+  await expect(traceFrame(page).getByTestId('workbench-run-status')).toContainText('Passed');
 
-  await page.getByRole('tab', { name: 'Network' }).click();
-  await page.getByRole('option').filter({ hasText: 'post-data-1' }).click();
+  await traceFrame(page).getByRole('tab', { name: 'Network' }).click();
+  await traceFrame(page).getByRole('option').filter({ hasText: 'post-data-1' }).click();
 
   await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
 
-  await page.getByRole('button', { name: 'Copy request' }).hover();
-  await page.getByRole('button', { name: 'Copy as cURL' }).click();
+  await traceFrame(page).getByRole('button', { name: 'Copy request' }).hover();
+  await traceFrame(page).getByRole('button', { name: 'Copy as cURL' }).click();
   await expect(async () => {
-    const curlRequest = await page.evaluate(() => (window as any).__clipboardCall);
+    const curlRequest = await traceFrame(page).locator('body').evaluate(() => (window as any).__clipboardCall);
     if (process.platform === 'win32') {
       expect(curlRequest).toContain(`curl ^"${server.PREFIX}/post-data-1^"`);
       expect(curlRequest).toContain(`-H ^"content-type: application/json^"`);
@@ -499,20 +499,20 @@ test('should copy network request', async ({ runUITest, server }) => {
     }
   }).toPass();
 
-  await page.getByRole('button', { name: 'Copy request' }).hover();
-  await page.getByRole('button', { name: 'Copy as Fetch' }).click();
+  await traceFrame(page).getByRole('button', { name: 'Copy request' }).hover();
+  await traceFrame(page).getByRole('button', { name: 'Copy as Fetch' }).click();
   await expect(async () => {
-    const fetchRequest = await page.evaluate(() => (window as any).__clipboardCall);
+    const fetchRequest = await traceFrame(page).locator('body').evaluate(() => (window as any).__clipboardCall);
     expect(fetchRequest).toContain(`fetch("${server.PREFIX}/post-data-1", {`);
     expect(fetchRequest).toContain(`"content-type": "application/json"`);
     expect(fetchRequest).toContain(`"body": "{\\"data\\":{\\"key\\":\\"value\\",\\"array\\":[\\"value-1\\",\\"value-2\\"]}}"`);
     expect(fetchRequest).toContain(`"method": "POST"`);
   }).toPass();
 
-  await page.getByRole('button', { name: 'Copy request' }).hover();
-  await page.getByRole('button', { name: 'Copy as Playwright' }).click();
+  await traceFrame(page).getByRole('button', { name: 'Copy request' }).hover();
+  await traceFrame(page).getByRole('button', { name: 'Copy as Playwright' }).click();
   await expect(async () => {
-    const playwrightRequest = await page.evaluate(() => (window as any).__clipboardCall);
+    const playwrightRequest = await traceFrame(page).locator('body').evaluate(() => (window as any).__clipboardCall);
     expect(playwrightRequest).toContain(`await page.request.post('${server.PREFIX}/post-data-1', {`);
     expect(playwrightRequest.replaceAll('\r\n', '\n')).toContain(
         `  data: '{"data":{"key":"value","array":["value-1","value-2"]}}'`
@@ -535,9 +535,9 @@ test('should preserve selection during test run', async ({ runUITest, server }, 
   });
 
   await page.getByRole('treeitem', { name: 'network tab test' }).dblclick();
-  await page.getByRole('tab', { name: 'Network' }).click();
-  await page.getByRole('option').filter({ hasText: 'network.html' }).click();
-  const headersPanel = page.getByRole('tabpanel', { name: 'Headers' });
+  await traceFrame(page).getByRole('tab', { name: 'Network' }).click();
+  await traceFrame(page).getByRole('option').filter({ hasText: 'network.html' }).click();
+  const headersPanel = traceFrame(page).getByRole('tabpanel', { name: 'Headers' });
   await expect(headersPanel).toBeVisible();
 
   // Wait to ensure that trace polling (every 500ms) does not close the selected entry

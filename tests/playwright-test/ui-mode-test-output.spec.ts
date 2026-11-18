@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, retries } from './ui-mode-fixtures';
+import { test, expect, retries, traceFrame } from './ui-mode-fixtures';
 import path from 'path';
 
 test.describe.configure({ mode: 'parallel', retries });
@@ -92,10 +92,10 @@ test('should show console messages for test', async ({ runUITest }, testInfo) =>
     `,
   });
   await page.getByTitle('Run all').click();
-  await page.getByText('Console').click();
+  await traceFrame(page).getByText('Console').click();
   await page.getByText('print').click();
 
-  await expect(page.locator('.console-tab .console-line-message')).toHaveText([
+  await expect(traceFrame(page).locator('.console-tab .console-line-message')).toHaveText([
     'page message',
     'node message',
     'page error',
@@ -103,7 +103,7 @@ test('should show console messages for test', async ({ runUITest }, testInfo) =>
     'Colors: RED GREEN',
   ]);
 
-  await expect(page.locator('.console-tab .console-source')).toHaveText([
+  await expect(traceFrame(page).locator('.console-tab .console-source')).toHaveText([
     'page',
     'test',
     'page',
@@ -111,8 +111,8 @@ test('should show console messages for test', async ({ runUITest }, testInfo) =>
     'test',
   ]);
 
-  await expect.soft(page.getByText('RED', { exact: true })).toHaveCSS('color', 'rgb(205, 49, 49)');
-  await expect.soft(page.getByText('GREEN', { exact: true })).toHaveCSS('color', 'rgb(0, 188, 0)');
+  await expect.soft(traceFrame(page).getByText('RED', { exact: true })).toHaveCSS('color', 'rgb(205, 49, 49)');
+  await expect.soft(traceFrame(page).getByText('GREEN', { exact: true })).toHaveCSS('color', 'rgb(0, 188, 0)');
 });
 
 test('should collapse repeated console messages for test', async ({ runUITest }) => {
@@ -143,10 +143,10 @@ test('should collapse repeated console messages for test', async ({ runUITest })
     `,
   });
   await page.getByRole('treeitem', { name: 'print test' }).dblclick();
-  await expect(page.getByTestId('workbench-run-status')).toContainText('Passed');
+  await expect(traceFrame(page).getByTestId('workbench-run-status')).toContainText('Passed');
 
-  await page.getByRole('tab', { name: 'Console' }).click();
-  await expect(page.getByRole('tabpanel', { name: 'Console' })).toMatchAriaSnapshot(`
+  await traceFrame(page).getByRole('tab', { name: 'Console' }).click();
+  await expect(traceFrame(page).getByRole('tabpanel', { name: 'Console' })).toMatchAriaSnapshot(`
     - tabpanel "Console":
       - listbox:
         - option /page message/
@@ -175,10 +175,10 @@ test('should format console messages in page', async ({ runUITest }, testInfo) =
     `,
   });
   await page.getByTitle('Run all').click();
-  await page.getByText('Console').click();
+  await traceFrame(page).getByText('Console').click();
   await page.getByText('print').click();
 
-  await expect(page.locator('.console-tab .console-line-message')).toHaveText([
+  await expect(traceFrame(page).locator('.console-tab .console-line-message')).toHaveText([
     'Object {a: 1}',
     /Date.*/,
     'Regex /a/',
@@ -188,7 +188,7 @@ test('should format console messages in page', async ({ runUITest }, testInfo) =
     'Failed to load resource: net::ERR_CONNECTION_REFUSED',
   ]);
 
-  await expect(page.locator('.console-tab')).toMatchAriaSnapshot(`
+  await expect(traceFrame(page).locator('.console-tab')).toMatchAriaSnapshot(`
     - listbox:
       - option /<anonymous>:\\d+ Object/
       - option /<anonymous>:\\d+ Date/
@@ -199,13 +199,13 @@ test('should format console messages in page', async ({ runUITest }, testInfo) =
       - option /Failed to load resource/
   `);
 
-  const label = page.getByText('React DevTools');
+  const label = traceFrame(page).getByText('React DevTools');
   await expect(label).toHaveCSS('color', 'rgb(255, 0, 0)');
   await expect(label).toHaveCSS('font-weight', '700');
   // blue should not be used, should inherit color red.
   await expect(label).toHaveCSS('outline-color', 'rgb(255, 0, 0)');
 
-  const link = page.getByText('https://fb.me/react-devtools');
+  const link = traceFrame(page).getByText('https://fb.me/react-devtools');
   await expect(link).toHaveCSS('color', 'rgb(0, 0, 255)');
   await expect(link).toHaveCSS('text-decoration-color', 'rgb(0, 0, 255)');
   await expect(link).toHaveCSS('text-decoration-style', 'solid');
@@ -229,10 +229,10 @@ test('should stream console messages live', async ({ runUITest }) => {
     `,
   });
   await page.getByTitle('Run all').click();
-  await page.getByText('Console').click();
+  await traceFrame(page).getByText('Console').click();
   await page.getByText('print').click();
 
-  await expect(page.locator('.console-tab .console-line-message')).toHaveText([
+  await expect(traceFrame(page).locator('.console-tab .console-line-message')).toHaveText([
     'I was logged',
     'I was clicked',
   ]);
@@ -252,10 +252,10 @@ test('should print beforeAll console messages once', async ({ runUITest }, testI
     `,
   });
   await page.getByTitle('Run all').click();
-  await page.getByText('Console').click();
+  await traceFrame(page).getByText('Console').click();
   await page.getByText('print').click();
   await expect(page.getByTestId('status-line')).toHaveText('1/1 (100%) — 1 passed');
-  await expect(page.locator('.console-tab .console-line-message')).toHaveText([
+  await expect(traceFrame(page).locator('.console-tab .console-line-message')).toHaveText([
     'before all log',
     'test log',
   ]);

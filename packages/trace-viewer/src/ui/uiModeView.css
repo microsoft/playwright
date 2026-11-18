@@ -123,3 +123,9 @@
   color: var(--vscode-input-foreground);
   background-color: var(--vscode-input-background);
 }
+
+.ui-mode-trace-frame {
+  flex: auto;
+  border: none;
+  min-height: 0;
+}
