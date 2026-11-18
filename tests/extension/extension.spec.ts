@@ -18,6 +18,7 @@ import fs from 'fs/promises';
 import path from 'path';
 
 import WebSocket from 'ws';
+import { chromium } from 'playwright';
 
 import { test as base, expect } from './harness';
 import { extensionId, clickAllow } from './extension-fixtures';
@@ -169,6 +170,35 @@ test('client lists the cookies of the browser', {
 
 // Connection with the token.
 
+test('connectOverCDP connects through the extension', async ({ user, browserWithExtension }) => {
+  const { PLAYWRIGHT_MCP_EXECUTABLE_PATH: executablePath, ...stubEnv } = browserWithExtension.chromeStubEnv;
+  // The relay runs in this process, and the Chrome stub gets its environment.
+  Object.assign(process.env, stubEnv);
+  try {
+    const browser = await chromium.connectOverCDP('chromium-extension', {
+      headers: {
+        'x-playwright-extension-token': await user.token(),
+        'x-playwright-extension-executable-path': executablePath,
+        'x-playwright-extension-user-data-dir': browserWithExtension.userDataDir,
+        'x-playwright-extension-client-name': 'library',
+        'x-playwright-extension-tab-group-title': 'Library tabs',
+        'x-playwright-extension-tab-group-color': 'purple',
+      },
+    });
+    const [page] = browser.contexts()[0].pages();
+    await page.goto(user.urlOf('Alpha'));
+    expect(await page.textContent('body')).toBe('Page Alpha');
+    expect(await user.connectedClients()).toEqual(['library']);
+    expect(await user.groups()).toEqual([{ title: 'Library tabs', color: 'purple', tabs: ['Alpha'] }]);
+
+    await browser.close();
+    await expect.poll(user.connectedClients).toEqual([]);
+  } finally {
+    for (const name of Object.keys(stubEnv))
+      delete process.env[name];
+  }
+});
+
 test('client with the token skips the connect page', async ({ user, connectWithToken }) => {
   const client = await connectWithToken('token-client');
   await client.navigate('Alpha');
@@ -197,7 +227,7 @@ test('client reports an error when the extension refuses the token', {
 
   const connectPage = user.waitForConnectPage();
   expect(await client.mcp.callTool({ name: 'browser_tabs', arguments: { action: 'list' } })).toHaveResponse({
-    error: expect.stringContaining(`Playwright extension did not connect within 0.5s after opening the connect page. Make sure the extension is installed in the Chrome profile "Default" and PLAYWRIGHT_MCP_EXTENSION_TOKEN matches its token.`),
+    error: expect.stringContaining(`Playwright extension did not connect within 0.5s after opening the connect page. Make sure the extension is installed in the Chrome profile "Default" and the extension token is correct.`),
     isError: true,
   });
   await expect((await connectPage).locator('.status-banner')).toContainText('Invalid token provided.');

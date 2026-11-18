@@ -79,7 +79,15 @@ async function createBrowser(config: FullConfig, clientInfo: ClientInfo, cliOpti
     const { channel, profileDirName } = resolveExtensionOptions(cliOptions);
     const tabGroup = config.tabGroup === false ? undefined : { title: config.sessionName, color: config.sessionColor };
     // The merged executablePath already applies cli > env > config file precedence and per-source path resolution.
-    browser = await createExtensionBrowser(channel, config.browser.launchOptions.executablePath, config.browser.userDataDir, profileDirName, clientInfo.clientName, tabGroup, config.background);
+    browser = await createExtensionBrowser({
+      channel,
+      executablePath: config.browser.launchOptions.executablePath,
+      userDataDir: config.browser.userDataDir,
+      profileDirName,
+      clientName: clientInfo.clientName,
+      tabGroup,
+      background: config.background,
+    });
     ownership = 'attached';
   } else {
     browser = await createPersistentBrowser(config, clientInfo);

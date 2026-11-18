@@ -197,6 +197,8 @@ A CDP websocket endpoint or http url to connect to. For example `http://localhos
 
 Alternatively, a browser channel name such as `chrome` or `msedge` to connect to a browser with remote debugging enabled in its default user data directory. On Linux, Playwright uses `CHROME_USER_DATA_DIR` when set. Otherwise, it uses `CHROME_CONFIG_HOME`, then `XDG_CONFIG_HOME`, then `~/.config` to locate that directory.
 
+Alternatively, a browser channel name with the `-extension` suffix, such as `chrome-extension` or `msedge-extension`, to connect to the tabs of a running browser through the [Playwright Extension](https://chromewebstore.google.com/detail/playwright-extension/mmlmfjhmonkocbjadbfplnigmagldckm). Playwright opens the connect page of the extension in the browser, and the user selects the tabs to share. Pass the options of this connection in [`option: BrowserType.connectOverCDP.headers`].
+
 ### option: BrowserType.connectOverCDP.endpointURL
 * since: v1.14
 * langs: js
@@ -208,6 +210,17 @@ Alternatively, a browser channel name such as `chrome` or `msedge` to connect to
 - `headers` <[Object]<[string], [string]>>
 
 Additional HTTP headers to be sent with connect request. Optional.
+
+When [`param: endpointURL`] is an extension endpoint such as `chrome-extension`, the headers are not sent. They are the options of the connection:
+* `x-playwright-extension-token` - the token of the extension. With the token, the user does not have to approve the connection. Without the token, the user must approve the connection before [`option: BrowserType.connectOverCDP.timeout`] expires, so set it to a value that gives the user enough time.
+* `x-playwright-extension-client-name` - the name of the client that the extension shows to the user.
+* `x-playwright-extension-tab-group` - pass `false` to keep the tabs out of a tab group.
+* `x-playwright-extension-tab-group-title` - the title of the tab group.
+* `x-playwright-extension-tab-group-color` - the color of the tab group: `green`, `blue`, `purple`, `orange`, `pink`, `cyan`, `yellow` or `red`.
+* `x-playwright-extension-background` - pass `true` to keep the tabs from becoming active.
+* `x-playwright-extension-executable-path` - the path to the browser executable, when it is not at the standard location.
+* `x-playwright-extension-user-data-dir` - the user data directory of the browser, when it is not the default one.
+* `x-playwright-extension-profile-directory` - the name of the profile directory that has the extension, for example `Profile 1`.
 
 ### option: BrowserType.connectOverCDP.isLocal
 * since: v1.58

@@ -38,6 +38,7 @@ import { helper } from '../helper';
 import { registry } from '../registry';
 import { WebSocketTransport } from '../transport';
 import { CRDevTools } from './crDevTools';
+import { extensionEndpointChannel, startExtensionRelay } from './crExtensionRelay';
 import { Browser } from '../browser';
 
 import type { HTTPRequestParams } from '@utils/network';
@@ -83,7 +84,18 @@ export class Chromium extends BrowserType {
     return await this._connectOverCDPInternal(progress, params.endpointURL!, params);
   }
 
-  async _connectOverCDPInternal(progress: Progress, endpointURL: string, options: types.LaunchOptions & { headers?: types.HeadersArray, isLocal?: boolean, noDefaults?: boolean, isWebView?: boolean, maxPageAttachTime?: number, artifactsDir?: string }, onClose?: () => Promise<void>) {
+  async _connectOverCDPInternal(progress: Progress, endpointURL: string, options: types.LaunchOptions & { headers?: types.HeadersArray, isLocal?: boolean, noDefaults?: boolean, isWebView?: boolean, maxPageAttachTime?: number, artifactsDir?: string }, onClose?: () => Promise<void>): Promise<CRBrowser> {
+    const extensionChannel = extensionEndpointChannel(endpointURL);
+    if (extensionChannel) {
+      const relay = await startExtensionRelay(progress, extensionChannel, headersArrayToObject(options.headers ?? [], true));
+      try {
+        return await this._connectOverCDPInternal(progress, relay.cdpEndpoint(), { ...options, headers: undefined, isLocal: true }, async () => relay.stop());
+      } catch (e) {
+        relay.stop();
+        throw e;
+      }
+    }
+
     let headersMap: { [key: string]: string; } | undefined;
     if (options.headers)
       headersMap = headersArrayToObject(options.headers, false);
