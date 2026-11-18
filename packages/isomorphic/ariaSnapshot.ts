@@ -32,6 +32,7 @@ export type AriaProps = {
   invalid?: boolean | 'grammar' | 'spelling';
   level?: number;
   pressed?: boolean | 'mixed';
+  required?: boolean;
   selected?: boolean;
 };
 
@@ -65,6 +66,7 @@ export type AriaNodeJSON = {
   invalid?: true | 'grammar' | 'spelling';
   level?: number;
   pressed?: true | 'mixed';
+  required?: true;
   selected?: true;
   ariaHidden?: true;
   ref?: string;
@@ -517,6 +519,11 @@ export class KeyParser {
     if (key === 'pressed') {
       this._assert(value === 'true' || value === 'false' || value === 'mixed', 'Value of "pressed" attribute must be a boolean or "mixed"', errorPos);
       node.pressed = value === 'true' ? true : value === 'false' ? false : 'mixed';
+      return;
+    }
+    if (key === 'required') {
+      this._assert(value === 'true' || value === 'false', 'Value of "required" attribute must be a boolean', errorPos);
+      node.required = value === 'true';
       return;
     }
     if (key === 'selected') {

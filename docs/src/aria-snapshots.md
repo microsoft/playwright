@@ -156,7 +156,7 @@ Each accessible element in the tree is represented as a YAML node:
 - **role**: Specifies the ARIA or HTML role of the element (e.g., `heading`, `list`, `listitem`, `button`).
 - **"name"**: Accessible name of the element. Quoted strings indicate exact values, `/patterns/` are used for regular expression.
 - **[attribute=value]**: Attributes and values, in square brackets, represent specific ARIA attributes, such
-  as `checked`, `disabled`, `expanded`, `invalid`, `level`, `pressed`, or `selected`. Attributes can constrain a
+  as `checked`, `disabled`, `expanded`, `invalid`, `level`, `pressed`, `required`, or `selected`. Attributes can constrain a
   specific value, such as `[pressed=mixed]`.
 
 These values are derived from ARIA attributes or calculated based on HTML semantics. To inspect the accessibility tree
@@ -573,7 +573,7 @@ Groups capture nested elements, such as `<details>` elements with summary conten
 
 ### Attributes and states
 
-Commonly used ARIA attributes, like `checked`, `disabled`, `expanded`, `invalid`, `level`, `pressed`, and `selected`, represent
+Commonly used ARIA attributes, like `checked`, `disabled`, `expanded`, `invalid`, `level`, `pressed`, `required`, and `selected`, represent
 control states.
 
 #### Checkbox with `checked` attribute
@@ -615,4 +615,18 @@ and `spelling` render as `[invalid=grammar]` and `[invalid=spelling]`. A `false`
 
 ```yaml title="aria snapshot"
 - textbox "Bio" [invalid=spelling]
+```
+
+#### Input with `required` attribute
+
+On roles that support `aria-required`, native `required` attributes on inputs, textareas and selects,
+or `aria-required="true"`, render as `[required]`. A native `required` attribute takes precedence over
+`aria-required="false"`. A false value is omitted from snapshots, but can be asserted with `[required=false]`.
+
+```html
+<input type="email" aria-label="Email" required>
+```
+
+```yaml title="aria snapshot"
+- textbox "Email" [required]
 ```

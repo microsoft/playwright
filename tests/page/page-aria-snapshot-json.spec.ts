@@ -63,15 +63,39 @@ it('AR-096 should snapshot roles, names and text', { annotation: { type: 'issue'
   expect(await page.ariaSnapshot({ mode: 'ai', timeout: 2000 })).toBe(await page.locator(':root').ariaSnapshot({ mode: 'ai' }));
 });
 
-it('AR-097 should snapshot flags as properties', async ({ page }) => {
+it('AR-097 should snapshot flags as properties', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44204' } }, async ({ page }) => {
   await page.setContent(`
-    <input type="checkbox" title="Check" checked>
-    <button disabled>Click</button>
+    <input type="checkbox" title="Check" checked required>
+    <button disabled aria-required="true">Click</button>
+    <input type="email" aria-label="Email" required aria-required="false">
+    <textarea aria-label="Notes" required></textarea>
+    <select aria-label="Country" required></select>
+    <div role="textbox" aria-label="Custom" aria-required="TrUe"></div>
+    <input aria-label="Optional" aria-required="false">
   `);
   expect(await page.ariaSnapshotJSON()).toEqual([
-    { role: 'checkbox', name: 'Check', checked: true },
+    { role: 'checkbox', name: 'Check', checked: true, required: true },
     { role: 'button', name: 'Click', disabled: true },
+    { role: 'textbox', name: 'Email', required: true },
+    { role: 'textbox', name: 'Notes', required: true },
+    { role: 'combobox', name: 'Country', required: true },
+    { role: 'textbox', name: 'Custom', required: true },
+    { role: 'textbox', name: 'Optional' },
   ]);
+  expect(await page.locator('body').ariaSnapshot()).toBe(`- checkbox "Check" [checked] [required]
+- button "Click" [disabled]
+- textbox "Email" [required]
+- textbox "Notes" [required]
+- combobox "Country" [required]
+- textbox "Custom" [required]
+- textbox "Optional"`);
+  await expect(page).toMatchAriaSnapshot(`
+    - textbox "Email" [required]
+    - textbox "Custom" [required=true]
+    - textbox "Optional" [required=false]
+  `);
+  await expect(page).not.toMatchAriaSnapshot(`- textbox "Email" [required=false]`);
+  await expect(page).not.toMatchAriaSnapshot(`- textbox "Optional" [required]`);
 });
 
 it('AR-098 should snapshot link url and textbox value', async ({ page }) => {
