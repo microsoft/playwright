@@ -1,0 +1,71 @@
+# Rolls Chromium to Chrome Canary in a PR that never merges: the PR is there to run
+# the tests against tip-of-tree Chromium and to find upstream regressions early.
+name: "PR: roll Chromium tip-of-tree (do not merge)"
+on:
+  workflow_dispatch:
+  schedule:
+    # At 10:05am UTC (3AM PST) every Tuesday and Thursday.
+    - cron: "5 10 * * 2,4"
+
+permissions:
+  contents: write        # Push the roll branch
+
+jobs:
+  roll:
+    name: Roll Chromium tip-of-tree
+    runs-on: ubuntu-24.04
+    if: github.repository == 'microsoft/playwright'
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: lts/*
+      - name: Find the build to roll to
+        id: roll
+        run: node utils/resolve_chromium_roll.mjs tip-of-tree
+      - run: npm ci
+        if: ${{ steps.roll.outputs.revision }}
+      - run: npm run build
+        if: ${{ steps.roll.outputs.revision }}
+      - name: Roll
+        if: ${{ steps.roll.outputs.revision }}
+        env:
+          REVISION: ${{ steps.roll.outputs.revision }}
+          VERSION: ${{ steps.roll.outputs.version }}
+        run: node utils/roll_browser.js chromium "$REVISION" "$VERSION"
+      - run: npm run build
+        if: ${{ steps.roll.outputs.revision }}
+      - name: Push branch
+        if: ${{ steps.roll.outputs.revision }}
+        env:
+          BRANCH: ${{ steps.roll.outputs.branch }}
+          TITLE: ${{ steps.roll.outputs.title }}
+          DESCRIPTION: ${{ steps.roll.outputs.description }}
+        run: |
+          git config --global user.name microsoft-playwright-automation[bot]
+          git config --global user.email 203992400+microsoft-playwright-automation[bot]@users.noreply.github.com
+          git checkout -b "$BRANCH"
+          git add .
+          git commit -m "$TITLE" -m "$DESCRIPTION"
+          git push origin "$BRANCH"
+      - uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        if: ${{ steps.roll.outputs.revision }}
+        id: app-token
+        with:
+          client-id: ${{ vars.PLAYWRIGHT_APP_CLIENT_ID }}
+          private-key: ${{ secrets.PLAYWRIGHT_PRIVATE_KEY }}
+          permission-contents: read
+          permission-pull-requests: write
+      - name: Create Pull Request
+        if: ${{ steps.roll.outputs.revision }}
+        id: create-pr
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          BRANCH: ${{ steps.roll.outputs.branch }}
+          TITLE: ${{ steps.roll.outputs.title }}
+          DESCRIPTION: ${{ steps.roll.outputs.description }}
+        run: |
+          URL=$(gh api "repos/$GITHUB_REPOSITORY/pulls" -f head="$BRANCH" -f base=main -f title="$TITLE" -f body="$DESCRIPTION" --jq .html_url)
+          echo "Created $URL"
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
