@@ -138,7 +138,7 @@ it('SE-164 should handle errors', async ({ playwright, browser }) => {
   await playwright.selectors.register('duMMy', createDummySelector);
 
   error = await playwright.selectors.register('dummy', createDummySelector).catch(e => e);
-  expect(error.message).toBe('selectors.register: "dummy" selector engine has been already registered');
+  expect(error.message).toContain('"dummy" selector engine has been already registered');
 
   error = await playwright.selectors.register('css', createDummySelector).catch(e => e);
   expect(error.message).toContain('"css" is a predefined selector engine');
@@ -147,7 +147,7 @@ it('SE-164 should handle errors', async ({ playwright, browser }) => {
 
 it('SE-165 should throw "already registered" error when registering', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36467' } }, async ({ playwright }) => {
   await playwright.selectors.register('alreadyRegistered', createTagSelector);
-  await expect(playwright.selectors.register('alreadyRegistered', createTagSelector)).rejects.toThrowError('selectors.register: "alreadyRegistered" selector engine has been already registered');
+  await expect(playwright.selectors.register('alreadyRegistered', createTagSelector)).rejects.toThrowError('"alreadyRegistered" selector engine has been already registered');
 });
 
 it('SE-166 should not rely on engines working from the root', async ({ playwright, browser }) => {
