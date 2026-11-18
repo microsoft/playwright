@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import fs from 'fs';
+import path from 'path';
 import { test, expect } from './npmTest';
 
 test.use({ isolateBrowsers: true });
@@ -64,7 +66,9 @@ test('should validate dependencies correctly if skipped during install', async (
   });
 });
 
-test('should not validate dependencies on launch if validated during install', async ({ exec, writeFiles }) => {
+test('should not validate dependencies on launch if validated during install', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44201' },
+}, async ({ exec, writeFiles, tmpWorkspace, _browsersPath }) => {
   await exec('npm i playwright');
 
   await writeFiles({
@@ -76,6 +80,28 @@ test('should not validate dependencies on launch if validated during install', a
       await browser.close();
     })();`,
   });
+
+  if (process.platform === 'linux') {
+    await test.step('should not cache validation when Chromium dependencies are missing', async () => {
+      await writeFiles({
+        'bin/ldd': '#!/bin/sh\necho "libxkbcommon.so.0 => not found"\n',
+      });
+      await fs.promises.chmod(path.join(tmpWorkspace, 'bin/ldd'), 0o755);
+      const result = await exec('npx playwright install chromium', {
+        env: {
+          PATH: `${path.join(tmpWorkspace, 'bin')}:${process.env.PATH}`,
+          DEBUG: 'pw:install',
+        },
+      });
+      expect(result).toContain('validation failed for chromium\n');
+      expect(result).toContain('validation failed for chromium-headless-shell');
+      expect(result).toContain('libxkbcommon0');
+      const chromiumDirectories = (await fs.promises.readdir(_browsersPath)).filter(name => name.startsWith('chromium'));
+      expect(chromiumDirectories).toHaveLength(2);
+      for (const directory of chromiumDirectories)
+        expect(fs.existsSync(path.join(_browsersPath, directory, 'DEPENDENCIES_VALIDATED'))).toBe(false);
+    });
+  }
 
   const result = await exec('npx playwright install chromium', {
     env: {
