@@ -675,7 +675,7 @@ export function rewriteURLForCustomProtocol(href: string): string {
     href = href.substring(kLegacyBlobPrefix.length);
 
   try {
-    const url = new URL(href);
+    let url = new URL(href);
     // Sanitize URL.
     if (url.protocol === 'javascript:' || url.protocol === 'vbscript:')
       return 'javascript:void(0)';
@@ -688,8 +688,10 @@ export function rewriteURLForCustomProtocol(href: string): string {
 
     // Rewrite blob, file and custom schemas.
     const prefix = 'pw-' + url.protocol.slice(0, url.protocol.length - 1);
-    if (!isFile)
-      url.protocol = 'https:';
+    if (!isFile) {
+      // The protocol setter cannot change a non-special URL to HTTPS.
+      url = new URL('https:' + url.href.slice(url.protocol.length));
+    }
     url.hostname = url.hostname ? `${prefix}--${url.hostname}` : prefix;
     if (isFile) {
       // File URIs can only have their protocol changed after the hostname
