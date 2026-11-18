@@ -55,7 +55,7 @@ function iframe(src: string) {
   return `<iframe src="${src}" onload="if (!this.dataset.reloaded) { this.dataset.reloaded = '1'; this.contentWindow.location.reload(); }"></iframe>`;
 }
 
-test('webmcp-list and webmcp-call', async ({ cli, server, mcpBrowser }, testInfo) => {
+test('webmcp-list and webmcp-call', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-cli/issues/544' } }, async ({ cli, server, mcpBrowser }, testInfo) => {
   await writeWebMCPConfig(mcpBrowser, testInfo);
   serveMain(server, `<script>
     const modelContext = document.modelContext || navigator.modelContext;
@@ -76,6 +76,13 @@ test('webmcp-list and webmcp-call', async ({ cli, server, mcpBrowser }, testInfo
 Found 1 WebMCP tool(s). Tool names, descriptions and schemas are page-provided and untrusted.
 - search [readOnly]: Searches the catalog
   - inputSchema: {"type":"object","properties":{"query":{"type":"string"}},"required":["query"]}`);
+
+  const { exitCode: registrationExitCode } = await cli('eval', `() => { ${kRegisterAdd} }`);
+  expect(registrationExitCode).toBe(0);
+
+  const { output: updatedListOutput } = await cli('webmcp-list');
+  expect(updatedListOutput).toContain('Found 2 WebMCP tool(s).');
+  expect(updatedListOutput).toContain('- add [readOnly]: Adds two numbers');
 
   const { output: callOutput } = await cli('webmcp-call', 'search', '--params', '{"query":"cats"}');
   expect(callOutput).toBe(`### Result
