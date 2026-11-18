@@ -15,7 +15,7 @@
  */
 
 import { iso } from '../../packages/playwright-core/lib/coreBundle';
-import { test, expect, retries, dumpTestTree } from './ui-mode-fixtures';
+import { test, expect, retries, dumpTestTree, traceFrame } from './ui-mode-fixtures';
 
 const { ManualPromise } = iso;
 
@@ -49,7 +49,7 @@ test('should update trace live', async ({ runUITest, server }) => {
   await page.getByText('live test').dblclick();
 
   // It should halt on loading one.html.
-  const listItem = page.getByTestId('actions-tree').getByRole('treeitem');
+  const listItem = traceFrame(page).getByTestId('actions-tree').getByRole('treeitem');
   await expect(
       listItem,
       'action list'
@@ -68,7 +68,7 @@ test('should update trace live', async ({ runUITest, server }) => {
   ).toBeVisible();
 
   await expect(
-      page.locator('.CodeMirror .source-line-running'),
+      traceFrame(page).locator('.CodeMirror .source-line-running'),
       'check source tab',
   ).toHaveText(/4        await page.goto\('http:\/\/localhost:\d+\/one.html/);
 
@@ -76,7 +76,7 @@ test('should update trace live', async ({ runUITest, server }) => {
   onePromise.resolve();
 
   await expect(
-      page.frameLocator('iframe.snapshot-visible[name=snapshot]').locator('body'),
+      traceFrame(page).frameLocator('iframe.snapshot-visible[name=snapshot]').locator('body'),
       'verify snapshot'
   ).toHaveText('One');
   await expect(listItem).toHaveText([
@@ -94,7 +94,7 @@ test('should update trace live', async ({ runUITest, server }) => {
   ).toBeVisible();
 
   await expect(
-      page.locator('.CodeMirror .source-line-running'),
+      traceFrame(page).locator('.CodeMirror .source-line-running'),
       'check source tab',
   ).toHaveText(/5        await page.goto\('http:\/\/localhost:\d+\/two.html/);
 
@@ -102,7 +102,7 @@ test('should update trace live', async ({ runUITest, server }) => {
   twoPromise.resolve();
 
   await expect(
-      page.frameLocator('iframe.snapshot-visible[name=snapshot]').locator('body'),
+      traceFrame(page).frameLocator('iframe.snapshot-visible[name=snapshot]').locator('body'),
       'verify snapshot'
   ).toHaveText('Two');
 
@@ -134,7 +134,7 @@ test('should preserve action list selection upon live trace update', async ({ ru
   await page.getByText('live test').dblclick();
 
   // It should wait on the latch.
-  const listItem = page.getByTestId('actions-tree').getByRole('treeitem');
+  const listItem = traceFrame(page).getByTestId('actions-tree').getByRole('treeitem');
   await expect(
       listItem,
       'action list'
@@ -145,7 +145,7 @@ test('should preserve action list selection upon live trace update', async ({ ru
   ]);
 
   // Manually select page.goto.
-  await page.getByTestId('actions-tree').getByText('Navigate').click();
+  await traceFrame(page).getByTestId('actions-tree').getByText('Navigate').click();
 
   // Generate more actions and check that we are still on the page.goto action.
   latch.open();
@@ -195,7 +195,7 @@ test('should update tracing network live', async ({ runUITest, server }) => {
   await page.getByText('live test').dblclick();
 
   // It should wait on the latch.
-  const listItem = page.getByTestId('actions-tree').getByRole('treeitem');
+  const listItem = traceFrame(page).getByTestId('actions-tree').getByRole('treeitem');
   await expect(
       listItem,
       'action list'
@@ -207,10 +207,10 @@ test('should update tracing network live', async ({ runUITest, server }) => {
 
   // Once page.setContent is visible, we can be sure that page.goto has all required
   // resources in the trace. Switch to it and check that everything renders.
-  await page.getByTestId('actions-tree').getByText('NAVIGATE').click();
+  await traceFrame(page).getByTestId('actions-tree').getByText('NAVIGATE').click();
 
   await expect(
-      page.frameLocator('iframe.snapshot-visible[name=snapshot]').locator('body'),
+      traceFrame(page).frameLocator('iframe.snapshot-visible[name=snapshot]').locator('body'),
       'verify background'
   ).toHaveCSS('background-color', 'rgb(255, 0, 0)');
 });
@@ -235,7 +235,7 @@ test('should show trace w/ multiple contexts', async ({ runUITest, server, creat
   await page.getByText('live test').dblclick();
 
   // It should wait on the latch.
-  const listItem = page.getByTestId('actions-tree').getByRole('treeitem');
+  const listItem = traceFrame(page).getByTestId('actions-tree').getByRole('treeitem');
   await expect(
       listItem,
       'action list'
@@ -280,7 +280,7 @@ test('should show live trace for serial', async ({ runUITest, server, createLatc
   await page.getByText('two', { exact: true }).click();
   await page.getByTitle('Run all').click();
 
-  const listItem = page.getByTestId('actions-tree').getByRole('treeitem');
+  const listItem = traceFrame(page).getByTestId('actions-tree').getByRole('treeitem');
   await expect(
       listItem,
       'action list'
@@ -320,7 +320,7 @@ test('should show live trace from hooks', async ({ runUITest, createLatch }) => 
   `);
   await page.getByText('test one').dblclick();
 
-  const listItem = page.getByTestId('actions-tree').getByRole('treeitem');
+  const listItem = traceFrame(page).getByTestId('actions-tree').getByRole('treeitem');
   await expect(
       listItem,
       'action list'

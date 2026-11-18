@@ -22,7 +22,7 @@ import { TeleSuiteUpdater, type TeleSuiteUpdaterProgress, type TeleSuiteUpdaterT
 import type { TeleTestCase } from '@testIsomorphic/teleReceiver';
 import type * as reporterTypes from 'playwright/types/testReporter';
 import { SplitView } from '@web/components/splitView';
-import type { SourceLocation, TraceModel } from '@isomorphic/trace/traceModel';
+import type { SourceLocation } from '@isomorphic/trace/traceModel';
 import './uiModeView.css';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { Toolbar } from '@web/components/toolbar';
@@ -35,6 +35,7 @@ import { TestServerConnection, WebSocketTestServerTransport } from '@testIsomorp
 import { FiltersView } from './uiModeFiltersView';
 import { TestListView } from './uiModeTestListView';
 import { TraceView } from './uiModeTraceView';
+import type { AriaModeInfo } from './ariaModeView';
 import { SettingsView } from './settingsView';
 import { DefaultSettingsView } from './defaultSettingsView';
 
@@ -125,7 +126,10 @@ export const UIModeView: React.FC<{}> = ({
   const [settingsVisible, setSettingsVisible] = React.useState(false);
   const [testingOptionsVisible, setTestingOptionsVisible] = React.useState(false);
   const [revealSource, setRevealSource] = React.useState(false);
-  const [traceModel, setTraceModel] = React.useState<TraceModel | undefined>();
+  const [traceInfo, setTraceInfo] = React.useState<AriaModeInfo | undefined>();
+  const onOpenExternally = React.useCallback((location: SourceLocation) => {
+    testServerConnection?.openNoReply({ location });
+  }, [testServerConnection]);
   const onRevealSource = React.useCallback(() => setRevealSource(true), [setRevealSource]);
 
   const [singleWorker, setSingleWorker] = useSetting<boolean>('single-worker', false);
@@ -480,10 +484,10 @@ export const UIModeView: React.FC<{}> = ({
           <TraceView
             pathSeparator={queryParams.pathSeparator}
             item={selectedItem}
-            onModelChange={setTraceModel}
+            onTraceInfoChange={setTraceInfo}
             rootDir={testModel?.config?.rootDir}
             revealSource={revealSource}
-            onOpenExternally={location => testServerConnection?.openNoReply({ location: { file: location.file, line: location.line, column: location.column } })}
+            onOpenExternally={onOpenExternally}
           />
         </div>
       </div>}
@@ -568,7 +572,7 @@ export const UIModeView: React.FC<{}> = ({
           />
           <div className='section-title'>Settings</div>
         </Toolbar>
-        {settingsVisible && <DefaultSettingsView location='ui-mode' model={traceModel} />}
+        {settingsVisible && <DefaultSettingsView location='ui-mode' model={traceInfo} />}
       </div>
       }
     />

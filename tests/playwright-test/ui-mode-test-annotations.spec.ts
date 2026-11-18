@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect } from './ui-mode-fixtures';
+import { test, expect, traceFrame } from './ui-mode-fixtures';
 
 test('should display annotations', async ({ runUITest }) => {
   const { page } = await runUITest({
@@ -35,9 +35,9 @@ test('should display annotations', async ({ runUITest }) => {
   await expect(page.getByTestId('status-line')).toHaveText('1/1 (100%) — 1 passed');
   await page.getByRole('treeitem', { name: 'suite' }).locator('.codicon-chevron-right').click();
   await page.getByText('annotation test').click();
-  await page.getByText('Annotations', { exact: true }).click();
+  await traceFrame(page).getByText('Annotations', { exact: true }).click();
 
-  const annotations = page.locator('.annotations-tab');
+  const annotations = traceFrame(page).locator('.annotations-tab');
   await expect(annotations.getByText('suite annotation')).toBeVisible();
   await expect(annotations.getByText('bug report')).toBeVisible();
   await expect(annotations.locator('.annotation-item').filter({ hasText: 'bug report' }).locator('a'))

@@ -22,19 +22,5 @@ import { UIModeView } from './ui/uiModeView';
 
 (async () => {
   applyTheme();
-  if (window.location.protocol !== 'file:') {
-    if (!navigator.serviceWorker)
-      throw new Error(`Service workers are not supported.\nMake sure to serve the website (${window.location}) via HTTPS or localhost.`);
-    navigator.serviceWorker.register('sw.bundle.js');
-    if (!navigator.serviceWorker.controller) {
-      await new Promise<void>(f => {
-        navigator.serviceWorker.oncontrollerchange = () => f();
-      });
-    }
-
-    // Keep SW running.
-    setInterval(function() { fetch('ping'); }, 10000);
-  }
-
   ReactDOM.createRoot(document.querySelector('#root')!).render(<UIModeView/>);
 })();

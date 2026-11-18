@@ -59,6 +59,7 @@ class TestServer {
     this._configCLIOverrides = configCLIOverrides;
   }
 
+  // One server has the trace viewer and the WebSocket. The client is a tool, for example an IDE.
   async start(options: { host?: string, port?: number }): Promise<HttpServer> {
     this._dispatcher = new TestServerDispatcher(this._configLocation, this._configCLIOverrides);
     return await coreServer.startTraceViewerServer({
@@ -67,6 +68,26 @@ class TestServer {
       allowedFileRoots: () => this._allowedFileRoots(),
       transport: this._dispatcher.transport,
     });
+  }
+
+  // UI mode embeds the trace viewer, which shows content from the pages under test.
+  // The trace viewer has its own server on a different port, so the browser keeps it in a different origin.
+  // The UI mode server has the WebSocket, and it does not give files.
+  async startUIMode(options: { host?: string, port?: number }): Promise<{ server: HttpServer, traceViewerServer: HttpServer }> {
+    this._dispatcher = new TestServerDispatcher(this._configLocation, this._configCLIOverrides);
+    const [server, traceViewerServer] = await Promise.all([
+      coreServer.startTraceViewerServer({
+        host: options.host,
+        port: options.port,
+        allowedFileRoots: () => [],
+        transport: this._dispatcher.transport,
+      }),
+      coreServer.startTraceViewerServer({
+        host: options.host,
+        allowedFileRoots: () => this._allowedFileRoots(),
+      }),
+    ]);
+    return { server, traceViewerServer };
   }
 
   private _allowedFileRoots(): string[] {
@@ -279,8 +300,11 @@ export class TestServerDispatcher implements TestServerInterface {
 
 export async function runUIMode(configFile: string | undefined, configCLIOverrides: ipc.ConfigCLIOverrides, options: TraceViewerServerOptions & TraceViewerRedirectOptions): Promise<reporterTypes.FullResult['status']> {
   const configLocation = configLoader.resolveConfigLocation(configFile);
-  return await innerRunTestServer(configLocation, configCLIOverrides, options, async (server: HttpServer, cancelPromise: ManualPromise<void>) => {
-    const uiModePath = coreServer.traceViewerPath(undefined, { ...options, webApp: 'uiMode.html' });
+  return await innerRunTestServer(configLocation, configCLIOverrides, async (testServer, cancelPromise) => {
+    const { server, traceViewerServer } = await testServer.startUIMode(options);
+    // The page gets to the two servers through the same host, so it only needs the port and the path.
+    const traceViewerPath = traceViewerServer.urlPrefix('precise').substring(traceViewerServer.rootUrl('precise').length) + '/trace/';
+    const uiModePath = coreServer.traceViewerPath(undefined, { ...options, webApp: 'uiMode.html' }) + '&traceViewer=' + encodeURIComponent(traceViewerServer.port() + traceViewerPath);
     if (options.host !== undefined || options.port !== undefined) {
       server.installRootRedirect(uiModePath);
       await coreServer.openTraceInBrowser(server.rootUrl('human-readable'));
@@ -314,21 +338,21 @@ async function installedChromiumChannelForUI(configLocation: ConfigLocation, con
 
 export async function runTestServer(configFile: string | undefined, configCLIOverrides: ipc.ConfigCLIOverrides, options: { host?: string, port?: number }): Promise<reporterTypes.FullResult['status']> {
   const configLocation = configLoader.resolveConfigLocation(configFile);
-  return await innerRunTestServer(configLocation, configCLIOverrides, options, async server => {
+  return await innerRunTestServer(configLocation, configCLIOverrides, async testServer => {
+    const server = await testServer.start(options);
     // eslint-disable-next-line no-console
     console.log('Listening on ' + server.urlPrefix('precise').replace('http:', 'ws:') + '/ws');
   });
 }
 
-async function innerRunTestServer(configLocation: ConfigLocation, configCLIOverrides: ipc.ConfigCLIOverrides, options: { host?: string, port?: number }, openUI: (server: HttpServer, cancelPromise: ManualPromise<void>) => Promise<void>): Promise<reporterTypes.FullResult['status']> {
+async function innerRunTestServer(configLocation: ConfigLocation, configCLIOverrides: ipc.ConfigCLIOverrides, openUI: (testServer: TestServer, cancelPromise: ManualPromise<void>) => Promise<void>): Promise<reporterTypes.FullResult['status']> {
   const testServer = new TestServer(configLocation, configCLIOverrides);
   const cancelPromise = new ManualPromise<void>();
   const sigintWatcher = new SigIntWatcher();
   process.stdin.on('close', () => gracefullyProcessExitDoNotHang(0));
   void sigintWatcher.promise().then(() => cancelPromise.resolve());
   try {
-    const server = await testServer.start(options);
-    await openUI(server, cancelPromise);
+    await openUI(testServer, cancelPromise);
     await cancelPromise;
   } finally {
     await testServer.stop();

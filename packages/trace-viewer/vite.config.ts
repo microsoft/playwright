@@ -52,6 +52,7 @@ export default defineConfig({
           input: {
             index: path.resolve(__dirname, 'index.html'),
             uiMode: path.resolve(__dirname, 'uiMode.html'),
+            uiModeTrace: path.resolve(__dirname, 'uiModeTrace.html'),
             snapshot: path.resolve(__dirname, 'snapshot.html'),
           },
           output: {

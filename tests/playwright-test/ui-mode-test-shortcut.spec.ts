@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, retries, dumpTestTree } from './ui-mode-fixtures';
+import { test, expect, retries, dumpTestTree, traceFrame } from './ui-mode-fixtures';
 
 test.describe.configure({ mode: 'parallel', retries });
 
@@ -35,6 +35,8 @@ test('should run tests', async ({ runUITest }) => {
   await expect(page.getByTestId('stop-button')).toBeDisabled();
 
   await page.getByPlaceholder('Filter (e.g. text, @tag)').fill('test 3');
+  // The shortcut also works when the focus is in the trace viewer frame.
+  await traceFrame(page).getByTestId('actions-tree').click();
   await page.keyboard.press('F5');
 
   await expect(page.getByTestId('status-line')).toHaveText('1/1 (100%) — 1 passed');
