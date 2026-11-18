@@ -44,5 +44,6 @@
     "packages/*/lib",
     "packages/extension",
     "packages/playwright-core/src/tools/skills",
+    "packages/playwright/skills",
   ]
 }

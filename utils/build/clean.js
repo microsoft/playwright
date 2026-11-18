@@ -5,6 +5,7 @@ const path = require('path');
 const rmSync = (dir) => fs.rmSync(dir, { recursive: true, force: true, maxRetries: 10 });
 
 const packagesDir = path.join(__dirname, '..', '..', 'packages');
+rmSync(path.join(packagesDir, 'playwright', 'skills'));
 for (const entry of fs.readdirSync(packagesDir, { withFileTypes: true })) {
   if (!entry.isDirectory())
     continue;

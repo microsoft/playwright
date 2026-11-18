@@ -219,6 +219,17 @@ Use `playwright` as a library for browser automation scripts — web scraping, P
 npm i playwright
 ```
 
+### Agent skills
+
+The `playwright` package includes agent skills for browser automation, component testing, and trace inspection under `skills/`.
+With [pnpm 12.11.0 or newer](https://pnpm.io/agent-skills), projects that directly depend on `playwright` can run `pnpm approve` to select which skills to link into their agent skill directories. Skills are not linked until approved.
+
+The explicit installer remains available:
+
+```bash
+npx playwright init-skills
+```
+
 ### Examples
 
 **Take a screenshot:**

@@ -1112,6 +1112,12 @@ copyFiles.push({
 });
 
 copyFiles.push({
+  files: 'packages/playwright-core/src/tools/skills/**/*',
+  from: 'packages/playwright-core/src/tools/skills',
+  to: 'packages/playwright/skills',
+});
+
+copyFiles.push({
   files: 'packages/playwright-core/src/tools/dashboard/*.{png,ico}',
   from: 'packages/playwright-core/src',
   to: 'packages/playwright-core/lib',

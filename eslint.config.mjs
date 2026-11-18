@@ -55,6 +55,7 @@ const ignores = [
   "packages/playwright-core/types/*",
   "packages/playwright/bundles/expect/third_party/",
   "packages/playwright-core/src/tools/skills/",
+  "packages/playwright/skills/",
   "packages/html-reporter/bundle.ts",
   "packages/html-reporter/playwright.config.ts",
   "packages/html-reporter/tests/*",

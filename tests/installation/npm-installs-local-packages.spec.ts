@@ -17,7 +17,7 @@ import path from 'path';
 import { test, expect } from './npmTest';
 import fs from 'fs';
 
-test('installs local packages', async ({ registry, exec, tmpWorkspace }) => {
+test('installs local packages', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44202' } }, async ({ registry, exec, tmpWorkspace }) => {
   const packages = ['playwright', 'playwright-core', 'playwright-chromium', 'playwright-firefox', 'playwright-webkit', '@playwright/test', '@playwright/browser-chromium', '@playwright/browser-firefox', '@playwright/browser-webkit'];
   await exec('npm i --foreground-scripts', ...packages, { env: { PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1' } });
 
@@ -32,5 +32,15 @@ test('installs local packages', async ({ registry, exec, tmpWorkspace }) => {
       const installedVersion = JSON.parse(await fs.promises.readFile(pkgJsonPath, 'utf8')).version;
       expect(installedVersion).toBe(expectedPlaywrightVersion);
     });
+  }
+
+  const sourceSkills = path.join(__dirname, '..', '..', 'packages', 'playwright-core', 'src', 'tools', 'skills');
+  const discoverableSkills = path.join(tmpWorkspace, 'node_modules', 'playwright', 'skills');
+  const files = fs.readdirSync(sourceSkills, { recursive: true, encoding: 'utf8' });
+  expect(fs.readdirSync(discoverableSkills, { recursive: true, encoding: 'utf8' }).sort()).toEqual(files.sort());
+  for (const file of files) {
+    const source = path.join(sourceSkills, file);
+    if (fs.statSync(source).isFile())
+      expect(fs.readFileSync(path.join(discoverableSkills, file))).toEqual(fs.readFileSync(source));
   }
 });
