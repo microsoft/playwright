@@ -22369,6 +22369,11 @@ export interface FrameLocator {
  * [keyboard.insertText(text)](https://playwright.dev/docs/api/class-keyboard#keyboard-insert-text) to manually fire
  * events as if they were generated from a real keyboard.
  *
+ * **NOTE** Caps Lock state emulation is not supported. Pressing `CapsLock` dispatches keyboard events, but does not
+ * make subsequent lowercase input uppercase. To type uppercase text, pass uppercase characters to
+ * [locator.pressSequentially(text[, options])](https://playwright.dev/docs/api/class-locator#locator-press-sequentially)
+ * or [keyboard.type(text[, options])](https://playwright.dev/docs/api/class-keyboard#keyboard-type).
+ *
  * An example of holding down `Shift` in order to select and delete some text:
  *
  * ```js

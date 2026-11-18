@@ -7,6 +7,12 @@ raw characters and generates proper `keydown`, `keypress`/`input`, and `keyup` e
 For finer control, you can use [`method: Keyboard.down`], [`method: Keyboard.up`], and [`method: Keyboard.insertText`]
 to manually fire events as if they were generated from a real keyboard.
 
+:::note
+Caps Lock state emulation is not supported. Pressing `CapsLock` dispatches keyboard events, but does not make subsequent
+lowercase input uppercase. To type uppercase text, pass uppercase characters to [`method: Locator.pressSequentially`] or
+[`method: Keyboard.type`].
+:::
+
 An example of holding down `Shift` in order to select and delete some text:
 
 ```js
