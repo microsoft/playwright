@@ -502,7 +502,20 @@ export class Context {
     const browser = this._defaultBrowserContext.browser();
     if (!browser)
       throw new Error('Isolated contexts are not supported for this browser.');
-    const browserContext = await browser.newContext(this.config.browser?.contextOptions);
+    const contextOptions = { ...this.config.browser?.contextOptions };
+    if (contextOptions.recordHar) {
+      const { dir, name: baseName, ext } = path.parse(path.resolve(contextOptions.recordHar.path));
+      contextOptions.recordHar = {
+        ...contextOptions.recordHar,
+        path: await this.outputFile({
+          prefix: '',
+          ext: '',
+          suggestedFilename: path.join(dir, `${baseName}-${sanitizeForFilePath(name)}${ext}`),
+          ordinal: true,
+        }, { origin: 'code' }),
+      };
+    }
+    const browserContext = await browser.newContext(contextOptions);
     browserContext.once('close', () => this._browserContexts.delete(name));
     return browserContext;
   }
