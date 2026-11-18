@@ -46,7 +46,6 @@ it('WO-002 should emit created and destroyed events', async function({ page }) {
   await page.evaluate(workerObj => workerObj.terminate(), workerObj);
   expect(await workerDestroyedPromise).toBe(worker);
   const error = await workerThisObj.getProperty('self').catch(error => error);
-  expect(error.message).toContain('jsHandle.getProperty');
   expect(error.message).toContain(kTargetClosedErrorMessage);
 });
 

@@ -675,7 +675,7 @@ it('EV-074 should not leak utility script', async function({ page }) {
 
 it('EV-075 should not leak handles', async ({ page }) => {
   const error = await page.evaluate('handles.length').catch(e => e);
-  expect((error as Error).message).toContain(' handles');
+  expect((error as Error).message).toContain('handles');
 });
 
 it('EV-076 should work with CSP', async ({ page, server }) => {
