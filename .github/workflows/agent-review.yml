@@ -3,8 +3,9 @@
 name: "Agent: review"
 
 on:
-  # A PR from a fork gets no secrets here, and the bot cannot push to a fork: the job skips it.
-  pull_request:
+  # Runs from the default branch, also when the PR has a merge conflict. It never checks out the
+  # PR. The job skips a PR from a fork: the bot cannot push to a fork.
+  pull_request_target:
     types: [labeled]
 
 permissions: {}
