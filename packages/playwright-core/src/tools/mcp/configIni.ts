@@ -161,6 +161,7 @@ const longhandTypes: Record<string, LonghandType> = {
   'sessionColor': 'string',
   'background': 'boolean',
   'capabilities': 'string[]',
+  'redactUrlParams': 'string[]',
   'saveSession': 'boolean',
   'saveVideo': 'size',
   'sharedBrowserContext': 'boolean',
