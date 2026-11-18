@@ -41,7 +41,7 @@ it('HT-001 should block all events when hit target is wrong', async ({ page, ser
   });
 
   const error = await page.click('button', { timeout: 3000 }).catch(e => e);
-  expect(error.message).toContain('page.click: Timeout 3000ms exceeded.');
+  expect(error.message).toContain('Timeout 3000ms exceeded.');
 
   // Give it some time, just in case.
   await page.waitForTimeout(1000);
@@ -108,7 +108,7 @@ it('HT-004 should block all events when hit target is wrong and element detaches
   });
 
   const error = await page.click('button', { timeout: 3000 }).catch(e => e);
-  expect(error.message).toContain('page.click: Timeout 3000ms exceeded.');
+  expect(error.message).toContain('Timeout 3000ms exceeded.');
 
   // Give it some time, just in case.
   await page.waitForTimeout(1000);

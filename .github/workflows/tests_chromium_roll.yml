@@ -1,0 +1,241 @@
+name: "tests chromium roll"
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - release-*
+    paths:
+      - 'packages/playwright-core/browsers.json'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'packages/playwright-core/browsers.json'
+      - '.github/workflows/tests_chromium_roll.yml'
+
+concurrency:
+  # For pull requests, cancel all currently-running jobs for this workflow
+  # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#concurrency
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  # Force terminal colors. @see https://www.npmjs.com/package/colors
+  FORCE_COLOR: 1
+  # Avoid debconf interactive prompts (e.g. tzdata) during apt-get in containers.
+  DEBIAN_FRONTEND: noninteractive
+
+permissions:
+  contents: read    # This is required for actions/checkout to succeed
+
+jobs:
+  detect:
+    name: detect chromium roll
+    runs-on: ubuntu-latest
+    outputs:
+      roll: ${{ steps.detect.outputs.roll }}
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        # A pull request is checked out as its merge commit, the first parent of
+        # which is the base branch.
+        fetch-depth: 2
+    - name: Compare the Chromium of browsers.json with the base
+      id: detect
+      env:
+        BEFORE: ${{ github.event_name == 'pull_request' && 'HEAD^1' || github.event.before }}
+      run: |
+        chromium() {
+          git show "$1:packages/playwright-core/browsers.json" | jq -c '[.browsers[] | select(.name | startswith("chromium"))]'
+        }
+        if [[ "$BEFORE" != "HEAD^1" && -n "$BEFORE" ]]; then
+          git fetch --depth=1 origin "$BEFORE" || true
+        fi
+        ROLL=true
+        # The base is missing in a manual run and after a force push: run the tests then.
+        if [[ -n "$BEFORE" ]] && git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+          if [[ "$(chromium "$BEFORE")" == "$(chromium HEAD)" ]]; then
+            ROLL=false
+          fi
+          # A pull request that changes this workflow tries it out.
+          if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]] && ! git diff --quiet "$BEFORE" HEAD -- .github/workflows/tests_chromium_roll.yml; then
+            ROLL=true
+          fi
+        fi
+        echo "roll=$ROLL" | tee -a "$GITHUB_OUTPUT"
+
+  test_linux:
+    name: ${{ matrix.distribution }} ${{ matrix.mode }}${{ matrix.channel && format(' ({0})', matrix.channel) || '' }}
+    needs: detect
+    if: &roll ${{ needs.detect.outputs.roll == 'true' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - mode: headless
+            distribution: ubuntu-22.04
+            runs-on: ubuntu-22.04
+          - mode: headed
+            distribution: ubuntu-22.04
+            runs-on: ubuntu-22.04
+          - mode: headless
+            distribution: ubuntu-22.04-arm64
+            runs-on: ubuntu-22.04-arm
+          - mode: headed
+            distribution: ubuntu-22.04-arm64
+            runs-on: ubuntu-22.04-arm
+          - mode: headless
+            distribution: ubuntu-24.04
+            runs-on: ubuntu-24.04
+          - mode: headed
+            distribution: ubuntu-24.04
+            runs-on: ubuntu-24.04
+          - mode: headless
+            distribution: ubuntu-24.04-arm64
+            runs-on: ubuntu-24.04-arm
+          - mode: headed
+            distribution: ubuntu-24.04-arm64
+            runs-on: ubuntu-24.04-arm
+          - mode: headless
+            distribution: ubuntu-26.04
+            runs-on: ubuntu-26.04
+          - mode: headed
+            distribution: ubuntu-26.04
+            runs-on: ubuntu-26.04
+          - mode: headless
+            distribution: ubuntu-26.04-arm64
+            runs-on: ubuntu-26.04-arm
+          - mode: headed
+            distribution: ubuntu-26.04-arm64
+            runs-on: ubuntu-26.04-arm
+          - mode: headless
+            distribution: debian-12
+            runs-on: ubuntu-24.04
+            container: 'debian:12'
+          - mode: headed
+            distribution: debian-12
+            runs-on: ubuntu-24.04
+            container: 'debian:12'
+          - mode: headless
+            distribution: debian-12-arm64
+            runs-on: ubuntu-24.04-arm
+            container: 'debian:12'
+          - mode: headed
+            distribution: debian-12-arm64
+            runs-on: ubuntu-24.04-arm
+            container: 'debian:12'
+          - mode: headless
+            distribution: debian-13
+            runs-on: ubuntu-24.04
+            container: 'debian:13'
+          - mode: headed
+            distribution: debian-13
+            runs-on: ubuntu-24.04
+            container: 'debian:13'
+          - mode: headless
+            distribution: debian-13-arm64
+            runs-on: ubuntu-24.04-arm
+            container: 'debian:13'
+          - mode: headed
+            distribution: debian-13-arm64
+            runs-on: ubuntu-24.04-arm
+            container: 'debian:13'
+          # The chromium channel is the new headless mode.
+          - mode: headless
+            distribution: ubuntu-24.04
+            runs-on: ubuntu-24.04
+            channel: chromium
+          - mode: headless
+            distribution: ubuntu-24.04-arm64
+            runs-on: ubuntu-24.04-arm
+            channel: chromium
+    runs-on: ${{ matrix.runs-on }}
+    container: ${{ matrix.container }}
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+    - name: Install container dependencies
+      if: ${{ matrix.container }}
+      # xauth is for xvfb-run, unzip is for the integrity check of the blob report.
+      run: apt-get update && apt-get install -y xauth unzip
+    - uses: ./.github/actions/run-test
+      with:
+        node-version: 24
+        browsers-to-install: chromium
+        command: npm run ctest ${{ matrix.mode == 'headed' && '-- --headed --workers=2' || '' }}
+        bot-name: "chromium-roll-${{ matrix.distribution }}-${{ matrix.mode }}${{ matrix.channel && format('-{0}', matrix.channel) || '' }}"
+      env:
+        PWTEST_CHANNEL: ${{ matrix.channel }}
+
+  test_mac:
+    name: ${{ matrix.runs-on }} ${{ matrix.mode }}
+    needs: detect
+    if: *roll
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Intel: *-large
+          # Arm64: *-xlarge
+          - mode: headless
+            runs-on: macos-15-large
+          - mode: headless
+            runs-on: macos-15-xlarge
+          - mode: headless
+            runs-on: macos-26-large
+          - mode: headless
+            runs-on: macos-26-xlarge
+          - mode: headed
+            runs-on: macos-15-xlarge
+    runs-on: ${{ matrix.runs-on }}
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+    - uses: ./.github/actions/run-test
+      with:
+        node-version: 24
+        browsers-to-install: chromium
+        command: npm run ctest ${{ matrix.mode == 'headed' && '-- --headed --workers=2' || '' }}
+        bot-name: "chromium-roll-${{ matrix.runs-on }}-${{ matrix.mode }}"
+
+  test_windows:
+    name: windows-large ${{ matrix.mode }}
+    needs: detect
+    if: *roll
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [headless, headed]
+    runs-on: playwright-x64-server2025-64-core
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+    - uses: ./.github/actions/run-test
+      with:
+        node-version: 24
+        browsers-to-install: chromium
+        command: npm run ctest -- ${{ matrix.mode == 'headed' && '--headed --workers=2' || '--workers=16' }}
+        bot-name: "chromium-roll-windows-large-${{ matrix.mode }}"
+
+  stress:
+    name: stress ${{ matrix.os }}
+    needs: detect
+    if: *roll
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+    - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      with:
+        node-version: 24
+    - run: npm ci
+    - run: npm run build
+    - run: npx playwright install --with-deps chromium
+    - uses: ./.github/actions/ci-env
+    - run: $CI_ENV_EXEC npx playwright test --config=tests/stress/playwright.config.ts contexts.spec --project=chromium --reporter=list
+      shell: bash
+    - run: $CI_ENV_EXEC npx playwright test --config=tests/stress/playwright.config.ts browsers.spec --project=chromium --reporter=list
+      if: ${{ !cancelled() }}
+      shell: bash

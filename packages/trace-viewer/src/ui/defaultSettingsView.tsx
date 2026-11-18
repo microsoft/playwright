@@ -19,15 +19,15 @@ import { type Setting, SettingsView } from './settingsView';
 import { kThemeOptions, type Theme, useThemeSetting } from '@web/theme';
 import { useSetting } from '@web/uiUtils';
 import { canToggleAriaMode, shouldDisplayAriaMode } from './ariaModeView';
+import type { AriaModeInfo } from './ariaModeView';
 
-import type { TraceModel } from '@isomorphic/trace/traceModel';
 
 /**
  * A view of the collection of standard settings used between various applications
  */
 export const DefaultSettingsView: React.FC<{
   location: 'ui-mode' | 'trace-viewer',
-  model?: TraceModel,
+  model?: AriaModeInfo,
 }> = ({ location, model }) => {
   const [
     shouldPopulateCanvasFromScreenshot,

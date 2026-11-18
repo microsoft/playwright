@@ -166,6 +166,11 @@ export class SnapshotRenderer {
             // we will be using the currentSrc instead.
             attrName = '_' + attrName;
           }
+          if (upperName === 'TEMPLATE' && (attr.toLowerCase() === 'shadowrootmode' || attr.toLowerCase() === 'shadowroot')) {
+            // The capture side never records declarative shadow roots. A closed shadow root
+            // would hide its links from the click listener in the snapshot script.
+            attrName = '_' + attr;
+          }
           if (hasUnsafeHttpEquiv && (attr.toLowerCase() === 'http-equiv' || attr.toLowerCase() === 'content')) {
             // Neutralize the META directive by renaming the attribute so the browser ignores it.
             attrName = '_' + attr;
@@ -329,6 +334,17 @@ function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefine
   function applyPlaywrightAttributes(blankSnapshotUrl: string, viewport: ViewportSize, ...targetIds: (string | undefined)[]) {
     // eslint-disable-next-line no-restricted-globals
     const win = window;
+
+    // The snapshot must not navigate: the snapshot content could open a page from the trace viewer origin.
+    // Install this listener first, so that snapshot content that makes the code below throw cannot skip it.
+    // A middle click sends 'auxclick' and opens the link in a new tab.
+    for (const eventName of ['click', 'auxclick']) {
+      win.addEventListener(eventName, event => {
+        if (event.composedPath().some(target => (target as Element).localName === 'a' || (target as Element).localName === 'area'))
+          event.preventDefault();
+      }, true);
+    }
+
     const searchParams = new URLSearchParams(win.location.search);
     const shouldPopulateCanvasFromScreenshot = searchParams.has('shouldPopulateCanvasFromScreenshot');
     const isUnderTest = searchParams.has('isUnderTest');
@@ -444,8 +460,13 @@ function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefine
         const body = root.querySelector(`body[__playwright_custom_elements__]`);
         if (body && win.customElements) {
           const customElements = (body.getAttribute('__playwright_custom_elements__') || '').split(',');
-          for (const elementName of customElements)
-            win.customElements.define(elementName, class extends HTMLElement {});
+          for (const elementName of customElements) {
+            try {
+              win.customElements.define(elementName, class extends HTMLElement {});
+            } catch {
+              // The snapshot can have names that are not valid custom element names.
+            }
+          }
         }
       }
 
@@ -456,9 +477,6 @@ function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefine
         template.remove();
         visit(shadowRoot);
       }
-
-      for (const element of root.querySelectorAll('a'))
-        element.addEventListener('click', event => { event.preventDefault(); });
 
       if ('adoptedStyleSheets' in (root as any)) {
         const adoptedSheets: CSSStyleSheet[] = [...(root as any).adoptedStyleSheets];
@@ -657,7 +675,7 @@ export function rewriteURLForCustomProtocol(href: string): string {
     href = href.substring(kLegacyBlobPrefix.length);
 
   try {
-    const url = new URL(href);
+    let url = new URL(href);
     // Sanitize URL.
     if (url.protocol === 'javascript:' || url.protocol === 'vbscript:')
       return 'javascript:void(0)';
@@ -670,8 +688,10 @@ export function rewriteURLForCustomProtocol(href: string): string {
 
     // Rewrite blob, file and custom schemas.
     const prefix = 'pw-' + url.protocol.slice(0, url.protocol.length - 1);
-    if (!isFile)
-      url.protocol = 'https:';
+    if (!isFile) {
+      // The protocol setter cannot change a non-special URL to HTTPS.
+      url = new URL('https:' + url.href.slice(url.protocol.length));
+    }
     url.hostname = url.hostname ? `${prefix}--${url.hostname}` : prefix;
     if (isFile) {
       // File URIs can only have their protocol changed after the hostname

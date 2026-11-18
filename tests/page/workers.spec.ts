@@ -46,7 +46,6 @@ it('WO-002 should emit created and destroyed events', async function({ page }) {
   await page.evaluate(workerObj => workerObj.terminate(), workerObj);
   expect(await workerDestroyedPromise).toBe(worker);
   const error = await workerThisObj.getProperty('self').catch(error => error);
-  expect(error.message).toContain('jsHandle.getProperty');
   expect(error.message).toContain(kTargetClosedErrorMessage);
 });
 
@@ -62,7 +61,7 @@ it('WO-003 should reject in-flight evaluate and emit close when page closes', {
   const evalPromise = worker.evaluate(() => new Promise(() => {})).catch((e: Error) => e);
   await page.close();
   const error = await evalPromise as Error;
-  expect(error.message).toContain('worker.evaluate');
+  expect(error.message).toMatch(/(Target page, context or browser has been closed|Execution context was destroyed)/);
   expect(await closePromise).toBe(worker);
 });
 

@@ -35,7 +35,7 @@ it('WA-078 should respect timeout', async ({ page, server }) => {
   server.setRoute('/one-style.css', (req, res) => void 0);
   await page.goto(server.PREFIX + '/one-style.html', { waitUntil: 'domcontentloaded' });
   const error = await page.waitForLoadState('load', { timeout: 1 }).catch(e => e);
-  expect(error.message).toContain('page.waitForLoadState: Timeout 1ms exceeded.');
+  expect(error.message).toContain('Timeout 1ms exceeded.');
   expect(error.stack.split('\n')[1]).toContain(__filename);
 });
 

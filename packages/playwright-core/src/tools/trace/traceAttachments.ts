@@ -53,7 +53,7 @@ export async function traceAttachment(attachmentId: string, options: { output?: 
     const blob = await trace.loader.resourceEntry(attachment.file);
     if (blob)
       content = Buffer.from(await blob.arrayBuffer());
-  } else if (attachment.base64) {
+  } else if (attachment.base64 !== undefined) {
     content = Buffer.from(attachment.base64, 'base64');
   }
 

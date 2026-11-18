@@ -422,24 +422,35 @@ it('RO-115 should fulfill preload link requests', async ({ page, server, browser
   expect(color).toBe('rgb(0, 128, 0)');
 });
 
-it('RO-116 should fulfill json', async ({ page, server }) => {
+it('RO-116 should fulfill json', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44109' },
+}, async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
-  await page.route('**/data.json', route => {
-    void route.fulfill({
+  const cases: { options: Parameters<Route['fulfill']>[0], contentType: string }[] = [
+    { options: { json: { bar: 'baz' } }, contentType: 'application/json' },
+    { options: { json: 1 }, contentType: 'application/json' },
+    { options: { json: null }, contentType: 'application/json' },
+    { options: { json: false }, contentType: 'application/json' },
+    { options: { json: 0 }, contentType: 'application/json' },
+    { options: { json: '' }, contentType: 'application/json' },
+    { options: { json: { bar: 'baz' }, headers: { 'content-type': 'application/problem+json' } }, contentType: 'application/problem+json' },
+    { options: { json: { bar: 'baz' }, headers: { 'Content-Type': 'application/problem+json' } }, contentType: 'application/problem+json' },
+    { options: { json: { bar: 'baz' }, headers: { 'Content-Type': 'application/problem+json' }, contentType: 'text/plain' }, contentType: 'text/plain' },
+  ];
+  for (const { options, contentType } of cases) {
+    await page.route('**/data.json', route => route.fulfill({
+      ...options,
       status: 201,
-      headers: {
-        foo: 'bar'
-      },
-      json: { bar: 'baz' },
-    });
-  });
-  const [response, body] = await Promise.all([
-    page.waitForResponse('**/*'),
-    page.evaluate(() => fetch('./data.json').then(r => r.text()))
-  ]);
-  expect(response.status()).toBe(201);
-  expect(response.headers()['content-type']).toBe('application/json');
-  expect(body).toBe(JSON.stringify({ bar: 'baz' }));
+      headers: { foo: 'bar', ...options.headers },
+    }), { times: 1 });
+    const [response, body] = await Promise.all([
+      page.waitForResponse('**/data.json'),
+      page.evaluate(() => fetch('./data.json').then(r => r.text()))
+    ]);
+    expect(response.status()).toBe(201);
+    expect.soft(response.headers()['content-type'], JSON.stringify(options)).toBe(contentType);
+    expect(body).toBe(JSON.stringify(options.json));
+  }
 });
 
 it('RO-117 should fulfill with gzip and readback', {

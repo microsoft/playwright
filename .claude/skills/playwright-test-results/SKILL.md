@@ -49,7 +49,7 @@ The columns are inferred from the parquet the reporter emits
 | --- | --- |
 | `run_id`, `run_attempt` | GitHub Actions run identity |
 | `run_started_at` | when the run started |
-| `workflow_name` | e.g. `tests 1` / `tests 2` / `tests others` / `MCP` |
+| `workflow_name` | e.g. `tests 1` / `tests 2` / `tests others` / `tests chromium roll` / `MCP` |
 | `event` | `push` / `pull_request` |
 | `head_sha`, `head_branch`, `pr_number` | what was tested |
 | `bot_name` | e.g. `chromium-ubuntu-22.04-node20`, `webkit-macos-15-large` — the CI bot. **OS and arch are encoded here**; there is no separate os column. |

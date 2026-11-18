@@ -2598,10 +2598,15 @@ test('TV-110 should survive service worker restart', async ({ page, runAndTrace,
 test('TV-111 should not navigate on anchor clicks', async ({ runAndTrace, page, server }) => {
   const url = server.EMPTY_PAGE;
   const traceViewer = await runAndTrace(async () => {
+    // An invalid custom element name must not stop the snapshot script before it guards the links.
     await page.setContent(`
-      <a href="${url}">link1</a>
-      <a href="${url}" target="_blank">link2</a>
-      <a href="${url}" target="_top">link3</a>
+      <body __playwright_custom_elements__="not a valid name">
+        <a href="${url}">link1</a>
+        <a href="${url}" target="_blank">link2</a>
+        <a href="${url}" target="_top">link3</a>
+        <map name="map"><area href="${url}" alt="link4" shape="default"></map>
+        <img usemap="#map" width="100" height="100">
+      </body>
     `);
   });
   const snapshot = await traceViewer.snapshotFrame('Set content');
@@ -2613,6 +2618,8 @@ test('TV-111 should not navigate on anchor clicks', async ({ runAndTrace, page, 
       newPageOpened = true;
     });
     await snapshot.getByRole('link', { name }).click();
+    // A middle click opens a link in a new tab.
+    await snapshot.getByRole('link', { name }).click({ button: 'middle' });
     await traceViewer.page.waitForTimeout(500);
     await expect(traceViewer.page).not.toHaveURL(url, { timeout: 500 });
     expect(frame.url()).not.toBe(url);
@@ -2622,6 +2629,10 @@ test('TV-111 should not navigate on anchor clicks', async ({ runAndTrace, page, 
   await checkLink('link1');
   await checkLink('link2');
   await checkLink('link3');
+
+  await snapshot.locator('area').dispatchEvent('click');
+  await traceViewer.page.waitForTimeout(500);
+  expect(frame.url()).not.toBe(url);
 });
 
 test('TV-112 should respect CSSOM changes', async ({ runAndTrace, page, server }) => {

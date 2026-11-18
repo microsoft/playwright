@@ -232,7 +232,7 @@ it('FI-018 should throw nice error without injected script stack when element is
   let error = null;
   await page.setContent(`<select><option>value1</option></select>`);
   await page.fill('select', '').catch(e => error = e);
-  expect(error.message).toContain('page.fill: Error: Element is not an <input>, <textarea> or [contenteditable] element\nCall log:');
+  expect(error.message).toContain('Error: Element is not an <input>, <textarea> or [contenteditable] element\nCall log:');
 });
 
 it('FI-019 should throw if passed a non-string value', async ({ page, server }) => {

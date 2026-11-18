@@ -45,6 +45,15 @@ jobs:
     - run: npm run build
     - run: ./utils/docker/build.sh --${{ matrix.docker_arch }} ${{ matrix.docker_tag }} playwright:localbuild
       shell: bash
+    # The scan looks at the content of the files, in all layers of the image.
+    - name: Scan the image for secrets
+      uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+      with:
+        image-ref: playwright:localbuild
+        scanners: secret
+        exit-code: '1'
+        # The secret scan needs no vulnerability database.
+        cache: 'false'
     - name: Launch container
       run: |
         docker run \

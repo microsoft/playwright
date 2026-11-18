@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, retries } from './ui-mode-fixtures';
+import { test, expect, retries, traceFrame } from './ui-mode-fixtures';
 
 test.describe.configure({ mode: 'parallel', retries });
 
@@ -38,10 +38,10 @@ test('should show screenshots', async ({ runUITest }) => {
   await expect(page.getByTestId('status-line')).toHaveText('2/2 (100%) — 2 passed');
 
   await page.getByText('test 1', { exact: true }).click();
-  await expect(page.getByTestId('actions-tree')).toContainText('Expect');
-  await expect(page.locator('.film-strip-frame').first()).toBeVisible();
+  await expect(traceFrame(page).getByTestId('actions-tree')).toContainText('Expect');
+  await expect(traceFrame(page).locator('.film-strip-frame').first()).toBeVisible();
 
   await page.getByText('test 2', { exact: true }).click();
-  await expect(page.getByTestId('actions-tree')).toContainText('Expect');
-  await expect(page.locator('.film-strip-frame').first()).toBeVisible();
+  await expect(traceFrame(page).getByTestId('actions-tree')).toContainText('Expect');
+  await expect(traceFrame(page).locator('.film-strip-frame').first()).toBeVisible();
 });

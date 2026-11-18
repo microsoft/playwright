@@ -228,9 +228,13 @@ async function doFetch(event: FetchEvent): Promise<Response> {
     }
 
     if (relativePath.startsWith('/file/')) {
+      // The trace viewer never shows these files in a frame. Only a snapshot that navigates itself does.
+      // A trace viewer that is in a frame itself still downloads attachments, and a download has a file name.
+      if (['iframe', 'frame', 'embed', 'object'].includes(request.destination) && !url.searchParams.has('dn'))
+        return new Response(null, { status: 403 });
       const blob = await loadedTrace!.traceLoader.resourceEntry(relativePath.slice('/file/'.length));
       if (blob)
-        return new Response(blob, { status: 200, headers: downloadHeaders(url.searchParams) });
+        return new Response(blob, { status: 200, headers: fileHeaders(url.searchParams) });
       return new Response(null, { status: 404 });
     }
   }
@@ -251,12 +255,14 @@ function takeCoverage(): IstanbulCoverage {
   return result;
 }
 
-function downloadHeaders(searchParams: URLSearchParams): Headers | undefined {
+function fileHeaders(searchParams: URLSearchParams): Headers {
+  const headers = new Headers();
+  // Trace files can have content from the pages under test. Do not run them as pages in the trace viewer origin.
+  headers.set('Content-Security-Policy', 'sandbox');
   const name = searchParams.get('dn');
   const contentType = searchParams.get('dct');
   if (!name)
-    return;
-  const headers = new Headers();
+    return headers;
   headers.set('Content-Disposition', `attachment; filename="attachment"; filename*=UTF-8''${encodeURIComponent(name)}`);
   if (contentType)
     headers.set('Content-Type', contentType);

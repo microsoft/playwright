@@ -424,8 +424,8 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
       headers[header.toLowerCase()] = String(headersOption![header]);
     if (options.contentType)
       headers['content-type'] = String(options.contentType);
-    else if (options.json)
-      headers['content-type'] = 'application/json';
+    else if (options.json !== undefined)
+      headers['content-type'] ??= 'application/json';
     else if (options.path)
       headers['content-type'] = getMimeTypeForPath(options.path) || 'application/octet-stream';
     if (length && !('content-length' in headers))

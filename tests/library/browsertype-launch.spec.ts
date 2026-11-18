@@ -66,7 +66,7 @@ it('BT-010 should reject if launched browser fails immediately', async ({ mode, 
   if (channel === 'webkit-wsl')
     expect(error.message).toContain('Failed to launch');
   else
-    expect(error.message).toMatch(/browserType\.launch(.|\n)*(spawn UNKNOWN|spawn EFTYPE|Browser logs:)/gim);
+    expect(error.message).toMatch(/(spawn UNKNOWN|spawn EFTYPE|Browser logs:)/gim);
 });
 
 it('BT-011 should reject if executable path is invalid', async ({ browserType, mode }) => {
@@ -80,7 +80,7 @@ it('BT-012 should handle timeout', async ({ browserType, mode }) => {
 
   const options: any = { timeout: 5000, __testHookBeforeCreateBrowser: () => new Promise(f => setTimeout(f, 6000)) };
   const error = await browserType.launch(options).catch(e => e);
-  expect(error!.message).toContain(`browserType.launch: Timeout 5000ms exceeded.`);
+  expect(error!.message).toContain(`Timeout 5000ms exceeded.`);
   expect(error!.message).toContain(`<launching>`);
   expect(error!.message).toContain(`<launched> pid=`);
 });

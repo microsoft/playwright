@@ -64,7 +64,8 @@ export const ImageDiffView: React.FC<{
   noTargetBlank?: boolean,
   hideDetails?: boolean,
 }> = ({ diff, noTargetBlank, hideDetails }) => {
-  const [mode, setMode] = React.useState<'diff' | 'actual' | 'expected' | 'slider' | 'sxs'>(diff.diff ? 'diff' : 'actual');
+  const [mode, setMode] = React.useState<'diff' | 'actual' | 'expected' | 'slider' | 'sxs' | 'blink'>(diff.diff ? 'diff' : 'actual');
+  const [blinkExpected, setBlinkExpected] = React.useState(false);
   const [showSxsDiff, setShowSxsDiff] = React.useState<boolean>(false);
 
   const [expectedImage, setExpectedImage] = React.useState<HTMLImageElement | null>(null);
@@ -81,6 +82,13 @@ export const ImageDiffView: React.FC<{
       setDiffImage(await loadImage(diff.diff?.attachment.path));
     })();
   }, [diff]);
+
+  React.useEffect(() => {
+    if (mode !== 'blink')
+      return;
+    const interval = window.setInterval(() => setBlinkExpected(expected => !expected), 500);
+    return () => window.clearInterval(interval);
+  }, [mode]);
 
   const isLoaded = expectedImage && actualImage && diffImage;
 
@@ -105,18 +113,21 @@ export const ImageDiffView: React.FC<{
         {modeTab('expected', expectedImageTitle)}
         {modeTab('sxs', 'Side by side')}
         {modeTab('slider', 'Slider')}
+        {modeTab('blink', 'Blink')}
       </div>
       <div style={{ display: 'flex', justifyContent: 'center', flex: 'auto', minHeight: fitHeight + 60 }}>
         {diff.diff && mode === 'diff' && <ImageWithSize image={diffImage} alt='Diff' hideSize={hideDetails} canvasWidth={fitWidth} canvasHeight={fitHeight} scale={scale}/>}
         {diff.diff && mode === 'actual' && <ImageWithSize image={actualImage}  alt='Actual' hideSize={hideDetails} canvasWidth={fitWidth} canvasHeight={fitHeight} scale={scale}/>}
         {diff.diff && mode === 'expected' && <ImageWithSize image={expectedImage}  alt={expectedImageTitle} hideSize={hideDetails} canvasWidth={fitWidth} canvasHeight={fitHeight} scale={scale}/>}
         {diff.diff && mode === 'slider' && <ImageDiffSlider expectedImage={expectedImage} actualImage={actualImage} hideSize={hideDetails} canvasWidth={fitWidth} canvasHeight={fitHeight} scale={scale} expectedTitle={expectedImageTitle} />}
+        {diff.diff && mode === 'blink' && <ImageWithSize image={blinkExpected ? expectedImage : actualImage} title={blinkExpected ? expectedImageTitle : 'Actual'} hideSize={hideDetails} canvasWidth={fitWidth} canvasHeight={fitHeight} scale={scale}/>}
         {diff.diff && mode === 'sxs' && <div style={{ display: 'flex' }}>
           <ImageWithSize image={expectedImage} title={expectedImageTitle} hideSize={hideDetails} canvasWidth={sxsScale * imageWidth} canvasHeight={sxsScale * imageHeight} scale={sxsScale} />
           <ImageWithSize image={showSxsDiff ? diffImage : actualImage} title={showSxsDiff ? 'Diff' : 'Actual'} onClick={() => setShowSxsDiff(!showSxsDiff)} hideSize={hideDetails} canvasWidth={sxsScale * imageWidth} canvasHeight={sxsScale * imageHeight} scale={sxsScale} />
         </div>}
         {!diff.diff && mode === 'actual' && <ImageWithSize image={actualImage} title='Actual' hideSize={hideDetails} canvasWidth={fitWidth} canvasHeight={fitHeight} scale={scale}/>}
         {!diff.diff && mode === 'expected' && <ImageWithSize image={expectedImage} title={expectedImageTitle} hideSize={hideDetails} canvasWidth={fitWidth} canvasHeight={fitHeight} scale={scale}/>}
+        {!diff.diff && mode === 'blink' && <ImageWithSize image={blinkExpected ? expectedImage : actualImage} title={blinkExpected ? expectedImageTitle : 'Actual'} hideSize={hideDetails} canvasWidth={fitWidth} canvasHeight={fitHeight} scale={scale}/>}
         {!diff.diff && mode === 'sxs' && <div style={{ display: 'flex' }}>
           <ImageWithSize image={expectedImage} title={expectedImageTitle} canvasWidth={sxsScale * imageWidth} canvasHeight={sxsScale * imageHeight} scale={sxsScale} />
           <ImageWithSize image={actualImage} title='Actual' canvasWidth={sxsScale * imageWidth} canvasHeight={sxsScale * imageHeight} scale={sxsScale} />

@@ -5247,7 +5247,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        */
       nodeId: DOM.NodeId;
       /**
-       * Bounds of the layer in absolute page coordinates.
+       * Bounds of the layer. A page target reports them in absolute coordinates of the document of the node passed to <code>layersForNode</code>, also for the layers of frames in the same process. A frame target reports them relative to its frame's viewport, so they account for the frame's scroll position.
        */
       bounds: IntRect;
       /**
@@ -5286,6 +5286,10 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        * The name of the CSS pseudo-element that prompted the layer to be generated.
        */
       pseudoElement?: string;
+      /**
+       * For a layer that hosts a frame whose layers are not included in the result, the content box of the frame owner in the same coordinate space as <code>bounds</code>. The frame's layers are reported by the frame's own target.
+       */
+      contentFrameRect?: IntRect;
     }
     /**
      * An object containing the reasons why the layer was composited as properties.
@@ -9041,6 +9045,10 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        * Whether the target is paused on start and has to be explicitely resumed by inspector.
        */
       isPaused?: boolean;
+      /**
+       * Opaque identifier, assigned by the UI process, of the process that runs this target. Not an OS process ID. Targets with the same value run in the same process. Absent when the backend does not know the process.
+       */
+      processIdentifier?: string;
     }
     /**
      * State of a debugger pause session. While it is paused, the UI process holds every page of the browsing context group: each frame is either stopped or held. Closed means the hold was released, not that no frame is stopped: a frame can stay in the debugger, so Debugger.paused and Debugger.resumed remain the source of truth for which frames are stopped.

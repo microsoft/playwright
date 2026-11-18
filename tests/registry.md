@@ -583,7 +583,6 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `BT-076` | `library/browsertype-connect.spec.ts` | {launchServer, run-server} › should upload large file *(2 copies)* |
 | `BT-077` | `library/browsertype-connect.spec.ts` | {launchServer, run-server} › should upload a folder *(2 copies)* |
 | `BT-078` | `library/browsertype-connect.spec.ts` | {launchServer, run-server} › setInputFiles should preserve lastModified timestamp *(2 copies)* |
-| `BT-079` | `library/browsertype-connect.spec.ts` | {launchServer, run-server} › should connect over http *(2 copies)* |
 | `BT-080` | `library/browsertype-connect.spec.ts` | {launchServer, run-server} › socks proxy › should forward non-forwarded requests *(2 copies)* |
 | `BT-081` | `library/browsertype-connect.spec.ts` | {launchServer, run-server} › socks proxy › should proxy localhost requests @smoke *(2 copies)* |
 | `BT-082` | `library/browsertype-connect.spec.ts` | {launchServer, run-server} › socks proxy › should proxy ipv6 localhost requests @smoke *(2 copies)* |
@@ -599,7 +598,6 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `BT-092` | `library/browsertype-connect.spec.ts` | launchServer only › cannot launch another browser |
 | `BT-093` | `library/browsertype-connect.spec.ts` | should refuse connecting when versions do not match |
 | `BT-094` | `library/browsertype-connect.spec.ts` | should filter local paths from unsafe launch options |
-| `BT-095` | `library/browsertype-connect.spec.ts` | should timeout after redirect when connecting over http |
 | `BT-096` | `library/browsertype-connect.spec.ts` | should not retain closed browsers in launch mode |
 | `BT-097` | `library/browsertype-launch-selenium.spec.ts` | selenium grid 3.141.59 standalone chromium |
 | `BT-098` | `library/browsertype-launch-selenium.spec.ts` | selenium grid 3.141.59 hub + node chromium |
@@ -766,6 +764,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `CD-051` | `library/chromium/session.spec.ts` | should emit close event when page closes |
 | `CD-052` | `library/chromium/session.spec.ts` | should work with newBrowserCDPSession |
 | `CD-053` | `library/chromium/connect-over-cdp.spec.ts` | should connect when another client inspects a terminated shared worker |
+| `CD-054` | `library/chromium/connect-over-cdp.spec.ts` | should not wait for a busy page longer than maxPageAttachTime |
 
 ### CF — Code frame
 
@@ -4118,6 +4117,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `PA-054` | `library/page-close.spec.ts` | should reject response.finished if page closes |
 | `PA-055` | `library/page-close.spec.ts` | should not throw when continuing while page is closing |
 | `PA-056` | `library/page-close.spec.ts` | should not throw when continuing after page is closed |
+| `PA-057` | `page/page-basic.spec.ts` | should prefix the error message with the api name |
 
 ### PC — Playwright client
 
@@ -5255,6 +5255,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `TV-134` | `library/snapshot-renderer.spec.ts` | stripAnsiEscapes should not exhibit polynomial backtracking |
 | `TV-135` | `library/snapshot-renderer.spec.ts` | stripAnsiEscapes handles common ANSI sequences after fix |
 | `TV-136` | `library/snapshot-renderer.spec.ts` | snapshot renderer selects the nearest out-of-order screencast frame |
+| `TV-137` | `library/snapshot-renderer.spec.ts` | snapshot renderer neutralizes declarative shadow roots |
 
 ### TZ — Timezone
 

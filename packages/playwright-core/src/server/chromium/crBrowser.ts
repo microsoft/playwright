@@ -103,7 +103,7 @@ export class CRBrowser extends Browser {
         }),
         browser._defaultContext.initialize(),
       ]);
-      await browser._waitForAllPagesToBeInitialized();
+      await browser._waitForAllPagesToBeInitialized(options.maxPageAttachTime);
     } finally {
       browser._isConnecting = false;
     }
@@ -178,8 +178,16 @@ export class CRBrowser extends Browser {
     return this.options.name === 'clank';
   }
 
-  async _waitForAllPagesToBeInitialized() {
-    await Promise.all([...this._crPages.values()].map(crPage => crPage._page.waitForInitializedOrError()));
+  async _waitForAllPagesToBeInitialized(timeout?: number) {
+    const allPages = Promise.all([...this._crPages.values()].map(crPage => crPage._page.waitForInitializedOrError()));
+    if (!timeout) {
+      await allPages;
+      return;
+    }
+    // Pages that are not ready in time, e.g. with a busy renderer, are reported later.
+    let timer: NodeJS.Timeout | undefined;
+    await Promise.race([allPages, new Promise(f => timer = setTimeout(f, timeout))]);
+    clearTimeout(timer);
   }
 
   _onAttachedToTarget({ targetInfo, sessionId, waitingForDebugger }: Protocol.Target.attachedToTargetPayload) {

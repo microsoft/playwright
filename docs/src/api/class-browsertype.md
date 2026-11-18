@@ -107,6 +107,14 @@ A Playwright browser websocket endpoint to connect to. You obtain this endpoint 
 
 Additional HTTP headers to be sent with web socket connect request. Optional.
 
+### option: BrowserType.connect.launchOptions
+* since: v1.66
+* langs: js
+- `launchOptions` <[LaunchOptions]>
+
+Options used to launch the browser, as passed to [`method: BrowserType.launch`]. Only applies when the server
+launches a browser for each connection. The server ignores the options that it does not allow.
+
 ### option: BrowserType.connect.slowMo
 * since: v1.10
 - `slowMo` <[float]>
@@ -421,7 +429,11 @@ const { chromium } = require('playwright');  // Or 'webkit' or 'firefox'.
 * since: v1.45
 - `host` <[string]>
 
-Host to use for the web socket. It is optional and defaults to `localhost`, accepting connections only from the loopback interface. Pass an explicit address (e.g. `0.0.0.0`) to accept connections from the network — be aware this exposes the browser RPC to anything that can reach the listening port.
+Host to use for the web socket. It is optional and defaults to `localhost`, accepting connections only from the loopback interface. Pass an explicit address (e.g. `0.0.0.0`) to accept connections from the network.
+
+:::warning
+The Browser Server has no authentication. A client that can reach the listening port and knows the [`option: BrowserType.launchServer.wsPath`] gets full control of the browser and can act as the OS user that started the server. When you pass an explicit host, restrict access to the port with your network configuration, for example a firewall, a private network or an authenticating proxy. Do not rely on the `wsPath` alone.
+:::
 
 ### option: BrowserType.launchServer.port
 * since: v1.8
@@ -440,6 +452,10 @@ unguessable string.
 Any process or web page (including those running in Playwright) with knowledge
 of the `wsPath` can take control of the OS user. For this reason, you should
 use an unguessable token when using this option.
+
+The unguessable path protects a server on the loopback interface from web pages and
+from other local processes. It is not a replacement for network access control: the path
+is a part of the URL and is sent in plain text over `ws://`. See [`option: BrowserType.launchServer.host`].
 :::
 
 ## method: BrowserType.name

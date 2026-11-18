@@ -58,7 +58,7 @@ async function closeBrowser(client: Client) {
   expect(await client.callTool({
     name: 'browser_close',
   })).toHaveResponse({
-    code: expect.stringContaining(`page.close()`),
+    code: expect.stringContaining(`browser.close()`),
   });
 }
 

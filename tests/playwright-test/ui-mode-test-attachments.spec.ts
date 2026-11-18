@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, retries } from './ui-mode-fixtures';
+import { test, expect, retries, traceFrame } from './ui-mode-fixtures';
 
 test.describe.configure({ mode: 'parallel', retries });
 
@@ -34,16 +34,16 @@ test('should contain text attachment', async ({ runUITest }) => {
   await page.getByText('attach test').click();
   await page.getByTitle('Run all').click();
   await expect(page.getByTestId('status-line')).toHaveText('1/1 (100%) — 1 passed');
-  await page.getByText('Attachments').click();
+  await traceFrame(page).getByText('Attachments').click();
 
-  await page.locator('.tab-attachments').getByText('text attachment').click();
-  await expect(page.locator('.tab-attachments')).toContainText('hi tester!');
-  await page.locator('.tab-attachments').getByText('file attachment').first().click();
-  await expect(page.locator('.tab-attachments')).not.toContainText('attach test');
+  await traceFrame(page).locator('.tab-attachments').getByText('text attachment').click();
+  await expect(traceFrame(page).locator('.tab-attachments')).toContainText('hi tester!');
+  await traceFrame(page).locator('.tab-attachments').getByText('file attachment').first().click();
+  await expect(traceFrame(page).locator('.tab-attachments')).not.toContainText('attach test');
 
   {
     const downloadPromise = page.waitForEvent('download');
-    await page.getByRole('link', { name: 'download' }).first().click();
+    await traceFrame(page).getByRole('link', { name: 'download' }).first().click();
     const download = await downloadPromise;
     expect(download.suggestedFilename()).toBe('file attachment');
     expect((await readAllFromStream(await download.createReadStream())).toString()).toContain('attach test');
@@ -51,7 +51,7 @@ test('should contain text attachment', async ({ runUITest }) => {
 
   {
     const downloadPromise = page.waitForEvent('download');
-    await page.getByRole('link', { name: 'download' }).nth(1).click();
+    await traceFrame(page).getByRole('link', { name: 'download' }).nth(1).click();
     const download = await downloadPromise;
     expect(download.suggestedFilename()).toBe('file attachment 2');
     expect((await readAllFromStream(await download.createReadStream())).toString()).toContain('attach test');
@@ -70,9 +70,9 @@ test('should contain binary attachment', async ({ runUITest }) => {
   await page.getByText('attach test').click();
   await page.getByTitle('Run all').click();
   await expect(page.getByTestId('status-line')).toHaveText('1/1 (100%) — 1 passed');
-  await page.getByText('Attachments').click();
+  await traceFrame(page).getByText('Attachments').click();
   const downloadPromise = page.waitForEvent('download');
-  await page.getByRole('link', { name: 'download' }).click();
+  await traceFrame(page).getByRole('link', { name: 'download' }).click();
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toBe('data');
   expect(await readAllFromStream(await download.createReadStream())).toEqual(Buffer.from([1, 2, 3]));
@@ -90,10 +90,10 @@ test('should contain string attachment', async ({ runUITest }) => {
   await page.getByText('attach test').click();
   await page.getByTitle('Run all').click();
   await expect(page.getByTestId('status-line')).toHaveText('1/1 (100%) — 1 passed');
-  await page.getByText('Attachments').click();
-  await page.getByText('note', { exact: true }).click();
+  await traceFrame(page).getByText('Attachments').click();
+  await traceFrame(page).getByText('note', { exact: true }).click();
   const downloadPromise = page.waitForEvent('download');
-  await page.locator('.expandable-title', { hasText: 'note' }).getByRole('link').click();
+  await traceFrame(page).locator('.expandable-title', { hasText: 'note' }).getByRole('link').click();
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toBe('note');
   expect((await readAllFromStream(await download.createReadStream())).toString()).toEqual('text42');
@@ -119,9 +119,9 @@ test('should linkify string attachments', async ({ runUITest, server }) => {
   await page.getByText('attach test').click();
   await page.getByTitle('Run all').click();
   await expect(page.getByTestId('status-line')).toHaveText('1/1 (100%) — 1 passed');
-  await page.getByText('Attachments').click();
+  await traceFrame(page).getByText('Attachments').click();
 
-  const attachmentsPane = page.locator('.attachments-tab');
+  const attachmentsPane = traceFrame(page).locator('.attachments-tab');
 
   {
     const url = server.PREFIX + '/one.html';
@@ -175,13 +175,13 @@ test('should link from attachment step to attachments view', async ({ runUITest 
   await page.getByText('attach test').click();
   await page.getByTitle('Run all').click();
   await expect(page.getByTestId('status-line')).toHaveText('1/1 (100%) — 1 passed');
-  await page.getByRole('tab', { name: 'Attachments' }).click();
+  await traceFrame(page).getByRole('tab', { name: 'Attachments' }).click();
 
-  const panel = page.getByRole('tabpanel', { name: 'Attachments' });
+  const panel = traceFrame(page).getByRole('tabpanel', { name: 'Attachments' });
   const attachment = panel.getByLabel('my-attachment');
-  await page.getByRole('treeitem', { name: 'attach "spacer-1"' }).getByLabel('Open Attachment').click();
+  await traceFrame(page).getByRole('treeitem', { name: 'attach "spacer-1"' }).getByLabel('Open Attachment').click();
   await expect(attachment).not.toBeInViewport();
-  await page.getByRole('treeitem', { name: 'attach "my-attachment"' }).getByLabel('Open Attachment').click();
+  await traceFrame(page).getByRole('treeitem', { name: 'attach "my-attachment"' }).getByLabel('Open Attachment').click();
   await expect(attachment).toBeInViewport();
 });
 
@@ -207,8 +207,8 @@ test('attachments from inside boxed fixture should be visible', { annotation: { 
   await page.getByTitle('Run all').click();
   await expect(page.getByTestId('status-line')).toHaveText('1/1 (100%) — 1 passed');
 
-  await page.getByRole('treeitem', { name: 'attach "my attachment"' }).getByLabel('Open Attachment').click();
-  await expect(page.getByRole('tabpanel', { name: 'Attachments' })).toMatchAriaSnapshot(`
+  await traceFrame(page).getByRole('treeitem', { name: 'attach "my attachment"' }).getByLabel('Open Attachment').click();
+  await expect(traceFrame(page).getByRole('tabpanel', { name: 'Attachments' })).toMatchAriaSnapshot(`
     - tabpanel:
       - button /my attachment/
   `);

@@ -587,7 +587,7 @@ test('CD-020 should report an expected error when the endpointURL returns a non-
   });
   await expect(browserType.connectOverCDP({
     endpointURL: server.PREFIX,
-  })).rejects.toThrowError(`browserType.connectOverCDP: Unexpected status 404 when connecting to ${server.PREFIX}/json/version/`);
+  })).rejects.toThrowError(`Unexpected status 404 when connecting to ${server.PREFIX}/json/version/`);
 });
 
 test('CD-021 should report an expected error when the endpoint URL JSON webSocketDebuggerUrl is undefined', async ({ browserType, server }) => {
@@ -598,7 +598,7 @@ test('CD-021 should report an expected error when the endpoint URL JSON webSocke
   });
   await expect(browserType.connectOverCDP({
     endpointURL: server.PREFIX,
-  })).rejects.toThrowError('browserType.connectOverCDP: Invalid URL');
+  })).rejects.toThrowError('Invalid URL');
 });
 
 test('CD-022 should connect to an existing cdp session when passed as a first argument', async ({ browserType }, testInfo) => {
@@ -947,6 +947,50 @@ test('CD-036 should connect over CDP using a ConnectionTransport', async ({ brow
     await page.goto(server.EMPTY_PAGE);
     expect(page.url()).toBe(server.EMPTY_PAGE);
     await cdpBrowser.close();
+  } finally {
+    await browserServer.close();
+  }
+});
+
+test('CD-054 should not wait for a busy page longer than maxPageAttachTime', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44052' },
+}, async ({ browserType, server }, testInfo) => {
+  const port = 9339 + testInfo.workerIndex;
+  const browserServer = await browserType.launch({
+    // The busy page should not share a renderer with the other page.
+    args: ['--remote-debugging-port=' + port, '--site-per-process']
+  });
+  try {
+    const cdpBrowser1 = await browserType.connectOverCDP({
+      endpointURL: `http://127.0.0.1:${port}/`,
+    });
+    const context1 = cdpBrowser1.contexts()[0];
+    const page1 = await context1.newPage();
+    await page1.goto(server.CROSS_PROCESS_PREFIX + '/title.html');
+    const busyPage1 = await context1.newPage();
+    await busyPage1.goto(server.EMPTY_PAGE);
+    const busyStarted = busyPage1.waitForEvent('console', message => message.text() === 'busy');
+    busyPage1.evaluate(() => {
+      console.log('busy');
+      const start = Date.now();
+      while (Date.now() - start < 5000) {}
+    }).catch(() => {});
+    await busyStarted;
+
+    const cdpBrowser2 = await browserType.connectOverCDP({
+      endpointURL: `http://127.0.0.1:${port}/`,
+      maxPageAttachTime: 500,
+    } as any);
+    const context2 = cdpBrowser2.contexts()[0];
+    const pages = context2.pages();
+    expect(pages.map(page => page.url())).toEqual([server.CROSS_PROCESS_PREFIX + '/title.html']);
+    expect(await pages[0].title()).toBe('Woof-Woof');
+    // The busy page is reported when its renderer responds again.
+    const busyPage2 = await context2.waitForEvent('page');
+    expect(busyPage2.url()).toBe(server.EMPTY_PAGE);
+    expect(await busyPage2.evaluate(() => 1 + 1)).toBe(2);
+    await cdpBrowser2.close();
+    await cdpBrowser1.close();
   } finally {
     await browserServer.close();
   }

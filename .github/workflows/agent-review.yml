@@ -3,7 +3,8 @@
 name: "Agent: review"
 
 on:
-  # Runs from the default branch, for PRs from forks too. It never checks out the PR.
+  # Runs from the default branch, also when the PR has a merge conflict. It never checks out the
+  # PR. The job skips a PR from a fork: the bot cannot push to a fork.
   pull_request_target:
     types: [labeled]
 
@@ -12,7 +13,9 @@ permissions: {}
 jobs:
   pr:
     name: Hand the PR to the bot
-    if: github.repository_owner == 'microsoft' && github.event.label.name == 'agent-review'
+    if: >-
+      github.repository_owner == 'microsoft' && github.event.label.name == 'agent-review'
+      && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

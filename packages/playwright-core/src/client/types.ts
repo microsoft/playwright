@@ -104,6 +104,7 @@ export type ConnectOptions = {
   endpoint: string;
   browserName?: string;
   headers?: { [key: string]: string; };
+  launchOptions?: LaunchOptions;
   exposeNetwork?: string;
   slowMo?: number;
   timeout?: number;

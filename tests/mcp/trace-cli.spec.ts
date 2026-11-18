@@ -273,9 +273,23 @@ test('trace open with .trace file creates link', async ({ traceFile, traceCwd, r
   expect(actionsOutput).toContain('Click');
 });
 
-test('trace attachments lists attachments', async ({ runTraceCli }) => {
-  const { stdout, exitCode } = await runTraceCli(['attachments']);
+test('trace attachments lists and extracts attachments', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44174' } }, async ({ traceFile, traceCwd, runTraceCli }, testInfo) => {
+  const inlineTrace = testInfo.outputPath('inline.trace');
+  await fs.promises.writeFile(inlineTrace, [
+    { type: 'context-options', version: 8, origin: 'testRunner', browserName: '', options: {}, platform: process.platform, wallTime: 0, monotonicTime: 0 },
+    { type: 'before', callId: 'call@1', startTime: 0, class: 'Test', method: 'step', params: {} },
+    { type: 'after', callId: 'call@1', endTime: 1, attachments: [{ name: 'empty.txt', contentType: 'text/plain', base64: '' }] },
+  ].map(event => JSON.stringify(event)).join('\n'));
+  expect((await runTraceCli(['open', inlineTrace])).exitCode).toBe(0);
+
+  const { stdout: listOutput, exitCode: listExitCode } = await runTraceCli(['attachments']);
+  expect(listExitCode).toBe(0);
+  expect(listOutput).toContain('empty.txt');
+
+  const { stdout, exitCode } = await runTraceCli(['attachment', '1']);
   expect(exitCode).toBe(0);
-  // Our test trace has no attachments, just verify it doesn't crash
-  expect(stdout).toBeTruthy();
+  expect(stdout).toContain('Attachment saved to');
+  expect(await fs.promises.readFile(path.join(traceCwd, '.playwright-cli', 'empty.txt'))).toEqual(Buffer.alloc(0));
+
+  expect((await runTraceCli(['open', traceFile])).exitCode).toBe(0);
 });

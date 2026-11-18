@@ -18437,8 +18437,14 @@ export interface BrowserType<Unused = {}> {
 
     /**
      * Host to use for the web socket. It is optional and defaults to `localhost`, accepting connections only from the
-     * loopback interface. Pass an explicit address (e.g. `0.0.0.0`) to accept connections from the network — be aware
-     * this exposes the browser RPC to anything that can reach the listening port.
+     * loopback interface. Pass an explicit address (e.g. `0.0.0.0`) to accept connections from the network.
+     *
+     * **NOTE** The Browser Server has no authentication. A client that can reach the listening port and knows the
+     * [`wsPath`](https://playwright.dev/docs/api/class-browsertype#browser-type-launch-server-option-ws-path) gets full
+     * control of the browser and can act as the OS user that started the server. When you pass an explicit host, restrict
+     * access to the port with your network configuration, for example a firewall, a private network or an authenticating
+     * proxy. Do not rely on the `wsPath` alone.
+     *
      */
     host?: string;
 
@@ -18502,6 +18508,10 @@ export interface BrowserType<Unused = {}> {
      *
      * **NOTE** Any process or web page (including those running in Playwright) with knowledge of the `wsPath` can take
      * control of the OS user. For this reason, you should use an unguessable token when using this option.
+     *
+     * The unguessable path protects a server on the loopback interface from web pages and from other local processes. It
+     * is not a replacement for network access control: the path is a part of the URL and is sent in plain text over
+     * `ws://`. See [`host`](https://playwright.dev/docs/api/class-browsertype#browser-type-launch-server-option-host).
      *
      */
     wsPath?: string;
@@ -24856,7 +24866,7 @@ export interface Electron {
  *
  *     // Work with WebView's page as usual.
  *     const page = await webview.page();
- *     await page.waitForNavigation({ url: /.*microsoft\/playwright.*\/ });
+ *     await page.waitForURL(/.*microsoft\/playwright.*\/);
  *     console.log(await page.title());
  *   }
  *
@@ -26327,6 +26337,14 @@ export interface ConnectOptions {
    * Additional HTTP headers to be sent with web socket connect request. Optional.
    */
   headers?: { [key: string]: string; };
+
+  /**
+   * Options used to launch the browser, as passed to
+   * [browserType.launch([options])](https://playwright.dev/docs/api/class-browsertype#browser-type-launch). Only
+   * applies when the server launches a browser for each connection. The server ignores the options that it does not
+   * allow.
+   */
+  launchOptions?: LaunchOptions;
 
   /**
    * Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going

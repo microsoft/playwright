@@ -66,6 +66,8 @@ export type BrowserOptions = {
   userDataDir?: string;
   noDefaults?: boolean;
   isWebView?: boolean;
+  // Maximum time to wait for the existing pages while connecting. Slower pages are reported later.
+  maxPageAttachTime?: number;
   // Do not send Inspector.enable to detect pages without a renderer while connecting.
   noInspectorEnableOnConnect?: boolean;
 };

@@ -206,7 +206,7 @@ it.describe('element screenshot', () => {
     await page.setContent('<div style="width: 50px; height: 0"></div>');
     const div = await page.$('div');
     const error = await div.screenshot({ timeout: 3000 }).catch(e => e);
-    expect(error.message).toContain('elementHandle.screenshot: Timeout 3000ms exceeded');
+    expect(error.message).toContain('Timeout 3000ms exceeded');
     expect(error.message).toContain('element is not visible');
   });
 

@@ -40,8 +40,8 @@ export class SnapshotServer {
       status: 200,
       headers: {
         'Content-Type': 'text/html; charset=utf-8',
-        // Only allow our own bootstrap script.
-        'Content-Security-Policy': `script-src 'nonce-${renderedSnapshot.scriptNonce}'; object-src 'none'`,
+        // Only allow our own bootstrap script. Do not submit forms: the popout window has no iframe sandbox.
+        'Content-Security-Policy': `script-src 'nonce-${renderedSnapshot.scriptNonce}'; object-src 'none'; form-action 'none'`,
       },
     });
   }
