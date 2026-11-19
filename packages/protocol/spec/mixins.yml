@@ -203,11 +203,6 @@ ContextOptions:
             width: int
             height: int
         fps: int?
-        format:
-          type: enum?
-          literals:
-          - webm
-          - mp4
         showActions:
           type: object?
           properties:

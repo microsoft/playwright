@@ -17,7 +17,6 @@
 
 import { assert } from '@isomorphic/assert';
 import { rewriteErrorMessage } from '@utils/stackTrace';
-import { debugLogger } from '@utils/debugLogger';
 import { eventsHelper } from '@utils/eventsHelper';
 import * as dialog from '../dialog';
 import * as dom from '../dom';
@@ -336,16 +335,12 @@ export class CRPage implements PageDelegate {
     this._mainFrameSession._client._sendMayFail('Page.stopScreencast').catch(() => {});
   }
 
-  startMp4Recording(options: { fileName?: string, size?: types.Size, fps?: number }) {
+  startMp4Recording(options: { size?: types.Size, fps?: number }) {
     return new CRVideoRecorder(this, options);
   }
 
   async stopMp4Recordings() {
     await Promise.all([...this._videoRecorders].map(recorder => recorder.stop()));
-  }
-
-  async _mp4RecordingsStarted() {
-    await Promise.all([...this._videoRecorders].map(recorder => recorder.started.catch(e => debugLogger.log('error', e))));
   }
 
   rafCountForStablePosition(): number {
@@ -598,8 +593,7 @@ class FrameSession {
       // and we do not stall while connecting to the browser.
       promises.push(this._client._sendMayFail('Inspector.enable'));
     }
-    // Start the automatic mp4 recording before the page resumes.
-    promises.push(this._crPage._mp4RecordingsStarted().then(() => this._client.send('Runtime.runIfWaitingForDebugger')));
+    promises.push(this._client.send('Runtime.runIfWaitingForDebugger'));
     promises.push(this._firstNonInitialNavigationCommittedPromise);
     await Promise.all(promises);
 

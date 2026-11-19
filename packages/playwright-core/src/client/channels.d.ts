@@ -421,7 +421,6 @@ export type AndroidDeviceLaunchBrowserParams = {
       height: number,
     },
     fps?: number,
-    format?: 'webm' | 'mp4',
     showActions?: {
       duration?: number,
       position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right',
@@ -496,7 +495,6 @@ export type AndroidDeviceLaunchBrowserOptions = {
       height: number,
     },
     fps?: number,
-    format?: 'webm' | 'mp4',
     showActions?: {
       duration?: number,
       position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right',
@@ -928,7 +926,6 @@ export type BrowserNewContextParams = {
       height: number,
     },
     fps?: number,
-    format?: 'webm' | 'mp4',
     showActions?: {
       duration?: number,
       position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right',
@@ -1006,7 +1003,6 @@ export type BrowserNewContextOptions = {
       height: number,
     },
     fps?: number,
-    format?: 'webm' | 'mp4',
     showActions?: {
       duration?: number,
       position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right',
@@ -1087,7 +1083,6 @@ export type BrowserNewContextForReuseParams = {
       height: number,
     },
     fps?: number,
-    format?: 'webm' | 'mp4',
     showActions?: {
       duration?: number,
       position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right',
@@ -1165,7 +1160,6 @@ export type BrowserNewContextForReuseOptions = {
       height: number,
     },
     fps?: number,
-    format?: 'webm' | 'mp4',
     showActions?: {
       duration?: number,
       position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right',
@@ -1285,7 +1279,6 @@ export type BrowserContextInitializer = {
         height: number,
       },
       fps?: number,
-      format?: 'webm' | 'mp4',
       showActions?: {
         duration?: number,
         position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right',
@@ -1945,7 +1938,6 @@ export type BrowserTypeLaunchPersistentContextParams = {
       height: number,
     },
     fps?: number,
-    format?: 'webm' | 'mp4',
     showActions?: {
       duration?: number,
       position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right',
@@ -2036,7 +2028,6 @@ export type BrowserTypeLaunchPersistentContextOptions = {
       height: number,
     },
     fps?: number,
-    format?: 'webm' | 'mp4',
     showActions?: {
       duration?: number,
       position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right',

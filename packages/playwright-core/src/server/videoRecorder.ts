@@ -90,18 +90,12 @@ export function startAutomaticVideoRecording(page: Page) {
   const recordVideo = page.browserContext._options.recordVideo;
   if (!recordVideo)
     return;
-  if (recordVideo.showActions)
-    page.screencast.showActions(recordVideo.showActions);
+  const recorder = new VideoRecorder(page.screencast);
+  if (page.browserContext._options.recordVideo?.showActions)
+    page.screencast.showActions(page.browserContext._options.recordVideo?.showActions);
   const dir = recordVideo.dir ?? page.browserContext._browser.options.artifactsDir;
-  const format = recordVideo.format ?? 'webm';
-  const options = { size: recordVideo.size, fps: recordVideo.fps, fileName: path.join(dir, `${page.guid}.${format}`) };
-  if (format === 'mp4') {
-    if (!page.delegate.startMp4Recording)
-      throw new Error(kMp4NotSupportedError);
-    page.video = page.delegate.startMp4Recording(options).artifact;
-    return;
-  }
-  page.video = new VideoRecorder(page.screencast).start(options);
+  const artifact = recorder.start({ size: recordVideo.size, fps: recordVideo.fps, fileName: path.join(dir, page.guid + '.webm') });
+  page.video = artifact;
 }
 
 class FfmpegVideoRecorder {

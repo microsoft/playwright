@@ -42,10 +42,10 @@ export class CRVideoRecorder {
   private _stopRequested = new ManualPromise<void>();
   private _result: Promise<Error | undefined>;
 
-  constructor(crPage: CRPage, options: { fileName?: string, size?: types.Size, fps?: number }) {
+  constructor(crPage: CRPage, options: { size?: types.Size, fps?: number }) {
     this._crPage = crPage;
     const browserContext = crPage._browserContext;
-    const outputFile = options.fileName ?? path.join(browserContext._browser.options.artifactsDir, createGuid() + '.mp4');
+    const outputFile = path.join(browserContext._browser.options.artifactsDir, createGuid() + '.mp4');
     this.artifact = new Artifact(browserContext, outputFile);
     crPage._videoRecorders.add(this);
     this.started.catch(() => {});
