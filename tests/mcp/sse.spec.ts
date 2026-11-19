@@ -41,7 +41,7 @@ const test = baseTest.extend<{ serverEndpoint: (options?: { args?: string[], noP
       ], {
         stdio: 'pipe',
         env: inheritAndCleanEnv({
-          DEBUG: 'pw:mcp:test',
+          DEBUG: 'pw:mcp:test,pw:browser',
           DEBUG_COLORS: '0',
           DEBUG_HIDE_DATE: '1',
         }),
@@ -208,6 +208,9 @@ test('sse transport browser lifecycle (persistent)', async ({ serverEndpoint, se
     arguments: { function: '() => { localStorage.a = 42; }' },
   });
   await client1.close();
+  // The server closes the browser after the session is gone. Wait for the browser process to exit,
+  // so that the next session does not start a browser on the same profile too early.
+  await expect.poll(() => stderr()).toContain('<gracefully close end>');
 
   const transport2 = new SSEClientTransport(new URL('/sse', url));
   const client2 = new Client({ name: 'test', version: '1.0.0' });

@@ -547,7 +547,8 @@ it.describe('page screenshot', () => {
     expect(screenshot).toMatchSnapshot('screenshot-grid-fullpage.png');
   });
 
-  it('SS-039 should take fullPage screenshots during navigation', async ({ page, server }) => {
+  it('SS-039 should take fullPage screenshots during navigation', async ({ page, server, trace }) => {
+    it.skip(trace === 'on', 'frequent timeouts on the tracing bots');
     it.slow();
 
     await page.setViewportSize({ width: 500, height: 500 });

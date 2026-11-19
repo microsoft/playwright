@@ -169,7 +169,8 @@ test('CD-004 should connect when an existing page has been discarded', {
     await discards.goto('chrome://discards/');
     // Discarding replaces the tab's WebContents, but the url in the table survives.
     const row = discards.getByRole('row', { name: victimUrl });
-    await row.getByText('Urgent Discard').click();
+    // This click hangs on the macOS bots sometimes. The timeout makes the error show the call log.
+    await row.getByText('Urgent Discard').click({ timeout: 10000 });
     await expect(row).toContainText('discarded');
     // The renderer process is shut down asynchronously after the discard.
     await discards.waitForTimeout(3000);
