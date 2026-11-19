@@ -690,7 +690,6 @@ steps.push(new EsbuildStep({
   entryPoints: [filePath('packages/playwright-core/src/coreBundle.ts')],
   outfile: filePath('packages/playwright-core/lib/coreBundle.js'),
   external: [
-    '../../api.json',
     './help.json',
     // TODO: await import plugin is incompatible with esbuild, remove it
     'electron',
