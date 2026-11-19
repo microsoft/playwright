@@ -3718,6 +3718,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `LO-197` | `library/locator-highlight.spec.ts` | Page.hideHighlight clears all locator highlights |
 | `LO-198` | `library/locator-highlight.spec.ts` | highlight should work with a custom selector engine that runs in the main world |
 | `LO-199` | `library/locator-highlight.spec.ts` | highlight should resolve relative to the frame of the locator |
+| `LO-200` | `page/locator-wait-for-function.spec.ts` | should throw when predicate rejects |
 
 ### MC — Multiple clients
 

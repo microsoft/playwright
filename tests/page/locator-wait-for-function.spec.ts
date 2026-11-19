@@ -73,12 +73,16 @@ it('LO-188 should wait for element to appear and survive rerender', async ({ pag
   await page.locator('#target').waitForFunction(element => element.textContent === '3');
 });
 
-it('LO-189 should throw when predicate throws', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44217' } }, async ({ page }) => {
+it('LO-189 should throw when predicate throws', async ({ page }) => {
   await page.setContent('<div id=target>no</div>');
   const error = await page.locator('#target').waitForFunction(() => {
     throw new Error('oh my');
   }).catch(e => e);
   expect(error.message).toContain('oh my');
+});
+
+it('LO-200 should throw when predicate rejects', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44217' } }, async ({ page }) => {
+  await page.setContent('<div id=target>no</div>');
   await expect(page.locator('#target').waitForFunction(async () => {
     throw new Error('async oh my');
   })).rejects.toThrow('async oh my');
