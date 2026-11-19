@@ -434,7 +434,7 @@ export async function toHaveScreenshot(
     }
 
     if (helper.updateSnapshots === 'changed' || helper.updateSnapshots === 'all') {
-      if (actual)
+      if (actual && !(timedOut && previous))
         return writeFiles(actual);
       let header = formatMatcherMessage(this.utils, { promise: this.promise, isNot: this.isNot, matcherName: 'toHaveScreenshot', locator: locator?.toString(), expectation: 'expected', timeout, timedOut });
       header += '  Failed to re-generate expected.\n';
