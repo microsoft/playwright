@@ -2577,6 +2577,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `EX-326` | `page/expect-with-snapshot.spec.ts` | matchers that should not include an aria snapshot › toMatchAriaSnapshot failure has no extra aria snapshot |
 | `EX-327` | `page/matchers.misc.spec.ts` | should outlive frame navigation |
 | `EX-328` | `page/matchers.misc.spec.ts` | should print no-locator-resolved error when locator matcher did not resolve to any element |
+| `EX-329` | `page/expect-misc.spec.ts` | toHaveURL › resolve predicate after a navigation is aborted |
 
 ### FA — Favicon
 

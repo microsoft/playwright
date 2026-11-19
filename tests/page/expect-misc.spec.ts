@@ -406,6 +406,22 @@ Timeout:  10000ms
     await expectPromise;
   });
 
+  test('EX-329 resolve predicate after a navigation is aborted', async ({ page, server }) => {
+    await page.goto(server.EMPTY_PAGE);
+    await page.evaluate(() => {
+      window.location.href = '/one-style.html';
+      setTimeout(() => {
+        const firstNavigationBlockedUntil = Date.now() + 300;
+        while (Date.now() < firstNavigationBlockedUntil) {}
+        const link = document.createElement('a');
+        link.href = '/title.html';
+        document.body.append(link);
+        link.click();
+      }, 0);
+    });
+    await expect(page).toHaveURL(url => url.pathname === '/title.html');
+  });
+
   test('EX-221 support ignoreCase', async ({ page }) => {
     await page.goto('data:text/html,<div>A</div>');
     await expect(page).toHaveURL('DATA:teXT/HTml,<div>a</div>', { ignoreCase: true });
