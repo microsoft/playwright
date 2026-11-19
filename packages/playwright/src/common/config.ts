@@ -50,7 +50,7 @@ export class FullConfigInternal {
   readonly projects: FullProjectInternal[] = [];
   readonly singleTSConfigPath?: string;
   readonly captureGitInfo: Config['captureGitInfo'];
-  readonly retryStrategy: 'immediate' | 'isolated';
+  readonly retryStrategy: 'immediate' | 'deferred' | 'isolated';
   defineConfigWasUsed = false;
 
   globalSetups: string[] = [];
