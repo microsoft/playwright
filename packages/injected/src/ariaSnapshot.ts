@@ -298,6 +298,9 @@ function toAriaNode(element: Element, options: InternalOptions, nameSourceElemen
   if (roleUtils.kAriaPressedRoles.includes(role))
     result.pressed = roleUtils.getAriaPressed(element);
 
+  if (roleUtils.kAriaRequiredRoles.includes(role))
+    result.required = roleUtils.getAriaRequired(element);
+
   if (roleUtils.kAriaSelectedRoles.includes(role))
     result.selected = roleUtils.getAriaSelected(element);
 
@@ -399,6 +402,8 @@ function matchesNode(node: aria.AriaNode | string, template: aria.AriaTemplateNo
     return false;
   if (template.pressed !== undefined && template.pressed !== node.pressed)
     return false;
+  if (template.required !== undefined && template.required !== node.required)
+    return false;
   if (template.selected !== undefined && template.selected !== node.selected)
     return false;
   if (!matchesStringOrRegex(node.name, template.name))
@@ -490,6 +495,8 @@ export function renderAriaTreeAsJSON(ariaSnapshot: AriaSnapshot, publicOptions: 
       node.level = ariaNode.level;
     if (ariaNode.pressed === 'mixed' || ariaNode.pressed === true)
       node.pressed = ariaNode.pressed;
+    if (ariaNode.required)
+      node.required = true;
     if (ariaNode.selected === true)
       node.selected = true;
     if (ariaNode.ref) {

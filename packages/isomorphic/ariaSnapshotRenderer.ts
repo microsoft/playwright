@@ -66,6 +66,8 @@ export function renderAriaSnapshotAsYaml(snapshot: AriaSnapshotJSON, options: Ar
       key += ` [pressed=mixed]`;
     if (node.pressed === true)
       key += ` [pressed]`;
+    if (node.required)
+      key += ` [required]`;
     if (node.selected === true)
       key += ` [selected]`;
     if (node.ariaHidden)

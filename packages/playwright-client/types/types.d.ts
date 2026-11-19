@@ -14723,7 +14723,7 @@ export interface Locator {
    * - `text` Text content of the element when it is the only child, or the content of a static text fragment.
    * - `children` Child nodes and text fragments.
    * - Boolean and value properties for element state flags: `checked`, `disabled`, `expanded`, `active`, `invalid`,
-   *   `level`, `pressed` and `selected`.
+   *   `level`, `pressed`, `required` and `selected`.
    * - Additional element properties, for example `url` for links and `placeholder` for text boxes.
    * - `ref` Element reference for AI-optimized snapshots.
    * - `cursor` Set to `"pointer"` for clickable elements in AI-optimized snapshots.

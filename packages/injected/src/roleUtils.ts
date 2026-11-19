@@ -1159,6 +1159,16 @@ export function getReadonly(element: Element): boolean | 'error' {
   return 'error';
 }
 
+export const kAriaRequiredRoles = ['checkbox', 'combobox', 'gridcell', 'listbox', 'radiogroup', 'spinbutton', 'textbox', 'tree', 'columnheader', 'rowheader', 'searchbox', 'switch', 'treegrid'];
+export function getAriaRequired(element: Element): boolean {
+  // https://www.w3.org/TR/wai-aria-1.2/#aria-required
+  if (['INPUT', 'TEXTAREA', 'SELECT'].includes(elementSafeTagName(element)) && element.hasAttribute('required'))
+    return true;
+  if (kAriaRequiredRoles.includes(getAriaRole(element) || ''))
+    return getAriaBoolean(element.getAttribute('aria-required')) === true;
+  return false;
+}
+
 export const kAriaPressedRoles = ['button'];
 export function getAriaPressed(element: Element): boolean | 'mixed' {
   // https://www.w3.org/TR/wai-aria-1.2/#aria-pressed
