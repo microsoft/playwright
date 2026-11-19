@@ -189,9 +189,9 @@ export class Dispatcher {
         this._queue.unshift(result.remainingJob);
         this._updateCounterForWorkerHash(result.remainingJob.workerHash, +1);
       }
-      if (result.isolatedRetriesJob) {
-        this._queue.push(result.isolatedRetriesJob);
-        this._updateCounterForWorkerHash(result.isolatedRetriesJob.workerHash, +1);
+      if (result.deferredRetriesJob) {
+        this._queue.push(result.deferredRetriesJob);
+        this._updateCounterForWorkerHash(result.deferredRetriesJob.workerHash, +1);
       }
     }
   }
@@ -315,7 +315,7 @@ export class Dispatcher {
 }
 
 class JobDispatcher {
-  jobResult = new ManualPromise<{ remainingJob?: TestGroup, isolatedRetriesJob?: TestGroup, didFail: boolean }>();
+  jobResult = new ManualPromise<{ remainingJob?: TestGroup, deferredRetriesJob?: TestGroup, didFail: boolean }>();
 
   readonly job: TestGroup;
   private _testRun: TestRun;
@@ -582,22 +582,26 @@ class JobDispatcher {
     }
 
     const remaining = [...this._remainingByTestId.values()];
-    const isolatedRetries: testNs.TestCase[] = [];
+    const deferredRetries: testNs.TestCase[] = [];
     for (const test of retryCandidates) {
       if (test.results.length < test.retries + 1) {
         // Immediate retries run together with the remaining tests, in a single job.
         if (this._testRun.config.retryStrategy === 'immediate')
           remaining.push(test);
         else
-          isolatedRetries.push(test);
+          deferredRetries.push(test);
       }
     }
 
-    // This job is over, we will schedule new jobs for the remaining tests and isolated retries.
+    // This job is over, we will schedule new jobs for the remaining tests and deferred retries.
     const remainingJob = remaining.length ? { ...this.job, tests: remaining } : undefined;
     // Isolated retries run one at a time, after all other jobs have finished.
-    const isolatedRetriesJob = isolatedRetries.length ? { ...this.job, tests: isolatedRetries, locks: [...new Set([...this.job.locks, exclusiveLock])] } : undefined;
-    this._finished({ didFail: true, remainingJob, isolatedRetriesJob });
+    const deferredRetriesJob = deferredRetries.length ? {
+      ...this.job,
+      tests: deferredRetries,
+      locks: this._testRun.config.retryStrategy === 'isolated' ? [...new Set([...this.job.locks, exclusiveLock])] : this.job.locks,
+    } : undefined;
+    this._finished({ didFail: true, remainingJob, deferredRetriesJob });
   }
 
   onExit(data: ProcessExitData) {
@@ -607,7 +611,7 @@ class JobDispatcher {
     this._onDone({ skipTestsDueToSetupFailure: [], fatalErrors: [], unexpectedExitError });
   }
 
-  private _finished(result: { remainingJob?: TestGroup, isolatedRetriesJob?: TestGroup, didFail: boolean }) {
+  private _finished(result: { remainingJob?: TestGroup, deferredRetriesJob?: TestGroup, didFail: boolean }) {
     eventsHelper.removeEventListeners(this._listeners);
     this.jobResult.resolve(result);
   }

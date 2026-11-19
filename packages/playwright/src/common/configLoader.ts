@@ -242,8 +242,8 @@ function validateConfig(file: string, config: Config) {
   }
 
   if ('retryStrategy' in config && config.retryStrategy !== undefined) {
-    if (typeof config.retryStrategy !== 'string' || !['immediate', 'isolated'].includes(config.retryStrategy))
-      throw errorWithFile(file, `config.retryStrategy must be one of "immediate" or "isolated"`);
+    if (typeof config.retryStrategy !== 'string' || !['immediate', 'deferred', 'isolated'].includes(config.retryStrategy))
+      throw errorWithFile(file, `config.retryStrategy must be one of "immediate", "deferred" or "isolated"`);
   }
 
   if ('tsconfig' in config && config.tsconfig !== undefined) {

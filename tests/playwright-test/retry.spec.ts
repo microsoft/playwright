@@ -14,7 +14,10 @@
  * limitations under the License.
  */
 
+import { iso } from '../../packages/playwright-core/lib/coreBundle';
 import { test, expect } from './playwright-test-fixtures';
+
+const { ManualPromise } = iso;
 
 test('should retry failures', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -331,42 +334,100 @@ test('should run isolated retries one by one in a single worker', async ({ runIn
   expect(retryWorkers[0]).toBe(retryWorkers[1]);
 });
 
-test('should not defer remaining tests with isolated retries', async ({ runInlineTest }) => {
+test('should run deferred retries alongside first attempts and other retries', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44226' } }, async ({ runInlineTest, server }) => {
+  const firstAttempt = new ManualPromise<void>();
+  const retryA = new ManualPromise<void>();
+  const retryC = new ManualPromise<void>();
+  server.setRoute('/first-attempt', async (req, res) => {
+    firstAttempt.resolve();
+    await retryA;
+    res.end();
+  });
+  server.setRoute('/retry-a', async (req, res) => {
+    await firstAttempt;
+    retryA.resolve();
+    await retryC;
+    res.end();
+  });
+  server.setRoute('/retry-c', async (req, res) => {
+    retryC.resolve();
+    await retryA;
+    res.end();
+  });
+
   const result = await runInlineTest({
     'playwright.config.js': `
-      module.exports = { retries: 1, retryStrategy: 'isolated' };
+      module.exports = { retries: 1, retryStrategy: 'deferred' };
     `,
     'a.test.js': `
       import { test, expect } from '@playwright/test';
-      test('a1', ({}, testInfo) => {
-        console.log('\\n%%a1-' + testInfo.retry);
+      test('a', async ({ request }, testInfo) => {
+        console.log('\\n%%a-' + testInfo.retry);
         expect(testInfo.retry).toBe(1);
-      });
-      test('a2', ({}, testInfo) => {
-        console.log('\\n%%a2-' + testInfo.retry);
+        await request.get('${server.PREFIX}/retry-a');
       });
     `,
     'b.test.js': `
-      import { test, expect } from '@playwright/test';
-      test('b1', ({}, testInfo) => {
-        console.log('\\n%%b1-' + testInfo.retry);
-        expect(testInfo.retry).toBe(1);
+      import { test } from '@playwright/test';
+      test('b', async ({ request }) => {
+        await request.get('${server.PREFIX}/first-attempt');
       });
     `,
-  }, { workers: 1 });
+    'c.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('c', async ({ request }, testInfo) => {
+        console.log('\\n%%c-' + testInfo.retry);
+        expect(testInfo.retry).toBe(1);
+        await request.get('${server.PREFIX}/retry-c');
+      });
+    `,
+  }, { workers: 2 });
   expect(result.exitCode).toBe(0);
   expect(result.flaky).toBe(2);
   expect(result.passed).toBe(1);
-  // After "a1" fails, "a2" keeps its priority in the queue and runs
-  // before "b1", while the retry of "a1" is deferred to the end.
-  expect(result.outputLines).toEqual([
-    'a1-0',
-    'a2-0',
-    'b1-0',
-    'a1-1',
-    'b1-1',
-  ]);
+  expect(result.outputLines).toEqual(['a-0', 'c-0', 'a-1', 'c-1']);
 });
+
+for (const retryStrategy of ['isolated', 'deferred']) {
+  test(`should not defer remaining tests with ${retryStrategy} retries`, { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44226' } }, async ({ runInlineTest }) => {
+    const result = await runInlineTest({
+      'playwright.config.js': `
+        module.exports = { retries: 2, retryStrategy: '${retryStrategy}' };
+      `,
+      'a.test.js': `
+        import { test, expect } from '@playwright/test';
+        test('a1', ({}, testInfo) => {
+          console.log('\\n%%a1-' + testInfo.retry);
+          expect(testInfo.retry).toBe(2);
+        });
+        test('a2', ({}, testInfo) => {
+          console.log('\\n%%a2-' + testInfo.retry);
+        });
+      `,
+      'b.test.js': `
+        import { test, expect } from '@playwright/test';
+        test('b1', ({}, testInfo) => {
+          console.log('\\n%%b1-' + testInfo.retry);
+          expect(testInfo.retry).toBe(2);
+        });
+      `,
+    }, { workers: 1 });
+    expect(result.exitCode).toBe(0);
+    expect(result.flaky).toBe(2);
+    expect(result.passed).toBe(1);
+    // After "a1" fails, "a2" keeps its priority in the queue and runs
+    // before "b1", while the retry of "a1" is deferred to the end.
+    expect(result.outputLines).toEqual([
+      'a1-0',
+      'a2-0',
+      'b1-0',
+      'a1-1',
+      'b1-1',
+      'a1-2',
+      'b1-2',
+    ]);
+  });
+}
 
 test('should retry based on error condition', async ({ runInlineTest }) => {
   const result = await runInlineTest({
