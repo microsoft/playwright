@@ -38,6 +38,7 @@ export function decorateProgram(program: Command) {
       .option('--device <device>', 'emulate a specific device, for example "iPhone 15"')
       .option('--mobile', 'emulate a generic mobile device (Pixel 10 for Chromium, iPhone 17 for WebKit)')
       .option('--extension', 'run with the extension')
+      .option('--profile-dir-name <name>', 'name of the profile directory to connect to when running with the extension')
       .option('--no-tab-group', 'do not group the tabs of the session when running with the extension')
       .option('--session-color <color>', 'color of the tab group of the session when running with the extension')
       .option('--browser <name>', 'browser to use (chromium, chrome, firefox, webkit)')

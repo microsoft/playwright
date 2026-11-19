@@ -46,6 +46,7 @@ type AttachOptions = {
   cdp?: string;
   endpoint?: string;
   extension?: boolean | string;
+  'profile-dir-name'?: string;
   'session-color'?: string;
   'tab-group'?: boolean;
 };
@@ -188,7 +189,11 @@ export async function program(options?: { args?: MinimistArgs, embedderVersion?:
         output.errorAttachNoTarget();
       const attachSessionName = explicitSessionName(args.session as string) ?? attachTarget ?? cdpChannel ?? extensionChannel ?? sessionName;
       args.session = attachSessionName;
-      const { pid } = await startSession(attachSessionName, registry, clientInfo, args, 'attach');
+      const { pid } = await startSession(attachSessionName, registry, clientInfo, args, 'attach').catch(async (e: Error) => {
+        if (!cdpChannel && !args.extension)
+          throw e;
+        return output.errorAttachToChannel(e.message, await listChannelSessions());
+      });
       const newEntry = await registry.loadEntry(clientInfo, attachSessionName);
       const toolText = await runInSessionOrStop(newEntry, clientInfo, { _: ['snapshot'], filename: '<auto>' }, output);
       output.attach(attachSessionName, pid, targetName, toolText);

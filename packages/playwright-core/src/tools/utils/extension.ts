@@ -22,19 +22,6 @@ export const playwrightExtensionId = 'mmlmfjhmonkocbjadbfplnigmagldckm';
 
 export const playwrightExtensionInstallUrl = `https://chromewebstore.google.com/detail/playwright-extension/${playwrightExtensionId}`;
 
-export async function findPlaywrightExtensionProfile(userDataDir: string): Promise<string | undefined> {
-  const profiles = await listProfileDirectories(userDataDir);
-  const lastUsed = await readLastUsedProfile(userDataDir);
-  const ordered = lastUsed && profiles.includes(lastUsed)
-    ? [lastUsed, ...profiles.filter(profile => profile !== lastUsed)]
-    : profiles;
-  for (const profile of ordered) {
-    if (await isExtensionInstalledInProfile(path.join(userDataDir, profile)))
-      return profile;
-  }
-  return undefined;
-}
-
 async function listProfileDirectories(userDataDir: string): Promise<string[]> {
   let entries: string[];
   try {
@@ -51,18 +38,44 @@ function profileRank(profile: string): number {
   return profile === 'Default' ? -1 : parseInt(profile.slice('Profile '.length), 10);
 }
 
-async function readLastUsedProfile(userDataDir: string): Promise<string | undefined> {
+async function readLocalStateProfile(userDataDir: string): Promise<any> {
   try {
     const localState = JSON.parse(await fs.promises.readFile(path.join(userDataDir, 'Local State'), 'utf-8'));
-    const lastUsed = localState?.profile?.last_used;
-    return typeof lastUsed === 'string' ? lastUsed : undefined;
+    return localState?.profile;
   } catch {
     return undefined;
   }
 }
 
-export async function isPlaywrightExtensionInstalled(userDataDir: string): Promise<boolean> {
-  return await findPlaywrightExtensionProfile(userDataDir) !== undefined;
+export type BrowserProfile = {
+  dirName: string;
+  name: string;
+  extensionInstalled: boolean;
+};
+
+export async function listBrowserProfiles(userDataDir: string): Promise<BrowserProfile[]> {
+  const [dirNames, localStateProfile] = await Promise.all([
+    listProfileDirectories(userDataDir),
+    readLocalStateProfile(userDataDir),
+  ]);
+  return await Promise.all(dirNames.map(async dirName => ({
+    dirName,
+    name: profileDisplayName(localStateProfile?.info_cache?.[dirName]) ?? dirName,
+    extensionInstalled: await isExtensionInstalledInProfile(path.join(userDataDir, dirName)),
+  })));
+}
+
+function profileDisplayName(info: any): string | undefined {
+  const name = nonEmptyString(info?.name);
+  const email = nonEmptyString(info?.user_name);
+  if (!email)
+    return name;
+  const accountName = nonEmptyString(info?.gaia_name) ?? name;
+  return accountName ? `${accountName} (${email})` : email;
+}
+
+function nonEmptyString(value: unknown): string | undefined {
+  return typeof value === 'string' && value ? value : undefined;
 }
 
 export async function isExtensionInstalledInProfile(profileDir: string): Promise<boolean> {

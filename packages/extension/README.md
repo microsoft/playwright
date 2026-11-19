@@ -97,7 +97,7 @@ By default, the connected tab becomes active and the browser window is focused. 
 
 ### Selecting a Chrome Profile
 
-If the extension is installed in several Chrome profiles, the connection is made to the one you used last. To always connect to a specific profile, pass the name of its directory, the last component of "Profile Path" at `chrome://version`, via `--profile-dir-name`:
+The connection is made to the `Default` profile. To connect to another profile, pass the name of its directory, the last component of "Profile Path" at `chrome://version`, via `--profile-dir-name`:
 
 ```json
 {

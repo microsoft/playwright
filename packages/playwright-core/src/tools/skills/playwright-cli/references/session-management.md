@@ -111,6 +111,14 @@ playwright-cli open https://example.com --profile=/path/to/profile
 
 Use `attach` to connect to a browser that is already running, instead of launching a new one.
 
+Before you attach, run `list --all` to know what you attach to:
+
+```bash
+playwright-cli list --all
+```
+
+The section "Browsers available to attach" shows each Chrome and Edge that is installed, and if its remote debugging is on. The section "Browser profiles available to attach" shows each profile with the name that the browser shows for it (for a signed-in profile, the account name and the email), and if the Playwright Extension is installed in it. Each entry gives the command to attach to it. When `attach --cdp=<channel>` or `attach --extension` fails, the error shows the same two sections.
+
 ### Attach by channel name
 
 Connect to a running Chrome or Edge instance by its channel name. The browser must have remote debugging enabled — navigate to `chrome://inspect/#remote-debugging` in the target browser and check "Allow remote debugging for this browser instance".
@@ -151,6 +159,12 @@ playwright-cli attach --extension=msedge
 ```
 
 When the extension is not installed in that browser, `attach` fails with `Playwright Extension not found in "<profile path>"`. Try the other browser, or ask the user to install the extension.
+
+A browser can have several profiles, and the extension is installed separately in each profile. Without `--profile-dir-name`, `attach` connects to the `Default` profile. Find the profiles in the output of `list --all`. When there are several profiles, ask the user which one to use:
+
+```bash
+playwright-cli attach --extension=chrome --profile-dir-name="Profile 1"
+```
 
 The session controls only its own tabs: the tabs that the user picked on the connect page, and the tabs that the session opened. The extension puts them into a tab group. Give the session a name for the task, and optionally a color:
 

@@ -14,7 +14,11 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
+import path from 'path';
+
 import { test, expect } from './harness';
+import { extensionId } from './extension-fixtures';
 
 test('attach --extension', async ({ user, cli, browserWithExtension, server }) => {
   const connectPage = user.waitForConnectPage();
@@ -46,6 +50,23 @@ test('attach --extension gives the name and the color of the session to the tab 
 
   await cli(['--session=my session', 'goto', user.urlOf('Alpha')]);
   await expect.poll(user.groups).toEqual([{ title: 'my session', color: 'red', tabs: ['Alpha'] }]);
+});
+
+test('attach --extension --profile-dir-name opens the connect page in that profile', async ({ user, cli, browserWithExtension }) => {
+  await fs.promises.mkdir(path.join(browserWithExtension.userDataDir, 'Profile 1', 'Extensions', extensionId), { recursive: true });
+
+  const connectPage = user.waitForConnectPage();
+  const attached = cli(['attach', '--extension=chromium', '--profile-dir-name=Profile 1'], {
+    env: { PWTEST_EXTENSION_USER_DATA_DIR: browserWithExtension.userDataDir },
+  });
+  await user.allow(await connectPage);
+  await attached;
+
+  expect(await browserWithExtension.chromeStubArgs()).toEqual([[
+    `--user-data-dir=${browserWithExtension.userDataDir}`,
+    '--profile-directory=Profile 1',
+    expect.stringContaining(`chrome-extension://${extensionId}/connect.html?`),
+  ]]);
 });
 
 test('detach --close-tabs closes the tabs of the session', async ({ user, cli, browserWithExtension }) => {

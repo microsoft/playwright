@@ -70,7 +70,7 @@ const testWithOldExtension = test.extend({
 });
 
 // Creates a user data directory with the given profiles.
-async function createUserDataDir(profiles: Record<string, Profile>, options: { lastUsedProfile?: string } = {}): Promise<string> {
+async function createUserDataDir(profiles: Record<string, Profile>): Promise<string> {
   const userDataDir = test.info().outputPath('user-data-dir');
   for (const [name, profile] of Object.entries(profiles)) {
     await fs.mkdir(path.join(userDataDir, name), { recursive: true });
@@ -79,8 +79,6 @@ async function createUserDataDir(profiles: Record<string, Profile>, options: { l
     if (profile.preferences)
       await fs.writeFile(path.join(userDataDir, name, 'Preferences'), JSON.stringify(profile.preferences));
   }
-  if (options.lastUsedProfile)
-    await fs.writeFile(path.join(userDataDir, 'Local State'), JSON.stringify({ profile: { last_used: options.lastUsedProfile } }));
   return userDataDir;
 }
 
@@ -321,45 +319,13 @@ test('PLAYWRIGHT_MCP_PROFILE_DIR_NAME gives the profile of the extension', async
   expect(await client.snapshot()).toContain('Page Alpha');
 });
 
-test('client starts the profile that has the extension', {
-  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41916' },
-}, async ({ chromeArgs }) => {
-  const userDataDir = await createUserDataDir({
-    'Default': {},
-    'Profile 1': { hasExtension: true },
-  });
-
-  const args = await chromeArgs({ env: { PWTEST_EXTENSION_USER_DATA_DIR: userDataDir } });
-  expect(args).toContain('--profile-directory=Profile 1');
-});
-
-test('client ignores the preferences that an uninstalled extension left in a profile', {
-  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-mcp/issues/1712' },
-}, async ({ chromeArgs }) => {
-  const userDataDir = await createUserDataDir({
-    'Default': {
-      preferences: {
-        extensions: { settings: { [extensionId]: {} } },
-        protection: { macs: { extensions: { settings: { [extensionId]: 'DEADBEEF' } } } },
-        updateclientdata: { apps: { [extensionId]: { pv: '0.3.0' } } },
-      },
-    },
-    'Profile 1': {
-      preferences: { extensions: { settings: { [extensionId]: { path: '/tmp/extension', location: 4 } } } },
-    },
-  }, { lastUsedProfile: 'Default' });
-
-  const args = await chromeArgs({ env: { PWTEST_EXTENSION_USER_DATA_DIR: userDataDir } });
-  expect(args).toContain('--profile-directory=Profile 1');
-});
-
 test('--profile-dir-name selects one of the profiles that have the extension', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-mcp/issues/1732' },
 }, async ({ chromeArgs }) => {
   const userDataDir = await createUserDataDir({
     'Default': { hasExtension: true },
     'Profile 1': { hasExtension: true },
-  }, { lastUsedProfile: 'Default' });
+  });
 
   const args = await chromeArgs({ args: [`--user-data-dir=${userDataDir}`, '--profile-dir-name=Profile 1'] });
   expect(args).toEqual([`--user-data-dir=${userDataDir}`, '--profile-directory=Profile 1', connectPageUrl]);
@@ -372,15 +338,25 @@ test('--executable-path skips the check that the profile has the extension', {
   expect(args).toContainEqual(connectPageUrl);
 });
 
-test('client reports an error when the profile does not have the extension', async ({ startClient, server }) => {
-  const userDataDir = test.info().outputPath('empty-profile');
+test('client reports an error when the profile does not have the extension', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-mcp/issues/1712' },
+}, async ({ startClient, server }) => {
+  const userDataDir = await createUserDataDir({
+    'Default': {
+      preferences: {
+        extensions: { settings: { [extensionId]: {} } },
+        protection: { macs: { extensions: { settings: { [extensionId]: 'DEADBEEF' } } } },
+        updateclientdata: { apps: { [extensionId]: { pv: '0.3.0' } } },
+      },
+    },
+  });
   const { client } = await startClient({
     args: ['--extension'],
     env: { PWTEST_EXTENSION_USER_DATA_DIR: userDataDir },
   });
 
   expect(await client.callTool({ name: 'browser_navigate', arguments: { url: server.HELLO_WORLD } })).toHaveResponse({
-    error: expect.stringContaining(`Playwright Extension not found in "${userDataDir}"`),
+    error: expect.stringContaining(`Playwright Extension not found in "${path.join(userDataDir, 'Default')}"`),
     isError: true,
   });
 });
@@ -394,7 +370,7 @@ test('--browser selects the user data directory of that channel', {
   });
 
   expect(await client.callTool({ name: 'browser_navigate', arguments: { url: server.HELLO_WORLD } })).toHaveResponse({
-    error: expect.stringContaining(`Playwright Extension not found in "${defaultUserDataDirForChannel('chrome-dev')}"`),
+    error: expect.stringContaining(`Playwright Extension not found in "${path.join(defaultUserDataDirForChannel('chrome-dev')!, 'Default')}"`),
     isError: true,
   });
 });

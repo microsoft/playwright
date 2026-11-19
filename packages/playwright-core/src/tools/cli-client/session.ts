@@ -142,6 +142,8 @@ export class Session {
       args.push(`--idle-timeout=${cliArgs['idle-timeout']}`);
     if (cliArgs.extension)
       args.push('--extension');
+    if (cliArgs['profile-dir-name'])
+      args.push(`--profile-dir-name=${cliArgs['profile-dir-name']}`);
     if (cliArgs['tab-group'] === false)
       args.push('--no-tab-group');
     if (cliArgs['session-color'])
