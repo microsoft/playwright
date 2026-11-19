@@ -37,6 +37,10 @@ Usage:
       Single-revision mode: download, extract and check just that build,
       showing full output of the check command. Exits 0 if good, 1 if bad.
 
+A revision is a trunk commit position (1739869) or a Chrome version
+(159.0.8154.6). A version stands for the position that its release branch
+was cut from.
+
 Options:
   --good <rev>       Known good revision (required for bisect mode).
   --bad <rev>        Known bad revision (required for bisect mode).
@@ -65,7 +69,16 @@ function detectPlatform() {
 
 const PLATFORM = detectPlatform();
 
-function parseRevision(value, name) {
+async function resolveRevision(value, name) {
+  if (/^\d+(\.\d+){3}$/.test(value)) {
+    const url = `https://chromiumdash.appspot.com/fetch_version?version=${value}`;
+    const response = await fetch(url);
+    const position = response.ok ? (await response.json()).chromium_main_branch_position : undefined;
+    if (!Number.isInteger(position))
+      throw new Error(`Cannot find the position of ${name} version ${value}, see ${url}`);
+    console.log(`${name} version ${value} is cut from r${position}`);
+    return position;
+  }
   const rev = Number(String(value).replace(/^r/, ''));
   if (!Number.isInteger(rev) || rev <= 0)
     throw new Error(`Invalid ${name} revision: ${value}`);
@@ -178,7 +191,7 @@ if (options.help) {
 
 // Single-revision mode.
 if (positionals.length === 1) {
-  const rev = parseRevision(positionals[0], 'requested');
+  const rev = await resolveRevision(positionals[0], 'requested');
   process.exit(isGood(rev, options.check, { verbose: true }) ? 0 : 1);
 }
 if (positionals.length > 1)
@@ -186,9 +199,11 @@ if (positionals.length > 1)
 
 if (!options.good || !options.bad)
   throw new Error('Both --good and --bad are required for bisect mode. See --help.');
-const good = parseRevision(options.good, '--good');
-const bad = parseRevision(options.bad, '--bad');
-if (good >= bad)
+const good = await resolveRevision(options.good, '--good');
+const bad = await resolveRevision(options.bad, '--bad');
+if (good === bad)
+  throw new Error(`--good and --bad are the same revision r${good}. Two versions of one release branch differ in the commits of that branch, which have no per-commit builds.`);
+if (good > bad)
   throw new Error(`--good (${good}) must be smaller than --bad (${bad}).`);
 
 const revisions = await listRevisions(good, bad);

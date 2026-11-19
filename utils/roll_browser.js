@@ -107,8 +107,10 @@ Example:
   console.log('\nDownloading new browser...');
   const registry = new Registry(browsersJSON);
   const executable = registry.findExecutable(browserName);
-  await registry.installDeps([executable]);
-  await registry.install([...registry.defaultExecutables(), executable]);
+  // Documentation update below launches all default browsers, so all of them need dependencies.
+  const executablesToInstall = [...registry.defaultExecutables(), executable];
+  await registry.installDeps(executablesToInstall);
+  await registry.install(executablesToInstall);
 
   // 5. Update browser version if rolling WebKit / Firefox, validate if rolling Chromium.
   const browserType = playwright[browserTypeName];

@@ -179,7 +179,7 @@ not literally named above, the answer is still no.
 When the root cause is in a browser and the fix does not belong in this repo:
 
 - **Firefox and WebKit** are built in `microsoft/playwright-browsers`. File the bug as an issue there, labeled `browser-firefox` or `browser-webkit`, with the condensed Playwright test as the repro and a link to the Playwright issue.
-- **Chromium** bugs go upstream, to https://crbug.com/new, with a repro that needs no Playwright: a plain page or CDP commands. Only a person can file there.
+- **Chromium** bugs go upstream, to https://crbug.com/new, with a repro that needs no Playwright: a plain page or CDP commands. Only a person can file there. When a newer Chromium broke something that worked before, find the upstream commit first with the [playwright-bisect-chromium](.claude/skills/playwright-bisect-chromium/SKILL.md) skill.
 
 ## Development Guides
 
