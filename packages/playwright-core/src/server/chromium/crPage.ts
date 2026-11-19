@@ -724,7 +724,7 @@ class FrameSession {
       if (frame) {
         this._page.frameManager.removeChildFramesRecursively(frame);
         // Electron webviews swap into a separate WebContents, not an iframe target.
-        if (frame.parentFrame()) {
+        if (this._crPage._browserContext._browser.options.name === 'electron' && frame.parentFrame()) {
           const owner = await this._client._sendMayFail('DOM.getFrameOwner', { frameId });
           const node = owner && await this._client._sendMayFail('DOM.resolveNode', { backendNodeId: owner.backendNodeId });
           const objectId = node?.object.objectId;
