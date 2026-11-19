@@ -369,14 +369,12 @@ function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefine
     const scrollLefts: Element[] = [];
     const targetElements: Element[] = [];
     const canvasElements: HTMLCanvasElement[] = [];
-    const scrollRoots: (Document | ShadowRoot)[] = [];
 
     let topSnapshotWindow: Window = win;
     while (topSnapshotWindow !== topSnapshotWindow.parent && new URLSearchParams(topSnapshotWindow.location.search).has('frameId'))
       topSnapshotWindow = topSnapshotWindow.parent;
 
     const visit = (root: Document | ShadowRoot) => {
-      scrollRoots.push(root);
       // Collect all scrolled elements for later use.
       for (const e of root.querySelectorAll(`[__playwright_scroll_top_]`))
         scrollTops.push(e);
@@ -534,17 +532,21 @@ function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefine
         // that may place the point at the wrong place. To avoid confusion, we just show the
         // point in the middle of the target element.
         const target = targetElements[0];
-        const updatePoint = () => {
-          const targetBox = target?.getBoundingClientRect();
-          const targetCenter = targetBox ? { x: targetBox.left + targetBox.width / 2, y: targetBox.top + targetBox.height / 2 } : null;
-          pointElement.style.left = (targetCenter?.x ?? pointX) + 'px';
-          pointElement.style.top = (targetCenter?.y ?? pointY) + 'px';
-          return targetCenter;
-        };
-        const targetCenter = updatePoint();
-        if (target) {
-          for (const root of scrollRoots)
-            root.addEventListener('scroll', updatePoint, true);
+        const targetBox = target?.getBoundingClientRect();
+        const targetCenter = target ? { x: targetBox.left + targetBox.width / 2, y: targetBox.top + targetBox.height / 2 } : null;
+        pointElement.style.left = (targetCenter?.x ?? pointX) + 'px';
+        pointElement.style.top = (targetCenter?.y ?? pointY) + 'px';
+
+        let anchor = target;
+        while ((anchor as SVGElement | undefined)?.ownerSVGElement)
+          anchor = (anchor as SVGElement).ownerSVGElement!;
+        if (anchor && targetCenter) {
+          const anchorBox = anchor.getBoundingClientRect();
+          const anchorNames = win.getComputedStyle(anchor).getPropertyValue('anchor-name');
+          (anchor as HTMLElement).style.setProperty('anchor-name', anchorNames && anchorNames !== 'none' ? `${anchorNames}, --playwright-target` : '--playwright-target');
+          pointElement.style.setProperty('position-anchor', '--playwright-target');
+          pointElement.style.setProperty('left', `calc(anchor(left, ${anchorBox.left}px) + ${targetCenter.x - anchorBox.left}px)`);
+          pointElement.style.setProperty('top', `calc(anchor(top, ${anchorBox.top}px) + ${targetCenter.y - anchorBox.top}px)`);
         }
 
         const isAligned = !targetCenter || (Math.abs(targetCenter.x - pointX) <= 10 && Math.abs(targetCenter.y - pointY) <= 10);
@@ -559,7 +561,8 @@ function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefine
           pointElement.setAttribute('title', kPointerWarningTitle);
         }
 
-        win.document.documentElement.appendChild(pointElement);
+        const anchorRoot = anchor?.getRootNode();
+        (anchorRoot && anchorRoot !== win.document ? anchorRoot : win.document.documentElement).appendChild(pointElement);
       }
 
       if (canvasElements.length > 0) {
