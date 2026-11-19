@@ -30,9 +30,48 @@ function isProcessAlive(pid: number): boolean {
   }
 }
 
-test('list', async ({ cli, server }) => {
-  const { output: emptyOutput } = await cli('list');
+test('list', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-cli/issues/549' },
+}, async ({ cli, server }, testInfo) => {
+  const registryDir = testInfo.outputPath('registry');
+  await fs.promises.mkdir(registryDir, { recursive: true });
+  for (const guid of ['stale-1', 'stale-2']) {
+    await fs.promises.writeFile(path.join(registryDir, guid), JSON.stringify({
+      playwrightVersion: '0.0.0',
+      title: guid,
+      browser: { guid, browserName: 'chromium', launchOptions: {} },
+    }));
+  }
+  const cleanupLog = testInfo.outputPath('cleanup.log');
+  const preload = testInfo.outputPath('watch-registry.cjs');
+  await fs.promises.writeFile(preload, `
+    const fs = require('fs');
+    const path = require('path');
+    const watchers = new Set();
+    const watch = fs.watch;
+    fs.watch = (...args) => {
+      const watcher = watch(...args);
+      if (args[0] === process.env.PWTEST_SERVER_REGISTRY || path.dirname(args[0]) === process.env.PWTEST_SERVER_REGISTRY) {
+        watchers.add(watcher);
+        const close = watcher.close.bind(watcher);
+        watcher.close = () => {
+          watchers.delete(watcher);
+          return close();
+        };
+      }
+      return watcher;
+    };
+    const unlink = fs.promises.unlink;
+    fs.promises.unlink = async file => {
+      if (path.dirname(file) === process.env.PWTEST_SERVER_REGISTRY)
+        fs.appendFileSync(${JSON.stringify(cleanupLog)}, watchers.size + '\\n');
+      return await unlink(file);
+    };
+  `);
+  const { output: emptyOutput } = await cli('list', { env: { NODE_OPTIONS: `--require="${preload}"` } });
   expect(emptyOutput).toContain('(no browsers)');
+  expect((await fs.promises.readFile(cleanupLog, 'utf-8')).trim().split('\n')).toEqual(['0', '0']);
+  expect(await fs.promises.readdir(registryDir)).toEqual([]);
 
   await cli('open', server.HELLO_WORLD);
 
