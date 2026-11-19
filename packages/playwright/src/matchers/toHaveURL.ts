@@ -33,28 +33,32 @@ export async function toHaveURLWithPredicate(
   const timeout = options?.timeout ?? this.timeout;
   const baseURL: string | undefined = (page.context() as any)._options.baseURL;
   let lastCheckedURLString: string | undefined = undefined;
-  try {
-    await page.mainFrame().waitForURL(
-        url => {
-          lastCheckedURLString = url.toString();
+  const isExpectedURL = (url: string) => {
+    lastCheckedURLString = url;
 
-          if (options?.ignoreCase) {
-            return (
-              !this.isNot ===
-              urlMatches(
-                  baseURL?.toLocaleLowerCase(),
-                  lastCheckedURLString.toLocaleLowerCase(),
-                  expected,
-              )
-            );
-          }
+    if (options?.ignoreCase) {
+      return (
+        !this.isNot ===
+        urlMatches(
+            baseURL?.toLocaleLowerCase(),
+            lastCheckedURLString.toLocaleLowerCase(),
+            expected,
+        )
+      );
+    }
 
-          return (
-            !this.isNot === urlMatches(baseURL, lastCheckedURLString, expected)
-          );
-        },
-        { timeout, signal: options?.signal },
+    return (
+      !this.isNot === urlMatches(baseURL, lastCheckedURLString, expected)
     );
+  };
+  try {
+    if (!isExpectedURL(page.url()) || options?.signal?.aborted) {
+      await page.waitForEvent('framenavigated', {
+        predicate: frame => frame === page.mainFrame() && isExpectedURL(frame.url()),
+        timeout,
+        signal: options?.signal,
+      });
+    }
 
     return { name: matcherName, pass: !this.isNot, message: () => '' };
   } catch (e) {

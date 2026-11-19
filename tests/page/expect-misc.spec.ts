@@ -399,11 +399,21 @@ Timeout:  10000ms
     await expect(page).toHaveURL(url => url.href === 'data:text/html,<div>A</div>', { timeout: 1000 });
   });
 
-  test('EX-220 resolve predicate after retries', async ({ page }) => {
+  test('EX-220 resolve predicate after retries', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44236' } }, async ({ page, server }) => {
     await page.goto('data:text/html,<div>A</div>');
     const expectPromise = expect(page).toHaveURL(url => url.href === 'data:text/html,<div>B</div>', { timeout: 1000 });
     setTimeout(() => page.goto('data:text/html,<div>B</div>'), 500);
     await expectPromise;
+
+    await page.goto(server.EMPTY_PAGE);
+    await page.route('**/aborted', route => route.abort('aborted'));
+    await Promise.all([
+      expect(page).toHaveURL(url => url.pathname === '/title.html'),
+      (async () => {
+        await expect(page.goto(server.PREFIX + '/aborted')).rejects.toThrow();
+        await page.goto(server.PREFIX + '/title.html');
+      })(),
+    ]);
   });
 
   test('EX-221 support ignoreCase', async ({ page }) => {
