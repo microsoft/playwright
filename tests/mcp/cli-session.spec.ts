@@ -68,7 +68,7 @@ test('list', {
       return await unlink(file);
     };
   `);
-  const { output: emptyOutput } = await cli('list', { env: { NODE_OPTIONS: `--require="${preload}"` } });
+  const { output: emptyOutput } = await cli('list', { env: { NODE_OPTIONS: `--require="${preload.replaceAll('\\', '/')}"` } });
   expect(emptyOutput).toContain('(no browsers)');
   expect((await fs.promises.readFile(cleanupLog, 'utf-8')).trim().split('\n')).toEqual(['0', '0']);
   expect(await fs.promises.readdir(registryDir)).toEqual([]);
