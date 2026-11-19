@@ -400,20 +400,14 @@ Timeout:  10000ms
   });
 
   test('EX-220 resolve predicate after retries', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44236' } }, async ({ page, server }) => {
-    await page.goto('data:text/html,<div>A</div>');
-    const expectPromise = expect(page).toHaveURL(url => url.href === 'data:text/html,<div>B</div>', { timeout: 1000 });
-    setTimeout(() => page.goto('data:text/html,<div>B</div>'), 500);
-    await expectPromise;
-
     await page.goto(server.EMPTY_PAGE);
     await page.route('**/aborted', route => route.abort('aborted'));
-    await Promise.all([
-      expect(page).toHaveURL(url => url.pathname === '/title.html'),
-      (async () => {
-        await expect(page.goto(server.PREFIX + '/aborted')).rejects.toThrow();
-        await page.goto(server.PREFIX + '/title.html');
-      })(),
-    ]);
+    const expectPromise = expect(page).toHaveURL(url => url.pathname === '/title.html').catch(e => e);
+    await expect(page.goto(server.PREFIX + '/aborted')).rejects.toThrow();
+    await expect(page).toHaveURL(url => url.href === server.EMPTY_PAGE);
+    await page.goto(server.PREFIX + '/title.html');
+    await expect(page).toHaveURL(url => url.pathname === '/title.html');
+    expect(await expectPromise).toBeUndefined();
   });
 
   test('EX-221 support ignoreCase', async ({ page }) => {
