@@ -308,7 +308,7 @@ it('ER-022 should not fire for a caught fetch rejected by a pending navigation',
   await navigation;
   const [error] = await Promise.all([
     page.waitForEvent('pageerror'),
-    page.evaluate(() => setTimeout(() => { throw new Error('genuine error'); }, 0)),
+    page.evaluate(() => window.builtins.setTimeout(() => { throw new Error('genuine error'); }, 0)),
   ]);
   expect(error.message).toBe('genuine error');
   expect(errors).toEqual(['genuine error']);

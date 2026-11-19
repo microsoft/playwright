@@ -216,6 +216,8 @@ export async function rafraf(target: Page | Frame, count = 1) {
 export async function ensureSomeFrames(page: Page) {
   await rafraf(page, 100);
   await page.screenshot();
+  // The screenshot forces a screencast frame. Give it time to arrive before the caller stops recording.
+  await rafraf(page);
 }
 
 export function roundBox(box: BoundingBox): BoundingBox {
