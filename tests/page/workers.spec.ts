@@ -79,12 +79,14 @@ it('WO-005 should have timestamp on worker console messages', async function({ p
   it.skip(isAndroid, 'there is a time difference between android emulator and host machine');
   it.skip(channel === 'webkit-wsl', 'there is a time difference between WSL VM and host machine');
 
-  const before = Date.now() - 1;  // Account for the rounding of fractional timestamps.
+  // The clocks of the browser and of the test process differ by a few milliseconds on Windows.
+  const margin = 10;
+  const before = Date.now() - margin;
   const [message] = await Promise.all([
     page.waitForEvent('console'),
     page.evaluate(() => new Worker(URL.createObjectURL(new Blob(['console.log("ts")'], { type: 'application/javascript' })))),
   ]);
-  const after = Date.now() + 1;  // Account for the rounding of fractional timestamps.
+  const after = Date.now() + margin;
   expect(message.text()).toBe('ts');
   expect(message.timestamp()).toBeGreaterThanOrEqual(before);
   expect(message.timestamp()).toBeLessThanOrEqual(after);

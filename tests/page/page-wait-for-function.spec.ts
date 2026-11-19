@@ -49,7 +49,8 @@ it('WA-004 should poll on interval', async ({ page, server }) => {
     }
     return window.builtins.Date.now() - window['__startTime'];
   }, {}, { polling });
-  expect(await timeDelta.jsonValue()).not.toBeLessThan(polling);
+  // Firefox timers sometimes fire one millisecond early.
+  expect(await timeDelta.jsonValue()).not.toBeLessThan(polling - 1);
 });
 
 it('WA-005 should avoid side effects after timeout', async ({ page }) => {
