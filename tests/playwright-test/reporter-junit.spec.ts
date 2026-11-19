@@ -348,7 +348,10 @@ for (const useIntermediateMergeReport of [false, true] as const) {
     });
 
     test('should add file attribute relative to fileRoot', {
-      annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44099' },
+      annotation: [
+        { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44099' },
+        { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44225' },
+      ],
     }, async ({ runInlineTest }) => {
       const files = {
         'packages/foo/playwright.config.ts': `
@@ -371,7 +374,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       };
 
       const byDefault = await run({});
-      expect(byDefault['classname']).toBe('auth/a.test.js');
+      expect(byDefault['classname']).toBe(path.join('auth', 'a.test.js'));
       expect(byDefault['file']).toBe('src/auth/a.test.js');
 
       // The option is relative to the config directory.
