@@ -71,18 +71,18 @@ class ServerRegistry extends EventEmitter {
     return super.off(event, listener as (...args: any[]) => void);
   }
 
-  watch(): () => void {
+  watch(): () => Promise<void> {
     this._watcherRefs++;
     if (!this._watcher)
       this._startWatcher();
     let disposed = false;
-    return () => {
+    return async () => {
       if (disposed)
         return;
       disposed = true;
       this._watcherRefs--;
       if (this._watcherRefs === 0)
-        this._stopWatcher();
+        await this._stopWatcher();
     };
   }
 
@@ -92,9 +92,10 @@ class ServerRegistry extends EventEmitter {
 
   async list(): Promise<Map<string, BrowserDescriptor[]>> {
     const ownWatcher = !this._watcher;
-    let dispose: (() => void) | undefined;
+    let dispose: (() => Promise<void>) | undefined;
     if (ownWatcher)
       dispose = this.watch();
+    const staleGuids: string[] = [];
     try {
       await this._ready;
       const statuses = await Promise.all(
@@ -106,7 +107,7 @@ class ServerRegistry extends EventEmitter {
       const result = new Map<string, BrowserDescriptor[]>();
       for (const { descriptor, canConnect } of statuses) {
         if (!canConnect) {
-          await fs.promises.unlink(path.join(this._browsersDir(), descriptor.browser.guid)).catch(() => {});
+          staleGuids.push(descriptor.browser.guid);
           continue;
         }
         const key = descriptor.workspaceDir ?? '';
@@ -119,7 +120,9 @@ class ServerRegistry extends EventEmitter {
       }
       return result;
     } finally {
-      dispose?.();
+      await dispose?.();
+      for (const guid of staleGuids)
+        await this.delete(guid);
     }
   }
 
@@ -212,12 +215,12 @@ class ServerRegistry extends EventEmitter {
     this.emit(event, descriptor);
   }
 
-  private _stopWatcher() {
+  private async _stopWatcher() {
     const watcher = this._watcher;
     this._watcher = undefined;
     this._ready = undefined;
     this._descriptors.clear();
-    void watcher?.close();
+    await watcher?.close();
   }
 }
 
