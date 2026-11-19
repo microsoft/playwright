@@ -240,6 +240,17 @@ export type CommonWorkerFixtures = {
   daemonProcess: (params: TestChildParams) => TestChildProcess;
 };
 
+export const crashTestFixtures: Fixtures<{}, { _coredumpFilter: void }> = {
+  _coredumpFilter: [async ({}, use) => {
+    if (process.platform === 'linux') {
+      // Large renderer core dumps delay crash events. Piped core handlers ignore RLIMIT_CORE.
+      // This filter is inherited by child processes and leaves the browser sandbox enabled.
+      await fs.promises.writeFile('/proc/self/coredump_filter', '0');
+    }
+    await use();
+  }, { scope: 'worker', auto: true }],
+};
+
 export const commonFixtures: Fixtures<CommonFixtures, CommonWorkerFixtures> = {
   childProcess: async ({}, use, testInfo) => {
     const processes: TestChildProcess[] = [];
