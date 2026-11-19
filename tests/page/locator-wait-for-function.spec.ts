@@ -38,9 +38,17 @@ it('LO-186 should accept string expression', async ({ page }) => {
   await page.locator('#target').waitForFunction(`element => element.textContent === 'yes'`);
 });
 
-it('LO-187 should resolve a promise returned by the predicate', async ({ page }) => {
-  await page.setContent('<div id=target>yes</div>');
-  await page.locator('#target').waitForFunction(async element => element.textContent === 'yes');
+it('LO-187 should resolve a promise returned by the predicate', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44217' } }, async ({ page }) => {
+  await page.setContent('<div id=target>no</div>');
+  const target = page.locator('#target');
+  await expect(target.waitForFunction(async element => element.textContent === 'yes', undefined, { timeout: 250 })).rejects.toThrow('Timeout 250ms exceeded');
+  await target.waitForFunction(async element => {
+    await new Promise(resolve => window.builtins.setTimeout(resolve, 10));
+    const result = element.textContent === 'yes';
+    element.textContent = 'yes';
+    return result;
+  });
+  expect(await target.textContent()).toBe('yes');
 });
 
 it('LO-188 should wait for element to appear and survive rerender', async ({ page }) => {
@@ -71,6 +79,13 @@ it('LO-189 should throw when predicate throws', async ({ page }) => {
     throw new Error('oh my');
   }).catch(e => e);
   expect(error.message).toContain('oh my');
+});
+
+it('LO-200 should throw when predicate rejects', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44217' } }, async ({ page }) => {
+  await page.setContent('<div id=target>no</div>');
+  await expect(page.locator('#target').waitForFunction(async () => {
+    throw new Error('async oh my');
+  })).rejects.toThrow('async oh my');
 });
 
 it('LO-190 should throw on strict mode violation', async ({ page }) => {

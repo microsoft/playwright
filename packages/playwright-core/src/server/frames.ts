@@ -86,7 +86,7 @@ export type NavigationEvent = {
   isPublic?: boolean;
 };
 
-type ElementCallback<T, R> = (injected: InjectedScript, element: Element, data: js.Unboxed<T>) => R;
+type ElementCallback<T, R> = (injected: InjectedScript, element: Element, data: js.Unboxed<T>) => R | Promise<R>;
 
 export class NavigationAbortedError extends Error {
   readonly documentId?: string;
@@ -1761,10 +1761,10 @@ export class Frame extends SdkObject<FrameEventMap> {
     const callbackText = body.toString();
     progress.log(`waiting for ${this._asLocator(target.selector)}`);
     const promise = this.retryWithProgressAndBackoff(progress, async (progress, continuePolling) => {
-      const resolved = await progress.race(this.selectors.callOnSelector({ ...target, mainWorld: options.mainWorld, markTargets: 'first' }, ({ injected, elements }, { callbackText, taskData }) => {
+      const resolved = await progress.race(this.selectors.callOnSelector({ ...target, mainWorld: options.mainWorld, markTargets: 'first' }, async ({ injected, elements }, { callbackText, taskData }) => {
         const callback = injected.eval(callbackText) as ElementCallback<T, R>;
         const element = elements[0];
-        const value = callback(injected, element, taskData as js.Unboxed<T>);
+        const value = await callback(injected, element, taskData as js.Unboxed<T>);
         if (!value)
           return { success: false };
         const log = `  locator resolved to ${injected.previewNode(element)}`;
