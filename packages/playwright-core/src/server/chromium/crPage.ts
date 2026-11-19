@@ -709,7 +709,7 @@ class FrameSession {
     this._page.frameManager.frameCommittedSameDocumentNavigation(frameId, url);
   }
 
-  _onFrameDetached(frameId: string, reason: 'remove' | 'swap') {
+  async _onFrameDetached(frameId: string, reason: 'remove' | 'swap') {
     if (this._crPage._sessions.has(frameId)) {
       // This is a local -> remote frame transition, where
       // Page.frameDetached arrives after Target.attachedToTarget.
@@ -721,8 +721,25 @@ class FrameSession {
       // Page.frameDetached arrives before Target.attachedToTarget.
       // We should keep the frame in the tree, and it will be used for the new target.
       const frame = this._page.frameManager.frame(frameId);
-      if (frame)
+      if (frame) {
         this._page.frameManager.removeChildFramesRecursively(frame);
+        // Electron webviews swap into a separate WebContents, not an iframe target.
+        if (frame.parentFrame()) {
+          const owner = await this._client._sendMayFail('DOM.getFrameOwner', { frameId });
+          const node = owner && await this._client._sendMayFail('DOM.resolveNode', { backendNodeId: owner.backendNodeId });
+          const objectId = node?.object.objectId;
+          if (objectId) {
+            const result = await this._client._sendMayFail('Runtime.callFunctionOn', {
+              objectId,
+              functionDeclaration: 'function() { return this.getRootNode().host?.nodeName === "WEBVIEW"; }',
+              returnByValue: true,
+            });
+            await releaseObject(this._client, objectId);
+            if (result?.result.value && !this._crPage._sessions.has(frameId) && this._page.frameManager.frame(frameId) === frame)
+              this._page.frameManager.frameDetached(frameId);
+          }
+        }
+      }
       return;
     }
     // Just a regular frame detach.

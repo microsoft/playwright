@@ -52,3 +52,24 @@ test('should type into a textarea', async ({ launchElectronApp, newWindow }) => 
   await page.keyboard.type(text);
   expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe(text);
 });
+
+test('should not keep webview guest frames in the host page', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44223' } }, async ({ launchElectronApp }) => {
+  const app = await launchElectronApp('electron-app.js');
+  await app.evaluate(({ BrowserWindow }) => {
+    const window = new BrowserWindow({ webPreferences: { webviewTag: true } });
+    void window.loadURL('about:blank');
+  });
+  const page = await app.firstWindow();
+  await page.evaluate(async () => {
+    const webview = document.createElement('webview');
+    const loaded = new Promise<void>(resolve => webview.addEventListener('did-finish-load', () => resolve()));
+    webview.setAttribute('src', 'data:text/html,guest');
+    document.body.innerHTML = '<h1>host</h1>';
+    document.body.appendChild(webview);
+    await loaded;
+  });
+  await expect.poll(() => page.frames()).toEqual([page.mainFrame()]);
+  const start = Date.now();
+  expect(await page.locator('body').ariaSnapshot({ mode: 'ai', timeout: 5000 })).toContain('heading "host"');
+  expect(Date.now() - start).toBeLessThan(2500);
+});
