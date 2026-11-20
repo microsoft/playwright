@@ -1153,6 +1153,15 @@ test('BT-093 should refuse connecting when versions do not match', async ({ conn
   expect(error.message).toContain('client version: v' + getPlaywrightVersion(true));
 });
 
+test('BT-105 run-server should exit when stdin closes', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44255' } }, async ({ childProcess }) => {
+  const server = childProcess({
+    command: ['node', path.join(__dirname, '..', '..', 'packages', 'playwright-core', 'cli.js'), 'run-server', '--port=0'],
+  });
+  await server.waitForOutput('Listening on ');
+  server.process.stdin!.end();
+  expect(await server.exited).toEqual({ exitCode: 0, signal: null });
+});
+
 test('BT-094 should filter local paths from unsafe launch options', async ({ connect, startRemoteServer, server, trace }, testInfo) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42394' });
   test.skip(trace === 'on', 'the test starts its own tracing');

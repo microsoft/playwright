@@ -85,6 +85,7 @@ export async function runServer(options: RunServerOptions) {
   process.on('exit', () => server.close().catch(console.error));
   console.log('Listening on ' + wsEndpoint);
   process.stdin.on('close', () => gracefullyProcessExitDoNotHang(0));
+  process.stdin.resume();
 }
 
 export async function launchBrowserServer(browserName: string, configFile?: string) {

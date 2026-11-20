@@ -607,6 +607,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `BT-102` | `library/browsertype-launch-selenium.spec.ts` | selenium grid 3.141.59 standalone non-chromium |
 | `BT-103` | `library/browsertype-launch-selenium.spec.ts` | selenium grid 3.141.59 standalone chromium through run-driver |
 | `BT-104` | `library/browsertype-launch-server.spec.ts` | launch server › should handle timeout |
+| `BT-105` | `library/browsertype-connect.spec.ts` | run-server should exit when stdin closes |
 
 ### BU — Before unload
 
