@@ -23,9 +23,6 @@ const BROWSER_STATE_METHODS = new Set([
   'Browser.grantPermissions',
   'Browser.resetPermissions',
   'Browser.setPermission',
-  'Browser.setDownloadBehavior',
-  'Target.createTarget',
-  'Target.closeTarget',
   'Target.attachToTarget',
   'Target.activateTarget',
 ]);

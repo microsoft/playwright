@@ -60,8 +60,11 @@ type Fixtures = {
   connect: (clientName: string, pick?: Pick | ((connectPage: Page) => Promise<void>), options?: ConnectOptions) => Promise<ExtensionClient>;
   // Starts a client that skips the connect page. It gets a blank tab.
   connectWithToken: (clientName: string, options?: ConnectOptions) => Promise<ExtensionClient>;
-  // Connects to the extension the way the relay of a client does, to send protocol commands and read protocol events.
+  // Connects to the extension the way a client of protocol version 2 does, to send chrome.* commands and read chrome.* events.
   connectRelay: (clientName: string) => Promise<RelayPeer>;
+  // Connects to the extension the way a client does, to send CDP commands and read CDP events.
+  connectCDP: (clientName: string) => Promise<CDPPeer>;
+  connectSocket: (clientName: string, protocolVersion: number) => Promise<WebSocket>;
 };
 
 export const test = base.extend<Fixtures>({
@@ -118,21 +121,31 @@ export const test = base.extend<Fixtures>({
     });
   },
 
-  connectRelay: async ({ user, server }, use) => {
-    await use(async clientName => {
-      // The test server is the relay.
+  connectSocket: async ({ user, server }, use) => {
+    await use(async (clientName, protocolVersion) => {
+      // The test server is the client.
       const socketPromise = new Promise<WebSocket>(resolve => server.onceWebSocketConnection(resolve));
       const url = new URL(`chrome-extension://${extensionId}/connect.html`);
       url.searchParams.set('mcpRelayUrl', `ws://127.0.0.1:${server.PORT}/ws`);
-      url.searchParams.set('protocolVersion', '2');
+      url.searchParams.set('protocolVersion', String(protocolVersion));
       url.searchParams.set('client', JSON.stringify({ name: clientName }));
       url.searchParams.set('token', await user.token());
       const connectPage = await user.browserContext.newPage();
       await connectPage.goto(url.toString()).catch(() => {});
-      const peer = new RelayPeer(await socketPromise);
+      return await socketPromise;
+    });
+  },
+
+  connectRelay: async ({ connectSocket }, use) => {
+    await use(async clientName => {
+      const peer = new RelayPeer(await connectSocket(clientName, 2));
       await expect.poll(() => peer.eventNames()).toContain('extension.initialized');
       return peer;
     });
+  },
+
+  connectCDP: async ({ connectSocket }, use) => {
+    await use(async clientName => new CDPPeer(await connectSocket(clientName, 3)));
   },
 });
 
@@ -441,7 +454,7 @@ export class ExtensionClient {
   }
 }
 
-// The relay side of the extension protocol.
+// The client side of protocol version 2.
 export class RelayPeer {
   readonly events: { method: string, params: any[] }[] = [];
   private _socket: WebSocket;
@@ -490,5 +503,39 @@ export class RelayPeer {
 
   close(): void {
     this._socket.close();
+  }
+}
+
+// The client side of the extension protocol, which is CDP.
+export class CDPPeer {
+  readonly events: { method: string, params: any, sessionId?: string }[] = [];
+  private _socket: WebSocket;
+  private _callbacks = new Map<number, (response: any) => void>();
+  private _lastId = 0;
+
+  constructor(socket: WebSocket) {
+    this._socket = socket;
+    socket.on('message', data => {
+      const message = JSON.parse(data.toString());
+      if (message.id)
+        this._callbacks.get(message.id)!(message);
+      else
+        this.events.push(message);
+    });
+  }
+
+  // The tabs of the client: each `Target.attachedToTarget` event.
+  targets(): { sessionId: string, targetInfo: any }[] {
+    return this.events.filter(event => event.method === 'Target.attachedToTarget').map(event => event.params);
+  }
+
+  // Sends a command. Gives `{ result }` or `{ error }`.
+  async send(method: string, params?: object, sessionId?: string): Promise<{ result?: any, error?: string }> {
+    const id = ++this._lastId;
+    const { result, error } = await new Promise<any>(resolve => {
+      this._callbacks.set(id, resolve);
+      this._socket.send(JSON.stringify({ id, method, params, sessionId }));
+    });
+    return error === undefined ? { result } : { error: error.message };
   }
 }
