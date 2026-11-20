@@ -8651,6 +8651,26 @@ export interface PlaywrightTestArgs {
   /**
    * Isolated [APIRequestContext](https://playwright.dev/docs/api/class-apirequestcontext) instance for each test.
    *
+   * The instance respects configuration options such as
+   * [testOptions.storageState](https://playwright.dev/docs/api/class-testoptions#test-options-storage-state),
+   * [testOptions.extraHTTPHeaders](https://playwright.dev/docs/api/class-testoptions#test-options-extra-http-headers)
+   * and [testOptions.baseURL](https://playwright.dev/docs/api/class-testoptions#test-options-base-url), like the
+   * [fixtures.context](https://playwright.dev/docs/api/class-fixtures#fixtures-context) fixture. Cookies from the
+   * configured `storageState` are sent with matching requests, which can authenticate those requests.
+   *
+   * To start the `request` fixture without stored cookies, override `storageState`:
+   *
+   * ```js
+   * test.use({ storageState: { cookies: [], origins: [] } });
+   * ```
+   *
+   * Alternatively, create a separate [APIRequestContext](https://playwright.dev/docs/api/class-apirequestcontext) with
+   * `playwright.request.newContext({ storageState: undefined })` to ignore the configured storage state. These
+   * overrides do not clear authentication headers or HTTP credentials; override
+   * [testOptions.extraHTTPHeaders](https://playwright.dev/docs/api/class-testoptions#test-options-extra-http-headers)
+   * or [testOptions.httpCredentials](https://playwright.dev/docs/api/class-testoptions#test-options-http-credentials)
+   * separately if configured.
+   *
    * **Usage**
    *
    * ```js
