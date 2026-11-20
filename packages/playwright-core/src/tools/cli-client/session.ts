@@ -148,7 +148,7 @@ export class Session {
       args.push('--no-tab-group');
     if (cliArgs['session-color'])
       args.push(`--session-color=${cliArgs['session-color']}`);
-    else if (cliArgs.cdp)
+    if (cliArgs.cdp)
       args.push(`--cdp=${cliArgs.cdp}`);
     else if (cliArgs.endpoint)
       args.push(`--endpoint=${cliArgs.endpoint}`);

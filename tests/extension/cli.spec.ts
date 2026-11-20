@@ -52,11 +52,11 @@ test('attach --extension gives the name and the color of the session to the tab 
   await expect.poll(user.groups).toEqual([{ title: 'my session', color: 'red', tabs: ['Alpha'] }]);
 });
 
-test('attach --extension --profile-dir-name opens the connect page in that profile', async ({ user, cli, browserWithExtension }) => {
+test('attach --cdp with an extension URL opens the connect page in that profile', async ({ user, cli, browserWithExtension }) => {
   await fs.promises.mkdir(path.join(browserWithExtension.userDataDir, 'Profile 1', 'Extensions', extensionId), { recursive: true });
 
   const connectPage = user.waitForConnectPage();
-  const attached = cli(['attach', '--extension=chromium', '--profile-dir-name=Profile 1'], {
+  const attached = cli(['attach', '--cdp=extension://chromium/Profile 1'], {
     env: { PWTEST_EXTENSION_USER_DATA_DIR: browserWithExtension.userDataDir },
   });
   await user.allow(await connectPage);

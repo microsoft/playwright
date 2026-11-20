@@ -117,6 +117,8 @@ The connection is made to the `Default` profile. To connect to another profile, 
 
 The `PLAYWRIGHT_MCP_PROFILE_DIR_NAME` environment variable can be used instead of the option. The authentication token is specific to the profile, so use the one displayed in that profile.
 
+A URL can also tell the browser and the profile: `--cdp-endpoint "extension://chrome/Profile 2"` is the same as `--extension --browser chrome --profile-dir-name "Profile 2"`. For Edge, use `extension://msedge/<profile directory>`. With the CLI, `playwright-cli list --all` shows the URL of each profile, and `playwright-cli attach --cdp="extension://chrome/Profile 2"` connects to it.
+
 ## Troubleshooting
 
 Chrome does not allow extensions to debug a page that contains a frame with a restricted URL, for example a page of another extension (`chrome-extension://`), a `chrome://` page, or a URL with a custom scheme. When such a frame loads, Chrome detaches the Playwright debugger. If the frame stays in the page, the tab is no longer available to the client. This often happens when another extension adds its own frame to every page. Disable that extension on the sites you automate, set its **Site access** to **On click**, or use a profile without it. Then navigate again.

@@ -67,7 +67,7 @@ const attach = declareCommand({
     name: z.string().optional().describe('Bound browser name to attach to'),
   }),
   options: z.object({
-    cdp: z.string().optional().describe('Connect to an existing browser via CDP endpoint URL.'),
+    cdp: z.string().optional().describe('Connect to an existing browser via CDP endpoint URL, or via a URL from "list --all", such as remote-debugging://chrome or extension://chrome.'),
     endpoint: z.string().optional().describe('Playwright browser server endpoint to attach to.'),
     extension: z.union([z.boolean(), z.string()]).optional().describe('Connect to browser extension, optionally specify browser name (e.g. --extension=chrome)'),
     ['profile-dir-name']: z.string().optional().describe('With --extension, name of the profile directory to connect to, as shown by "list --all". Defaults to the Default profile directory.'),

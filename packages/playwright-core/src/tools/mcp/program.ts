@@ -40,7 +40,7 @@ export function decorateMCPCommand(command: Command) {
       .option('--block-service-workers', 'block service workers')
       .option('--browser <browser>', 'browser or chrome channel to use, possible values: chrome, firefox, webkit, msedge.')
       .option('--caps <caps>', 'comma-separated list of additional capabilities to enable, possible values: vision, pdf, devtools.', commaSeparatedList)
-      .option('--cdp-endpoint <endpoint>', 'CDP endpoint to connect to.')
+      .option('--cdp-endpoint <endpoint>', 'CDP endpoint to connect to. Also a URL such as remote-debugging://chrome, or extension://chrome/Default to connect to a browser profile with the Playwright Extension.')
       .option('--cdp-header <headers...>', 'CDP headers to send with the connect request, multiple can be specified.', headerParser)
       .option('--cdp-timeout <timeout>', 'timeout in milliseconds for connecting to CDP endpoint, defaults to 30000ms', numberParser)
       .option('--codegen <lang>', `specify the language to use for code generation, possible values: "typescript", "python", "java", "csharp", "none". Default is "${defaultCodegenLanguage}".`, enumParser.bind(null, '--codegen', ['none', 'typescript', 'python', 'java', 'csharp']))

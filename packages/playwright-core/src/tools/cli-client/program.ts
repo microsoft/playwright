@@ -20,7 +20,7 @@ import crypto from 'crypto';
 import os from 'os';
 import path from 'path';
 
-import { isKnownChannel, listChannelSessions } from './channelSessions';
+import { attachTargetChannel, listChannelSessions } from './channelSessions';
 import { JsonOutput, TextOutput } from './output';
 import { clientKey, createClientInfo, explicitSessionName, Registry, resolveSessionName } from './registry';
 import { Session } from './session';
@@ -183,7 +183,7 @@ export async function program(options?: { args?: MinimistArgs, embedderVersion?:
         args.extension = true;
       }
 
-      const cdpChannel = typeof args.cdp === 'string' && isKnownChannel(args.cdp) ? args.cdp : undefined;
+      const cdpChannel = typeof args.cdp === 'string' ? attachTargetChannel(args.cdp) : undefined;
       const targetName = attachTarget ?? cdpChannel ?? extensionChannel ?? args.endpoint as string ?? args.cdp as string;
       if (!targetName)
         output.errorAttachNoTarget();

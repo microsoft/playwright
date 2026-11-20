@@ -17,6 +17,9 @@
 import fs from 'fs';
 import path from 'path';
 
+// The server has the same check in server/chromium/crExtensionProfile.ts, because tools and the server
+// cannot import each other. Keep the two checks the same.
+
 // Also pinned via the "key" field in packages/extension/manifest.json.
 export const playwrightExtensionId = 'mmlmfjhmonkocbjadbfplnigmagldckm';
 

@@ -21,7 +21,7 @@ import path from 'path';
 
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { wrapInASCIIBox } from '@utils/ascii';
-import { isChromiumChannelName, defaultUserDataDirForChannel } from '@utils/chromiumChannels';
+import { defaultUserDataDirForChannel } from '@utils/chromiumChannels';
 import { RecentLogsCollector } from '@utils/debugLogger';
 import { removeFolders } from '@utils/fileUtils';
 import { gracefullyCloseSet } from '@utils/processLauncher';
@@ -38,6 +38,8 @@ import { helper } from '../helper';
 import { registry } from '../registry';
 import { WebSocketTransport } from '../transport';
 import { CRDevTools } from './crDevTools';
+import { parseAttachURL } from './crAttachURL';
+import { startExtensionRelay } from './crExtensionRelay';
 import { Browser } from '../browser';
 
 import type { HTTPRequestParams } from '@utils/network';
@@ -83,7 +85,18 @@ export class Chromium extends BrowserType {
     return await this._connectOverCDPInternal(progress, params.endpointURL!, params);
   }
 
-  async _connectOverCDPInternal(progress: Progress, endpointURL: string, options: types.LaunchOptions & { headers?: types.HeadersArray, isLocal?: boolean, noDefaults?: boolean, isWebView?: boolean, maxPageAttachTime?: number, artifactsDir?: string }, onClose?: () => Promise<void>) {
+  async _connectOverCDPInternal(progress: Progress, endpointURL: string, options: types.LaunchOptions & { headers?: types.HeadersArray, isLocal?: boolean, noDefaults?: boolean, isWebView?: boolean, maxPageAttachTime?: number, artifactsDir?: string }, onClose?: () => Promise<void>): Promise<CRBrowser> {
+    const attachURL = parseAttachURL(endpointURL);
+    if (attachURL?.kind === 'extension') {
+      const relay = await startExtensionRelay(progress, attachURL, headersArrayToObject(options.headers ?? [], true));
+      try {
+        return await this._connectOverCDPInternal(progress, relay.cdpEndpoint(), { ...options, headers: undefined, isLocal: true }, async () => relay.stop());
+      } catch (e) {
+        relay.stop();
+        throw e;
+      }
+    }
+
     let headersMap: { [key: string]: string; } | undefined;
     if (options.headers)
       headersMap = headersArrayToObject(options.headers, false);
@@ -93,9 +106,9 @@ export class Chromium extends BrowserType {
     else if (headersMap && !Object.keys(headersMap).some(key => key.toLowerCase() === 'user-agent'))
       headersMap['User-Agent'] = getUserAgent();
 
-    const channel = isChromiumChannelName(endpointURL) ? endpointURL : undefined;
-    if (channel)
-      endpointURL = await resolveChannelEndpoint(progress, endpointURL);
+    const channel = attachURL?.channel;
+    if (attachURL)
+      endpointURL = await resolveChannelEndpoint(progress, attachURL.channel, attachURL.userDataDir);
 
     let wsEndpoint: string;
     let chromeTransport: WebSocketTransport;
@@ -435,10 +448,10 @@ async function urlToWSEndpoint(progress: Progress, endpointURL: string, headers:
   return JSON.parse(json).webSocketDebuggerUrl;
 }
 
-async function resolveChannelEndpoint(progress: Progress, channel: string): Promise<string> {
-  const userDataDir = defaultUserDataDirForChannel(channel);
+async function resolveChannelEndpoint(progress: Progress, channel: string, customUserDataDir: string | undefined): Promise<string> {
+  const userDataDir = customUserDataDir ?? defaultUserDataDirForChannel(channel);
   if (!userDataDir)
-    throw new Error(`Connecting to ${channel} by channel name is not supported on ${process.platform}.`);
+    throw new Error(`${channel} has no default user data directory on ${process.platform}. Give it in the URL: remote-debugging://${channel}?userDataDir=<path>.`);
 
   const devToolsActivePortPath = path.join(userDataDir, 'DevToolsActivePort');
   progress.log(`<ws preparing> reading ${devToolsActivePortPath}`);

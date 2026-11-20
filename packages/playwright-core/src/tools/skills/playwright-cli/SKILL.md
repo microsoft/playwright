@@ -289,17 +289,17 @@ playwright-cli open --profile=/path/to/profile
 # to know what you attach to. Each entry gives the command to attach to it.
 playwright-cli list --all
 
-# Connect to a browser profile of the user via Playwright Extension (chrome, msedge, ...).
-# Without --profile-dir-name, the Default profile is used.
+# Connect to a browser profile of the user via Playwright Extension, with the URL from list --all:
+# extension://<channel>/<profile directory>, for example extension://msedge/Default.
 # The session name is the title of the tab group; pick a color to tell sessions apart.
-playwright-cli attach --extension=chrome --profile-dir-name="Profile 1" --session=finance --session-color=blue
+playwright-cli attach --cdp="extension://chrome/Profile 1" --session=finance --session-color=blue
 playwright-cli -s=finance goto https://example.com
 # Detach and close the tabs of the session, when the user does not need them
 playwright-cli -s=finance detach --close-tabs
 
-# Connect to a running Chrome or Edge by channel name
-playwright-cli attach --cdp=chrome
-playwright-cli attach --cdp=msedge
+# Connect to a running Chrome or Edge with remote debugging enabled
+playwright-cli attach --cdp=remote-debugging://chrome
+playwright-cli attach --cdp=remote-debugging://msedge
 
 # Connect to a running browser via CDP endpoint
 playwright-cli attach --cdp=http://localhost:9222
