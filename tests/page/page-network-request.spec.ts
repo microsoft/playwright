@@ -569,3 +569,20 @@ it('NE-029 should handle mixed-content blocked requests', async ({ page, asset, 
   expect(headers['origin']).toBeTruthy();
   expect(request.failure().errorText).toBe('mixed-content');
 });
+
+it('NE-146 should report cookies with an unrelated route', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44170' } }, async ({ page, server }) => {
+  await page.route('**/never-match', route => route.continue());
+  await page.goto(server.EMPTY_PAGE);
+  await page.evaluate(() => document.cookie = 'myCookie=myValue; path=/');
+  server.setRoute('/headers', (req, res) => res.end());
+
+  const [request, serverRequest] = await Promise.all([
+    page.waitForRequest('**/headers'),
+    server.waitForRequest('/headers'),
+    page.evaluate(() => fetch('/headers').then(response => response.text())),
+  ]);
+  expect(serverRequest.headers.cookie).toBe('myCookie=myValue');
+  expect((await request.allHeaders())['cookie']).toBe('myCookie=myValue');
+  expect(await request.headerValue('cookie')).toBe('myCookie=myValue');
+  expect((await request.headersArray()).find(header => header.name.toLowerCase() === 'cookie')?.value).toBe('myCookie=myValue');
+});

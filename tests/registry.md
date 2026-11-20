@@ -4024,6 +4024,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `NE-143` | `page/page-event-network.spec.ts` | should resolve responses after a same-process navigation |
 | `NE-144` | `library/browsercontext-network-event.spec.ts` | should not wait for navigation after background cache revalidation |
 | `NE-145` | `page/page-network-response.spec.ts` | should return source for a module script loaded from cache |
+| `NE-146` | `page/page-network-request.spec.ts` | should report cookies with an unrelated route |
 
 ### OO — OOPIF
 
