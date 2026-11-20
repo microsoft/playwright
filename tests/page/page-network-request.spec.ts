@@ -455,8 +455,15 @@ it('NE-025 should report raw response headers in redirects', async ({ page, serv
   expect(headersChain).toEqual(expectedHeaders);
 });
 
-it('NE-026 should report all cookies in one header', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44170' } }, async ({ page, server, isElectron, browserMajorVersion }) => {
+it('NE-026 should report all cookies in one header', async ({ page, server, isElectron, browserMajorVersion }) => {
   it.skip(isElectron && browserMajorVersion < 99, 'This needs Chromium >= 99');
+
+  const expectedHeaders = {};
+  server.setRoute('/headers', (req, res) => {
+    for (let i = 0; i < req.rawHeaders.length; i += 2)
+      expectedHeaders[req.rawHeaders[i]] = req.rawHeaders[i + 1];
+    res.end();
+  });
 
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(() => {
@@ -466,23 +473,6 @@ it('NE-026 should report all cookies in one header', { annotation: { type: 'issu
   const response = await page.goto(server.EMPTY_PAGE);
   const cookie = (await response.request().allHeaders())['cookie'];
   expect(cookie).toBe('myCookie=myValue; myOtherCookie=myOtherValue');
-
-  await page.route('**/never-match', route => route.continue());
-  const requestPromise = page.waitForRequest('**/headers');
-  const earlyHeadersPromise = requestPromise.then(request => request.allHeaders());
-  server.setRoute('/headers', async (req, res) => {
-    await earlyHeadersPromise;
-    res.end();
-  });
-  const [serverRequest, routedResponse] = await Promise.all([
-    server.waitForRequest('/headers'),
-    page.goto(server.PREFIX + '/headers'),
-  ]);
-  const request = routedResponse.request();
-  expect(serverRequest.headers.cookie).toBe(cookie);
-  expect((await request.allHeaders())['cookie']).toBe(cookie);
-  expect(await request.headerValue('cookie')).toBe(cookie);
-  expect((await request.headersArray()).find(header => header.name.toLowerCase() === 'cookie')?.value).toBe(cookie);
 });
 
 it('NE-027 should not allow to access frame on popup main request', async ({ page, server }) => {
@@ -578,4 +568,21 @@ it('NE-029 should handle mixed-content blocked requests', async ({ page, asset, 
   const headers = await request.allHeaders();
   expect(headers['origin']).toBeTruthy();
   expect(request.failure().errorText).toBe('mixed-content');
+});
+
+it('NE-146 should report cookies with an unrelated route', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44170' } }, async ({ page, server }) => {
+  await page.route('**/never-match', route => route.continue());
+  await page.goto(server.EMPTY_PAGE);
+  await page.evaluate(() => document.cookie = 'myCookie=myValue; path=/');
+  server.setRoute('/headers', (req, res) => res.end());
+
+  const [request, serverRequest] = await Promise.all([
+    page.waitForRequest('**/headers'),
+    server.waitForRequest('/headers'),
+    page.evaluate(() => fetch('/headers').then(response => response.text())),
+  ]);
+  expect(serverRequest.headers.cookie).toBe('myCookie=myValue');
+  expect((await request.allHeaders())['cookie']).toBe('myCookie=myValue');
+  expect(await request.headerValue('cookie')).toBe('myCookie=myValue');
+  expect((await request.headersArray()).find(header => header.name.toLowerCase() === 'cookie')?.value).toBe('myCookie=myValue');
 });
