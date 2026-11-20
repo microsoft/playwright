@@ -62,13 +62,21 @@ it('HA-002 should have browser', async ({ browserName, browser, contextFactory, 
   expect(log.browser!.version).toBe(browser.version());
 });
 
-it('HA-003 should have pages', async ({ contextFactory, server }, testInfo) => {
+it('HA-003 should have pages', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44242' },
+}, async ({ contextFactory, server }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto('data:text/html,<title>Hello</title>');
   // For data: load comes before domcontentloaded...
   await page.waitForLoadState('domcontentloaded');
+
+  const pageWithDialog = await page.context().newPage();
+  const dialogPromise = pageWithDialog.waitForEvent('dialog');
+  await pageWithDialog.goto('data:text/html,<body onload="alert(1)">', { waitUntil: 'commit' });
+  await dialogPromise;
+
   const log = await getLog();
-  expect(log.pages!.length).toBe(1);
+  expect(log.pages!.length).toBe(2);
   const pageEntry = log.pages![0];
   expect(pageEntry.id).toBeTruthy();
   expect(pageEntry.title).toBe('Hello');

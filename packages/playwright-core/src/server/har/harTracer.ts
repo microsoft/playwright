@@ -174,12 +174,13 @@ export class HarTracer {
   }
 
   private _onDOMContentLoaded(page: Page, pageEntry: har.Page) {
-    const promise = page.mainFrame().evaluateExpression(nullProgress, String(() => {
+    const frame = page.mainFrame();
+    const promise = frame.raceAgainstEvaluationStallingEvents(() => frame.evaluateExpression(nullProgress, String(() => {
       return {
         title: document.title,
         domContentLoaded: performance.timing.domContentLoadedEventStart,
       };
-    }), { isFunction: true, world: 'utility' }).then(result => {
+    }), { isFunction: true, world: 'utility' })).then(result => {
       pageEntry.title = result.title;
       if (!this._options.omitTiming)
         pageEntry.pageTimings.onContentLoad = result.domContentLoaded;
@@ -188,12 +189,13 @@ export class HarTracer {
   }
 
   private _onLoad(page: Page, pageEntry: har.Page) {
-    const promise = page.mainFrame().evaluateExpression(nullProgress, String(() => {
+    const frame = page.mainFrame();
+    const promise = frame.raceAgainstEvaluationStallingEvents(() => frame.evaluateExpression(nullProgress, String(() => {
       return {
         title: document.title,
         loaded: performance.timing.loadEventStart,
       };
-    }), { isFunction: true, world: 'utility' }).then(result => {
+    }), { isFunction: true, world: 'utility' })).then(result => {
       pageEntry.title = result.title;
       if (!this._options.omitTiming)
         pageEntry.pageTimings.onLoad = result.loaded;
