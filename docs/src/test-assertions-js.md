@@ -278,7 +278,7 @@ await expect(async () => {
 });
 ```
 
-Note that by default `toPass` has timeout 0 and does not respect custom [expect timeout](./test-timeouts.md#expect-timeout).
+By default, `toPass` has no separate assertion timeout. The [test timeout](./test-timeouts.md#test-timeout) still applies. To set a default matcher timeout, configure `expect.toPass.timeout` in [`property: TestConfig.expect`].
 
 ## Add custom matchers using expect.extend
 
