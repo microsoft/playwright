@@ -330,9 +330,8 @@ export class Request extends SdkObject {
   }
 
   // "null" means no raw headers available - we'll use provisional headers as raw headers.
-  setRawRequestHeaders(headers: HeadersArray | null) {
-    // Replace provisional headers used during interception when actual headers arrive.
-    if (headers && this._rawRequestHeadersPromise.isDone())
+  setRawRequestHeaders(headers: HeadersArray | null, force = false) {
+    if (force && this._rawRequestHeadersPromise.isDone())
       this._rawRequestHeadersPromise = new ManualPromise();
     if (!this._rawRequestHeadersPromise.isDone())
       this._rawRequestHeadersPromise.resolve(headers || this._headers);

@@ -96,7 +96,8 @@ export class WKInterceptableRequest {
       const headers = { ...responsePayload.requestHeaders };
       if (!headers['host'])
         headers['Host'] = new URL(this.request.url()).host;
-      this.request.setRawRequestHeaders(headersObjectToArray(headers));
+      // Replace provisional headers used while the request was intercepted.
+      this.request.setRawRequestHeaders(headersObjectToArray(headers), true);
     } else {
       // No raw headers available, use provisional ones.
       this.request.setRawRequestHeaders(null);
