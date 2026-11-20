@@ -33,7 +33,7 @@ import type { Screencast, ScreencastClient } from './screencast';
 import type { Page } from './page';
 
 export const kDefaultFps = 25;
-export const kMp4NotSupportedError = 'Recording mp4 video is only supported in Chromium';
+export const kMp4NotSupportedError = 'Recording mp4 video is not supported in this browser';
 
 export class VideoRecorder {
   private _screencast: Screencast;

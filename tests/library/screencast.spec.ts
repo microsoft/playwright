@@ -303,7 +303,10 @@ test('SC-039 start should record mp4 video in Chromium', {
   const videoPath = testInfo.outputPath('video.mp4');
   if (browserName !== 'chromium' || isBidi) {
     const error = await page.screencast.start({ path: videoPath }).catch(e => e);
-    expect(error.message).toContain('Recording mp4 video is only supported in Chromium');
+    expect(error.message).toContain('Recording mp4 video is not supported in this browser');
+    // The failed start does not block the next one.
+    await page.screencast.start({ path: testInfo.outputPath('video.webm') });
+    await page.screencast.stop();
     await context.close();
     return;
   }
@@ -339,7 +342,8 @@ test('SC-039 start should record mp4 video in Chromium', {
 
   await context.close();
 
-  // Page close and context close save a recording that was not stopped.
+  // Page close and context close save a recording that was not stopped. As with WebM,
+  // the video stays in artifactsDir, it is not copied to the path.
   const artifactsDir = testInfo.outputPath('artifacts');
   const browser2 = await browserType.launch({ artifactsDir });
   const context2 = await browser2.newContext();

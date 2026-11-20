@@ -22,7 +22,6 @@ import { createGuid } from '@utils/crypto';
 import { mkdirIfNeeded } from '@utils/fileUtils';
 import { Artifact } from '../artifact';
 import { nullProgress } from '../progress';
-import { isSessionClosedError } from '../protocolError';
 import { kDefaultFps } from '../videoRecorder';
 
 import type { CDPSession } from './crConnection';
@@ -88,8 +87,8 @@ export class CRVideoRecorder {
       let stopped = false;
       while (true) {
         const response: Protocol.IO.readReturnValue = await session.send(nullProgress, 'IO.read', { handle: stream }).catch(e => {
-          // The read fails until Chromium writes the first fragment.
-          if (stopped || isSessionClosedError(e))
+          // The read fails with this error until Chromium writes the first fragment.
+          if (stopped || !e.message.includes('Read failed'))
             throw e;
           return { data: '', eof: true };
         });
