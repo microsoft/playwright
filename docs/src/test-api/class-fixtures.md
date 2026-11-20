@@ -142,6 +142,22 @@ test('basic test', async ({ page }) => {
 
 Isolated [APIRequestContext] instance for each test.
 
+The instance respects configuration options such as [`property: TestOptions.storageState`],
+[`property: TestOptions.extraHTTPHeaders`] and [`property: TestOptions.baseURL`], like the
+[`property: Fixtures.context`] fixture. Cookies from the configured `storageState` are sent with matching requests,
+which can authenticate those requests.
+
+To start the `request` fixture without stored cookies, override `storageState`:
+
+```js
+test.use({ storageState: { cookies: [], origins: [] } });
+```
+
+Alternatively, create a separate [APIRequestContext] with
+`playwright.request.newContext({ storageState: undefined })` to ignore the configured storage state.
+These overrides do not clear authentication headers or HTTP credentials; override
+[`property: TestOptions.extraHTTPHeaders`] or [`property: TestOptions.httpCredentials`] separately if configured.
+
 **Usage**
 
 ```js
