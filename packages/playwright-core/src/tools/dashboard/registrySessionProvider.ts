@@ -100,7 +100,7 @@ class BrowserTracker {
 
 export class RegistrySessionProvider extends EventEmitter<SessionProviderEventMap> implements SessionProvider {
   private _trackers = new Map<string, BrowserTracker>();
-  private _serverRegistryDispose?: () => void;
+  private _serverRegistryDispose?: () => Promise<void>;
   private _pushSessionsScheduled = false;
 
   start(): void {
@@ -111,16 +111,17 @@ export class RegistrySessionProvider extends EventEmitter<SessionProviderEventMa
     this._scheduleSessions();
   }
 
-  dispose(): void {
+  async dispose(): Promise<void> {
     serverRegistry.off('added', this._scheduleSessions);
     serverRegistry.off('removed', this._scheduleSessions);
     serverRegistry.off('changed', this._scheduleSessions);
-    this._serverRegistryDispose?.();
+    const dispose = this._serverRegistryDispose?.();
     this._serverRegistryDispose = undefined;
     for (const tracker of this._trackers.values())
       tracker.dispose();
     this._trackers.clear();
     this.removeAllListeners();
+    await dispose;
   }
 
   async sessions(): Promise<BrowserDescriptor[]> {
