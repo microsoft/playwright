@@ -15,9 +15,45 @@
  */
 import { test, expect } from './harness';
 
-// These tests talk to the extension the way the relay of a client does.
+// These tests talk to the extension the way a client does.
 
-test('client gets its tabs as events and controls them with commands', async ({ user, connectRelay }) => {
+test('client gets its tabs as CDP targets and controls them with CDP commands', async ({ user, connectCDP }) => {
+  const client = await connectCDP('worker');
+  expect(await client.send('Browser.getVersion')).toEqual({ result: expect.objectContaining({ protocolVersion: '1.3' }) });
+  // The client gets no tab before it asks for them.
+  expect(client.events).toEqual([]);
+  expect(await client.send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true })).toEqual({ result: {} });
+  const [blank] = client.targets();
+  expect(blank.targetInfo).toEqual(expect.objectContaining({ type: 'page', attached: true }));
+  expect(await client.send('Runtime.evaluate', { expression: '1 + 1', returnByValue: true }, blank.sessionId)).toEqual({
+    result: { result: expect.objectContaining({ value: 2 }) },
+  });
+
+  // A new target is a new tab of the client.
+  const { result: { targetId } } = await client.send('Target.createTarget', { url: user.urlOf('Alpha') });
+  const alpha = client.targets().find(target => target.targetInfo.targetId === targetId)!;
+  await expect.poll(() => user.tab('Alpha')).toEqual({ group: 'Playwright · worker', badge: '✓' });
+  expect(await client.send('Runtime.evaluate', { expression: 'document.title', returnByValue: true }, alpha.sessionId)).toEqual({
+    result: { result: expect.objectContaining({ value: 'Alpha' }) },
+  });
+
+  expect(await client.send('Storage.setCookies', { cookies: [] })).toEqual({ error: 'Storage.setCookies is not allowed: it changes the state of the browser, not of the tab' });
+  expect(await client.send('Storage.getCookies')).toEqual({ result: { cookies: expect.any(Array) } });
+
+  // The client loses a tab that the user drags out of its group.
+  await user.dragOutOfGroup('Alpha');
+  await expect.poll(() => client.events.at(-1)).toEqual({ method: 'Target.detachedFromTarget', params: { sessionId: alpha.sessionId, targetId } });
+  expect(await client.send('Page.reload', {}, alpha.sessionId)).toEqual({ error: `No tab found for sessionId: ${alpha.sessionId}` });
+  expect(await client.send('Target.closeTarget', { targetId })).toEqual({ result: { success: false } });
+
+  expect(await client.send('Target.closeTarget', { targetId: blank.targetInfo.targetId })).toEqual({ result: { success: true } });
+  await expect.poll(() => client.events.at(-1)).toEqual({ method: 'Target.detachedFromTarget', params: { sessionId: blank.sessionId, targetId: blank.targetInfo.targetId } });
+  expect(await user.tabs()).toContain('Alpha');
+});
+
+// Protocol version 2, for the clients that were released before version 3. A layer in the extension changes it into CDP.
+
+test('version 2 client gets its tabs as events and controls them with commands', async ({ user, connectRelay }) => {
   const client = await connectRelay('worker');
   // The blank tab of the client comes before the end of the handshake.
   expect(client.eventNames()).toEqual(['chrome.tabs.onCreated', 'extension.initialized']);
@@ -27,7 +63,6 @@ test('client gets its tabs as events and controls them with commands', async ({ 
   expect(await client.sendToTab(blankTabId, 'Runtime.evaluate', { expression: '1 + 1', returnByValue: true })).toEqual({
     result: { result: expect.objectContaining({ value: 2 }) },
   });
-  expect(await client.send('chrome.debugger.detach', { tabId: blankTabId })).toEqual({ result: {} });
 
   // The response is the announcement of a tab that the client creates.
   const { result: tab } = await client.send('chrome.tabs.create', { url: user.urlOf('Alpha') });
@@ -54,7 +89,6 @@ test('commands for a tab that the client does not own are refused', async ({ use
     const notOwned = { error: `Tab ${tabId} is not owned by this client` };
     expect(await client.attach(tabId)).toEqual(notOwned);
     expect(await client.sendToTab(tabId, 'Page.reload')).toEqual(notOwned);
-    expect(await client.send('chrome.debugger.detach', { tabId })).toEqual(notOwned);
     expect(await client.send('chrome.tabs.remove', tabId)).toEqual(notOwned);
     // One tab of the list is not owned, so no tab is closed.
     expect(await client.send('chrome.tabs.remove', [ownTabId, tabId])).toEqual(notOwned);
@@ -120,9 +154,6 @@ test('commands that change the state of the whole browser are refused, reads are
     'Browser.grantPermissions',
     'Browser.resetPermissions',
     'Browser.setPermission',
-    'Browser.setDownloadBehavior',
-    'Target.createTarget',
-    'Target.closeTarget',
     'Target.attachToTarget',
     'Target.activateTarget',
   ];

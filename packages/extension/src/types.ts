@@ -18,6 +18,7 @@
 export type GroupColor = `${chrome.tabGroups.Color}`;
 
 export type SessionOptions = {
+  protocolVersion: number;
   clientName: string;
   tabGroup?: { title?: string, color?: string };
   background: boolean;

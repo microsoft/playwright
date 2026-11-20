@@ -37,7 +37,6 @@ export class OwnedTab {
     this.tabId = tab.id!;
     this.session = session;
     this._announced = !announce;
-    this._announce(tab);
   }
 
   async attach(requiredVersion: string): Promise<void> {
@@ -47,11 +46,6 @@ export class OwnedTab {
       return;
     }
     this._setAttached(true);
-  }
-
-  async detach(): Promise<void> {
-    this._setAttached(false);
-    await chrome.debugger.detach({ tabId: this.tabId });
   }
 
   async sendCommand(cdpSessionId: string | undefined, method: string, params?: { [key: string]: unknown }): Promise<unknown> {
@@ -71,7 +65,7 @@ export class OwnedTab {
     // Chrome resets the badge of a tab on navigation.
     if (this._attached)
       showBadge(this.tabId, true);
-    this._announce(tab);
+    this.announce(tab);
   }
 
   didReceiveDebuggerEvent(source: chrome.debugger.DebuggerSession, method: string, params?: object): void {
@@ -81,7 +75,7 @@ export class OwnedTab {
 
   didDetachDebugger(reason: string): void {
     this._setAttached(false);
-    this.session.debuggerDetached(this.tabId, reason);
+    this.session.tabDetached(this.tabId);
     // Chrome reports target_closed for a tab that stays open, for example when a subframe goes to an unknown scheme.
     if (reason === 'target_closed')
       this._reannounceLater();
@@ -95,12 +89,12 @@ export class OwnedTab {
     setTimeout(async () => {
       const tab = await chrome.tabs.get(this.tabId).catch(() => undefined);
       if (tab && !this._disposed)
-        this._announce(tab);
+        this.announce(tab);
     }, REANNOUNCE_DELAY_MS);
   }
 
-  // The client attaches the debugger to each tab that is announced to it.
-  private _announce(tab: chrome.tabs.Tab): void {
+  // The debugger is attached to each tab that is announced to the client.
+  announce(tab: chrome.tabs.Tab): void {
     if (this._announced || !isDebuggableUrl(tab.url))
       return;
     this._announced = true;

@@ -310,9 +310,9 @@ test('user rotates the token on the manage page', async ({ user, connectWithToke
 
 // Protocol versions.
 
-test('connect page asks for protocol version 2', async ({ openConnectPage }) => {
+test('connect page asks for protocol version 3', async ({ openConnectPage }) => {
   const { connectPage } = await openConnectPage('worker');
-  expect(new URL(connectPage.url()).searchParams.get('protocolVersion')).toBe('2');
+  expect(new URL(connectPage.url()).searchParams.get('protocolVersion')).toBe('3');
 });
 
 testWithOldExtension('client works with an old version of the extension', async ({ connect }) => {
