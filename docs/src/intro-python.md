@@ -15,6 +15,16 @@ This introduction describes the Playwright Pytest plugin, which is the recommend
 - [How to install Playwright Pytest](/intro.md#installing-playwright-pytest)
 - [How to run the example test](/intro.md#running-the-example-test)
 
+## Linux system dependency
+
+Starting with Playwright 1.65, the bundled Node.js 26 requires `libatomic.so.1` on Linux. Minimal images, including `python:*-slim`, may not include this library. On Debian and Ubuntu, install `libatomic1` as root before running Playwright commands or using the Python API:
+
+```bash
+apt-get update && apt-get install -y libatomic1
+```
+
+`playwright install --with-deps` cannot install this library if the bundled Node.js cannot start.
+
 ## Installing Playwright Pytest
 
 Playwright recommends using the official [Playwright Pytest plugin](./test-runners.md) to write end-to-end tests. It provides context isolation, running it on multiple browser configurations out of the box.
