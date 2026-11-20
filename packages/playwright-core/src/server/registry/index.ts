@@ -494,7 +494,7 @@ export interface Executable {
   browserVersion?: string,
   executablePathOrDie(sdkLanguage: string): string;
   executablePath(): string | undefined;
-  _validateHostRequirements(sdkLanguage: string): Promise<void>;
+  _validateHostRequirements?(sdkLanguage: string): Promise<void>;
   wslExecutablePath?: string
 }
 
@@ -567,7 +567,6 @@ export class Registry {
       executablePath: () => chromiumExecutable,
       executablePathOrDie: (sdkLanguage: string) => executablePathOrDie('chromium', chromiumExecutable, chromium.installByDefault, sdkLanguage),
       installType: chromium.installByDefault ? 'download-by-default' : 'download-on-demand',
-      _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, chromium.dir, ['chrome-linux'], [], ['chrome-win']),
       downloadURLs: this._downloadURLs(chromium),
       title: chromium.title,
       revision: chromium.revision,
@@ -586,7 +585,6 @@ export class Registry {
       executablePath: () => chromiumHeadlessShellExecutable,
       executablePathOrDie: (sdkLanguage: string) => executablePathOrDie('chromium', chromiumHeadlessShellExecutable, chromiumHeadlessShell.installByDefault, sdkLanguage),
       installType: chromiumHeadlessShell.installByDefault ? 'download-by-default' : 'download-on-demand',
-      _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, chromiumHeadlessShell.dir, ['chrome-linux'], [], ['chrome-win']),
       downloadURLs: this._downloadURLs(chromiumHeadlessShell),
       title: chromiumHeadlessShell.title,
       revision: chromiumHeadlessShell.revision,
@@ -742,7 +740,6 @@ export class Registry {
       wslExecutablePath: `/home/pwuser/.cache/ms-playwright/webkit-${webkit.revision}/pw_run.sh`,
       installType: 'download-on-demand',
       title: 'Webkit in WSL',
-      _validateHostRequirements: (sdkLanguage: string) => Promise.resolve(),
       _isHermeticInstallation: true,
       _install: async () => {
         if (process.platform !== 'win32')
@@ -768,7 +765,6 @@ export class Registry {
       executablePath: () => ffmpegExecutable,
       executablePathOrDie: (sdkLanguage: string) => executablePathOrDie('ffmpeg', ffmpegExecutable, ffmpeg.installByDefault, sdkLanguage),
       installType: ffmpeg.installByDefault ? 'download-by-default' : 'download-on-demand',
-      _validateHostRequirements: () => Promise.resolve(),
       downloadURLs: this._downloadURLs(ffmpeg),
       title: ffmpeg.title,
       revision: ffmpeg.revision,
@@ -785,7 +781,6 @@ export class Registry {
       executablePath: () => winlddExecutable,
       executablePathOrDie: (sdkLanguage: string) => executablePathOrDie('winldd', winlddExecutable, winldd.installByDefault, sdkLanguage),
       installType: process.platform === 'win32' ? 'download-by-default' : 'none',
-      _validateHostRequirements: () => Promise.resolve(),
       downloadURLs: this._downloadURLs(winldd),
       title: winldd.title,
       revision: winldd.revision,
@@ -801,7 +796,6 @@ export class Registry {
       executablePath: () => undefined,
       executablePathOrDie: () => '',
       installType: 'download-on-demand',
-      _validateHostRequirements: () => Promise.resolve(),
       downloadURLs: this._downloadURLs(android),
       title: android.title,
       revision: android.revision,
@@ -847,7 +841,6 @@ export class Registry {
       executablePath: () => executablePath('', false),
       executablePathOrDie: (sdkLanguage: string) => executablePath(sdkLanguage, true)!,
       installType: install ? 'install-script' : 'none',
-      _validateHostRequirements: () => Promise.resolve(),
       _isHermeticInstallation: false,
       _install: install,
     };
@@ -886,7 +879,6 @@ export class Registry {
       executablePath: () => executablePath('', false),
       executablePathOrDie: (sdkLanguage: string) => executablePath(sdkLanguage, true)!,
       installType: 'none',
-      _validateHostRequirements: () => Promise.resolve(),
       _isHermeticInstallation: true,
       _install: install,
     };
@@ -1056,7 +1048,7 @@ export class Registry {
   private async _validateHostRequirementsForExecutableIfNeeded(executable: Executable, sdkLanguage: string) {
     const kMaximumReValidationPeriod = 30 * 24 * 60 * 60 * 1000; // 30 days
     // Executable does not require validation.
-    if (!executable.directory)
+    if (!executable.directory || !executable._validateHostRequirements)
       return;
     const markerFile = path.join(executable.directory, 'DEPENDENCIES_VALIDATED');
     // Executable is already validated.
