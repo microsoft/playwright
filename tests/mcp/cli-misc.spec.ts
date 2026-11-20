@@ -30,7 +30,7 @@ test('daemon shuts down on browser launch failure', async ({ cli, server }) => {
 test('install-browser', async ({ cli, server, mcpBrowser }) => {
   test.skip(mcpBrowser !== 'chromium', 'Test only chromium');
   const { output } = await cli('install-browser', '--list');
-  expect(output).toMatch(/chromium-\d+/);
+  expect(output).toMatch(/chromium-(tot-)?\d+/);
 });
 
 test('install-browser --no-shell', async ({ cli }) => {
@@ -39,7 +39,7 @@ test('install-browser --no-shell', async ({ cli }) => {
   expect(withShell.output).toContain('chromium-headless-shell');
   const noShell = await cli('install-browser', 'chromium', '--no-shell', '--dry-run');
   expect(noShell.exitCode).toBe(0);
-  expect(noShell.output).toMatch(/chromium v\d+/);
+  expect(noShell.output).toMatch(/chromium v(tot-)?\d+/);
   expect(noShell.output).not.toContain('chromium-headless-shell');
 });
 
