@@ -97,7 +97,7 @@ npx playwright test --ui
 | `--max-failures <N>` or `-x` | Stop after the first `N` failures. Passing `-x` stops after the first failure. |
 | `--no-deps` | Do not run project dependencies. |
 | `--output <dir>` | Folder for output artifacts (default: "test-results"). |
-| `--only-changed [ref]` | Only run test files that have been changed between 'HEAD' and 'ref'. Defaults to running all uncommitted changes. Only supports Git. |
+| `--only-changed [ref]` | Run changed tests and tests affected by changed source files. Compares the working tree to the given Git ref (default: `HEAD`) and includes untracked, non-ignored files. Requires Git. |
 | `--pass-with-no-tests` | Makes test run succeed even if no tests were found. |
 | `--project <project-name...>` | Only run tests from the specified list of projects, supports '*' wildcard (default: run all projects). |
 | `--quiet` | Suppress stdio. |
