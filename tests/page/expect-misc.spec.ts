@@ -401,8 +401,8 @@ Timeout:  10000ms
 
   test('EX-220 resolve predicate after retries', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44236' } }, async ({ page, server }) => {
     await page.goto('data:text/html,<div>A</div>');
-    const retryPromise = expect(page).toHaveURL(url => url.href === 'data:text/html,<div>B</div>');
-    await page.goto('data:text/html,<div>B</div>');
+    const retryPromise = expect(page).toHaveURL(url => url.href === 'data:text/html,<div>B</div>', { timeout: 1000 });
+    setTimeout(() => page.goto('data:text/html,<div>B</div>'), 500);
     await retryPromise;
 
     await page.goto(server.EMPTY_PAGE);
