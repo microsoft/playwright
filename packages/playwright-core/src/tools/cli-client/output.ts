@@ -22,6 +22,7 @@ import { playwrightExtensionInstallUrl } from '../utils/extension';
 import { processExit } from '../../bootstrap';
 
 import type { ChannelSession } from './channelSessions';
+import type { BrowserProfile } from '../utils/extension';
 import type { BrowserDescriptor } from '../../serverRegistry';
 
 export type ListedBrowser = {
@@ -57,6 +58,7 @@ export interface Output {
   errorDetachNotAttached(session: string): never;
   errorBrowserNotOpenForTool(session: string): never;
   errorAttachNoTarget(): never;
+  errorAttachToChannel(message: string, channelSessions: ChannelSession[]): never;
   errorInstallGlobalRequiresSkills(): never;
 
   list(data: ListData): void;
@@ -134,6 +136,16 @@ export class TextOutput implements Output {
     return processExit(1);
   }
 
+  errorAttachToChannel(message: string, channelSessions: ChannelSession[]): never {
+    console.error(`Error: ${message.trimEnd()}`);
+    if (channelSessions.length) {
+      console.error('');
+      console.error(renderChannelSessions(channelSessions));
+    }
+    // eslint-disable-next-line no-restricted-syntax
+    return processExit(1);
+  }
+
   errorInstallGlobalRequiresSkills(): never {
     console.error(`Error: --global requires --skills`);
     // eslint-disable-next-line no-restricted-syntax
@@ -195,9 +207,7 @@ export class TextOutput implements Output {
 
     if (channelSessions?.length) {
       console.log('');
-      console.log('### Browsers available to attach via CDP');
-      for (const session of channelSessions)
-        console.log(renderChannelSession(session));
+      console.log(renderChannelSessions(channelSessions));
     }
   }
 
@@ -328,6 +338,12 @@ export class JsonOutput implements Output {
     return processExit(1);
   }
 
+  errorAttachToChannel(message: string, channelSessions: ChannelSession[]): never {
+    this._emit({ isError: true, error: message, channelSessions });
+    // eslint-disable-next-line no-restricted-syntax
+    return processExit(1);
+  }
+
   errorInstallGlobalRequiresSkills(): never {
     this._emit({ isError: true, error: `--global requires --skills` });
     // eslint-disable-next-line no-restricted-syntax
@@ -436,18 +452,32 @@ function renderServer(server: BrowserDescriptor): string {
   return lines.join('\n');
 }
 
+function renderChannelSessions(channelSessions: ChannelSession[]): string {
+  const lines = ['### Browsers available to attach', ...channelSessions.map(renderChannelSession)];
+  const profiles = channelSessions.flatMap(session => session.profiles.map(profile => renderChannelProfile(session, profile)));
+  if (profiles.length)
+    lines.push('', '### Browser profiles available to attach', profiles.join('\n\n'));
+  return lines.join('\n');
+}
+
 function renderChannelSession(session: ChannelSession): string {
   const lines = [`- ${session.channel}:`];
   lines.push(`  - data-dir: ${session.userDataDir}`);
-  if (session.extensionInstalled)
-    lines.push(`  - attach (extension): \`playwright-cli attach --extension=${session.channel}\``);
-  else
-    lines.push(`  - attach (extension): install at ${playwrightExtensionInstallUrl}`);
   if (session.endpoint) {
     lines.push(`  - attach (remote debugging): \`playwright-cli attach --cdp=${session.channel}\``);
   } else {
     const inspectScheme = session.channel.startsWith('msedge') ? 'edge' : 'chrome';
     lines.push(`  - attach (remote debugging): enable at ${inspectScheme}://inspect/#remote-debugging`);
   }
+  return lines.join('\n');
+}
+
+function renderChannelProfile(session: ChannelSession, profile: BrowserProfile): string {
+  const lines = [`- ${session.channel} - ${profile.name}:`];
+  lines.push(`  - profile-dir: ${path.join(session.userDataDir, profile.dirName)}`);
+  if (profile.extensionInstalled)
+    lines.push(`  - attach (extension): \`playwright-cli attach --extension=${session.channel} --profile-dir-name="${profile.dirName}"\``);
+  else
+    lines.push(`  - attach (extension): install at ${playwrightExtensionInstallUrl}`);
   return lines.join('\n');
 }

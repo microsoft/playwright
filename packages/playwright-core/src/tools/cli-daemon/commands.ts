@@ -70,6 +70,7 @@ const attach = declareCommand({
     cdp: z.string().optional().describe('Connect to an existing browser via CDP endpoint URL.'),
     endpoint: z.string().optional().describe('Playwright browser server endpoint to attach to.'),
     extension: z.union([z.boolean(), z.string()]).optional().describe('Connect to browser extension, optionally specify browser name (e.g. --extension=chrome)'),
+    ['profile-dir-name']: z.string().optional().describe('With --extension, name of the profile directory to connect to, as shown by "list --all". Defaults to the Default profile directory.'),
     config: z.string().optional().describe('Path to the configuration file, defaults to .playwright/cli.config.json'),
     session: z.string().optional().describe('Session name (defaults to bound browser name or "default"). With --extension, it is the title of the tab group.'),
     ['session-color']: z.string().optional().describe('With --extension, color of the tab group of the session: blue, red, yellow, green, pink, purple, cyan or orange.'),
