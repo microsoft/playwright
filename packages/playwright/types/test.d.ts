@@ -8651,6 +8651,15 @@ export interface PlaywrightTestArgs {
   /**
    * Isolated [APIRequestContext](https://playwright.dev/docs/api/class-apirequestcontext) instance for each test.
    *
+   * The instance is created with the same options as the
+   * [fixtures.context](https://playwright.dev/docs/api/class-fixtures#fixtures-context) fixture, including
+   * [testOptions.storageState](https://playwright.dev/docs/api/class-testoptions#test-options-storage-state),
+   * [testOptions.extraHTTPHeaders](https://playwright.dev/docs/api/class-testoptions#test-options-extra-http-headers)
+   * and [testOptions.baseURL](https://playwright.dev/docs/api/class-testoptions#test-options-base-url). When the config
+   * sets `storageState`, requests start out authenticated. To test unauthenticated behavior, override it with
+   * `test.use({ storageState: { cookies: [], origins: [] } })` or create a context with
+   * `playwright.request.newContext({ storageState: undefined })`.
+   *
    * **Usage**
    *
    * ```js

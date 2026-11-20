@@ -142,6 +142,8 @@ test('basic test', async ({ page }) => {
 
 Isolated [APIRequestContext] instance for each test.
 
+The instance is created with the same options as the [`property: Fixtures.context`] fixture, including [`property: TestOptions.storageState`], [`property: TestOptions.extraHTTPHeaders`] and [`property: TestOptions.baseURL`]. When the config sets `storageState`, requests start out authenticated. To test unauthenticated behavior, override it with `test.use({ storageState: { cookies: [], origins: [] } })` or create a context with `playwright.request.newContext({ storageState: undefined })`.
+
 **Usage**
 
 ```js
