@@ -297,7 +297,7 @@ test('SC-015 start dispose stops recording', async ({ browser }, testInfo) => {
 
 test('SC-039 start should record mp4 video in Chromium', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43999' },
-}, async ({ browser, browserName, isBidi }, testInfo) => {
+}, async ({ browser, browserType, browserName, isBidi }, testInfo) => {
   const context = await browser.newContext({ viewport: { width: 1000, height: 400 } });
   const page = await context.newPage();
   const videoPath = testInfo.outputPath('video.mp4');
@@ -336,7 +336,23 @@ test('SC-039 start should record mp4 video in Chromium', {
   await page.screencast.start({ path: videoPath2 });
   await page.screencast.stop();
   expect(fs.readFileSync(videoPath2).includes('av01')).toBe(true);
+
   await context.close();
+
+  // Page close and context close save a recording that was not stopped.
+  const artifactsDir = testInfo.outputPath('artifacts');
+  const browser2 = await browserType.launch({ artifactsDir });
+  const context2 = await browser2.newContext();
+  const page1 = await context2.newPage();
+  const page2 = await context2.newPage();
+  await page1.screencast.start({ path: testInfo.outputPath('video3.mp4') });
+  await page2.screencast.start({ path: testInfo.outputPath('video4.mp4') });
+  const savedVideos = () => fs.readdirSync(artifactsDir).filter(f => fs.readFileSync(path.join(artifactsDir, f)).includes('av01'));
+  await page1.close();
+  expect(savedVideos()).toHaveLength(1);
+  await context2.close();
+  expect(savedVideos()).toHaveLength(2);
+  await browser2.close();
 });
 
 type Pixel = { r: number, g: number, b: number, alpha: number };
