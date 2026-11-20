@@ -34,6 +34,10 @@ print(str(normalized))
 
 - String values of the `params` option in [APIRequestContext] requests are now appended to the query that the URL already has, instead of replacing it.
 
+### Announcements
+
+- Playwright for Python now bundles Node.js 26 instead of Node.js 24. On Linux, Node.js 26 requires `libatomic.so.1`. Minimal images, including `python:*-slim`, may need [`libatomic1` installed](./intro.md#linux-system-dependency) before running Playwright, including `playwright install --with-deps`.
+
 ### Browser Versions
 
 - Chromium 158.0.8127.18

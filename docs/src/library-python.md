@@ -5,6 +5,8 @@ title: "Getting started - Library"
 
 ## Installation
 
+On Linux, the bundled Node.js requires `libatomic.so.1`. If it is missing, [install `libatomic1`](./intro.md#linux-system-dependency) before running the commands below.
+
 [<img src="https://badge.fury.io/py/playwright.svg" alt="PyPI version" width="132" height="20" />](https://pypi.python.org/pypi/playwright/)
 
 <Tabs
