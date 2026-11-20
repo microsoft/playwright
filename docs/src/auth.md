@@ -592,12 +592,12 @@ test('admin and user', async ({ adminPage, userPage }) => {
 
 ### Session storage
 
-Reusing authenticated state covers [cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies), [local storage](https://developer.mozilla.org/en-US/docs/Web/API/Storage), [IndexedDB](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API) and passkey ([WebAuthn](https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API)) based authentication. Rarely, [session storage](https://developer.mozilla.org/en-US/docs/Web/API/Window/sessionStorage) is used for storing information associated with the signed-in state. Session storage is specific to a particular domain and is not persisted across page loads. Playwright does not provide API to persist session storage, but the following snippet can be used to save/load session storage.
+Reusing authenticated state covers [cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies), [local storage](https://developer.mozilla.org/en-US/docs/Web/API/Storage), [IndexedDB](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API) and passkey ([WebAuthn](https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API)) based authentication. Rarely, [session storage](https://developer.mozilla.org/en-US/docs/Web/API/Window/sessionStorage) is used for storing information associated with the signed-in state. Session storage belongs to an origin within a browser tab. It survives reloads in that tab and is cleared when the tab closes. To reuse session storage in a new context, save its contents and restore them with an init script.
 
 ```js
-// Get session storage and store as env variable
-const sessionStorage = await page.evaluate(() => JSON.stringify(sessionStorage));
-fs.writeFileSync('playwright/.auth/session.json', sessionStorage, 'utf-8');
+// Save session storage to a file.
+const savedSessionStorage = await page.evaluate(() => JSON.stringify(window.sessionStorage));
+fs.writeFileSync('playwright/.auth/session.json', savedSessionStorage, 'utf-8');
 
 // Set session storage in a new context
 const sessionStorage = JSON.parse(fs.readFileSync('playwright/.auth/session.json', 'utf-8'));
@@ -610,12 +610,18 @@ await context.addInitScript(storage => {
 ```
 
 ```java
-// Get session storage and store as env variable
-String sessionStorage = (String) page.evaluate("JSON.stringify(sessionStorage)");
-System.getenv().put("SESSION_STORAGE", sessionStorage);
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
-// Set session storage in a new context
-String sessionStorage = System.getenv("SESSION_STORAGE");
+// Save session storage to a file.
+Path sessionPath = Paths.get("playwright/.auth/session.json");
+String savedSessionStorage = (String) page.evaluate("JSON.stringify(sessionStorage)");
+Files.write(sessionPath, savedSessionStorage.getBytes(StandardCharsets.UTF_8));
+
+// Set session storage in a new context.
+String sessionStorage = new String(Files.readAllBytes(sessionPath), StandardCharsets.UTF_8);
 String escapedSessionStorage = sessionStorage.replace("\\", "\\\\").replace("'", "\\'");
 context.addInitScript("(storage => {\n" +
   "  if (window.location.hostname === 'example.com') {\n" +
