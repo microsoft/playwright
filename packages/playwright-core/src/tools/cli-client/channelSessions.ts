@@ -30,8 +30,11 @@ export type ChannelSession = {
   profiles: BrowserProfile[];
 };
 
-export function isKnownChannel(name: string): boolean {
-  return channelToUserDataDir.has(name);
+// The channel of a channel name such as chrome, or of a URL such as remote-debugging://chrome or extension://chrome/Default.
+export function attachTargetChannel(target: string): string | undefined {
+  if (channelToUserDataDir.has(target))
+    return target;
+  return target.match(/^(?:remote-debugging|extension):\/\/([^/?]+)/)?.[1];
 }
 
 export async function listChannelSessions(): Promise<ChannelSession[]> {

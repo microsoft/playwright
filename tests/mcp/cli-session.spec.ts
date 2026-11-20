@@ -318,7 +318,7 @@ test('list --all and a failed attach list browser profiles available to attach',
 ### Browser profiles available to attach
 - chrome - Work:
   - profile-dir: ${path.join(userDataDir, 'Default')}
-  - attach (extension): \`playwright-cli attach --extension=chrome --profile-dir-name="Default"\`
+  - attach (extension): \`playwright-cli attach --cdp="extension://chrome/Default"\`
 
 - chrome - Jane Doe (jane@example.com):
   - profile-dir: ${path.join(userDataDir, 'Profile 1')}
@@ -327,12 +327,12 @@ test('list --all and a failed attach list browser profiles available to attach',
   const list = await cli('list', '--all', { env });
   expect(list.output).toContain(listing);
 
-  const cdp = await cli('attach', '--cdp=chrome', { env });
+  const cdp = await cli('attach', '--cdp=remote-debugging://chrome', { env });
   expect(cdp.exitCode).toBe(1);
   expect(cdp.error).toContain(`DevToolsActivePort file not found at ${path.join(userDataDir, 'DevToolsActivePort')}`);
   expect(cdp.error).toContain(listing);
 
-  const extension = await cli('attach', '--extension=chrome', '--profile-dir-name=Profile 1', { env });
+  const extension = await cli('attach', '--cdp=extension://chrome/Profile 1', { env });
   expect(extension.exitCode).toBe(1);
   expect(extension.error).toContain(`Playwright Extension not found in "${path.join(userDataDir, 'Profile 1')}"`);
   expect(extension.error).toContain(listing);

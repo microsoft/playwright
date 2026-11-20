@@ -26,7 +26,7 @@ import { IdleTimer, defaultIdleTimeout } from '../backend/idleTimer';
 import { createExtensionBrowser } from './extensionContextFactory';
 import { connectToBrowserAcrossVersions, descriptorEndpoint } from '../utils/connect';
 import { serverRegistry } from '../../serverRegistry';
-import { resolveExtensionOptions } from './config';
+import { isExtensionURL, resolveExtensionURL } from './config';
 import { throwIfExecutableMissing } from '../utils/browserErrors';
 // eslint-disable-next-line no-restricted-imports
 import { connectToBrowser } from '../../client/connect';
@@ -69,17 +69,22 @@ async function createBrowser(config: FullConfig, clientInfo: ClientInfo, cliOpti
 
   let browser: playwrightTypes.Browser;
   let ownership: 'attached' | 'own' = 'own';
-  if (config.browser.cdpEndpoint) {
+  const cdpEndpoint = config.browser.cdpEndpoint;
+  if (cdpEndpoint && !isExtensionURL(cdpEndpoint)) {
     browser = await createCDPBrowser(config, clientInfo);
     ownership = 'attached';
-  } else if (config.browser.isolated) {
+  } else if (config.browser.isolated && !cdpEndpoint) {
     browser = await createIsolatedBrowser(config, clientInfo);
     ownership = 'own';
   } else if (config.extension) {
-    const { channel, profileDirName } = resolveExtensionOptions(cliOptions);
     const tabGroup = config.tabGroup === false ? undefined : { title: config.sessionName, color: config.sessionColor };
-    // The merged executablePath already applies cli > env > config file precedence and per-source path resolution.
-    browser = await createExtensionBrowser(channel, config.browser.launchOptions.executablePath, config.browser.userDataDir, profileDirName, clientInfo.clientName, tabGroup, config.background);
+    browser = await createExtensionBrowser(resolveExtensionURL(config, cliOptions), {
+      clientName: clientInfo.clientName,
+      tabGroup,
+      background: config.background,
+      headers: config.browser.cdpHeaders,
+      timeout: config.browser.cdpTimeout,
+    });
     ownership = 'attached';
   } else {
     browser = await createPersistentBrowser(config, clientInfo);

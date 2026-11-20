@@ -129,7 +129,7 @@ export type FullConfig = MergedConfig & {
 };
 
 export async function resolveConfig(config: Config): Promise<FullConfig> {
-  const merged = mergeConfig(defaultConfig, config);
+  const merged = withExtensionURL(mergeConfig(defaultConfig, config));
   const browser = await validateBrowserConfig(merged.browser);
   return { ...merged, browser };
 }
@@ -143,6 +143,7 @@ export async function resolveCLIConfigForMCP(cliOptions: CLIOptions, env?: NodeJ
   result = mergeConfig(result, await loadConfig(configFile));
   result = mergeConfig(result, resolveConfigPaths(envOverrides, process.cwd()));
   result = mergeConfig(result, resolveConfigPaths(cliOverrides, process.cwd()));
+  result = withExtensionURL(result);
 
   const browser = await validateBrowserConfig(result.browser);
   if (browser.launchOptions.headless === undefined)
@@ -195,6 +196,7 @@ export async function resolveCLIConfigForCLI(daemonProfilesDir: string, sessionN
   result = mergeConfig(result, await loadConfig(configFile));
   result = mergeConfig(result, resolveConfigPaths(envOverrides, process.cwd()));
   result = mergeConfig(result, resolveConfigPaths(daemonOverrides, process.cwd()));
+  result = withExtensionURL(result);
 
   if (result.browser.isolated === undefined)
     result.browser.isolated = !options.profile && !options.persistent && !result.browser.userDataDir && !result.browser.remoteEndpoint && !result.browser.cdpEndpoint && !result.extension;
@@ -216,11 +218,31 @@ export async function resolveCLIConfigForCLI(daemonProfilesDir: string, sessionN
   return { ...result, browser, configFile, skillMode: true };
 }
 
-export function resolveExtensionOptions(cliOptions: CLIOptions): { channel: string, profileDirName?: string } {
-  const browser = cliOptions.browser ?? envToString(process.env.PLAYWRIGHT_MCP_BROWSER);
-  const { channel } = resolveBrowserParam(browser);
+export function isExtensionURL(endpoint: string | undefined): endpoint is string {
+  return !!endpoint?.startsWith('extension://');
+}
+
+// An extension URL such as extension://chrome as the CDP endpoint turns on the extension mode.
+function withExtensionURL(config: MergedConfig): MergedConfig {
+  return isExtensionURL(config.browser.cdpEndpoint) ? { ...config, extension: true } : config;
+}
+
+// The URL for connectOverCDP: extension://<channel>[/<profile directory>][?userDataDir=<path>&executablePath=<path>].
+// The options give the parts that the URL in the CDP endpoint does not have.
+export function resolveExtensionURL(config: FullConfig, cliOptions: CLIOptions): string {
+  const { channel } = resolveBrowserParam(cliOptions.browser ?? envToString(process.env.PLAYWRIGHT_MCP_BROWSER));
+  const url = new URL(isExtensionURL(config.browser.cdpEndpoint) ? config.browser.cdpEndpoint : `extension://${channel ?? 'chrome'}`);
   const profileDirName = cliOptions.profileDirName ?? envToString(process.env.PLAYWRIGHT_MCP_PROFILE_DIR_NAME);
-  return { channel: channel ?? 'chrome', profileDirName };
+  if (profileDirName && !url.pathname.replace(/^\//, ''))
+    url.pathname = `/${profileDirName}`;
+  const userDataDir = config.browser.userDataDir ?? process.env.PWTEST_EXTENSION_USER_DATA_DIR;
+  if (userDataDir && !url.searchParams.has('userDataDir'))
+    url.searchParams.set('userDataDir', userDataDir);
+  // The merged executablePath already applies cli > env > config file precedence and per-source path resolution.
+  const executablePath = config.browser.launchOptions.executablePath;
+  if (executablePath && !url.searchParams.has('executablePath'))
+    url.searchParams.set('executablePath', executablePath);
+  return url.toString();
 }
 
 async function validateBrowserConfig(browser: MergedConfig['browser']): Promise<FullConfig['browser']> {

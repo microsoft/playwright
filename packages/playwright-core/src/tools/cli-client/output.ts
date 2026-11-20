@@ -464,7 +464,7 @@ function renderChannelSession(session: ChannelSession): string {
   const lines = [`- ${session.channel}:`];
   lines.push(`  - data-dir: ${session.userDataDir}`);
   if (session.endpoint) {
-    lines.push(`  - attach (remote debugging): \`playwright-cli attach --cdp=${session.channel}\``);
+    lines.push(`  - attach (remote debugging): \`playwright-cli attach --cdp=remote-debugging://${session.channel}\``);
   } else {
     const inspectScheme = session.channel.startsWith('msedge') ? 'edge' : 'chrome';
     lines.push(`  - attach (remote debugging): enable at ${inspectScheme}://inspect/#remote-debugging`);
@@ -476,7 +476,7 @@ function renderChannelProfile(session: ChannelSession, profile: BrowserProfile):
   const lines = [`- ${session.channel} - ${profile.name}:`];
   lines.push(`  - profile-dir: ${path.join(session.userDataDir, profile.dirName)}`);
   if (profile.extensionInstalled)
-    lines.push(`  - attach (extension): \`playwright-cli attach --extension=${session.channel} --profile-dir-name="${profile.dirName}"\``);
+    lines.push(`  - attach (extension): \`playwright-cli attach --cdp="extension://${session.channel}/${profile.dirName}"\``);
   else
     lines.push(`  - attach (extension): install at ${playwrightExtensionInstallUrl}`);
   return lines.join('\n');

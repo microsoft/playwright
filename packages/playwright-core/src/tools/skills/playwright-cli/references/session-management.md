@@ -117,29 +117,30 @@ Before you attach, run `list --all` to know what you attach to:
 playwright-cli list --all
 ```
 
-The section "Browsers available to attach" shows each Chrome and Edge that is installed, and if its remote debugging is on. The section "Browser profiles available to attach" shows each profile with the name that the browser shows for it (for a signed-in profile, the account name and the email), and if the Playwright Extension is installed in it. Each entry gives the command to attach to it. When `attach --cdp=<channel>` or `attach --extension` fails, the error shows the same two sections.
+The section "Browsers available to attach" shows each Chrome and Edge that is installed, and if its remote debugging is on. The section "Browser profiles available to attach" shows each profile with the name that the browser shows for it (for a signed-in profile, the account name and the email), and if the Playwright Extension is installed in it. Each entry gives the command to attach to it, with a URL that tells what you attach to:
 
-### Attach by channel name
+- `remote-debugging://<channel>` - the whole browser, with remote debugging.
+- `extension://<channel>/<profile directory>` - one browser profile, with the Playwright Extension.
 
-Connect to a running Chrome or Edge instance by its channel name. The browser must have remote debugging enabled — navigate to `chrome://inspect/#remote-debugging` in the target browser and check "Allow remote debugging for this browser instance".
-
-```bash
-# Attach to Chrome
-playwright-cli attach --cdp=chrome
-
-# Attach to Chrome Canary
-playwright-cli attach --cdp=chrome-canary
-
-# Attach to Microsoft Edge
-playwright-cli attach --cdp=msedge
-
-# Attach to Edge Dev
-playwright-cli attach --cdp=msedge-dev
-```
+When `attach` to one of these URLs fails, the error shows the same two sections.
 
 Supported channels: `chrome`, `chrome-beta`, `chrome-dev`, `chrome-canary`, `msedge`, `msedge-beta`, `msedge-dev`, `msedge-canary`.
 
-When `--session` is not provided, the session is named after the channel (e.g. `--cdp=msedge` creates a session called `msedge`), so parallel attaches to Chrome and Edge don't collide on `default`. Pass `--session=<name>` to override.
+When `--session` is not provided, the session is named after the channel (e.g. `--cdp=remote-debugging://msedge` creates a session called `msedge`), so parallel attaches to Chrome and Edge don't collide on `default`. Pass `--session=<name>` to override.
+
+### Attach with remote debugging
+
+Connect to all tabs of a running Chrome or Edge. The browser must have remote debugging enabled — navigate to `chrome://inspect/#remote-debugging` in the target browser and check "Allow remote debugging for this browser instance".
+
+```bash
+# Attach to Chrome
+playwright-cli attach --cdp=remote-debugging://chrome
+
+# Attach to Microsoft Edge
+playwright-cli attach --cdp=remote-debugging://msedge
+```
+
+`--cdp=chrome` is a short form of `--cdp=remote-debugging://chrome`.
 
 ### Attach via CDP endpoint
 
@@ -151,27 +152,23 @@ playwright-cli attach --cdp=http://localhost:9222
 
 ### Attach via browser extension
 
-Connect to the everyday browser profile of the user: their tabs, logins and cookies. The browser must have the Playwright Extension installed. Name the browser, because the extension can be in Edge and not in Chrome:
+Connect to the everyday browser profile of the user: their tabs, logins and cookies. A browser can have several profiles, and the Playwright Extension is installed separately in each profile. Use the URL of the profile from `list --all`. When there are several profiles, ask the user which one to use:
 
 ```bash
-playwright-cli attach --extension=chrome
-playwright-cli attach --extension=msedge
+playwright-cli attach --cdp="extension://chrome/Default"
+playwright-cli attach --cdp="extension://msedge/Profile 1"
 ```
 
-When the extension is not installed in that browser, `attach` fails with `Playwright Extension not found in "<profile path>"`. Try the other browser, or ask the user to install the extension.
+Without the profile directory, `extension://chrome` connects to the `Default` profile. `--extension=chrome --profile-dir-name="Profile 1"` is a short form of `--cdp="extension://chrome/Profile 1"`.
 
-A browser can have several profiles, and the extension is installed separately in each profile. Without `--profile-dir-name`, `attach` connects to the `Default` profile. Find the profiles in the output of `list --all`. When there are several profiles, ask the user which one to use:
-
-```bash
-playwright-cli attach --extension=chrome --profile-dir-name="Profile 1"
-```
+When the extension is not installed in that profile, `attach` fails with `Playwright Extension not found in "<profile path>"`. Use another profile from the list, or ask the user to install the extension.
 
 The session controls only its own tabs: the tabs that the user picked on the connect page, and the tabs that the session opened. The extension puts them into a tab group. Give the session a name for the task, and optionally a color:
 
 ```bash
 # The tab group has the title "finance" and the color blue.
 # Colors: blue, red, yellow, green, pink, purple, cyan, orange.
-playwright-cli attach --extension=msedge --session=finance --session-color=blue
+playwright-cli attach --cdp="extension://msedge/Default" --session=finance --session-color=blue
 
 # Each next command names the session
 playwright-cli -s=finance goto https://example.com
@@ -204,7 +201,7 @@ playwright-cli detach
 playwright-cli -s=msedge detach
 ```
 
-`detach` only works on sessions created via `attach`. For sessions created via `open`, use `close`. `detach --close-tabs` only works on sessions created via `attach --extension`.
+`detach` only works on sessions created via `attach`. For sessions created via `open`, use `close`. `detach --close-tabs` only works on sessions attached with the extension.
 
 ## Default Browser Session
 

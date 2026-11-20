@@ -1,6 +1,6 @@
 # Playwright Extension: Design
 
-The extension lets Playwright clients (the MCP server and the CLI) control tabs in the browser profile of the user. More than one client can be connected at the same time.
+The extension lets Playwright clients (the library, the MCP server and the CLI) control tabs in the browser profile of the user. More than one client can be connected at the same time.
 
 The design has one central rule: **each tab has zero owners or one owner, and one object, `TabRegistry`, is the only place that changes an owner.** Tab groups, the command checks and the events to the clients all follow from that table.
 
@@ -135,6 +135,26 @@ The relay starts the browser with `connect.html` and these parameters:
 | `tabGroupColor` | Optional color: `green`, `blue`, `purple`, `orange`, `pink`, `cyan`, `yellow` or `red`. The default is the first of these, in this order, that no other client group has. `grey` is refused, because it marks a group that its client left. |
 | `background` | `true` if the tabs of the client must not become active |
 
+The endpoint of `connectOverCDP` tells which browser profile to connect to: `extension://<channel>[/<profile directory>][?userDataDir=<path>&executablePath=<path>]`, for example `extension://chrome/Profile 1`.
+
+| Part | Value |
+| --- | --- |
+| channel | The browser channel, for example `chrome` or `msedge` |
+| profile directory | Optional. The default is `Default`. |
+| `userDataDir` | Optional. The default is the user data directory of the channel. |
+| `executablePath` | Optional. With it, the relay does not check that the profile has the extension, because the browser can be in another file system, for example Windows Chrome from WSL2. |
+
+The client gives the other values to the relay in the headers of `connectOverCDP`.
+
+| Header | Value |
+| --- | --- |
+| `x-playwright-extension-client-name` | The name of the client. The default is `Playwright`. |
+| `x-playwright-extension-token` | The token of the extension |
+| `x-playwright-extension-tab-group` | `false` for a client without grouping |
+| `x-playwright-extension-tab-group-title` | The title of the group |
+| `x-playwright-extension-tab-group-color` | The color of the group |
+| `x-playwright-extension-background` | `true` if the tabs of the client must not become active |
+
 The MCP server has the options `--session-name`, `--session-color`, `--no-tab-group` and `--background`. The session name is the title of the group, and the session color is its color. The CLI gives the name of its session as the title, and `attach` has the options `--session-color` and `--no-tab-group`. `detach --close-tabs` closes each page of the session with `chrome.tabs.remove` before the client stops, so the session leaves no gray group.
 
 ### Runtime messages
@@ -217,13 +237,13 @@ Gray groups stay after a browser restart.
 
 ## Client side
 
-The client classes are in `packages/playwright-core/src/tools/mcp`.
+The client classes are in `packages/playwright-core/src/server/chromium`. `connectOverCDP('extension://chrome')` starts the relay in the Playwright server (`startExtensionRelay`), waits for the extension, and then connects to the CDP endpoint of the relay. The relay stops when the browser disconnects. The MCP server and the CLI use the same call (`tools/mcp/extensionContextFactory.ts`): they make the URL from their options or take it from `--cdp-endpoint` (MCP) and `attach --cdp` (CLI), read `PLAYWRIGHT_MCP_EXTENSION_TOKEN`, and pass the other options as headers.
 
 | Class | Responsibility |
 | --- | --- |
-| `CDPRelayServer` (`cdpRelay.ts`) | The WebSocket server for Playwright and for the extension. Starts the browser with the connect page URL. Waits for `extension.initialized`. |
-| `BrowserModel` (`browserModel.ts`) | Changes CDP from Playwright into `chrome.*` commands, and `chrome.*` events into CDP. Forgets a tab on `chrome.debugger.onDetach`, because a tab that went to another client stays open. |
-| `ExtensionConnection` (`cdpRelay.ts`) | Message ids and responses on the extension WebSocket |
+| `CDPRelayServer` (`crExtensionRelay.ts`) | The WebSocket server for Playwright and for the extension. Starts the browser with the connect page URL. Waits for `extension.initialized`. |
+| `BrowserModel` (`crExtensionBrowserModel.ts`) | Changes CDP from Playwright into `chrome.*` commands, and `chrome.*` events into CDP. Forgets a tab on `chrome.debugger.onDetach`, because a tab that went to another client stays open. |
+| `ExtensionConnection` (`crExtensionBrowserModel.ts`) | Message ids and responses on the extension WebSocket |
 
 A CDP command with no session goes to the first attached tab, and the extension decides if it passes.
 
@@ -233,7 +253,7 @@ The tests are in `tests/extension`. `harness.ts` has two actors: `user`, the per
 
 | File | Subject |
 | --- | --- |
-| `extension.spec.ts` | Connect page, token, protocol versions, browser profile, relay |
+| `extension.spec.ts` | Connect page, token, protocol versions, browser profile, relay, `connectOverCDP` |
 | `client-lifecycle.spec.ts` | Clients that connect, leave, and take the tabs and groups of other clients |
 | `tab-grouping.spec.ts` | Group title and color, gray groups, clients without grouping |
 | `tab-dragging.spec.ts` | Drags between clients, free groups, new groups and windows |

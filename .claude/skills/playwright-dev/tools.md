@@ -467,7 +467,6 @@ packages/playwright-core/src/tools/
 │   ├── index.ts              # MCP server entry
 │   ├── browserFactory.ts     # Browser factory
 │   ├── extensionContextFactory.ts
-│   ├── cdpRelay.ts           # CDP relay
 │   ├── watchdog.ts           # Watchdog
 │   └── log.ts                # Logging
 ├── cli-client/               # CLI client

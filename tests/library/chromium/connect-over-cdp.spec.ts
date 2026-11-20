@@ -42,6 +42,10 @@ test('CD-001 should connect to an existing cdp session', {
     expect(contexts.length).toBe(1);
     await cdpBrowser.close();
 
+    const urlBrowser = await browserType.connectOverCDP(`remote-debugging://chromium?${new URLSearchParams({ userDataDir })}`);
+    expect(urlBrowser.contexts().length).toBe(1);
+    await urlBrowser.close();
+
     if (process.platform === 'linux') {
       for (const env of [
         { CHROME_USER_DATA_DIR: '', CHROME_CONFIG_HOME: '', XDG_CONFIG_HOME: configHome },
