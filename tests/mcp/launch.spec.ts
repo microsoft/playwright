@@ -103,7 +103,7 @@ test('surfaces the missing browser executable path so a version mismatch is diag
     arguments: { url: server.HELLO_WORLD },
   });
   // The surfaced path must include the version-specific browser directory
-  // (e.g. chromium-1234) — that's the detail that reveals a version mismatch,
+  // (e.g. chromium-1234 or chromium-tot-1234) — that's the detail that reveals a version mismatch,
   // as opposed to a generic "not installed".
   const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   expect.soft(response).toHaveResponse({
@@ -112,7 +112,7 @@ test('surfaces the missing browser executable path so a version mismatch is diag
   });
   expect.soft(response).toHaveResponse({
     isError: true,
-    error: expect.stringMatching(new RegExp(escapeRegExp(emptyBrowsersPath) + String.raw`[\\/][\w.]+-\d+[\\/]`)),
+    error: expect.stringMatching(new RegExp(escapeRegExp(emptyBrowsersPath) + String.raw`[\\/][\w.]+-(tot-)?\d+[\\/]`)),
   });
 });
 
