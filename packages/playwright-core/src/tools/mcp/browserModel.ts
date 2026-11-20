@@ -220,6 +220,8 @@ export class BrowserModel {
     if (existing)
       return existing;
     await this._extension.send('chrome.debugger.attach', [{ tabId }, '1.3']);
+    // Keep background tabs rendering without resetting the user's other emulation settings.
+    await this._extension.send('chrome.debugger.sendCommand', [{ tabId }, 'Emulation.setFocusEmulationEnabled', { enabled: true }]);
     const result = await this._extension.send('chrome.debugger.sendCommand', [{ tabId }, 'Target.getTargetInfo']);
     const targetInfo = result?.targetInfo;
     const sessionId = `pw-tab-${this._nextSessionId++}`;
