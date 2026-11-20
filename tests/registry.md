@@ -478,6 +478,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `BC-082` | `library/browsercontext-reuse.spec.ts` | reuse {launch, connect} › should work with routeWebSocket *(2 copies)* |
 | `BC-083` | `library/browsercontext-reuse.spec.ts` | reuse {launch, connect} › should update viewport and media *(2 copies)* |
 | `BC-084` | `library/browsercontext-basic.spec.ts` | should locate only visible elements when configured |
+| `BC-085` | `library/browsercontext-basic.spec.ts` | should dispatch form click events across browser contexts |
 
 ### BP — Browsers path
 
