@@ -86,13 +86,20 @@ test('check that trace is saved with browser_start_tracing (no output dir)', asy
   ]);
 });
 
-test('browser_start_tracing traces isolated contexts', async ({ startClient, server }, testInfo) => {
+test('browser_start_tracing traces isolated contexts', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44199' },
+}, async ({ startClient, server }, testInfo) => {
   const outputDir = testInfo.outputPath('output');
 
   const { client } = await startClient({ args: [`--output-dir=${outputDir}`, '--caps=tracing'] });
 
   await client.callTool({
     name: 'browser_start_tracing',
+  });
+
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.EMPTY_PAGE },
   });
 
   await client.callTool({
@@ -109,6 +116,23 @@ test('browser_start_tracing traces isolated contexts', async ({ startClient, ser
   const tracesDir = path.join(outputDir, 'traces');
   const aliceTrace = (await fs.promises.readdir(tracesDir)).find(file => /^trace-\d+-alice\.trace$/.test(file));
   expect(await fs.promises.readFile(path.join(tracesDir, aliceTrace!), 'utf-8')).toContain(server.HELLO_WORLD);
+
+  await client.callTool({ name: 'browser_close' });
+  const files = await fs.promises.readdir(tracesDir);
+  for (const [pattern, url] of [
+    [/^trace-\d+\.network$/, server.EMPTY_PAGE],
+    [/^trace-\d+-alice\.network$/, server.HELLO_WORLD],
+  ] as const) {
+    const networkFile = files.find(file => pattern.test(file));
+    expect(networkFile).toBeTruthy();
+    const entries = (await fs.promises.readFile(path.join(tracesDir, networkFile!), 'utf-8')).trim().split('\n').map(line => JSON.parse(line));
+    expect(entries).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        type: 'resource-snapshot',
+        snapshot: expect.objectContaining({ request: expect.objectContaining({ url }) }),
+      }),
+    ]));
+  }
 });
 
 test('browser_stop_tracing without start returns error', async ({ startClient }) => {

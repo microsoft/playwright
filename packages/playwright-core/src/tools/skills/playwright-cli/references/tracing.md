@@ -22,6 +22,10 @@ playwright-cli tracing-stop
 
 ## Trace Output Files
 
+To capture network activity across isolated contexts, use `tracing-start` and `tracing-stop` instead of configuring a shared `browser.contextOptions.recordHar.path`. Start tracing before navigating or creating isolated tabs, and stop it before closing the browser. Each isolated context gets its own `.trace` and `.network` files, such as `trace-{timestamp}-alice.network`, so its requests do not overwrite those from another context.
+
+With the MCP server, enable `--caps=devtools` and call `browser_start_tracing` and `browser_stop_tracing`. The stop response links to each context's trace and network log. The `.network` files contain HAR request and response data as one JSON record per line; they are not standalone `.har` files.
+
 When you start tracing, Playwright creates a `.playwright-cli/traces/` directory with several files:
 
 ### `trace-{timestamp}.trace`

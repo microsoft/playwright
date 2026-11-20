@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
-
 import { test, expect } from './fixtures';
 
 import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
@@ -152,20 +150,7 @@ test('reuse first tab when navigating', async ({ startClient, cdpServer, server 
   expect(await pages[0].title()).toBe('Title');
 });
 
-test('create new tab in isolated context', {
-  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44199' },
-}, async ({ startClient, server }, testInfo) => {
-  const { client } = await startClient({
-    config: {
-      browser: {
-        contextOptions: { recordHar: { path: testInfo.outputPath('network.har') } },
-      },
-    },
-  });
-  await client.callTool({
-    name: 'browser_navigate',
-    arguments: { url: server.EMPTY_PAGE },
-  });
+test('create new tab in isolated context', async ({ client, server }) => {
   expect(await client.callTool({
     name: 'browser_tabs',
     arguments: {
@@ -174,29 +159,10 @@ test('create new tab in isolated context', {
       isolatedContext: 'alice',
     },
   })).toHaveResponse({
-    result: `- 0: [](${server.EMPTY_PAGE})
+    result: `- 0: [](about:blank)
 - 1: (current) [Title](${server.HELLO_WORLD}) [isolatedContext: alice]`,
     page: expect.stringContaining('- Isolated context: alice'),
   });
-
-  await client.callTool({
-    name: 'browser_tabs',
-    arguments: { action: 'new', url: server.PREFIX, isolatedContext: 'bob' },
-  });
-  expect(await client.callTool({ name: 'browser_close' })).toHaveResponse({
-    result: 'No open tabs. Navigate to a URL to create one.',
-  });
-
-  for (const [file, url] of [
-    ['network.har', server.EMPTY_PAGE],
-    ['network-alice.har', server.HELLO_WORLD],
-    ['network-bob.har', server.PREFIX + '/'],
-  ]) {
-    const har = JSON.parse(await fs.promises.readFile(testInfo.outputPath(file), 'utf-8'));
-    expect(har.log.entries).toEqual(expect.arrayContaining([
-      expect.objectContaining({ request: expect.objectContaining({ url }) }),
-    ]));
-  }
 });
 
 test('tabs in the same isolated context share storage', async ({ client, server }) => {

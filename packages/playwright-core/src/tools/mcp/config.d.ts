@@ -66,9 +66,6 @@ export type Config = {
      *
      * This is useful for settings options like `viewport`.
      * Relative paths are resolved against the config file's directory.
-     * With `recordHar`, named isolated contexts save separate HAR files beside the configured
-     * path, with the sanitized context name before the extension (e.g. `network-alice.har`).
-     * A numeric suffix is added when needed to avoid file name collisions.
      */
     contextOptions?: playwright.BrowserContextOptions;
 
