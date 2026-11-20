@@ -69,44 +69,6 @@ it('BC-002 should be able to click across browser contexts', async function({ br
   await page2.close();
 });
 
-it('BC-085 should dispatch form click events across browser contexts', {
-  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44265' },
-}, async function({ browser, contextFactory }) {
-  expect(browser.contexts().length).toBe(0);
-
-  const createPage = async () => {
-    const context = await contextFactory();
-    const page = await context.newPage();
-    await page.setContent(`<form><button><span>Continue</span></button></form>`);
-    await page.evaluate(() => {
-      window['events'] = [];
-      for (const type of ['pointerdown', 'mousedown', 'pointerup', 'mouseup', 'click', 'submit']) {
-        window.addEventListener(type, event => {
-          window['events'].push(event.type);
-          if (event.type === 'submit')
-            event.preventDefault();
-        }, true);
-      }
-    });
-    return page;
-  };
-
-  const clickInPage = async (page: Page, count: number) => {
-    for (let i = 0; i < count; ++i)
-      await page.locator('button').click();
-  };
-
-  const pages = [await createPage(), await createPage()];
-
-  const CLICK_COUNT = 20;
-  await Promise.all(pages.map(page => clickInPage(page, CLICK_COUNT)));
-  const expected = Array.from({ length: CLICK_COUNT }, () => [
-    'pointerdown', 'mousedown', 'pointerup', 'mouseup', 'click', 'submit',
-  ]).flat();
-  for (const page of pages)
-    expect(await page.evaluate(() => window['events'])).toEqual(expected);
-});
-
 it('BC-084 should locate only visible elements when configured', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43855' },
 }, async ({ page, contextFactory }) => {
@@ -157,6 +119,44 @@ it('BC-084 should locate only visible elements when configured', {
   const fileInput = visiblePage.locator('input').filter({ visible: false });
   await fileInput.setInputFiles({ name: 'file.txt', mimeType: 'text/plain', buffer: Buffer.from('contents') });
   expect(await fileInput.evaluate(input => (input as HTMLInputElement).files[0].name)).toBe('file.txt');
+});
+
+it('BC-085 should dispatch form click events across browser contexts', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44265' },
+}, async function({ browser, contextFactory }) {
+  expect(browser.contexts().length).toBe(0);
+
+  const createPage = async () => {
+    const context = await contextFactory();
+    const page = await context.newPage();
+    await page.setContent(`<form><button><span>Continue</span></button></form>`);
+    await page.evaluate(() => {
+      window['events'] = [];
+      for (const type of ['pointerdown', 'mousedown', 'pointerup', 'mouseup', 'click', 'submit']) {
+        window.addEventListener(type, event => {
+          window['events'].push(event.type);
+          if (event.type === 'submit')
+            event.preventDefault();
+        }, true);
+      }
+    });
+    return page;
+  };
+
+  const clickInPage = async (page: Page, count: number) => {
+    for (let i = 0; i < count; ++i)
+      await page.locator('button').click();
+  };
+
+  const pages = [await createPage(), await createPage()];
+
+  const CLICK_COUNT = 20;
+  await Promise.all(pages.map(page => clickInPage(page, CLICK_COUNT)));
+  const expected = Array.from({ length: CLICK_COUNT }, () => [
+    'pointerdown', 'mousedown', 'pointerup', 'mouseup', 'click', 'submit',
+  ]).flat();
+  for (const page of pages)
+    expect(await page.evaluate(() => window['events'])).toEqual(expected);
 });
 
 it('BC-003 should be able to hover across browser contexts in parallel', async function({ browser, browserName, headless }) {
