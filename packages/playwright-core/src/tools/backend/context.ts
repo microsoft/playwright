@@ -36,6 +36,8 @@ import type { SessionLog } from './sessionLog';
 import type { Disposable } from '@isomorphic/disposable';
 import type { ToolCapability } from './tool';
 import type { WebMCPToolDefinition } from './webmcp';
+// eslint-disable-next-line no-restricted-imports
+import type { Page as ClientPage } from '../../client/page';
 
 const testDebug = debug('pw:mcp:test');
 
@@ -82,6 +84,7 @@ type ContextOptions = {
   sessionLog?: SessionLog;
   cwd: string;
   onWebMCPToolsChanged?: () => void;
+  onLastPageClosed?: () => void;
 };
 
 export type RouteEntry = {
@@ -391,6 +394,9 @@ export class Context {
 
     if (this._currentTab === tab)
       this._setCurrentTab(this._tabs[Math.min(index, this._tabs.length - 1)]);
+
+    if (!this._tabs.length && this.options.onLastPageClosed && !(tab.page as ClientPage)._closeWasCalled)
+      this.options.onLastPageClosed();
   }
 
   currentWebMCPTools(): WebMCPToolDefinition[] {

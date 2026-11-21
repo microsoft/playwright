@@ -141,7 +141,9 @@ test('delete-data non-existent session', async ({ cli }) => {
   expect(output).toContain(`No user data found for browser 'nonexistent'.`);
 });
 
-test('session stops when browser exits', async ({ cli, server }) => {
+test('session stops when browser or last headed page is closed', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44180' },
+}, async ({ cli, server, mcpBrowser }) => {
   await cli('open', server.HELLO_WORLD);
 
   const { output: listBefore } = await cli('list');
@@ -153,6 +155,37 @@ test('session stops when browser exits', async ({ cli, server }) => {
   await cli('close');
   const { output: listAfter } = await cli('list');
   expect(listAfter).toContain('(no browsers)');
+
+  const { daemonPid } = await cli('open', '--headed', server.HELLO_WORLD);
+  expect((await cli('tab-close')).exitCode).toBe(0);
+  expect((await cli('list')).output).toContain('- default:');
+  await cli('tab-new', server.HELLO_WORLD);
+
+  const { output } = await cli('list', '--all', '--json');
+  const { servers } = JSON.parse(output);
+  const browserName = ['chrome', 'msedge'].includes(mcpBrowser) ? 'chromium' : mcpBrowser;
+  await using browser = await playwright[browserName].connect(servers[0].endpoint);
+  const page = browser.contexts()[0].pages()[0];
+  const popupPromise = page.waitForEvent('popup');
+  await page.evaluate(() => { window.open('about:blank'); });
+  const popup = await popupPromise;
+  await page.close();
+  await cli('tab-new', server.HELLO_WORLD, '--isolated-context=other');
+  const closed = popup.waitForEvent('close');
+  await popup.evaluate(() => { setTimeout(() => window.close(), 0); });
+  await closed;
+  expect((await cli('list')).output).toContain('- default:');
+
+  const lastPage = browser.contexts().find(context => context.pages().length)!.pages()[0];
+  const lastPopupPromise = lastPage.waitForEvent('popup');
+  await lastPage.evaluate(() => { window.open('about:blank'); });
+  const lastPopup = await lastPopupPromise;
+  await lastPage.close();
+  const lastClosed = lastPopup.waitForEvent('close');
+  await lastPopup.evaluate(() => { setTimeout(() => window.close(), 0); });
+  await lastClosed;
+  await expect.poll(() => isProcessAlive(daemonPid)).toBe(false);
+  expect((await cli('list')).output).toContain('(no browsers)');
 });
 
 for (const envName of ['XDG_RUNTIME_DIR', 'TMPDIR']) {
