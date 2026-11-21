@@ -298,7 +298,7 @@ export namespace Protocol {
   }
   
   /**
-   * CPUProfiler domain exposes cpu usage tracking.
+   * CPUProfiler domain exposes cpu usage tracking. On a frame target, the values cover the whole process that hosts the frame, and every target in one process reports the same numbers.
    */
   export namespace CPUProfiler {
     /**
@@ -329,7 +329,7 @@ export namespace Protocol {
        */
       usage: number;
       /**
-       * Per-thread CPU usage information. Does not include the main thread.
+       * Per-thread CPU usage information, including the main thread.
        */
       threads?: ThreadInfo[];
     }
@@ -7096,6 +7096,10 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        * Id of the node to snapshot.
        */
       nodeId: DOM.NodeId;
+      /**
+       * Id of the frame target that owns the node, if it is not the page target. Only the web-page target accepts it.
+       */
+      targetId?: string;
     }
     export type snapshotNodeReturnValue = {
       /**
@@ -7513,6 +7517,10 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        * JSON Inspector Protocol message (command) to be dispatched on the backend.
        */
       browserContextId?: ContextID;
+      /**
+       * Whether to create the page without activating its native window. Defaults to false.
+       */
+      background?: boolean;
     }
     export type createPageReturnValue = {
       /**
