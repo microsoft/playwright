@@ -141,6 +141,23 @@ export class RawTouchscreenImpl implements input.RawTouchscreen {
   }
 
   async tap(progress: Progress, x: number, y: number, modifiers: Set<types.KeyboardModifier>) {
+    await progress.race(this._session.send('input.performActions', {
+      context: this._session.sessionId,
+      actions: [
+        {
+          type: 'pointer',
+          id: 'pw_touch',
+          parameters: {
+            pointerType: bidi.Input.PointerType.Touch,
+          },
+          actions: [
+            { type: 'pointerMove', x, y },
+            { type: 'pointerDown', button: 0 },
+            { type: 'pointerUp', button: 0 },
+          ],
+        }
+      ]
+    }));
   }
 }
 
