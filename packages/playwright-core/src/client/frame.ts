@@ -224,12 +224,6 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
     return parseResult(result.value);
   }
 
-  async _evaluateExposeUtilityScript<R, Arg>(pageFunction: structs.PageFunction<Arg, R>, arg?: Arg): Promise<R> {
-    assertMaxArguments(arguments.length, 2);
-    const result = await this._channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) }, kNoTimeout);
-    return parseResult(result.value);
-  }
-
   async $(selector: string, options?: { strict?: boolean }): Promise<ElementHandle<SVGElement | HTMLElement> | null> {
     const result = await this._channel.querySelector({ selector, ...options }, kNoTimeout);
     return ElementHandle.fromNullable(result.element) as ElementHandle<SVGElement | HTMLElement> | null;
