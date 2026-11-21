@@ -95,6 +95,10 @@ export interface Commands {
     params: Bidi.BrowsingContext.HandleUserPromptParameters;
     returnType: Bidi.EmptyResult;
   };
+  'browsingContext.setBypassCSP': {
+    params: Bidi.BrowsingContext.SetBypassCspParameters;
+    returnType: Bidi.BrowsingContext.SetBypassCspResult;
+  };
   'browsingContext.setViewport': {
     params: Bidi.BrowsingContext.SetViewportParameters;
     returnType: Bidi.EmptyResult;
