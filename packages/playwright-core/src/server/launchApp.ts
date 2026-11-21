@@ -58,7 +58,7 @@ export async function launchApp(browserType: BrowserType, options: {
       ignoreDefaultArgs: ['--enable-automation'],
       ...options?.persistentContextOptions,
       channel,
-      noDefaultViewport: options.persistentContextOptions?.noDefaultViewport ?? true,
+      viewportMode: options.persistentContextOptions?.viewportMode || 'none',
       acceptDownloads: options?.persistentContextOptions?.acceptDownloads ?? (isUnderTest() ? 'accept' : 'internal-browser-default'),
       colorScheme: options?.persistentContextOptions?.colorScheme ?? 'no-override',
       args,

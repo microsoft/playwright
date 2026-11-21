@@ -142,11 +142,11 @@ scheme.AndroidDeviceInputDragParams = tObject({
 });
 scheme.AndroidDeviceInputDragResult = tOptional(tObject({}));
 scheme.AndroidDeviceLaunchBrowserParams = tObject({
-  noDefaultViewport: tOptional(tBoolean),
   viewport: tOptional(tObject({
     width: tInt,
     height: tInt,
   })),
+  viewportMode: tOptional(tEnum(['none', 'maximized', 'fixed'])),
   screen: tOptional(tObject({
     width: tInt,
     height: tInt,
@@ -453,11 +453,11 @@ scheme.BrowserDefaultUserAgentForTestResult = tObject({
   userAgent: tString,
 });
 scheme.BrowserNewContextParams = tObject({
-  noDefaultViewport: tOptional(tBoolean),
   viewport: tOptional(tObject({
     width: tInt,
     height: tInt,
   })),
+  viewportMode: tOptional(tEnum(['none', 'maximized', 'fixed'])),
   screen: tOptional(tObject({
     width: tInt,
     height: tInt,
@@ -533,11 +533,11 @@ scheme.BrowserNewContextResult = tObject({
   context: tChannel(['BrowserContext']),
 });
 scheme.BrowserNewContextForReuseParams = tObject({
-  noDefaultViewport: tOptional(tBoolean),
   viewport: tOptional(tObject({
     width: tInt,
     height: tInt,
   })),
+  viewportMode: tOptional(tEnum(['none', 'maximized', 'fixed'])),
   screen: tOptional(tObject({
     width: tInt,
     height: tInt,
@@ -635,11 +635,11 @@ scheme.BrowserContextInitializer = tObject({
   requestContext: tChannel(['APIRequestContext']),
   tracing: tChannel(['Tracing']),
   options: tObject({
-    noDefaultViewport: tOptional(tBoolean),
     viewport: tOptional(tObject({
       width: tInt,
       height: tInt,
     })),
+    viewportMode: tOptional(tEnum(['none', 'maximized', 'fixed'])),
     screen: tOptional(tObject({
       width: tInt,
       height: tInt,
@@ -1043,11 +1043,11 @@ scheme.BrowserTypeLaunchPersistentContextParams = tObject({
   chromiumSandbox: tOptional(tBoolean),
   firefoxUserPrefs: tOptional(tAny),
   cdpPort: tOptional(tInt),
-  noDefaultViewport: tOptional(tBoolean),
   viewport: tOptional(tObject({
     width: tInt,
     height: tInt,
   })),
+  viewportMode: tOptional(tEnum(['none', 'maximized', 'fixed'])),
   screen: tOptional(tObject({
     width: tInt,
     height: tInt,

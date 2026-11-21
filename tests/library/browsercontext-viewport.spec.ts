@@ -26,10 +26,18 @@ it('VP-001 should get the proper default viewport size', async ({ page, server }
   await verifyViewport(page, 1280, 720);
 });
 
-it('VP-002 should set the proper viewport size', async ({ page, server }) => {
+it('VP-002 should set the proper viewport size', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/1086' },
+}, async ({ page, server }) => {
   await verifyViewport(page, 1280, 720);
   await page.setViewportSize({ width: 345, height: 456 });
   await verifyViewport(page, 345, 456);
+
+  await Promise.all([
+    page.setViewportSize({ width: 456, height: 345 }),
+    page.setViewportSize({ width: 640, height: 480 }),
+  ]);
+  await verifyViewport(page, 640, 480);
 });
 
 it('VP-003 should return correct outerWidth and outerHeight', async ({ page }) => {
