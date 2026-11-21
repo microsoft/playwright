@@ -57,7 +57,12 @@ export class Screencast implements api.Screencast {
       fps: options.fps,
       sendFrames: !!options.onFrame,
       record: !!options.path,
-    }, kNoTimeout);
+      format: options.path?.toLowerCase().endsWith('.mp4') ? 'mp4' : undefined,
+    }, kNoTimeout).catch(e => {
+      this._started = false;
+      this._onFrame = null;
+      throw e;
+    });
     if (result.artifact) {
       this._artifact = Artifact.from(result.artifact);
       this._savePath = options.path;

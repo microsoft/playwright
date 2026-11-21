@@ -32,7 +32,7 @@ import { DisposableDispatcher } from './disposableDispatcher';
 import { SdkObject } from '../instrumentation';
 import { Recorder } from '../recorder';
 import { disposeAll } from '../disposable';
-import { VideoRecorder } from '../videoRecorder';
+import { kMp4NotSupportedError, VideoRecorder } from '../videoRecorder';
 import { nullProgress } from '../progress';
 
 import type { Artifact } from '../artifact';
@@ -67,7 +67,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   private _screencastClient: ScreencastClient | undefined;
   private _screencastFrameId = 0;
   private _screencastFrameAcks = new Map<number, ManualPromise<void>>();
-  private _videoRecorder: VideoRecorder | undefined;
+  private _videoRecorder: { stop(): Promise<void> } | undefined;
 
   static from(parentScope: BrowserContextDispatcher, page: Page): PageDispatcher {
     return PageDispatcher.fromNullable(parentScope, page)!;
@@ -398,6 +398,20 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     if (params.fps !== undefined && params.fps <= 0)
       throw new Error(`"fps" must be a positive number, got ${params.fps}`);
 
+    const mp4 = params.record && params.format === 'mp4';
+    let artifact: Artifact | undefined;
+    if (mp4) {
+      if (!this._page.delegate.startMp4Recording)
+        throw new Error(kMp4NotSupportedError);
+      const recorder = this._page.delegate.startMp4Recording(params);
+      await recorder.started.catch(async e => {
+        await recorder.stop();
+        throw e;
+      });
+      this._videoRecorder = recorder;
+      artifact = recorder.artifact;
+    }
+
     if (params.sendFrames) {
       this._screencastClient = {
         onFrame: async (frame: ScreencastFrame) => {
@@ -416,10 +430,10 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
       this._page.screencast.addClient(this._screencastClient);
     }
 
-    let artifact: Artifact | undefined;
-    if (params.record) {
-      this._videoRecorder = new VideoRecorder(this._page.screencast);
-      artifact = this._videoRecorder.start(params);
+    if (params.record && !mp4) {
+      const recorder = new VideoRecorder(this._page.screencast);
+      this._videoRecorder = recorder;
+      artifact = recorder.start(params);
     }
     return { artifact: artifact ? createVideoDispatcher(this.parentScope(), artifact) : undefined };
   }

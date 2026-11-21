@@ -295,6 +295,70 @@ test('SC-015 start dispose stops recording', async ({ browser }, testInfo) => {
   await context.close();
 });
 
+test('SC-039 start should record mp4 video in Chromium', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43999' },
+}, async ({ browser, browserType, browserName, isBidi }, testInfo) => {
+  const context = await browser.newContext({ viewport: { width: 1000, height: 400 } });
+  const page = await context.newPage();
+  const videoPath = testInfo.outputPath('video.mp4');
+  if (browserName !== 'chromium' || isBidi) {
+    const error = await page.screencast.start({ path: videoPath }).catch(e => e);
+    expect(error.message).toContain('Recording mp4 video is not supported in this browser');
+    // The failed start does not block the next one.
+    await page.screencast.start({ path: testInfo.outputPath('video.webm') });
+    await page.screencast.stop();
+    await context.close();
+    return;
+  }
+
+  // Frames are delivered together with the mp4 recording.
+  const frames: Buffer[] = [];
+  await page.screencast.start({ path: videoPath, size: { width: 500, height: 400 }, onFrame: ({ data }) => frames.push(data) });
+  await page.evaluate(() => document.body.style.backgroundColor = 'red');
+  await ensureSomeFrames(page);
+  await page.screencast.stop();
+  expect(frames.length).toBeGreaterThan(0);
+
+  const data = fs.readFileSync(videoPath);
+  expect(data.includes('av01')).toBe(true);
+  const video = await page.evaluate(async base64 => {
+    const video = document.createElement('video');
+    video.src = 'data:video/mp4;base64,' + base64;
+    await new Promise((resolve, reject) => {
+      video.onloadedmetadata = resolve;
+      video.onerror = () => reject(new Error('Failed to load the video'));
+    });
+    return { width: video.videoWidth, height: video.videoHeight, duration: video.duration };
+  }, data.toString('base64'));
+  expect(video.width).toBe(500);
+  expect(video.height).toBe(200);
+  expect(video.duration).toBeGreaterThan(0);
+
+  // The second recording works after the first one is stopped.
+  const videoPath2 = testInfo.outputPath('video2.mp4');
+  await page.screencast.start({ path: videoPath2 });
+  await page.screencast.stop();
+  expect(fs.readFileSync(videoPath2).includes('av01')).toBe(true);
+
+  await context.close();
+
+  // Page close and context close save a recording that was not stopped. As with WebM,
+  // the video stays in artifactsDir, it is not copied to the path.
+  const artifactsDir = testInfo.outputPath('artifacts');
+  const browser2 = await browserType.launch({ artifactsDir });
+  const context2 = await browser2.newContext();
+  const page1 = await context2.newPage();
+  const page2 = await context2.newPage();
+  await page1.screencast.start({ path: testInfo.outputPath('video3.mp4') });
+  await page2.screencast.start({ path: testInfo.outputPath('video4.mp4') });
+  const savedVideos = () => fs.readdirSync(artifactsDir).filter(f => fs.readFileSync(path.join(artifactsDir, f)).includes('av01'));
+  await page1.close();
+  expect(savedVideos()).toHaveLength(1);
+  await context2.close();
+  expect(savedVideos()).toHaveLength(2);
+  await browser2.close();
+});
+
 type Pixel = { r: number, g: number, b: number, alpha: number };
 type PixelPredicate = (pixel: Pixel) => boolean;
 
