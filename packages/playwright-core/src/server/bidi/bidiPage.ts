@@ -689,7 +689,7 @@ export class BidiPage implements PageDelegate {
   async setInputFilePaths(progress: Progress, handle: dom.ElementHandle<HTMLInputElement>, paths: string[]): Promise<void> {
     const fromContext = toBidiExecutionContext(handle._context);
     await progress.race(this._session.send('input.setFiles', {
-      context: this._session.sessionId,
+      context: handle._frame._id,
       element: await progress.race(fromContext.nodeIdForElementHandle(handle)),
       files: paths,
     }));
