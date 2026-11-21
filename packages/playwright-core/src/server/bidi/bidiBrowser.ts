@@ -494,15 +494,8 @@ export class BidiBrowserContext extends BrowserContext {
   }
 
   override async doUpdateDefaultEmulatedMedia() {
-    const features = this._options;
-    const colorScheme =
-      features.colorScheme === 'no-override'
-        ? null
-        : features.colorScheme === 'no-preference'
-          ? undefined
-          : features.colorScheme;
     await this._browser._browserSession.send('emulation.setMediaFeaturesOverride', {
-      features: { 'prefers-color-scheme': colorScheme },
+      features: toBidiMediaFeatures(this._options),
       userContexts: [this._userContextId()],
     });
   }
@@ -614,6 +607,19 @@ function getProxyConfiguration(proxySettings?: types.ProxySettings): bidi.Sessio
     proxy.noProxy = bypass.split(',');
 
   return proxy;
+}
+
+export function toBidiMediaFeatures(features: { colorScheme?: types.ColorScheme, reducedMotion?: types.ReducedMotion, forcedColors?: types.ForcedColors, contrast?: types.Contrast }): bidi.Emulation.MediaFeatures {
+  const result: bidi.Emulation.MediaFeatures = {};
+  if (features.colorScheme !== undefined)
+    result['prefers-color-scheme'] = features.colorScheme === 'no-override' ? null : features.colorScheme === 'no-preference' ? undefined : features.colorScheme;
+  if (features.reducedMotion !== undefined)
+    result['prefers-reduced-motion'] = features.reducedMotion === 'no-override' ? null : features.reducedMotion;
+  if (features.forcedColors !== undefined)
+    result['forced-colors'] = features.forcedColors === 'no-override' ? null : features.forcedColors;
+  if (features.contrast !== undefined)
+    result['prefers-contrast'] = features.contrast === 'no-override' ? null : features.contrast;
+  return result;
 }
 
 export function getScreenOrientation(isMobile: boolean, viewportSize: types.Size) {

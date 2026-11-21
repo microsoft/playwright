@@ -20,7 +20,7 @@ import { monotonicTime } from '@isomorphic/time';
 import * as dialog from '../dialog';
 import * as dom from '../dom';
 import * as js from '../javascript';
-import { BidiBrowserContext, getScreenOrientation } from './bidiBrowser';
+import { BidiBrowserContext, getScreenOrientation, toBidiMediaFeatures } from './bidiBrowser';
 import { Page, Worker } from '../page';
 import { BidiExecutionContext, createHandle } from './bidiExecutionContext';
 import { RawKeyboardImpl, RawMouseImpl, RawTouchscreenImpl } from './bidiInput';
@@ -367,15 +367,8 @@ export class BidiPage implements PageDelegate {
   }
 
   async updateEmulateMedia(): Promise<void> {
-    const features = this._page.emulatedMedia();
-    const colorScheme =
-      features.colorScheme === 'no-override'
-        ? null
-        : features.colorScheme === 'no-preference'
-          ? undefined
-          : features.colorScheme;
     await this._session.send('emulation.setMediaFeaturesOverride', {
-      features: { 'prefers-color-scheme': colorScheme },
+      features: toBidiMediaFeatures(this._page.emulatedMedia()),
       contexts: [this._session.sessionId, ...this._session._browsingContexts],
     });
   }
