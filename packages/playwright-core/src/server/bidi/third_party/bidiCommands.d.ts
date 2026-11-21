@@ -150,6 +150,10 @@ export interface Commands {
     params: Bidi.Emulation.SetNetworkConditionsParameters;
     returnType: Bidi.Emulation.SetNetworkConditionsResult;
   };
+  'emulation.setScriptingEnabled': {
+    params: Bidi.Emulation.SetScriptingEnabledParameters;
+    returnType: Bidi.Emulation.SetScriptingEnabledResult;
+  };
 
   'permissions.setPermission': {
     params: Bidi.Permissions.SetPermissionParameters;

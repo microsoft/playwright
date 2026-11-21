@@ -273,6 +273,12 @@ export class BidiBrowserContext extends BrowserContext {
       promises.push(this.doGrantPermissions('*', this._options.permissions));
     if (this._options.offline)
       promises.push(this.doUpdateOffline());
+    if (this._options.javaScriptEnabled === false) {
+      promises.push(this._browser._browserSession.send('emulation.setScriptingEnabled', {
+        enabled: false,
+        userContexts: [this._userContextId()],
+      }));
+    }
     await Promise.all(promises);
   }
 
