@@ -196,7 +196,7 @@ export class Electron extends SdkObject {
       tempDirectories.push(artifactsDir);
     }
     const browserLogsCollector = new RecentLogsCollector();
-    const env = options.env ? envArrayToObject(options.env) : process.env;
+    const env = options.env ? envArrayToObject(options.env) : { ...process.env };
 
     let command: string;
     if (options.executablePath) {
@@ -235,6 +235,8 @@ export class Electron extends SdkObject {
     // will make the debugger attach to Electron's Node. But Playwright
     // also needs to attach to drive the automation. Disable external debugging.
     delete env.NODE_OPTIONS;
+    // Electron must start as an app, not as a Node.js process.
+    delete env.ELECTRON_RUN_AS_NODE;
     const { launchedProcess, gracefullyClose, kill } = await progress.race(launchProcess({
       command,
       args: electronArguments,
