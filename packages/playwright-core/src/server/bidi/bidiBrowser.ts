@@ -40,6 +40,7 @@ export type BidiBrowserOptions = {
   // Authenticate against a proxy with a Proxy-Authorization header on every request,
   // or by answering the proxy's auth challenge with the credentials.
   proxyAuthentication: 'header' | 'credentials',
+  shouldProxyLoopback?: (bypass: string | undefined) => boolean,
 };
 
 export class BidiBrowser extends Browser {
@@ -61,7 +62,7 @@ export class BidiBrowser extends Browser {
       capabilities: {
         alwaysMatch: {
           'acceptInsecureCerts': options.persistent?.internalIgnoreHTTPSErrors || options.persistent?.ignoreHTTPSErrors,
-          'proxy': getProxyConfiguration(options.originalLaunchOptions.proxyOverride ?? options.proxy),
+          'proxy': getProxyConfiguration(options.originalLaunchOptions.proxyOverride ?? options.proxy, bidiOptions),
           'unhandledPromptBehavior': {
             default: bidi.Session.UserPromptHandlerType.Ignore,
           },
@@ -121,7 +122,7 @@ export class BidiBrowser extends Browser {
     const proxy = options.proxyOverride || options.proxy;
     const { userContext } = await this._browserSession.send('browser.createUserContext', {
       acceptInsecureCerts: options.internalIgnoreHTTPSErrors || options.ignoreHTTPSErrors,
-      proxy: getProxyConfiguration(proxy),
+      proxy: getProxyConfiguration(proxy, this._bidiOptions),
     });
     const context = new BidiBrowserContext(this, userContext, options);
     await context.initialize();
@@ -583,7 +584,7 @@ function toBidiSameSite(sameSite: channels.SetNetworkCookie['sameSite']): bidi.N
   return bidi.Network.SameSite.None;
 }
 
-function getProxyConfiguration(proxySettings?: types.ProxySettings): bidi.Session.ManualProxyConfiguration | undefined {
+function getProxyConfiguration(proxySettings: types.ProxySettings | undefined, bidiOptions: BidiBrowserOptions): bidi.Session.ManualProxyConfiguration | undefined {
   if (!proxySettings)
     return undefined;
 
@@ -609,9 +610,13 @@ function getProxyConfiguration(proxySettings?: types.ProxySettings): bidi.Sessio
     default:
       throw new Error('Invalid proxy server protocol: ' + proxySettings.server);
   }
-  const bypass = proxySettings.bypass ?? process.env.PLAYWRIGHT_PROXY_BYPASS_FOR_TESTING;
-  if (bypass)
-    proxy.noProxy = bypass.split(',');
+  const noProxy = proxySettings.bypass ? proxySettings.bypass.split(',') : [];
+  if (bidiOptions.shouldProxyLoopback?.(proxySettings.bypass))
+    noProxy.unshift('<-loopback>');
+  else if (!proxySettings.bypass && process.env.PLAYWRIGHT_PROXY_BYPASS_FOR_TESTING)
+    noProxy.push(...process.env.PLAYWRIGHT_PROXY_BYPASS_FOR_TESTING.split(','));
+  if (noProxy.length)
+    proxy.noProxy = noProxy;
 
   return proxy;
 }
