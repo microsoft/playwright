@@ -46,5 +46,5 @@ export interface SessionProvider extends EventEmitter<SessionProviderEventMap> {
   contextEntries(): ContextEntry[];
   findContext(params: { browser: string; context: string }): api.BrowserContext | undefined;
   findPage(params: { browser: string; context: string; page: string }): api.Page | undefined;
-  dispose(): void;
+  dispose(): void | Promise<void>;
 }
