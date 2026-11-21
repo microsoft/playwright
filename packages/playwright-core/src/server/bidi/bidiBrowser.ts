@@ -273,6 +273,12 @@ export class BidiBrowserContext extends BrowserContext {
       promises.push(this.doGrantPermissions('*', this._options.permissions));
     if (this._options.offline)
       promises.push(this.doUpdateOffline());
+    if (this._options.hasTouch) {
+      promises.push(this._browser._browserSession.send('emulation.setTouchOverride', {
+        maxTouchPoints: 1,
+        userContexts: [this._userContextId()],
+      }));
+    }
     await Promise.all(promises);
   }
 

@@ -133,6 +133,10 @@ export interface Commands {
     params: Bidi.Emulation.SetTimezoneOverrideParameters;
     returnType: Bidi.EmptyResult;
   };
+  'emulation.setTouchOverride': {
+    params: Bidi.Emulation.SetTouchOverrideParameters;
+    returnType: Bidi.EmptyResult;
+  };
   'emulation.setUserAgentOverride': {
     params: Bidi.Emulation.SetUserAgentOverrideParameters;
     returnType: Bidi.Emulation.SetUserAgentOverrideResult;
