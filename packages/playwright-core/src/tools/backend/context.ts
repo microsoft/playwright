@@ -591,6 +591,8 @@ export async function outputFile(options: ContextOptions, fileName: string, flag
   const resolvedFile = path.resolve(outputDir(options), fileName);
   await checkFile(options, resolvedFile, flags);
   await fs.promises.mkdir(path.dirname(resolvedFile), { recursive: true });
+  if (!options.config.outputDir && !options.config.skillMode)
+    await fs.promises.writeFile(path.join(outputDir(options), '.gitignore'), '*\n', { flag: 'wx' }).catch(() => {});
   debug('pw:mcp:file')(resolvedFile);
   return resolvedFile;
 }

@@ -404,3 +404,12 @@ test('snapshot by ref', { annotation: { type: 'issue', description: 'https://git
     isError: true,
   });
 });
+
+test('default output dir is git-ignored', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44289' } }, async ({ client, server }, testInfo) => {
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  });
+
+  expect(await fs.readFile(testInfo.outputPath('.playwright-mcp', '.gitignore'), 'utf-8')).toBe('*\n');
+});
