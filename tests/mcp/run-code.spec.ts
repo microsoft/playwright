@@ -286,6 +286,7 @@ test('browser_run_code_unsafe with filename', async ({ client, server }) => {
   }));
   const content = await consoleEntries(response);
   expect(content).toContain('[LOG] Clicked');
+  expect(response.code).toBe('// Ran code from test-code.js');
 });
 
 test('browser_run_code_unsafe with filename containing template literals', async ({ client, server }) => {
