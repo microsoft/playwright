@@ -157,6 +157,42 @@ test('file watching with a directory', async ({ startTestServer, writeFiles }, t
   ]);
 });
 
+test('directory watching with related file', async ({ startTestServer, writeFiles }, testInfo) => {
+  await writeFiles({
+    'playwright.config.ts': `
+      export default { testDir: './tests' };
+    `,
+    'utils/helper.ts': `
+      export const expected = 42;
+      `,
+    'tests/a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      import { expected } from '../utils/helper';
+      test('foo', () => {
+        expect(123).toBe(expected);
+      });
+      `,
+  });
+
+  const testServerConnection = await startTestServer();
+  const tests = await testServerConnection.listTests({});
+  expect(tests.report.map(e => e.method)).toEqual(['onConfigure', 'onProject', 'onBegin', 'onEnd']);
+
+  await testServerConnection.watch({ fileNames: [testInfo.outputPath('tests')] });
+
+  await writeFiles({
+    'utils/helper.ts': `
+      export const expected = 123;
+      `,
+  });
+
+  await expect.poll(() => testServerConnection.events).toHaveLength(1);
+  expect(testServerConnection.events).toEqual([
+    ['testFilesChanged', { testFiles: [testInfo.outputPath('tests', 'a.test.ts')] }]
+  ]);
+});
+
+
 test('should list tests with testIdAttribute', async ({ startTestServer, writeFiles }) => {
   await writeFiles({
     'a.test.ts': `
