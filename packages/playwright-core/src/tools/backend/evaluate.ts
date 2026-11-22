@@ -69,14 +69,14 @@ const evaluate = defineTabTool({
       else
         response.addCode(`await page.evaluate(${escapeWithQuotes(codeExpression)});`);
 
-      const text = params.filename && typeof evalResult.result === 'string' ? evalResult.result : isJSONValue(evalResult.result) ? JSON.stringify(evalResult.result, null, 2) : inspect(evalResult.result, {
+      const text = params.filename && typeof evalResult.result === 'string' ? evalResult.result : (isJSONValue(evalResult.result) ? JSON.stringify(evalResult.result, null, 2) : inspect(evalResult.result, {
         depth: null,
         maxArrayLength: null,
         maxStringLength: null,
         compact: false,
         colors: false,
         customInspect: false,
-      });
+      }));
       await response.addResult('Evaluation result', text, { prefix: 'result', ext: 'json', suggestedFilename: params.filename });
     }).catch(e => {
       response.addError(e instanceof Error ? e.message : String(e));
