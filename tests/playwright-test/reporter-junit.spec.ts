@@ -166,6 +166,25 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       expect(result.exitCode).toBe(1);
     });
 
+    test('should preserve UTF-8 split across stdio buffers', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'a.test.js': `
+          import { test } from '@playwright/test';
+          test('one', () => {
+            const bytes = Buffer.from('🤖');
+            for (const stream of [process.stdout, process.stderr]) {
+              stream.write(bytes.subarray(0, 2));
+              stream.write(bytes.subarray(2));
+            }
+          });
+        `,
+      }, { reporter: 'junit' });
+      expect(result.exitCode).toBe(0);
+      const testcase = parseXML(result.output)['testsuites']['testsuite'][0]['testcase'][0];
+      expect(testcase['system-out'][0]).toContain('🤖');
+      expect(testcase['system-err'][0]).toContain('🤖');
+    });
+
     test('should render stdout without ansi escapes', async ({ runInlineTest }) => {
       const result = await runInlineTest({
         'playwright.config.ts': `
