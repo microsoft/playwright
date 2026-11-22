@@ -69,7 +69,7 @@ const evaluate = defineTabTool({
       else
         response.addCode(`await page.evaluate(${escapeWithQuotes(codeExpression)});`);
 
-      const text = isJSONValue(evalResult.result) ? JSON.stringify(evalResult.result, null, 2) : inspect(evalResult.result, {
+      const text = params.filename && typeof evalResult.result === 'string' ? evalResult.result : isJSONValue(evalResult.result) ? JSON.stringify(evalResult.result, null, 2) : inspect(evalResult.result, {
         depth: null,
         maxArrayLength: null,
         maxStringLength: null,

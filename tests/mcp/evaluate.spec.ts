@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
+
 import { test, expect } from './fixtures';
 
 test('browser_evaluate', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43752' } }, async ({ client, server }) => {
@@ -198,6 +200,24 @@ test('browser_evaluate expression', async ({ client, server }) => {
     result: `42`,
     code: `await page.evaluate('() => (Promise.resolve(42))');`,
   });
+});
+
+test('browser_evaluate saves string result to file', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44295' } }, async ({ client, server }, testInfo) => {
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  });
+
+  expect(await client.callTool({
+    name: 'browser_evaluate',
+    arguments: {
+      function: `() => 'first line\\nsecond line\\n'`,
+      filename: 'eval-out.txt',
+    },
+  })).toHaveResponse({
+    result: expect.stringContaining('eval-out.txt'),
+  });
+  expect(await fs.promises.readFile(testInfo.outputPath('eval-out.txt'), 'utf8')).toBe('first line\nsecond line\n');
 });
 
 test('browser_evaluate (error)', async ({ client, server }) => {
