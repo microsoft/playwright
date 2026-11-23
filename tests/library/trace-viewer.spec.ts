@@ -25,7 +25,7 @@ import path from 'path';
 import type http from 'http';
 import { pathToFileURL } from 'url';
 import { expect, playwrightTest } from '../config/browserTest';
-import type { FrameLocator } from '@playwright/test';
+import type { FrameLocator, Locator } from '@playwright/test';
 import { parseTrace, rafraf, roundBox } from '../config/utils';
 
 const test = playwrightTest.extend<TraceViewerFixtures>(traceViewerFixtures);
@@ -1276,6 +1276,14 @@ test('TV-056 should not treat synthetic shadow root as a shadow root', async ({ 
   await expect(frame.locator('#native .icon')).toHaveCSS('fill', 'rgb(46, 139, 87)');
 });
 
+async function pointerOffset(frame: FrameLocator, target: Locator) {
+  const targetBox = await target.boundingBox();
+  const pointerBox = await frame.locator('x-pw-pointer').boundingBox();
+  return Math.max(
+      Math.abs(targetBox!.x + targetBox!.width / 2 - pointerBox!.x - pointerBox!.width / 2),
+      Math.abs(targetBox!.y + targetBox!.height / 2 - pointerBox!.y - pointerBox!.height / 2));
+}
+
 test('TV-057 should highlight target elements', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44127' } }, async ({ page, runAndTrace, browserName }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.setContent(`
@@ -1325,13 +1333,7 @@ test('TV-057 should highlight target elements', { annotation: { type: 'issue', d
       element.scrollTop = scroll;
       window.scrollTo(0, scroll);
     }, scroll);
-    await expect.poll(async () => {
-      const box1 = await framePageClick.getByText('t1').boundingBox();
-      const box2 = await framePageClick.locator('x-pw-pointer').boundingBox();
-      return Math.max(
-          Math.abs(box1!.x + box1!.width / 2 - box2!.x - box2!.width / 2),
-          Math.abs(box1!.y + box1!.height / 2 - box2!.y - box2!.height / 2));
-    }).toBeLessThan(2);
+    await expect.poll(() => pointerOffset(framePageClick, framePageClick.getByText('t1'))).toBeLessThan(2);
   }
 
   const framePageInnerText = await traceViewer.snapshotFrame('Inner text');
@@ -1369,12 +1371,15 @@ test('TV-057 should highlight target elements', { annotation: { type: 'issue', d
 test('TV-058 should highlight target element in shadow dom', async ({ page, server, runAndTrace }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.goto(server.PREFIX + '/shadow.html');
+    await page.evaluate(() => document.body.style.height = '2000px');
     await page.locator('button').click();
     await expect(page.locator('h1')).toHaveText('Hellow Shadow DOM v1');
   });
 
   const framePageClick = await traceViewer.snapshotFrame('Click');
   await expect(framePageClick.locator('button')).toHaveCSS('background-color', 'rgba(111, 168, 220, 0.498)');
+  await framePageClick.locator('button').evaluate(() => window.scrollTo(0, 20));
+  await expect.poll(() => pointerOffset(framePageClick, framePageClick.locator('button'))).toBeLessThan(2);
 
   const frameExpect = await traceViewer.snapshotFrame('Expect');
   await expect(frameExpect.locator('h1')).toHaveCSS('background-color', 'rgba(111, 168, 220, 0.498)');
