@@ -384,7 +384,7 @@ test('http transport browser lifecycle (persistent, multiclient)', async ({ serv
   await client2.close();
 });
 
-test('http transport shared context', async ({ serverEndpoint, server }) => {
+test('http transport shared context', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44279' } }, async ({ serverEndpoint, server }) => {
   const { url, stderr } = await serverEndpoint({ args: ['--shared-browser-context'] });
 
   // Create first client and navigate
@@ -395,11 +395,24 @@ test('http transport shared context', async ({ serverEndpoint, server }) => {
     name: 'browser_navigate',
     arguments: { url: server.HELLO_WORLD },
   });
+  expect(await client1.callTool({
+    name: 'browser_tabs',
+    arguments: { action: 'new', url: server.EMPTY_PAGE },
+  })).toHaveResponse({
+    result: expect.stringContaining(`- 1: (current) [](${server.EMPTY_PAGE})`),
+  });
 
   // Create second client - should reuse the same browser context
   const transport2 = new StreamableHTTPClientTransport(new URL('/mcp', url));
   const client2 = new Client({ name: 'test2', version: '1.0.0' });
   await client2.connect(transport2);
+
+  expect(await client2.callTool({
+    name: 'browser_tabs',
+    arguments: { action: 'select', index: 1 },
+  })).toHaveResponse({
+    result: expect.stringContaining(`- 1: (current) [](${server.EMPTY_PAGE})`),
+  });
 
   // Get tabs from second client - should see the tab created by first client
   const tabsResult = await client2.callTool({
