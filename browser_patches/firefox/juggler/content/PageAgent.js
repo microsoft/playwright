@@ -9,6 +9,7 @@ const Cr = Components.results;
 const Cu = Components.utils;
 
 const {Helper} = ChromeUtils.importESModule('chrome://juggler/content/Helper.js');
+const {filePicker} = ChromeUtils.importESModule('chrome://juggler/content/content/FilePicker.js');
 const {NetUtil} = ChromeUtils.importESModule('resource://gre/modules/NetUtil.sys.mjs');
 const {setTimeout} = ChromeUtils.importESModule('resource://gre/modules/Timer.sys.mjs');
 
@@ -87,7 +88,6 @@ export class PageAgent {
     this._runtime = frameTree.runtime();
 
     this._workerData = new Map();
-    this._interceptFileChooserDialog = false;
 
     const docShell = frameTree.mainFrame().docShell();
     this._docShell = docShell;
@@ -252,17 +252,21 @@ export class PageAgent {
   }
 
   setInterceptFileChooserDialog(enabled) {
-    this._interceptFileChooserDialog = enabled;
+    filePicker.setInterceptFileChooserDialog(this._docShell.browsingContext.browserId, enabled);
   }
 
-  _filePickerShown(inputElement) {
+  async _filePickerShown(inputElement) {
     // Fired by HTMLInputElement::InitFilePicker right before the native picker is opened.
-    // When intercepting, the parent process replaces the native picker with one that
-    // completes with no files (see FilePickerOverride in TargetRegistry.js).
-    if (!this._interceptFileChooserDialog)
-      return;
+    // The content-side override has already captured the interception decision in init().
     const frame = this._findFrameForNode(inputElement);
     if (!frame)
+      return;
+    const opened = filePicker.filePickerShown(frame.docShell().browsingContext);
+    if (!opened)
+      return;
+    // Let HTMLInputElement clear mPickerRunning before the client can open it again.
+    await opened;
+    if (this._findFrameForNode(inputElement) !== frame)
       return;
     this._browserPage.emit('pageFileChooserOpened', {
       executionContextId: frame.mainExecutionContext().id(),
@@ -372,6 +376,7 @@ export class PageAgent {
   }
 
   dispose() {
+    this.setInterceptFileChooserDialog(false);
     for (const workerData of this._workerData.values())
       workerData.dispose();
     this._workerData.clear();
@@ -592,7 +597,7 @@ export class PageAgent {
     return domWindow ? dragService.getCurrentSession(domWindow) : undefined;
   }
 
-  async _dispatchDragEvent({type, x, y, modifiers}) {
+  async _dispatchDragEvent({type, x, y, modifiers, identifier}) {
     const session = this._getCurrentDragSession();
     const dropEffect = session.dataTransfer.dropEffect;
 
@@ -603,6 +608,7 @@ export class PageAgent {
         x,
         y,
         {
+          identifier,
           button: 0,
           buttons: 0,
           clickCount: 0,

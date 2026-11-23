@@ -231,6 +231,7 @@ const Browser = {
     'newPage': {
       params: {
         browserContextId: t.Optional(t.String),
+        background: t.Optional(t.Boolean),
       },
       returns: {
         targetId: t.String,

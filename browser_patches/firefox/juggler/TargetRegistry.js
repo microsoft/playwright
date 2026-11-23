@@ -280,91 +280,6 @@ class DownloadManager {
 
 const screencastService = Cc['@mozilla.org/juggler/screencast;1'].getService(Ci.nsIScreencastService);
 
-const FILE_PICKER_CONTRACT_ID = '@mozilla.org/filepicker;1';
-
-// Replaces the "@mozilla.org/filepicker;1" factory in the parent process, the same way
-// WebDriver's FilePickerHandler and MockFilePicker do. Content processes always use
-// nsFilePickerProxy, which asks the parent (FilePickerParent) to create the real picker,
-// so a parent-side override covers all pages. Pages that intercept file choosers get a
-// picker that completes with no files; everything else is forwarded to the original picker.
-class FilePickerOverride {
-  constructor(registry) {
-    this._registry = registry;
-    this._registrar = Components.manager.QueryInterface(Ci.nsIComponentRegistrar);
-    this._originalCID = this._registrar.contractIDToCID(FILE_PICKER_CONTRACT_ID);
-    this._cid = Services.uuid.generateUUID();
-    this._factory = {
-      createInstance: iid => this._createPicker().QueryInterface(iid),
-      QueryInterface: ChromeUtils.generateQI(['nsIFactory']),
-    };
-    this._registrar.registerFactory(this._cid, 'Juggler file picker', FILE_PICKER_CONTRACT_ID, this._factory);
-  }
-
-  _createOriginalPicker() {
-    this._registrar.registerFactory(this._originalCID, 'Original file picker', FILE_PICKER_CONTRACT_ID, null);
-    try {
-      return Cc[FILE_PICKER_CONTRACT_ID].createInstance(Ci.nsIFilePicker);
-    } finally {
-      this._registrar.registerFactory(this._cid, 'Juggler file picker', FILE_PICKER_CONTRACT_ID, null);
-    }
-  }
-
-  _createPicker() {
-    let original = null;
-    const state = {};
-    const picker = {
-      QueryInterface: ChromeUtils.generateQI(['nsIFilePicker']),
-      init: (browsingContext, title, mode, global) => {
-        const target = this._registry.targetForBrowserId(browsingContext.browserId);
-        if (target && target.crossProcessCookie.interceptFileChooserDialog) {
-          state.mode = mode;
-          return;
-        }
-        original = this._createOriginalPicker();
-        original.init(browsingContext, title, mode, global);
-      },
-      open: callback => {
-        if (original)
-          original.open(callback);
-        else
-          // Close the picker without dispatching cancel or changing the input's files.
-          // Playwright assigns the files separately after the filechooser event.
-          callback.done(Ci.nsIFilePicker.returnOK);
-      },
-      isModeSupported: mode => original ? original.isModeSupported(mode) : Promise.resolve(true),
-      appendFilters: filterMask => original?.appendFilters(filterMask),
-      appendFilter: (title, filter) => original?.appendFilter(title, filter),
-      appendRawFilter: filter => original?.appendRawFilter(filter),
-
-      get defaultString() { return original ? original.defaultString : state.defaultString; },
-      set defaultString(value) { if (original) original.defaultString = value; else state.defaultString = value; },
-      get defaultExtension() { return original ? original.defaultExtension : state.defaultExtension; },
-      set defaultExtension(value) { if (original) original.defaultExtension = value; else state.defaultExtension = value; },
-      get filterIndex() { return original ? original.filterIndex : state.filterIndex; },
-      set filterIndex(value) { if (original) original.filterIndex = value; else state.filterIndex = value; },
-      get displayDirectory() { return original ? original.displayDirectory : state.displayDirectory; },
-      set displayDirectory(value) { if (original) original.displayDirectory = value; else state.displayDirectory = value; },
-      get displaySpecialDirectory() { return original ? original.displaySpecialDirectory : state.displaySpecialDirectory; },
-      set displaySpecialDirectory(value) { if (original) original.displaySpecialDirectory = value; else state.displaySpecialDirectory = value; },
-      get addToRecentDocs() { return original ? original.addToRecentDocs : state.addToRecentDocs; },
-      set addToRecentDocs(value) { if (original) original.addToRecentDocs = value; else state.addToRecentDocs = value; },
-      get okButtonLabel() { return original ? original.okButtonLabel : state.okButtonLabel; },
-      set okButtonLabel(value) { if (original) original.okButtonLabel = value; else state.okButtonLabel = value; },
-      get capture() { return original ? original.capture : state.capture; },
-      set capture(value) { if (original) original.capture = value; else state.capture = value; },
-
-      get mode() { return original ? original.mode : state.mode; },
-      get file() { return original ? original.file : null; },
-      get fileURL() { return original ? original.fileURL : null; },
-      get files() { return original ? original.files : [][Symbol.iterator](); },
-      get domFileOrDirectory() { return original ? original.domFileOrDirectory : null; },
-      get domFileOrDirectoryEnumerator() { return original ? original.domFileOrDirectoryEnumerator : null; },
-      get domFilesInWebKitDirectory() { return original ? original.domFilesInWebKitDirectory : null; },
-    };
-    return picker;
-  }
-}
-
 export class TargetRegistry {
   static instance() {
     return TargetRegistry._instance || null;
@@ -383,7 +298,6 @@ export class TargetRegistry {
 
     this._proxiesWithClashingAuthCacheKeys = new Set();
     this._browserProxy = null;
-    this._filePickerOverride = new FilePickerOverride(this);
     this._downloadManager = new DownloadManager(this);
     this._downloadInterceptor = new DownloadInterceptor(this);
 
@@ -590,18 +504,34 @@ export class TargetRegistry {
     return this._userContextIdToBrowserContext.get(userContextId);
   }
 
-  async newPage({browserContextId}) {
+  async newPage({browserContextId, background}) {
     // When creating the very first page, we cannot create multiple in parallel.
     // See https://github.com/microsoft/playwright/issues/34586.
     if (didCreateFirstPage)
-      return this._newPageInternal({browserContextId});
-    const result = globalNewPageChain.then(() => this._newPageInternal({browserContextId}));
+      return this._newPageInternal({browserContextId, background});
+    const result = globalNewPageChain.then(() => this._newPageInternal({browserContextId, background}));
     globalNewPageChain = result.catch(error => { /* swallow errors to keep chain running */ });
     return result;
   }
 
-  async _newPageInternal({browserContextId}) {
+  async _newPageInternal({browserContextId, background}) {
     const browserContext = this.browserContextForId(browserContextId);
+    if (background) {
+      const window = this._windowForBackgroundPage(browserContext);
+      if (window) {
+        await waitForWindowReady(window);
+        const tab = window.gBrowser.addTab('about:blank', {
+          userContextId: browserContext.userContextId,
+          triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal(),
+          skipAnimation: true,
+        });
+        const target = await this._waitForTarget(tab.linkedBrowser);
+        didCreateFirstPage = true;
+        return target.id();
+      }
+      // The browser context has no window to add a tab to, so the page gets a window
+      // of its own. The window manager activates it, there is no tab to keep selected.
+    }
     const features = "chrome,dialog=no,all";
     // See _callWithURIToLoad in browser.js for the structure of window.arguments
     // window.arguments[1]: unused (bug 871161)
@@ -639,14 +569,36 @@ export class TargetRegistry {
     if (window.gBrowser.browsers.length !== 1)
       throw new Error(`Unexpected number of tabs in the new window: ${window.gBrowser.browsers.length}`);
     const browser = window.gBrowser.browsers[0];
+    const target = await this._waitForTarget(browser);
+    if (!background)
+      browser.focus();
+    didCreateFirstPage = true;
+    return target.id();
+  }
+
+  async _waitForTarget(browser) {
     let target = this._browserToTarget.get(browser);
     while (!target) {
       await helper.awaitEvent(this, TargetRegistry.Events.TargetCreated);
       target = this._browserToTarget.get(browser);
     }
-    browser.focus();
-    didCreateFirstPage = true;
-    return target.id();
+    return target;
+  }
+
+  // A background page is a tab next to the pages of its browser context: in the most
+  // recent window if it shows this context, otherwise in the window of its newest page.
+  // Popup windows have no tab strip and are skipped.
+  _windowForBackgroundPage(browserContext) {
+    const windows = new Set();
+    for (const page of browserContext.pages) {
+      const window = page._window;
+      if (!window.closed && window.toolbar.visible)
+        windows.add(window);
+    }
+    const mostRecent = Services.wm.getMostRecentWindow('navigator:browser');
+    if (windows.has(mostRecent))
+      return mostRecent;
+    return [...windows].pop();
   }
 
   targets() {
@@ -947,7 +899,7 @@ export class PageTarget {
       const toolbarTop = stackRect.y;
       this._window.resizeBy(width - this._window.innerWidth, height + toolbarTop - this._window.innerHeight);
 
-      await this._channel.connect('').send('awaitViewportDimensions', { width: width / this._zoom, height: height / this._zoom });
+      await this._activateDocShellAndRun(() => this._channel.connect('').send('awaitViewportDimensions', { width: width / this._zoom, height: height / this._zoom }));
     } else {
       this._linkedBrowser.style.removeProperty('width');
       this._linkedBrowser.style.removeProperty('height');
@@ -957,10 +909,25 @@ export class PageTarget {
       this._linkedBrowser.closest('.browserStack').style.removeProperty('scrollbar-width');
 
       const actualSize = this._linkedBrowser.getBoundingClientRect();
-      await this._channel.connect('').send('awaitViewportDimensions', {
+      await this._activateDocShellAndRun(() => this._channel.connect('').send('awaitViewportDimensions', {
         width: actualSize.width / this._zoom,
         height: actualSize.height / this._zoom,
-      });
+      }));
+    }
+  }
+
+  // The document of a tab that is not selected is inactive and puts a resize off until
+  // the tab is selected. Activate it for the time of the resize.
+  async _activateDocShellAndRun(callback) {
+    const browsingContext = this._linkedBrowser.browsingContext;
+    if (browsingContext.isActive)
+      return await callback();
+    browsingContext.isActive = true;
+    try {
+      return await callback();
+    } finally {
+      if (!this._disposed && this._gBrowser.selectedTab !== this._tab)
+        this._linkedBrowser.browsingContext.isActive = false;
     }
   }
 
