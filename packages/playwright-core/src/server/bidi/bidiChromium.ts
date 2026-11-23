@@ -44,7 +44,10 @@ export class BidiChromium extends BrowserType {
     try {
       // Chromium rejects Proxy-Authorization as an unsafe header, so answer the proxy's
       // auth challenge with the credentials instead, like the CDP-based Chromium does.
-      return BidiBrowser.connect(this.attribution.playwright, bidiTransport, options, { proxyAuthentication: 'credentials' });
+      return BidiBrowser.connect(this.attribution.playwright, bidiTransport, options, {
+        proxyAuthentication: 'credentials',
+        shouldProxyLoopback,
+      });
     } catch (e) {
       const error = profileInUseError(browserLogsCollector.recentLogs());
       if (error)
