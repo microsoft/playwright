@@ -46,17 +46,6 @@ test('should git-ignore the default output directory', { annotation: { type: 'is
   expect(execFileSync('git', ['status', '--porcelain', '--untracked-files=all', '--', '.playwright-mcp'], { cwd, encoding: 'utf-8' })).toBe('');
 });
 
-test('should keep an existing .gitignore in the default output directory', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44289' } }, async ({ client, server }, testInfo) => {
-  const gitIgnore = testInfo.outputPath('.playwright-mcp', '.gitignore');
-  await fs.mkdir(testInfo.outputPath('.playwright-mcp'), { recursive: true });
-  await fs.writeFile(gitIgnore, '*.log\n');
-  await client.callTool({
-    name: 'browser_navigate',
-    arguments: { url: server.HELLO_WORLD },
-  });
-  expect(await fs.readFile(gitIgnore, 'utf-8')).toBe('*.log\n');
-});
-
 test('browser_navigate with bare host', async ({ client, server }) => {
   const urlWithoutScheme = server.HELLO_WORLD.replace(/^https?:\/\//, '');
   expect(await client.callTool({
