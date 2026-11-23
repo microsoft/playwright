@@ -123,8 +123,10 @@ test('should dispatch ready event', async ({ launchElectronApp }) => {
   ]);
 });
 
-test('should script application', async ({ launchElectronApp }) => {
-  const app = await launchElectronApp('electron-app.js');
+test('should script application', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44272' },
+}, async ({ launchElectronApp }) => {
+  const app = await launchElectronApp('electron-app.js', [], { env: { ELECTRON_RUN_AS_NODE: '1' } });
   const appPath = await app.evaluate(async ({ app }) => app.getAppPath());
   expect(appPath).toBe(path.resolve(__dirname));
 });
