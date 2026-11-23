@@ -59,6 +59,10 @@ function compareImages(mimeType: string, actualBuffer: Buffer | string, expected
   if (!actualBuffer || !(actualBuffer instanceof Buffer))
     return { errorMessage: 'Actual result should be a Buffer.' };
   validateBuffer(expectedBuffer, mimeType);
+  if (options.comparator !== undefined && options.comparator !== 'pixelmatch' && options.comparator !== 'ssim-cie94')
+    throw new Error(`Configuration specifies unknown comparator "${options.comparator}"`);
+  if (actualBuffer.equals(expectedBuffer))
+    return null;
 
   const decode = (buffer: Buffer): ImageData => {
     if (mimeType === 'image/png')
@@ -69,6 +73,8 @@ function compareImages(mimeType: string, actualBuffer: Buffer | string, expected
   };
   let actual: ImageData = decode(actualBuffer);
   let expected: ImageData = decode(expectedBuffer);
+  if (actual.width === expected.width && actual.height === expected.height && actual.data.equals(expected.data))
+    return null;
   const size = { width: Math.max(expected.width, actual.width), height: Math.max(expected.height, actual.height) };
   let sizesMismatchError = '';
   if (expected.width !== actual.width || expected.height !== actual.height) {
@@ -84,12 +90,10 @@ function compareImages(mimeType: string, actualBuffer: Buffer | string, expected
       // See https://en.wikipedia.org/wiki/Color_difference#CIELAB_%CE%94E*
       maxColorDeltaE94: 1.0,
     });
-  } else if ((options.comparator ?? 'pixelmatch') === 'pixelmatch') {
+  } else {
     count = pixelmatch(expected.data, actual.data, diff.data, size.width, size.height, {
       threshold: options.threshold ?? 0.2,
     });
-  } else {
-    throw new Error(`Configuration specifies unknown comparator "${options.comparator}"`);
   }
 
   const maxDiffPixels1 = options.maxDiffPixels;
