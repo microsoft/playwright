@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import path from 'path';
+
 import { BrowserContext, prepareBrowserContextParams } from './browserContext';
 import { ChannelOwner, apiCall } from './channelOwner';
 import { envObjectToArray } from './clientHelper';
@@ -58,6 +60,8 @@ export class Electron extends ChannelOwner<channels.ElectronChannel> implements 
 
   async launch(options: ElectronOptions = {}): Promise<ElectronApplication> {
     options = this._playwright.selectors._withSelectorOptions(options);
+    if (options.tracesDir)
+      options.tracesDir = path.resolve(options.tracesDir);
     const params: channels.ElectronLaunchParams = {
       ...await prepareBrowserContextParams(options),
       env: options.env ? envObjectToArray(options.env) : undefined,

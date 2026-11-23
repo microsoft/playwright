@@ -70,6 +70,8 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
 
     const logger = options.logger || this._playwright._defaultLaunchOptions?.logger;
     options = { ...this._playwright._defaultLaunchOptions, ...options };
+    if (options.tracesDir)
+      options.tracesDir = path.resolve(options.tracesDir);
     const launchOptions = toLaunchParams(options);
     const browser = Browser.from((await this._channel.launch(launchOptions, new TimeoutSettings().launchTimeout(options))).browser);
     browser._connectToBrowserType(this, options, logger);
@@ -90,6 +92,8 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       ...this._playwright._defaultLaunchOptions,
       ...options,
     });
+    if (options.tracesDir)
+      options.tracesDir = path.resolve(options.tracesDir);
     await this._instrumentation.runBeforeCreateBrowserContext(options);
 
     const logger = options.logger || this._playwright._defaultLaunchOptions?.logger;
