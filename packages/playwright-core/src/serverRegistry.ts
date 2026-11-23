@@ -71,7 +71,12 @@ class ServerRegistry extends EventEmitter {
     return super.off(event, listener as (...args: any[]) => void);
   }
 
-  watch(): () => Promise<void> {
+  watch(): () => void {
+    const dispose = this._watch();
+    return () => { void dispose(); };
+  }
+
+  private _watch(): () => Promise<void> {
     this._watcherRefs++;
     if (!this._watcher)
       this._startWatcher();
@@ -94,7 +99,7 @@ class ServerRegistry extends EventEmitter {
     const ownWatcher = !this._watcher;
     let dispose: (() => Promise<void>) | undefined;
     if (ownWatcher)
-      dispose = this.watch();
+      dispose = this._watch();
     const staleGuids: string[] = [];
     try {
       await this._ready;

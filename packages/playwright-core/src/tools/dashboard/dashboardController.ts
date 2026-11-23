@@ -113,8 +113,8 @@ export class DashboardConnection implements Transport {
     this._onconnected?.();
   }
 
-  async onclose() {
-    const dispose = this._provider.dispose();
+  onclose() {
+    this._provider.dispose();
     this._attachedPage?.dispose();
     this._attachedPage = undefined;
     for (const contextDebugger of this._contextDebuggers.values())
@@ -131,7 +131,6 @@ export class DashboardConnection implements Transport {
     }
     this._streams.clear();
     void fs.promises.rm(this._recordingDir, { recursive: true, force: true }).catch(() => {});
-    await dispose;
     this._onclose();
   }
 
