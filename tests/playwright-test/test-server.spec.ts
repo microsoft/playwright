@@ -128,56 +128,70 @@ test('file watching', async ({ startTestServer, writeFiles }, testInfo) => {
   ]);
 });
 
-test('file watching with a directory', {
-  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44299' },
-}, async ({ startTestServer, writeFiles }, testInfo) => {
+test('file watching with a directory', async ({ startTestServer, writeFiles }, testInfo) => {
   // The VS Code extension watches the test dir with a trailing separator when watching all tests,
   // and a directory without it when watching a folder.
   await writeFiles({
-    'playwright.config.ts': `
-      export default { testDir: './tests' };
-    `,
-    'utils/helper.ts': `
-      export const expected = 42;
-    `,
-    'tests/a.test.ts': `
-      import { test, expect } from '@playwright/test';
-      import { expected } from '../utils/helper';
-      test('foo', () => expect(expected).toBe(42));
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      test('foo', () => {});
       `,
   });
 
   const testServerConnection = await startTestServer();
   expect(await testServerConnection.runTests({ locations: [] })).toEqual({ status: 'passed' });
 
-  await testServerConnection.watch({ fileNames: [testInfo.outputPath('tests') + path.sep] });
+  await testServerConnection.watch({ fileNames: [testInfo.outputPath() + path.sep] });
 
   await writeFiles({
-    'tests/a.test.ts': `
-      import { test, expect } from '@playwright/test';
-      import { expected } from '../utils/helper';
-      test('foo', () => expect(expected).toBe(123));
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      test('foo', () => {});
       test('bar', () => {});
       `,
   });
 
   const changedEvents = () => testServerConnection.events.filter(e => e[0] === 'testFilesChanged');
   await expect.poll(changedEvents).toEqual([
-    ['testFilesChanged', { testFiles: [testInfo.outputPath('tests', 'a.test.ts')] }]
+    ['testFilesChanged', { testFiles: [testInfo.outputPath('a.test.ts')] }]
   ]);
-
-  await writeFiles({
-    'utils/helper.ts': `
-      export const expected = 123;
-    `,
-  });
-
-  await expect.poll(changedEvents).toEqual([
-    ['testFilesChanged', { testFiles: [testInfo.outputPath('tests', 'a.test.ts')] }],
-    ['testFilesChanged', { testFiles: [testInfo.outputPath('tests', 'a.test.ts')] }]
-  ]);
-  expect(await testServerConnection.runTests({ locations: [] })).toEqual({ status: 'passed' });
 });
+
+for (const separator of ['', path.sep]) {
+  test(`directory watching with external dependency${separator ? ' and trailing separator' : ''}`, {
+    annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44299' },
+  }, async ({ startTestServer, writeFiles }, testInfo) => {
+    await writeFiles({
+      'playwright.config.ts': `
+        export default { testDir: './tests' };
+      `,
+      'utils/helper.ts': `
+        export const expected = 42;
+      `,
+      'tests/nested/a.test.ts': `
+        import { test, expect } from '@playwright/test';
+        import { expected } from '../../utils/helper';
+        test('foo', () => expect(expected).toBe(123));
+      `,
+    });
+
+    const testServerConnection = await startTestServer();
+    const tests = await testServerConnection.listTests({});
+    expect(tests.report.map(e => e.method)).toEqual(['onConfigure', 'onProject', 'onBegin', 'onEnd']);
+
+    await testServerConnection.watch({ fileNames: [testInfo.outputPath('tests') + separator] });
+    await writeFiles({
+      'utils/helper.ts': `
+        export const expected = 123;
+      `,
+    });
+
+    await expect.poll(() => testServerConnection.events).toEqual([
+      ['testFilesChanged', { testFiles: [testInfo.outputPath('tests', 'nested', 'a.test.ts')] }]
+    ]);
+    expect(await testServerConnection.runTests({ locations: [] })).toEqual({ status: 'passed' });
+  });
+}
 
 test('should list tests with testIdAttribute', async ({ startTestServer, writeFiles }) => {
   await writeFiles({

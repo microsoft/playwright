@@ -15,6 +15,7 @@
  */
 
 import EventEmitter from 'events';
+import path from 'path';
 
 import { registry } from 'playwright-core/lib/coreBundle';
 
@@ -347,9 +348,14 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
 
   async watch(fileNames: string[]) {
     this._watchedTestDependencies = new Set();
+    const testFileNames = cc.testFileNames();
     for (const fileName of fileNames) {
       this._watchedTestDependencies.add(fileName);
-      cc.dependenciesForTestFile(fileName).forEach(file => this._watchedTestDependencies.add(file));
+      const directoryPrefix = fileName.endsWith(path.sep) ? fileName : fileName + path.sep;
+      for (const testFile of testFileNames) {
+        if (testFile === fileName || testFile.startsWith(directoryPrefix))
+          cc.dependenciesForTestFile(testFile).forEach(file => this._watchedTestDependencies.add(file));
+      }
     }
     await this._updateWatcher(true);
   }
