@@ -77,7 +77,8 @@ const evaluate = defineTabTool({
         colors: false,
         customInspect: false,
       });
-      await response.addResult('Evaluation result', text, { prefix: 'result', ext: 'json', suggestedFilename: params.filename });
+      const data = params.filename && typeof evalResult.result === 'string' ? evalResult.result : text;
+      await response.addResult('Evaluation result', data, { prefix: 'result', ext: 'json', suggestedFilename: params.filename });
     }).catch(e => {
       response.addError(e instanceof Error ? e.message : String(e));
     });

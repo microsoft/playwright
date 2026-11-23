@@ -14,9 +14,14 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
+
 import { test, expect } from './fixtures';
 
-test('browser_evaluate', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43752' } }, async ({ client, server }) => {
+test('browser_evaluate', { annotation: [
+  { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43752' },
+  { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44295' },
+] }, async ({ client, server }, testInfo) => {
   expect(await client.callTool({
     name: 'browser_navigate',
     arguments: { url: server.HELLO_WORLD },
@@ -33,6 +38,21 @@ test('browser_evaluate', { annotation: { type: 'issue', description: 'https://gi
     result: `"Title"`,
     code: `await page.evaluate('() => document.title');`,
   });
+
+  const expression = `() => ['first line', 'second line', ''].join('\\n')`;
+  expect(await client.callTool({
+    name: 'browser_evaluate',
+    arguments: { function: expression },
+  })).toHaveResponse({
+    result: JSON.stringify('first line\nsecond line\n'),
+  });
+  expect(await client.callTool({
+    name: 'browser_evaluate',
+    arguments: { function: expression, filename: 'eval-out.txt' },
+  })).toHaveResponse({
+    result: expect.stringContaining('eval-out.txt'),
+  });
+  expect(await fs.promises.readFile(testInfo.outputPath('eval-out.txt'), 'utf8')).toBe('first line\nsecond line\n');
 
   server.setRoute('/sandboxed', (req, res) => {
     res.writeHead(200, {
