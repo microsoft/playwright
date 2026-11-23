@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
+
 import { test, expect, writeFiles } from './fixtures';
 
 test.use({ mcpServerType: 'test-mcp' });
@@ -49,7 +51,15 @@ const workspace = {
     };
   `,
   'a.test.ts': `
-    import { test, expect } from '@playwright/test';
+    import fs from 'fs';
+    import path from 'path';
+    import { test as base, expect } from '@playwright/test';
+    const test = base.extend<{}, { resource: void }>({
+      resource: [async ({}, use) => {
+        await use();
+        fs.writeFileSync(path.join(__dirname, 'worker-teardown.txt'), 'torn down');
+      }, { scope: 'worker', auto: true }],
+    });
     test('test', async ({ page }) => {
       console.log('test');
       console.error('test');
@@ -57,7 +67,9 @@ const workspace = {
   `
 };
 
-test('setup should run global setup and teardown', async ({ startClient }, { workerIndex }) => {
+test('setup should run global setup and teardown', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44260' },
+}, async ({ startClient }, testInfo) => {
   await writeFiles(workspace);
   const { client } = await startClient();
 
@@ -76,6 +88,9 @@ Running 1 test using 1 worker
 test
 [err] test
 ### Paused at end of test. ready for interaction`));
+
+  await client.close();
+  expect(fs.existsSync(testInfo.outputPath('worker-teardown.txt'))).toBe(true);
 });
 
 test('test_run should run global setup and teardown', async ({ startClient }) => {
@@ -96,7 +111,7 @@ global setup
 Running 1 test using 1 worker
 test
 [err] test
-  ok 1 [id=<ID>] [project=chromium] › a.test.ts:3:5 › test (XXms)
+  ok 1 [id=<ID>] [project=chromium] › a.test.ts:11:5 › test (XXms)
   1 passed (XXms)
 global teardown
 [err] global teardown`);
@@ -124,7 +139,7 @@ global setup
 Running 1 test using 1 worker
 test
 [err] test
-  ok 1 [id=<ID>] [project=chromium] › a.test.ts:3:5 › test (XXms)
+  ok 1 [id=<ID>] [project=chromium] › a.test.ts:11:5 › test (XXms)
   1 passed (XXms)
 global teardown
 [err] global teardown`);

@@ -18,6 +18,7 @@ import EventEmitter from 'events';
 
 import * as zod from 'zod';
 import { tools } from 'playwright-core/lib/coreBundle';
+import { gracefullyCloseSet } from '@utils/processLauncher';
 
 import { TestContext } from './testContext';
 import * as testTools from './testTools.js';
@@ -47,6 +48,7 @@ export class TestServerBackend extends EventEmitter implements tools.ServerBacke
   private _options: { muteConsole?: boolean, headless?: boolean };
   private _context: TestContext | undefined;
   private _configPath: string | undefined;
+  private _gracefullyClose = () => this.dispose();
 
   constructor(configPath: string | undefined, options?: { muteConsole?: boolean, headless?: boolean }) {
     super();
@@ -56,6 +58,10 @@ export class TestServerBackend extends EventEmitter implements tools.ServerBacke
 
   async initialize(clientInfo: tools.ClientInfo): Promise<void> {
     this._context = new TestContext(clientInfo, this._configPath, this._options);
+    // The stdio server does not close the transport when stdin closes, so nobody calls
+    // dispose() explicitly. The exit watchdog runs gracefullyCloseSet before the process
+    // exits, so register the cleanup there.
+    gracefullyCloseSet.add(this._gracefullyClose);
   }
 
   async callTool(name: string, args: tools.CallToolRequest['params']['arguments'], signal: AbortSignal): Promise<tools.CallToolResult> {
@@ -70,6 +76,7 @@ export class TestServerBackend extends EventEmitter implements tools.ServerBacke
   }
 
   async dispose() {
+    gracefullyCloseSet.delete(this._gracefullyClose);
     await this._context?.close();
   }
 }
