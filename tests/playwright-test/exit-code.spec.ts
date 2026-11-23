@@ -251,3 +251,27 @@ test('should not force-kill a worker that is running a slow fixture teardown', a
   expect(result.output).toContain('slow teardown finished');
   expect(result.output).not.toContain('force-killed');
 });
+
+test('should not force-kill a worker that exited while its artifacts are being removed', async ({ runInlineTest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44304' });
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      import fs from 'fs';
+      import path from 'path';
+      const rm = fs.promises.rm;
+      fs.promises.rm = async (target, ...args) => {
+        if (path.basename(String(target)).startsWith('.playwright-artifacts-'))
+          await new Promise(f => setTimeout(f, 4000));
+        return rm(target, ...args);
+      };
+      export default {};
+    `,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('passes', async () => {});
+    `,
+  }, undefined, { PWTEST_CHILD_PROCESS_TIMEOUT: '2000' });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.output).not.toContain('force-killed');
+});

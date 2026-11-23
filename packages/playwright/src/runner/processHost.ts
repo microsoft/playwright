@@ -180,6 +180,10 @@ export class ProcessHost extends EventEmitter {
         const result = await raceAgainstDeadline(() => exitPromise, lastHeartbeat + timeout);
         if (!result.timedOut)
           return;
+        if (this._processDidExit) {
+          await exitPromise;
+          return;
+        }
         if (monotonicTime() < lastHeartbeat + timeout)
           continue;
         this.emit('processError', { message: `Error: ${this._processName} process did not exit within ${timeout}ms after stop, force-killed it` });
