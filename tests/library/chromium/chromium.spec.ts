@@ -807,8 +807,12 @@ browserTest('CR-032 should not leak service worker session after context close',
   await expect.poll(() => sessions.size).toBe(sessionCount);
 });
 
-// Chromium terminates the outgoing worker with a fetch event in flight when DevTools is attached to it,
-// see ServiceWorkerVersion::OnRequestTermination. The navigation then never settles.
+// When a waiting worker must replace a busy one, Chromium asks the outgoing worker to stop as soon as
+// possible. If DevTools is attached to that worker, ServiceWorkerVersion::OnRequestTermination stops it
+// without checking for work in flight, and the navigation that it handles never settles.
+// Pages also attach to their controlling worker during navigation, so detaching the browser-level
+// session alone does not help. Workaround: wait until registration.active is "activated" and
+// registration.waiting is null, then navigate.
 test.fixme('CR-047 should navigate while a newer service worker takes over', {
   annotation: [
     { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44287' },
@@ -872,4 +876,43 @@ test.fixme('CR-047 should navigate while a newer service worker takes over', {
     for (const res of held)
       res.end();
   }
+});
+
+// Guards against a fix for CR-047 that detaches from the outgoing worker before it stops.
+test('CR-048 should route service worker requests while a newer version is waiting', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44287' },
+}, async ({ context, page, server }) => {
+  let version = 1;
+  server.setRoute('/sw.js', (req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/javascript', 'Cache-Control': 'no-cache' });
+    res.end(`
+      self.PW_VERSION = ${version};
+      self.addEventListener('activate', event => event.waitUntil(self.clients.claim()));
+      self.addEventListener('fetch', event => {
+        if (event.request.url.endsWith('/proxy'))
+          event.respondWith(fetch('/data.txt'));
+      });
+    `);
+  });
+  server.setRoute('/one', (req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end(`<script>navigator.serviceWorker.register('/sw.js')</script>`);
+  });
+  server.setRoute('/data.txt', (req, res) => res.end('from server'));
+  await context.route('**/data.txt', route => route.fulfill({ body: 'from route' }));
+
+  // Given a page controlled by worker v1,
+  await page.goto(server.PREFIX + '/one');
+  await expect.poll(() => page.evaluate(() => !!navigator.serviceWorker.controller)).toBe(true);
+
+  // and worker v2 installed and waiting,
+  version = 2;
+  await page.evaluate(() => navigator.serviceWorker.getRegistration().then(registration => registration!.update()));
+  await expect.poll(() => page.evaluate(async () => (await navigator.serviceWorker.getRegistration())?.waiting?.state)).toBe('installed');
+
+  // when worker v1 fetches on behalf of the page,
+  const text = await page.evaluate(() => fetch('/proxy').then(r => r.text()));
+
+  // then the context route still handles that request.
+  expect(text).toBe('from route');
 });
