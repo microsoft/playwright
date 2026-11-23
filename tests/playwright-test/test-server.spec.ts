@@ -128,33 +128,55 @@ test('file watching', async ({ startTestServer, writeFiles }, testInfo) => {
   ]);
 });
 
-test('file watching with a directory', async ({ startTestServer, writeFiles }, testInfo) => {
+test('file watching with a directory', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44299' },
+}, async ({ startTestServer, writeFiles }, testInfo) => {
   // The VS Code extension watches the test dir with a trailing separator when watching all tests,
   // and a directory without it when watching a folder.
   await writeFiles({
-    'a.test.ts': `
-      import { test } from '@playwright/test';
-      test('foo', () => {});
+    'playwright.config.ts': `
+      export default { testDir: './tests' };
+    `,
+    'utils/helper.ts': `
+      export const expected = 42;
+    `,
+    'tests/a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      import { expected } from '../utils/helper';
+      test('foo', () => expect(expected).toBe(42));
       `,
   });
 
   const testServerConnection = await startTestServer();
   expect(await testServerConnection.runTests({ locations: [] })).toEqual({ status: 'passed' });
 
-  await testServerConnection.watch({ fileNames: [testInfo.outputPath() + path.sep] });
+  await testServerConnection.watch({ fileNames: [testInfo.outputPath('tests') + path.sep] });
 
   await writeFiles({
-    'a.test.ts': `
-      import { test } from '@playwright/test';
-      test('foo', () => {});
+    'tests/a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      import { expected } from '../utils/helper';
+      test('foo', () => expect(expected).toBe(123));
       test('bar', () => {});
       `,
   });
 
   const changedEvents = () => testServerConnection.events.filter(e => e[0] === 'testFilesChanged');
   await expect.poll(changedEvents).toEqual([
-    ['testFilesChanged', { testFiles: [testInfo.outputPath('a.test.ts')] }]
+    ['testFilesChanged', { testFiles: [testInfo.outputPath('tests', 'a.test.ts')] }]
   ]);
+
+  await writeFiles({
+    'utils/helper.ts': `
+      export const expected = 123;
+    `,
+  });
+
+  await expect.poll(changedEvents).toEqual([
+    ['testFilesChanged', { testFiles: [testInfo.outputPath('tests', 'a.test.ts')] }],
+    ['testFilesChanged', { testFiles: [testInfo.outputPath('tests', 'a.test.ts')] }]
+  ]);
+  expect(await testServerConnection.runTests({ locations: [] })).toEqual({ status: 'passed' });
 });
 
 test('should list tests with testIdAttribute', async ({ startTestServer, writeFiles }) => {

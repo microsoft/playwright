@@ -282,7 +282,19 @@ export function internalDependenciesForTestFile(filename: string): Set<string> |
 }
 
 export function dependenciesForTestFile(filename: string): Set<string> {
-  return fileDependencies.get(filename) || new Set();
+  const dependencies = fileDependencies.get(filename);
+  if (dependencies)
+    return dependencies;
+
+  const result = new Set<string>();
+  const directoryPrefix = filename.endsWith(path.sep) ? filename : filename + path.sep;
+  for (const [testFile, dependencies] of fileDependencies) {
+    if (testFile.startsWith(directoryPrefix)) {
+      for (const dependency of dependencies)
+        result.add(dependency);
+    }
+  }
+  return result;
 }
 
 // This is only used in the dev mode, specifically excluding
