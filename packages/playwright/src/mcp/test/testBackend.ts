@@ -58,6 +58,9 @@ export class TestServerBackend extends EventEmitter implements tools.ServerBacke
 
   async initialize(clientInfo: tools.ClientInfo): Promise<void> {
     this._context = new TestContext(clientInfo, this._configPath, this._options);
+    // The stdio server does not close the transport when stdin closes, so nobody calls
+    // dispose() explicitly. The exit watchdog runs gracefullyCloseSet before the process
+    // exits, so register the cleanup there.
     gracefullyCloseSet.add(this._gracefullyClose);
   }
 
