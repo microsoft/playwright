@@ -21,10 +21,10 @@ export type { Validator, ValidatorContext } from './validatorPrimitives';
 export { ValidationError, findValidator, maybeFindValidator, createMetadataValidator, createWaitInfoValidator } from './validatorPrimitives';
 
 scheme.AndroidInitializer = tOptional(tObject({}));
-scheme.AndroidDevicesParams = tObject({
-  host: tOptional(tString),
-  port: tOptional(tInt),
-  omitDriverInstall: tOptional(tBoolean),
+scheme.AndroidDevicesParams = tObject({}, {
+  host: tString,
+  port: tInt,
+  omitDriverInstall: tBoolean,
 });
 scheme.AndroidDevicesResult = tObject({
   devices: tArray(tChannel(['AndroidDevice'])),
@@ -53,7 +53,8 @@ scheme.AndroidDeviceWebViewRemovedEvent = tObject({
 });
 scheme.AndroidDeviceWaitParams = tObject({
   androidSelector: tType('AndroidSelector'),
-  state: tOptional(tEnum(['gone'])),
+}, {
+  state: tEnum(['gone']),
 });
 scheme.AndroidDeviceWaitResult = tOptional(tObject({}));
 scheme.AndroidDeviceFillParams = tObject({
@@ -63,19 +64,22 @@ scheme.AndroidDeviceFillParams = tObject({
 scheme.AndroidDeviceFillResult = tOptional(tObject({}));
 scheme.AndroidDeviceTapParams = tObject({
   androidSelector: tType('AndroidSelector'),
-  duration: tOptional(tFloat),
+}, {
+  duration: tFloat,
 });
 scheme.AndroidDeviceTapResult = tOptional(tObject({}));
 scheme.AndroidDeviceDragParams = tObject({
   androidSelector: tType('AndroidSelector'),
   dest: tType('Point'),
-  speed: tOptional(tFloat),
+}, {
+  speed: tFloat,
 });
 scheme.AndroidDeviceDragResult = tOptional(tObject({}));
 scheme.AndroidDeviceFlingParams = tObject({
   androidSelector: tType('AndroidSelector'),
   direction: tEnum(['up', 'down', 'left', 'right']),
-  speed: tOptional(tFloat),
+}, {
+  speed: tFloat,
 });
 scheme.AndroidDeviceFlingResult = tOptional(tObject({}));
 scheme.AndroidDeviceLongTapParams = tObject({
@@ -85,27 +89,31 @@ scheme.AndroidDeviceLongTapResult = tOptional(tObject({}));
 scheme.AndroidDevicePinchCloseParams = tObject({
   androidSelector: tType('AndroidSelector'),
   percent: tFloat,
-  speed: tOptional(tFloat),
+}, {
+  speed: tFloat,
 });
 scheme.AndroidDevicePinchCloseResult = tOptional(tObject({}));
 scheme.AndroidDevicePinchOpenParams = tObject({
   androidSelector: tType('AndroidSelector'),
   percent: tFloat,
-  speed: tOptional(tFloat),
+}, {
+  speed: tFloat,
 });
 scheme.AndroidDevicePinchOpenResult = tOptional(tObject({}));
 scheme.AndroidDeviceScrollParams = tObject({
   androidSelector: tType('AndroidSelector'),
   direction: tEnum(['up', 'down', 'left', 'right']),
   percent: tFloat,
-  speed: tOptional(tFloat),
+}, {
+  speed: tFloat,
 });
 scheme.AndroidDeviceScrollResult = tOptional(tObject({}));
 scheme.AndroidDeviceSwipeParams = tObject({
   androidSelector: tType('AndroidSelector'),
   direction: tEnum(['up', 'down', 'left', 'right']),
   percent: tFloat,
-  speed: tOptional(tFloat),
+}, {
+  speed: tFloat,
 });
 scheme.AndroidDeviceSwipeResult = tOptional(tObject({}));
 scheme.AndroidDeviceInfoParams = tObject({
@@ -141,79 +149,82 @@ scheme.AndroidDeviceInputDragParams = tObject({
   steps: tInt,
 });
 scheme.AndroidDeviceInputDragResult = tOptional(tObject({}));
-scheme.AndroidDeviceLaunchBrowserParams = tObject({
-  noDefaultViewport: tOptional(tBoolean),
-  viewport: tOptional(tObject({
+scheme.AndroidDeviceLaunchBrowserParams = tObject({}, {
+  noDefaultViewport: tBoolean,
+  viewport: tObject({
     width: tInt,
     height: tInt,
-  })),
-  screen: tOptional(tObject({
+  }),
+  screen: tObject({
     width: tInt,
     height: tInt,
-  })),
-  ignoreHTTPSErrors: tOptional(tBoolean),
-  clientCertificates: tOptional(tArray(tObject({
+  }),
+  ignoreHTTPSErrors: tBoolean,
+  clientCertificates: tArray(tObject({
     origin: tString,
-    cert: tOptional(tBinary),
-    key: tOptional(tBinary),
-    passphrase: tOptional(tString),
-    pfx: tOptional(tBinary),
-  }))),
-  javaScriptEnabled: tOptional(tBoolean),
-  bypassCSP: tOptional(tBoolean),
-  userAgent: tOptional(tString),
-  locale: tOptional(tString),
-  timezoneId: tOptional(tString),
-  geolocation: tOptional(tObject({
+  }, {
+    cert: tBinary,
+    key: tBinary,
+    passphrase: tString,
+    pfx: tBinary,
+  })),
+  javaScriptEnabled: tBoolean,
+  bypassCSP: tBoolean,
+  userAgent: tString,
+  locale: tString,
+  timezoneId: tString,
+  geolocation: tObject({
     longitude: tFloat,
     latitude: tFloat,
-    accuracy: tOptional(tFloat),
-  })),
-  permissions: tOptional(tArray(tString)),
-  extraHTTPHeaders: tOptional(tArray(tType('NameValue'))),
-  offline: tOptional(tBoolean),
-  httpCredentials: tOptional(tArray(tType('HttpCredentials'))),
-  deviceScaleFactor: tOptional(tFloat),
-  isMobile: tOptional(tBoolean),
-  hasTouch: tOptional(tBoolean),
-  colorScheme: tOptional(tEnum(['dark', 'light', 'no-preference', 'no-override'])),
-  reducedMotion: tOptional(tEnum(['reduce', 'no-preference', 'no-override'])),
-  forcedColors: tOptional(tEnum(['active', 'none', 'no-override'])),
-  acceptDownloads: tOptional(tEnum(['accept', 'deny', 'internal-browser-default'])),
-  contrast: tOptional(tEnum(['no-preference', 'more', 'no-override'])),
-  baseURL: tOptional(tString),
-  recordVideo: tOptional(tObject({
-    dir: tOptional(tString),
-    size: tOptional(tObject({
+  }, {
+    accuracy: tFloat,
+  }),
+  permissions: tArray(tString),
+  extraHTTPHeaders: tArray(tType('NameValue')),
+  offline: tBoolean,
+  httpCredentials: tArray(tType('HttpCredentials')),
+  deviceScaleFactor: tFloat,
+  isMobile: tBoolean,
+  hasTouch: tBoolean,
+  colorScheme: tEnum(['dark', 'light', 'no-preference', 'no-override']),
+  reducedMotion: tEnum(['reduce', 'no-preference', 'no-override']),
+  forcedColors: tEnum(['active', 'none', 'no-override']),
+  acceptDownloads: tEnum(['accept', 'deny', 'internal-browser-default']),
+  contrast: tEnum(['no-preference', 'more', 'no-override']),
+  baseURL: tString,
+  recordVideo: tObject({}, {
+    dir: tString,
+    size: tObject({
       width: tInt,
       height: tInt,
-    })),
-    fps: tOptional(tInt),
-    showActions: tOptional(tObject({
-      duration: tOptional(tFloat),
-      position: tOptional(tEnum(['top-left', 'top', 'top-right', 'bottom-left', 'bottom', 'bottom-right'])),
-      fontSize: tOptional(tInt),
-      cursor: tOptional(tEnum(['none', 'pointer'])),
-      style: tOptional(tObject({
-        point: tOptional(tString),
-        highlight: tOptional(tString),
-        title: tOptional(tString),
-      })),
-    })),
-  })),
-  strictSelectors: tOptional(tBoolean),
-  locateOnlyVisible: tOptional(tBoolean),
-  serviceWorkers: tOptional(tEnum(['allow', 'block'])),
-  selectorEngines: tOptional(tArray(tType('SelectorEngine'))),
-  testIdAttributeName: tOptional(tString),
-  pkg: tOptional(tString),
-  args: tOptional(tArray(tString)),
-  proxy: tOptional(tObject({
+    }),
+    fps: tInt,
+    showActions: tObject({}, {
+      duration: tFloat,
+      position: tEnum(['top-left', 'top', 'top-right', 'bottom-left', 'bottom', 'bottom-right']),
+      fontSize: tInt,
+      cursor: tEnum(['none', 'pointer']),
+      style: tObject({}, {
+        point: tString,
+        highlight: tString,
+        title: tString,
+      }),
+    }),
+  }),
+  strictSelectors: tBoolean,
+  locateOnlyVisible: tBoolean,
+  serviceWorkers: tEnum(['allow', 'block']),
+  selectorEngines: tArray(tType('SelectorEngine')),
+  testIdAttributeName: tString,
+  pkg: tString,
+  args: tArray(tString),
+  proxy: tObject({
     server: tString,
-    bypass: tOptional(tString),
-    username: tOptional(tString),
-    password: tOptional(tString),
-  })),
+  }, {
+    bypass: tString,
+    username: tString,
+    password: tString,
+  }),
 });
 scheme.AndroidDeviceLaunchBrowserResult = tObject({
   context: tChannel(['BrowserContext']),
@@ -232,13 +243,15 @@ scheme.AndroidDeviceShellResult = tObject({
 });
 scheme.AndroidDeviceInstallApkParams = tObject({
   file: tBinary,
-  args: tOptional(tArray(tString)),
+}, {
+  args: tArray(tString),
 });
 scheme.AndroidDeviceInstallApkResult = tOptional(tObject({}));
 scheme.AndroidDevicePushParams = tObject({
   file: tBinary,
   path: tString,
-  mode: tOptional(tInt),
+}, {
+  mode: tInt,
 });
 scheme.AndroidDevicePushResult = tOptional(tObject({}));
 scheme.AndroidDeviceConnectToWebViewParams = tObject({
@@ -254,32 +267,32 @@ scheme.AndroidWebView = tObject({
   pkg: tString,
   socketName: tString,
 });
-scheme.AndroidSelector = tObject({
-  checkable: tOptional(tBoolean),
-  checked: tOptional(tBoolean),
-  clazz: tOptional(tString),
-  clickable: tOptional(tBoolean),
-  depth: tOptional(tInt),
-  desc: tOptional(tString),
-  enabled: tOptional(tBoolean),
-  focusable: tOptional(tBoolean),
-  focused: tOptional(tBoolean),
-  hasChild: tOptional(tObject({
+scheme.AndroidSelector = tObject({}, {
+  checkable: tBoolean,
+  checked: tBoolean,
+  clazz: tString,
+  clickable: tBoolean,
+  depth: tInt,
+  desc: tString,
+  enabled: tBoolean,
+  focusable: tBoolean,
+  focused: tBoolean,
+  hasChild: tObject({
     androidSelector: tType('AndroidSelector'),
-  })),
-  hasDescendant: tOptional(tObject({
+  }),
+  hasDescendant: tObject({
     androidSelector: tType('AndroidSelector'),
-    maxDepth: tOptional(tInt),
-  })),
-  longClickable: tOptional(tBoolean),
-  pkg: tOptional(tString),
-  res: tOptional(tString),
-  scrollable: tOptional(tBoolean),
-  selected: tOptional(tBoolean),
-  text: tOptional(tString),
+  }, {
+    maxDepth: tInt,
+  }),
+  longClickable: tBoolean,
+  pkg: tString,
+  res: tString,
+  scrollable: tBoolean,
+  selected: tBoolean,
+  text: tString,
 });
 scheme.AndroidElementInfo = tObject({
-  children: tOptional(tArray(tType('AndroidElementInfo'))),
   clazz: tString,
   desc: tString,
   res: tString,
@@ -295,24 +308,27 @@ scheme.AndroidElementInfo = tObject({
   longClickable: tBoolean,
   scrollable: tBoolean,
   selected: tBoolean,
+}, {
+  children: tArray(tType('AndroidElementInfo')),
 });
 scheme.APIRequestContextInitializer = tObject({
   tracing: tChannel(['Tracing']),
 });
 scheme.APIRequestContextFetchParams = tObject({
   url: tString,
-  encodedParams: tOptional(tString),
-  params: tOptional(tArray(tType('NameValue'))),
-  method: tOptional(tString),
-  headers: tOptional(tArray(tType('NameValue'))),
-  postData: tOptional(tBinary),
-  jsonData: tOptional(tString),
-  formData: tOptional(tArray(tType('NameValue'))),
-  multipartData: tOptional(tArray(tType('FormField'))),
-  failOnStatusCode: tOptional(tBoolean),
-  ignoreHTTPSErrors: tOptional(tBoolean),
-  maxRedirects: tOptional(tInt),
-  maxRetries: tOptional(tInt),
+}, {
+  encodedParams: tString,
+  params: tArray(tType('NameValue')),
+  method: tString,
+  headers: tArray(tType('NameValue')),
+  postData: tBinary,
+  jsonData: tString,
+  formData: tArray(tType('NameValue')),
+  multipartData: tArray(tType('FormField')),
+  failOnStatusCode: tBoolean,
+  ignoreHTTPSErrors: tBoolean,
+  maxRedirects: tInt,
+  maxRetries: tInt,
 });
 scheme.APIRequestContextFetchResult = tObject({
   response: tType('APIResponse'),
@@ -320,8 +336,8 @@ scheme.APIRequestContextFetchResult = tObject({
 scheme.APIRequestContextFetchResponseBodyParams = tObject({
   fetchUid: tString,
 });
-scheme.APIRequestContextFetchResponseBodyResult = tObject({
-  binary: tOptional(tBinary),
+scheme.APIRequestContextFetchResponseBodyResult = tObject({}, {
+  binary: tBinary,
 });
 scheme.APIRequestContextFetchLogParams = tObject({
   fetchUid: tString,
@@ -333,16 +349,16 @@ scheme.APIRequestContextAddCookiesParams = tObject({
   cookies: tArray(tType('SetNetworkCookie')),
 });
 scheme.APIRequestContextAddCookiesResult = tOptional(tObject({}));
-scheme.APIRequestContextClearCookiesParams = tObject({
-  name: tOptional(tString),
-  nameRegexSource: tOptional(tString),
-  nameRegexFlags: tOptional(tString),
-  domain: tOptional(tString),
-  domainRegexSource: tOptional(tString),
-  domainRegexFlags: tOptional(tString),
-  path: tOptional(tString),
-  pathRegexSource: tOptional(tString),
-  pathRegexFlags: tOptional(tString),
+scheme.APIRequestContextClearCookiesParams = tObject({}, {
+  name: tString,
+  nameRegexSource: tString,
+  nameRegexFlags: tString,
+  domain: tString,
+  domainRegexSource: tString,
+  domainRegexFlags: tString,
+  path: tString,
+  pathRegexSource: tString,
+  pathRegexFlags: tString,
 });
 scheme.APIRequestContextClearCookiesResult = tOptional(tObject({}));
 scheme.APIRequestContextCookiesParams = tObject({
@@ -351,9 +367,9 @@ scheme.APIRequestContextCookiesParams = tObject({
 scheme.APIRequestContextCookiesResult = tObject({
   cookies: tArray(tType('NetworkCookie')),
 });
-scheme.APIRequestContextStorageStateParams = tObject({
-  indexedDB: tOptional(tBoolean),
-  opfs: tOptional(tBoolean),
+scheme.APIRequestContextStorageStateParams = tObject({}, {
+  indexedDB: tBoolean,
+  opfs: tBoolean,
 });
 scheme.APIRequestContextStorageStateResult = tObject({
   cookies: tArray(tType('NetworkCookie')),
@@ -363,8 +379,8 @@ scheme.APIRequestContextDisposeAPIResponseParams = tObject({
   fetchUid: tString,
 });
 scheme.APIRequestContextDisposeAPIResponseResult = tOptional(tObject({}));
-scheme.APIRequestContextDisposeParams = tObject({
-  reason: tOptional(tString),
+scheme.APIRequestContextDisposeParams = tObject({}, {
+  reason: tString,
 });
 scheme.APIRequestContextDisposeResult = tOptional(tObject({}));
 scheme.APIResponse = tObject({
@@ -373,10 +389,11 @@ scheme.APIResponse = tObject({
   status: tInt,
   statusText: tString,
   headers: tArray(tType('NameValue')),
-  securityDetails: tOptional(tType('SecurityDetails')),
-  serverAddr: tOptional(tType('RemoteAddr')),
-  timing: tOptional(tType('ResourceTiming')),
-  responseEndTiming: tOptional(tFloat),
+}, {
+  securityDetails: tType('SecurityDetails'),
+  serverAddr: tType('RemoteAddr'),
+  timing: tType('ResourceTiming'),
+  responseEndTiming: tFloat,
 });
 scheme.ArtifactInitializer = tObject({
   absolutePath: tString,
@@ -394,8 +411,8 @@ scheme.ArtifactSaveAsStreamResult = tObject({
   stream: tChannel(['Stream']),
 });
 scheme.ArtifactFailureParams = tOptional(tObject({}));
-scheme.ArtifactFailureResult = tObject({
-  error: tOptional(tString),
+scheme.ArtifactFailureResult = tObject({}, {
+  error: tString,
 });
 scheme.ArtifactStreamParams = tOptional(tObject({}));
 scheme.ArtifactStreamResult = tObject({
@@ -406,8 +423,8 @@ scheme.ArtifactCancelResult = tOptional(tObject({}));
 scheme.ArtifactDeleteParams = tOptional(tObject({}));
 scheme.ArtifactDeleteResult = tOptional(tObject({}));
 scheme.StreamInitializer = tOptional(tObject({}));
-scheme.StreamReadParams = tObject({
-  size: tOptional(tInt),
+scheme.StreamReadParams = tObject({}, {
+  size: tInt,
 });
 scheme.StreamReadResult = tObject({
   binary: tBinary,
@@ -432,18 +449,19 @@ scheme.BrowserContextEvent = tObject({
 scheme.BrowserCloseEvent = tOptional(tObject({}));
 scheme.BrowserStartServerParams = tObject({
   title: tString,
-  workspaceDir: tOptional(tString),
-  metadata: tOptional(tAny),
-  host: tOptional(tString),
-  port: tOptional(tInt),
+}, {
+  workspaceDir: tString,
+  metadata: tAny,
+  host: tString,
+  port: tInt,
 });
 scheme.BrowserStartServerResult = tObject({
   endpoint: tString,
 });
 scheme.BrowserStopServerParams = tOptional(tObject({}));
 scheme.BrowserStopServerResult = tOptional(tObject({}));
-scheme.BrowserCloseParams = tObject({
-  reason: tOptional(tString),
+scheme.BrowserCloseParams = tObject({}, {
+  reason: tString,
 });
 scheme.BrowserCloseResult = tOptional(tObject({}));
 scheme.BrowserKillForTestsParams = tOptional(tObject({}));
@@ -452,162 +470,168 @@ scheme.BrowserDefaultUserAgentForTestParams = tOptional(tObject({}));
 scheme.BrowserDefaultUserAgentForTestResult = tObject({
   userAgent: tString,
 });
-scheme.BrowserNewContextParams = tObject({
-  noDefaultViewport: tOptional(tBoolean),
-  viewport: tOptional(tObject({
+scheme.BrowserNewContextParams = tObject({}, {
+  noDefaultViewport: tBoolean,
+  viewport: tObject({
     width: tInt,
     height: tInt,
-  })),
-  screen: tOptional(tObject({
+  }),
+  screen: tObject({
     width: tInt,
     height: tInt,
-  })),
-  ignoreHTTPSErrors: tOptional(tBoolean),
-  clientCertificates: tOptional(tArray(tObject({
+  }),
+  ignoreHTTPSErrors: tBoolean,
+  clientCertificates: tArray(tObject({
     origin: tString,
-    cert: tOptional(tBinary),
-    key: tOptional(tBinary),
-    passphrase: tOptional(tString),
-    pfx: tOptional(tBinary),
-  }))),
-  javaScriptEnabled: tOptional(tBoolean),
-  bypassCSP: tOptional(tBoolean),
-  userAgent: tOptional(tString),
-  locale: tOptional(tString),
-  timezoneId: tOptional(tString),
-  geolocation: tOptional(tObject({
+  }, {
+    cert: tBinary,
+    key: tBinary,
+    passphrase: tString,
+    pfx: tBinary,
+  })),
+  javaScriptEnabled: tBoolean,
+  bypassCSP: tBoolean,
+  userAgent: tString,
+  locale: tString,
+  timezoneId: tString,
+  geolocation: tObject({
     longitude: tFloat,
     latitude: tFloat,
-    accuracy: tOptional(tFloat),
-  })),
-  permissions: tOptional(tArray(tString)),
-  extraHTTPHeaders: tOptional(tArray(tType('NameValue'))),
-  offline: tOptional(tBoolean),
-  httpCredentials: tOptional(tArray(tType('HttpCredentials'))),
-  deviceScaleFactor: tOptional(tFloat),
-  isMobile: tOptional(tBoolean),
-  hasTouch: tOptional(tBoolean),
-  colorScheme: tOptional(tEnum(['dark', 'light', 'no-preference', 'no-override'])),
-  reducedMotion: tOptional(tEnum(['reduce', 'no-preference', 'no-override'])),
-  forcedColors: tOptional(tEnum(['active', 'none', 'no-override'])),
-  acceptDownloads: tOptional(tEnum(['accept', 'deny', 'internal-browser-default'])),
-  contrast: tOptional(tEnum(['no-preference', 'more', 'no-override'])),
-  baseURL: tOptional(tString),
-  recordVideo: tOptional(tObject({
-    dir: tOptional(tString),
-    size: tOptional(tObject({
+  }, {
+    accuracy: tFloat,
+  }),
+  permissions: tArray(tString),
+  extraHTTPHeaders: tArray(tType('NameValue')),
+  offline: tBoolean,
+  httpCredentials: tArray(tType('HttpCredentials')),
+  deviceScaleFactor: tFloat,
+  isMobile: tBoolean,
+  hasTouch: tBoolean,
+  colorScheme: tEnum(['dark', 'light', 'no-preference', 'no-override']),
+  reducedMotion: tEnum(['reduce', 'no-preference', 'no-override']),
+  forcedColors: tEnum(['active', 'none', 'no-override']),
+  acceptDownloads: tEnum(['accept', 'deny', 'internal-browser-default']),
+  contrast: tEnum(['no-preference', 'more', 'no-override']),
+  baseURL: tString,
+  recordVideo: tObject({}, {
+    dir: tString,
+    size: tObject({
       width: tInt,
       height: tInt,
-    })),
-    fps: tOptional(tInt),
-    showActions: tOptional(tObject({
-      duration: tOptional(tFloat),
-      position: tOptional(tEnum(['top-left', 'top', 'top-right', 'bottom-left', 'bottom', 'bottom-right'])),
-      fontSize: tOptional(tInt),
-      cursor: tOptional(tEnum(['none', 'pointer'])),
-      style: tOptional(tObject({
-        point: tOptional(tString),
-        highlight: tOptional(tString),
-        title: tOptional(tString),
-      })),
-    })),
-  })),
-  strictSelectors: tOptional(tBoolean),
-  locateOnlyVisible: tOptional(tBoolean),
-  serviceWorkers: tOptional(tEnum(['allow', 'block'])),
-  selectorEngines: tOptional(tArray(tType('SelectorEngine'))),
-  testIdAttributeName: tOptional(tString),
-  proxy: tOptional(tObject({
+    }),
+    fps: tInt,
+    showActions: tObject({}, {
+      duration: tFloat,
+      position: tEnum(['top-left', 'top', 'top-right', 'bottom-left', 'bottom', 'bottom-right']),
+      fontSize: tInt,
+      cursor: tEnum(['none', 'pointer']),
+      style: tObject({}, {
+        point: tString,
+        highlight: tString,
+        title: tString,
+      }),
+    }),
+  }),
+  strictSelectors: tBoolean,
+  locateOnlyVisible: tBoolean,
+  serviceWorkers: tEnum(['allow', 'block']),
+  selectorEngines: tArray(tType('SelectorEngine')),
+  testIdAttributeName: tString,
+  proxy: tObject({
     server: tString,
-    bypass: tOptional(tString),
-    username: tOptional(tString),
-    password: tOptional(tString),
-  })),
-  storageState: tOptional(tObject({
-    cookies: tOptional(tArray(tType('SetNetworkCookie'))),
-    origins: tOptional(tArray(tType('SetOriginStorage'))),
-    credentials: tOptional(tArray(tType('SetVirtualCredential'))),
-  })),
+  }, {
+    bypass: tString,
+    username: tString,
+    password: tString,
+  }),
+  storageState: tObject({}, {
+    cookies: tArray(tType('SetNetworkCookie')),
+    origins: tArray(tType('SetOriginStorage')),
+    credentials: tArray(tType('SetVirtualCredential')),
+  }),
 });
 scheme.BrowserNewContextResult = tObject({
   context: tChannel(['BrowserContext']),
 });
-scheme.BrowserNewContextForReuseParams = tObject({
-  noDefaultViewport: tOptional(tBoolean),
-  viewport: tOptional(tObject({
+scheme.BrowserNewContextForReuseParams = tObject({}, {
+  noDefaultViewport: tBoolean,
+  viewport: tObject({
     width: tInt,
     height: tInt,
-  })),
-  screen: tOptional(tObject({
+  }),
+  screen: tObject({
     width: tInt,
     height: tInt,
-  })),
-  ignoreHTTPSErrors: tOptional(tBoolean),
-  clientCertificates: tOptional(tArray(tObject({
+  }),
+  ignoreHTTPSErrors: tBoolean,
+  clientCertificates: tArray(tObject({
     origin: tString,
-    cert: tOptional(tBinary),
-    key: tOptional(tBinary),
-    passphrase: tOptional(tString),
-    pfx: tOptional(tBinary),
-  }))),
-  javaScriptEnabled: tOptional(tBoolean),
-  bypassCSP: tOptional(tBoolean),
-  userAgent: tOptional(tString),
-  locale: tOptional(tString),
-  timezoneId: tOptional(tString),
-  geolocation: tOptional(tObject({
+  }, {
+    cert: tBinary,
+    key: tBinary,
+    passphrase: tString,
+    pfx: tBinary,
+  })),
+  javaScriptEnabled: tBoolean,
+  bypassCSP: tBoolean,
+  userAgent: tString,
+  locale: tString,
+  timezoneId: tString,
+  geolocation: tObject({
     longitude: tFloat,
     latitude: tFloat,
-    accuracy: tOptional(tFloat),
-  })),
-  permissions: tOptional(tArray(tString)),
-  extraHTTPHeaders: tOptional(tArray(tType('NameValue'))),
-  offline: tOptional(tBoolean),
-  httpCredentials: tOptional(tArray(tType('HttpCredentials'))),
-  deviceScaleFactor: tOptional(tFloat),
-  isMobile: tOptional(tBoolean),
-  hasTouch: tOptional(tBoolean),
-  colorScheme: tOptional(tEnum(['dark', 'light', 'no-preference', 'no-override'])),
-  reducedMotion: tOptional(tEnum(['reduce', 'no-preference', 'no-override'])),
-  forcedColors: tOptional(tEnum(['active', 'none', 'no-override'])),
-  acceptDownloads: tOptional(tEnum(['accept', 'deny', 'internal-browser-default'])),
-  contrast: tOptional(tEnum(['no-preference', 'more', 'no-override'])),
-  baseURL: tOptional(tString),
-  recordVideo: tOptional(tObject({
-    dir: tOptional(tString),
-    size: tOptional(tObject({
+  }, {
+    accuracy: tFloat,
+  }),
+  permissions: tArray(tString),
+  extraHTTPHeaders: tArray(tType('NameValue')),
+  offline: tBoolean,
+  httpCredentials: tArray(tType('HttpCredentials')),
+  deviceScaleFactor: tFloat,
+  isMobile: tBoolean,
+  hasTouch: tBoolean,
+  colorScheme: tEnum(['dark', 'light', 'no-preference', 'no-override']),
+  reducedMotion: tEnum(['reduce', 'no-preference', 'no-override']),
+  forcedColors: tEnum(['active', 'none', 'no-override']),
+  acceptDownloads: tEnum(['accept', 'deny', 'internal-browser-default']),
+  contrast: tEnum(['no-preference', 'more', 'no-override']),
+  baseURL: tString,
+  recordVideo: tObject({}, {
+    dir: tString,
+    size: tObject({
       width: tInt,
       height: tInt,
-    })),
-    fps: tOptional(tInt),
-    showActions: tOptional(tObject({
-      duration: tOptional(tFloat),
-      position: tOptional(tEnum(['top-left', 'top', 'top-right', 'bottom-left', 'bottom', 'bottom-right'])),
-      fontSize: tOptional(tInt),
-      cursor: tOptional(tEnum(['none', 'pointer'])),
-      style: tOptional(tObject({
-        point: tOptional(tString),
-        highlight: tOptional(tString),
-        title: tOptional(tString),
-      })),
-    })),
-  })),
-  strictSelectors: tOptional(tBoolean),
-  locateOnlyVisible: tOptional(tBoolean),
-  serviceWorkers: tOptional(tEnum(['allow', 'block'])),
-  selectorEngines: tOptional(tArray(tType('SelectorEngine'))),
-  testIdAttributeName: tOptional(tString),
-  proxy: tOptional(tObject({
+    }),
+    fps: tInt,
+    showActions: tObject({}, {
+      duration: tFloat,
+      position: tEnum(['top-left', 'top', 'top-right', 'bottom-left', 'bottom', 'bottom-right']),
+      fontSize: tInt,
+      cursor: tEnum(['none', 'pointer']),
+      style: tObject({}, {
+        point: tString,
+        highlight: tString,
+        title: tString,
+      }),
+    }),
+  }),
+  strictSelectors: tBoolean,
+  locateOnlyVisible: tBoolean,
+  serviceWorkers: tEnum(['allow', 'block']),
+  selectorEngines: tArray(tType('SelectorEngine')),
+  testIdAttributeName: tString,
+  proxy: tObject({
     server: tString,
-    bypass: tOptional(tString),
-    username: tOptional(tString),
-    password: tOptional(tString),
-  })),
-  storageState: tOptional(tObject({
-    cookies: tOptional(tArray(tType('SetNetworkCookie'))),
-    origins: tOptional(tArray(tType('SetOriginStorage'))),
-    credentials: tOptional(tArray(tType('SetVirtualCredential'))),
-  })),
+  }, {
+    bypass: tString,
+    username: tString,
+    password: tString,
+  }),
+  storageState: tObject({}, {
+    cookies: tArray(tType('SetNetworkCookie')),
+    origins: tArray(tType('SetOriginStorage')),
+    credentials: tArray(tType('SetVirtualCredential')),
+  }),
 });
 scheme.BrowserNewContextForReuseResult = tObject({
   context: tChannel(['BrowserContext']),
@@ -620,10 +644,10 @@ scheme.BrowserNewBrowserCDPSessionParams = tOptional(tObject({}));
 scheme.BrowserNewBrowserCDPSessionResult = tObject({
   session: tChannel(['CDPSession']),
 });
-scheme.BrowserStartTracingParams = tObject({
-  page: tOptional(tChannel(['Page'])),
-  screenshots: tOptional(tBoolean),
-  categories: tOptional(tArray(tString)),
+scheme.BrowserStartTracingParams = tObject({}, {
+  page: tChannel(['Page']),
+  screenshots: tBoolean,
+  categories: tArray(tString),
 });
 scheme.BrowserStartTracingResult = tOptional(tObject({}));
 scheme.BrowserStopTracingParams = tOptional(tObject({}));
@@ -634,71 +658,73 @@ scheme.BrowserContextInitializer = tObject({
   debugger: tChannel(['Debugger']),
   requestContext: tChannel(['APIRequestContext']),
   tracing: tChannel(['Tracing']),
-  options: tObject({
-    noDefaultViewport: tOptional(tBoolean),
-    viewport: tOptional(tObject({
+  options: tObject({}, {
+    noDefaultViewport: tBoolean,
+    viewport: tObject({
       width: tInt,
       height: tInt,
-    })),
-    screen: tOptional(tObject({
+    }),
+    screen: tObject({
       width: tInt,
       height: tInt,
-    })),
-    ignoreHTTPSErrors: tOptional(tBoolean),
-    clientCertificates: tOptional(tArray(tObject({
+    }),
+    ignoreHTTPSErrors: tBoolean,
+    clientCertificates: tArray(tObject({
       origin: tString,
-      cert: tOptional(tBinary),
-      key: tOptional(tBinary),
-      passphrase: tOptional(tString),
-      pfx: tOptional(tBinary),
-    }))),
-    javaScriptEnabled: tOptional(tBoolean),
-    bypassCSP: tOptional(tBoolean),
-    userAgent: tOptional(tString),
-    locale: tOptional(tString),
-    timezoneId: tOptional(tString),
-    geolocation: tOptional(tObject({
+    }, {
+      cert: tBinary,
+      key: tBinary,
+      passphrase: tString,
+      pfx: tBinary,
+    })),
+    javaScriptEnabled: tBoolean,
+    bypassCSP: tBoolean,
+    userAgent: tString,
+    locale: tString,
+    timezoneId: tString,
+    geolocation: tObject({
       longitude: tFloat,
       latitude: tFloat,
-      accuracy: tOptional(tFloat),
-    })),
-    permissions: tOptional(tArray(tString)),
-    extraHTTPHeaders: tOptional(tArray(tType('NameValue'))),
-    offline: tOptional(tBoolean),
-    httpCredentials: tOptional(tArray(tType('HttpCredentials'))),
-    deviceScaleFactor: tOptional(tFloat),
-    isMobile: tOptional(tBoolean),
-    hasTouch: tOptional(tBoolean),
-    colorScheme: tOptional(tEnum(['dark', 'light', 'no-preference', 'no-override'])),
-    reducedMotion: tOptional(tEnum(['reduce', 'no-preference', 'no-override'])),
-    forcedColors: tOptional(tEnum(['active', 'none', 'no-override'])),
-    acceptDownloads: tOptional(tEnum(['accept', 'deny', 'internal-browser-default'])),
-    contrast: tOptional(tEnum(['no-preference', 'more', 'no-override'])),
-    baseURL: tOptional(tString),
-    recordVideo: tOptional(tObject({
-      dir: tOptional(tString),
-      size: tOptional(tObject({
+    }, {
+      accuracy: tFloat,
+    }),
+    permissions: tArray(tString),
+    extraHTTPHeaders: tArray(tType('NameValue')),
+    offline: tBoolean,
+    httpCredentials: tArray(tType('HttpCredentials')),
+    deviceScaleFactor: tFloat,
+    isMobile: tBoolean,
+    hasTouch: tBoolean,
+    colorScheme: tEnum(['dark', 'light', 'no-preference', 'no-override']),
+    reducedMotion: tEnum(['reduce', 'no-preference', 'no-override']),
+    forcedColors: tEnum(['active', 'none', 'no-override']),
+    acceptDownloads: tEnum(['accept', 'deny', 'internal-browser-default']),
+    contrast: tEnum(['no-preference', 'more', 'no-override']),
+    baseURL: tString,
+    recordVideo: tObject({}, {
+      dir: tString,
+      size: tObject({
         width: tInt,
         height: tInt,
-      })),
-      fps: tOptional(tInt),
-      showActions: tOptional(tObject({
-        duration: tOptional(tFloat),
-        position: tOptional(tEnum(['top-left', 'top', 'top-right', 'bottom-left', 'bottom', 'bottom-right'])),
-        fontSize: tOptional(tInt),
-        cursor: tOptional(tEnum(['none', 'pointer'])),
-        style: tOptional(tObject({
-          point: tOptional(tString),
-          highlight: tOptional(tString),
-          title: tOptional(tString),
-        })),
-      })),
-    })),
-    strictSelectors: tOptional(tBoolean),
-    locateOnlyVisible: tOptional(tBoolean),
-    serviceWorkers: tOptional(tEnum(['allow', 'block'])),
-    selectorEngines: tOptional(tArray(tType('SelectorEngine'))),
-    testIdAttributeName: tOptional(tString),
+      }),
+      fps: tInt,
+      showActions: tObject({}, {
+        duration: tFloat,
+        position: tEnum(['top-left', 'top', 'top-right', 'bottom-left', 'bottom', 'bottom-right']),
+        fontSize: tInt,
+        cursor: tEnum(['none', 'pointer']),
+        style: tObject({}, {
+          point: tString,
+          highlight: tString,
+          title: tString,
+        }),
+      }),
+    }),
+    strictSelectors: tBoolean,
+    locateOnlyVisible: tBoolean,
+    serviceWorkers: tEnum(['allow', 'block']),
+    selectorEngines: tArray(tType('SelectorEngine')),
+    testIdAttributeName: tString,
   }),
 });
 scheme.BrowserContextBindingCallEvent = tObject({
@@ -714,8 +740,9 @@ scheme.BrowserContextConsoleEvent = tObject({
     columnNumber: tInt,
   }),
   timestamp: tFloat,
-  page: tOptional(tChannel(['Page'])),
-  worker: tOptional(tChannel(['Worker'])),
+}, {
+  page: tChannel(['Page']),
+  worker: tChannel(['Worker']),
 });
 scheme.BrowserContextCloseEvent = tOptional(tObject({}));
 scheme.BrowserContextDialogEvent = tObject({
@@ -747,23 +774,27 @@ scheme.BrowserContextServiceWorkerEvent = tObject({
 });
 scheme.BrowserContextRequestEvent = tObject({
   request: tChannel(['Request']),
-  page: tOptional(tChannel(['Page'])),
+}, {
+  page: tChannel(['Page']),
 });
 scheme.BrowserContextRequestFailedEvent = tObject({
   request: tChannel(['Request']),
-  failureText: tOptional(tString),
   responseEndTiming: tFloat,
-  page: tOptional(tChannel(['Page'])),
+}, {
+  failureText: tString,
+  page: tChannel(['Page']),
 });
 scheme.BrowserContextRequestFinishedEvent = tObject({
   request: tChannel(['Request']),
-  response: tOptional(tChannel(['Response'])),
   responseEndTiming: tFloat,
-  page: tOptional(tChannel(['Page'])),
+}, {
+  response: tChannel(['Response']),
+  page: tChannel(['Page']),
 });
 scheme.BrowserContextResponseEvent = tObject({
   response: tChannel(['Response']),
-  page: tOptional(tChannel(['Page'])),
+}, {
+  page: tChannel(['Page']),
 });
 scheme.BrowserContextRecorderEventEvent = tObject({
   event: tEnum(['actionAdded', 'actionUpdated', 'signalAdded']),
@@ -781,22 +812,22 @@ scheme.BrowserContextAddInitScriptParams = tObject({
 scheme.BrowserContextAddInitScriptResult = tObject({
   disposable: tChannel(['Disposable']),
 });
-scheme.BrowserContextClearCookiesParams = tObject({
-  name: tOptional(tString),
-  nameRegexSource: tOptional(tString),
-  nameRegexFlags: tOptional(tString),
-  domain: tOptional(tString),
-  domainRegexSource: tOptional(tString),
-  domainRegexFlags: tOptional(tString),
-  path: tOptional(tString),
-  pathRegexSource: tOptional(tString),
-  pathRegexFlags: tOptional(tString),
+scheme.BrowserContextClearCookiesParams = tObject({}, {
+  name: tString,
+  nameRegexSource: tString,
+  nameRegexFlags: tString,
+  domain: tString,
+  domainRegexSource: tString,
+  domainRegexFlags: tString,
+  path: tString,
+  pathRegexSource: tString,
+  pathRegexFlags: tString,
 });
 scheme.BrowserContextClearCookiesResult = tOptional(tObject({}));
 scheme.BrowserContextClearPermissionsParams = tOptional(tObject({}));
 scheme.BrowserContextClearPermissionsResult = tOptional(tObject({}));
-scheme.BrowserContextCloseParams = tObject({
-  reason: tOptional(tString),
+scheme.BrowserContextCloseParams = tObject({}, {
+  reason: tString,
 });
 scheme.BrowserContextCloseResult = tOptional(tObject({}));
 scheme.BrowserContextCookiesParams = tObject({
@@ -807,14 +838,16 @@ scheme.BrowserContextCookiesResult = tObject({
 });
 scheme.BrowserContextExposeBindingParams = tObject({
   name: tString,
-  noGlobal: tOptional(tBoolean),
+}, {
+  noGlobal: tBoolean,
 });
 scheme.BrowserContextExposeBindingResult = tObject({
   disposable: tChannel(['Disposable']),
 });
 scheme.BrowserContextGrantPermissionsParams = tObject({
   permissions: tArray(tString),
-  origin: tOptional(tString),
+}, {
+  origin: tString,
 });
 scheme.BrowserContextGrantPermissionsResult = tOptional(tObject({}));
 scheme.BrowserContextNewPageParams = tOptional(tObject({}));
@@ -833,33 +866,34 @@ scheme.BrowserContextSetExtraHTTPHeadersParams = tObject({
   headers: tArray(tType('NameValue')),
 });
 scheme.BrowserContextSetExtraHTTPHeadersResult = tOptional(tObject({}));
-scheme.BrowserContextSetGeolocationParams = tObject({
-  geolocation: tOptional(tObject({
+scheme.BrowserContextSetGeolocationParams = tObject({}, {
+  geolocation: tObject({
     longitude: tFloat,
     latitude: tFloat,
-    accuracy: tOptional(tFloat),
-  })),
+  }, {
+    accuracy: tFloat,
+  }),
 });
 scheme.BrowserContextSetGeolocationResult = tOptional(tObject({}));
-scheme.BrowserContextSetHTTPCredentialsParams = tObject({
-  httpCredentials: tOptional(tArray(tType('HttpCredentials'))),
+scheme.BrowserContextSetHTTPCredentialsParams = tObject({}, {
+  httpCredentials: tArray(tType('HttpCredentials')),
 });
 scheme.BrowserContextSetHTTPCredentialsResult = tOptional(tObject({}));
 scheme.BrowserContextSetNetworkInterceptionPatternsParams = tObject({
-  patterns: tArray(tObject({
-    glob: tOptional(tString),
-    regexSource: tOptional(tString),
-    regexFlags: tOptional(tString),
-    urlPattern: tOptional(tType('URLPattern')),
+  patterns: tArray(tObject({}, {
+    glob: tString,
+    regexSource: tString,
+    regexFlags: tString,
+    urlPattern: tType('URLPattern'),
   })),
 });
 scheme.BrowserContextSetNetworkInterceptionPatternsResult = tOptional(tObject({}));
 scheme.BrowserContextSetWebSocketInterceptionPatternsParams = tObject({
-  patterns: tArray(tObject({
-    glob: tOptional(tString),
-    regexSource: tOptional(tString),
-    regexFlags: tOptional(tString),
-    urlPattern: tOptional(tType('URLPattern')),
+  patterns: tArray(tObject({}, {
+    glob: tString,
+    regexSource: tString,
+    regexFlags: tString,
+    urlPattern: tType('URLPattern'),
   })),
 });
 scheme.BrowserContextSetWebSocketInterceptionPatternsResult = tOptional(tObject({}));
@@ -867,119 +901,124 @@ scheme.BrowserContextSetOfflineParams = tObject({
   offline: tBoolean,
 });
 scheme.BrowserContextSetOfflineResult = tOptional(tObject({}));
-scheme.BrowserContextStorageStateParams = tObject({
-  indexedDB: tOptional(tBoolean),
-  opfs: tOptional(tBoolean),
-  credentials: tOptional(tBoolean),
+scheme.BrowserContextStorageStateParams = tObject({}, {
+  indexedDB: tBoolean,
+  opfs: tBoolean,
+  credentials: tBoolean,
 });
 scheme.BrowserContextStorageStateResult = tObject({
   cookies: tArray(tType('NetworkCookie')),
   origins: tArray(tType('OriginStorage')),
-  credentials: tOptional(tArray(tType('VirtualCredential'))),
+}, {
+  credentials: tArray(tType('VirtualCredential')),
 });
-scheme.BrowserContextSetStorageStateParams = tObject({
-  storageState: tOptional(tObject({
-    cookies: tOptional(tArray(tType('SetNetworkCookie'))),
-    origins: tOptional(tArray(tType('SetOriginStorage'))),
-    credentials: tOptional(tArray(tType('SetVirtualCredential'))),
-  })),
+scheme.BrowserContextSetStorageStateParams = tObject({}, {
+  storageState: tObject({}, {
+    cookies: tArray(tType('SetNetworkCookie')),
+    origins: tArray(tType('SetOriginStorage')),
+    credentials: tArray(tType('SetVirtualCredential')),
+  }),
 });
 scheme.BrowserContextSetStorageStateResult = tOptional(tObject({}));
 scheme.BrowserContextPauseParams = tOptional(tObject({}));
 scheme.BrowserContextPauseResult = tOptional(tObject({}));
-scheme.BrowserContextShowRecorderParams = tObject({
-  language: tOptional(tString),
-  mode: tOptional(tEnum(['inspecting', 'recording'])),
-  pauseOnNextStatement: tOptional(tBoolean),
-  testIdAttributeName: tOptional(tString),
-  launchOptions: tOptional(tAny),
-  contextOptions: tOptional(tAny),
-  device: tOptional(tString),
-  saveStorage: tOptional(tString),
-  outputFile: tOptional(tString),
-  handleSIGINT: tOptional(tBoolean),
-  omitCallTracking: tOptional(tBoolean),
+scheme.BrowserContextShowRecorderParams = tObject({}, {
+  language: tString,
+  mode: tEnum(['inspecting', 'recording']),
+  pauseOnNextStatement: tBoolean,
+  testIdAttributeName: tString,
+  launchOptions: tAny,
+  contextOptions: tAny,
+  device: tString,
+  saveStorage: tString,
+  outputFile: tString,
+  handleSIGINT: tBoolean,
+  omitCallTracking: tBoolean,
 });
 scheme.BrowserContextShowRecorderResult = tOptional(tObject({}));
-scheme.BrowserContextStartRecordingParams = tObject({
-  language: tOptional(tString),
+scheme.BrowserContextStartRecordingParams = tObject({}, {
+  language: tString,
 });
 scheme.BrowserContextStartRecordingResult = tOptional(tObject({}));
 scheme.BrowserContextStopRecordingParams = tOptional(tObject({}));
 scheme.BrowserContextStopRecordingResult = tOptional(tObject({}));
 scheme.BrowserContextExposeConsoleApiParams = tOptional(tObject({}));
 scheme.BrowserContextExposeConsoleApiResult = tOptional(tObject({}));
-scheme.BrowserContextNewCDPSessionParams = tObject({
-  page: tOptional(tChannel(['Page'])),
-  frame: tOptional(tChannel(['Frame'])),
+scheme.BrowserContextNewCDPSessionParams = tObject({}, {
+  page: tChannel(['Page']),
+  frame: tChannel(['Frame']),
 });
 scheme.BrowserContextNewCDPSessionResult = tObject({
   session: tChannel(['CDPSession']),
 });
 scheme.BrowserContextCreateTempFilesParams = tObject({
-  rootDirName: tOptional(tString),
   items: tArray(tObject({
     name: tString,
-    lastModifiedMs: tOptional(tFloat),
+  }, {
+    lastModifiedMs: tFloat,
   })),
+}, {
+  rootDirName: tString,
 });
 scheme.BrowserContextCreateTempFilesResult = tObject({
-  rootDir: tOptional(tChannel(['WritableStream'])),
   writableStreams: tArray(tChannel(['WritableStream'])),
+}, {
+  rootDir: tChannel(['WritableStream']),
 });
 scheme.BrowserContextUpdateSubscriptionParams = tObject({
   event: tEnum(['console', 'dialog', 'dialogClosed', 'request', 'response', 'requestFinished', 'requestFailed']),
   enabled: tBoolean,
 });
 scheme.BrowserContextUpdateSubscriptionResult = tOptional(tObject({}));
-scheme.BrowserContextClockFastForwardParams = tObject({
-  ticksNumber: tOptional(tFloat),
-  ticksString: tOptional(tString),
+scheme.BrowserContextClockFastForwardParams = tObject({}, {
+  ticksNumber: tFloat,
+  ticksString: tString,
 });
 scheme.BrowserContextClockFastForwardResult = tOptional(tObject({}));
-scheme.BrowserContextClockInstallParams = tObject({
-  timeNumber: tOptional(tFloat),
-  timeString: tOptional(tString),
+scheme.BrowserContextClockInstallParams = tObject({}, {
+  timeNumber: tFloat,
+  timeString: tString,
 });
 scheme.BrowserContextClockInstallResult = tOptional(tObject({}));
-scheme.BrowserContextClockPauseAtParams = tObject({
-  timeNumber: tOptional(tFloat),
-  timeString: tOptional(tString),
+scheme.BrowserContextClockPauseAtParams = tObject({}, {
+  timeNumber: tFloat,
+  timeString: tString,
 });
 scheme.BrowserContextClockPauseAtResult = tOptional(tObject({}));
 scheme.BrowserContextClockResumeParams = tOptional(tObject({}));
 scheme.BrowserContextClockResumeResult = tOptional(tObject({}));
-scheme.BrowserContextClockRunForParams = tObject({
-  ticksNumber: tOptional(tFloat),
-  ticksString: tOptional(tString),
+scheme.BrowserContextClockRunForParams = tObject({}, {
+  ticksNumber: tFloat,
+  ticksString: tString,
 });
 scheme.BrowserContextClockRunForResult = tOptional(tObject({}));
-scheme.BrowserContextClockSetFixedTimeParams = tObject({
-  timeNumber: tOptional(tFloat),
-  timeString: tOptional(tString),
+scheme.BrowserContextClockSetFixedTimeParams = tObject({}, {
+  timeNumber: tFloat,
+  timeString: tString,
 });
 scheme.BrowserContextClockSetFixedTimeResult = tOptional(tObject({}));
-scheme.BrowserContextClockSetSystemTimeParams = tObject({
-  timeNumber: tOptional(tFloat),
-  timeString: tOptional(tString),
+scheme.BrowserContextClockSetSystemTimeParams = tObject({}, {
+  timeNumber: tFloat,
+  timeString: tString,
 });
 scheme.BrowserContextClockSetSystemTimeResult = tOptional(tObject({}));
 scheme.BrowserContextCredentialsInstallParams = tOptional(tObject({}));
 scheme.BrowserContextCredentialsInstallResult = tOptional(tObject({}));
 scheme.BrowserContextCredentialsCreateParams = tObject({
   rpId: tString,
-  id: tOptional(tString),
-  userHandle: tOptional(tString),
-  privateKey: tOptional(tString),
-  publicKey: tOptional(tString),
-  signCount: tOptional(tInt),
+}, {
+  id: tString,
+  userHandle: tString,
+  privateKey: tString,
+  publicKey: tString,
+  signCount: tInt,
 });
 scheme.BrowserContextCredentialsCreateResult = tObject({
   credential: tType('VirtualCredential'),
 });
-scheme.BrowserContextCredentialsGetParams = tObject({
-  rpId: tOptional(tString),
-  id: tOptional(tString),
+scheme.BrowserContextCredentialsGetParams = tObject({}, {
+  rpId: tString,
+  id: tString,
 });
 scheme.BrowserContextCredentialsGetResult = tObject({
   credentials: tArray(tType('VirtualCredential')),
@@ -992,156 +1031,164 @@ scheme.BrowserTypeInitializer = tObject({
   executablePath: tString,
   name: tString,
 });
-scheme.BrowserTypeLaunchParams = tObject({
-  channel: tOptional(tString),
-  executablePath: tOptional(tString),
-  args: tOptional(tArray(tString)),
-  ignoreAllDefaultArgs: tOptional(tBoolean),
-  ignoreDefaultArgs: tOptional(tArray(tString)),
-  handleSIGINT: tOptional(tBoolean),
-  handleSIGTERM: tOptional(tBoolean),
-  handleSIGHUP: tOptional(tBoolean),
-  env: tOptional(tArray(tType('NameValue'))),
-  headless: tOptional(tBoolean),
-  proxy: tOptional(tObject({
+scheme.BrowserTypeLaunchParams = tObject({}, {
+  channel: tString,
+  executablePath: tString,
+  args: tArray(tString),
+  ignoreAllDefaultArgs: tBoolean,
+  ignoreDefaultArgs: tArray(tString),
+  handleSIGINT: tBoolean,
+  handleSIGTERM: tBoolean,
+  handleSIGHUP: tBoolean,
+  env: tArray(tType('NameValue')),
+  headless: tBoolean,
+  proxy: tObject({
     server: tString,
-    bypass: tOptional(tString),
-    username: tOptional(tString),
-    password: tOptional(tString),
-  })),
-  downloadsPath: tOptional(tString),
-  tracesDir: tOptional(tString),
-  artifactsDir: tOptional(tString),
-  chromiumSandbox: tOptional(tBoolean),
-  firefoxUserPrefs: tOptional(tAny),
-  cdpPort: tOptional(tInt),
-  slowMo: tOptional(tFloat),
+  }, {
+    bypass: tString,
+    username: tString,
+    password: tString,
+  }),
+  downloadsPath: tString,
+  tracesDir: tString,
+  artifactsDir: tString,
+  chromiumSandbox: tBoolean,
+  firefoxUserPrefs: tAny,
+  cdpPort: tInt,
+  slowMo: tFloat,
 });
 scheme.BrowserTypeLaunchResult = tObject({
   browser: tChannel(['Browser']),
 });
 scheme.BrowserTypeLaunchPersistentContextParams = tObject({
-  channel: tOptional(tString),
-  executablePath: tOptional(tString),
-  args: tOptional(tArray(tString)),
-  ignoreAllDefaultArgs: tOptional(tBoolean),
-  ignoreDefaultArgs: tOptional(tArray(tString)),
-  handleSIGINT: tOptional(tBoolean),
-  handleSIGTERM: tOptional(tBoolean),
-  handleSIGHUP: tOptional(tBoolean),
-  env: tOptional(tArray(tType('NameValue'))),
-  headless: tOptional(tBoolean),
-  proxy: tOptional(tObject({
+  userDataDir: tString,
+}, {
+  channel: tString,
+  executablePath: tString,
+  args: tArray(tString),
+  ignoreAllDefaultArgs: tBoolean,
+  ignoreDefaultArgs: tArray(tString),
+  handleSIGINT: tBoolean,
+  handleSIGTERM: tBoolean,
+  handleSIGHUP: tBoolean,
+  env: tArray(tType('NameValue')),
+  headless: tBoolean,
+  proxy: tObject({
     server: tString,
-    bypass: tOptional(tString),
-    username: tOptional(tString),
-    password: tOptional(tString),
-  })),
-  downloadsPath: tOptional(tString),
-  tracesDir: tOptional(tString),
-  artifactsDir: tOptional(tString),
-  chromiumSandbox: tOptional(tBoolean),
-  firefoxUserPrefs: tOptional(tAny),
-  cdpPort: tOptional(tInt),
-  noDefaultViewport: tOptional(tBoolean),
-  viewport: tOptional(tObject({
+  }, {
+    bypass: tString,
+    username: tString,
+    password: tString,
+  }),
+  downloadsPath: tString,
+  tracesDir: tString,
+  artifactsDir: tString,
+  chromiumSandbox: tBoolean,
+  firefoxUserPrefs: tAny,
+  cdpPort: tInt,
+  noDefaultViewport: tBoolean,
+  viewport: tObject({
     width: tInt,
     height: tInt,
-  })),
-  screen: tOptional(tObject({
+  }),
+  screen: tObject({
     width: tInt,
     height: tInt,
-  })),
-  ignoreHTTPSErrors: tOptional(tBoolean),
-  clientCertificates: tOptional(tArray(tObject({
+  }),
+  ignoreHTTPSErrors: tBoolean,
+  clientCertificates: tArray(tObject({
     origin: tString,
-    cert: tOptional(tBinary),
-    key: tOptional(tBinary),
-    passphrase: tOptional(tString),
-    pfx: tOptional(tBinary),
-  }))),
-  javaScriptEnabled: tOptional(tBoolean),
-  bypassCSP: tOptional(tBoolean),
-  userAgent: tOptional(tString),
-  locale: tOptional(tString),
-  timezoneId: tOptional(tString),
-  geolocation: tOptional(tObject({
+  }, {
+    cert: tBinary,
+    key: tBinary,
+    passphrase: tString,
+    pfx: tBinary,
+  })),
+  javaScriptEnabled: tBoolean,
+  bypassCSP: tBoolean,
+  userAgent: tString,
+  locale: tString,
+  timezoneId: tString,
+  geolocation: tObject({
     longitude: tFloat,
     latitude: tFloat,
-    accuracy: tOptional(tFloat),
-  })),
-  permissions: tOptional(tArray(tString)),
-  extraHTTPHeaders: tOptional(tArray(tType('NameValue'))),
-  offline: tOptional(tBoolean),
-  httpCredentials: tOptional(tArray(tType('HttpCredentials'))),
-  deviceScaleFactor: tOptional(tFloat),
-  isMobile: tOptional(tBoolean),
-  hasTouch: tOptional(tBoolean),
-  colorScheme: tOptional(tEnum(['dark', 'light', 'no-preference', 'no-override'])),
-  reducedMotion: tOptional(tEnum(['reduce', 'no-preference', 'no-override'])),
-  forcedColors: tOptional(tEnum(['active', 'none', 'no-override'])),
-  acceptDownloads: tOptional(tEnum(['accept', 'deny', 'internal-browser-default'])),
-  contrast: tOptional(tEnum(['no-preference', 'more', 'no-override'])),
-  baseURL: tOptional(tString),
-  recordVideo: tOptional(tObject({
-    dir: tOptional(tString),
-    size: tOptional(tObject({
+  }, {
+    accuracy: tFloat,
+  }),
+  permissions: tArray(tString),
+  extraHTTPHeaders: tArray(tType('NameValue')),
+  offline: tBoolean,
+  httpCredentials: tArray(tType('HttpCredentials')),
+  deviceScaleFactor: tFloat,
+  isMobile: tBoolean,
+  hasTouch: tBoolean,
+  colorScheme: tEnum(['dark', 'light', 'no-preference', 'no-override']),
+  reducedMotion: tEnum(['reduce', 'no-preference', 'no-override']),
+  forcedColors: tEnum(['active', 'none', 'no-override']),
+  acceptDownloads: tEnum(['accept', 'deny', 'internal-browser-default']),
+  contrast: tEnum(['no-preference', 'more', 'no-override']),
+  baseURL: tString,
+  recordVideo: tObject({}, {
+    dir: tString,
+    size: tObject({
       width: tInt,
       height: tInt,
-    })),
-    fps: tOptional(tInt),
-    showActions: tOptional(tObject({
-      duration: tOptional(tFloat),
-      position: tOptional(tEnum(['top-left', 'top', 'top-right', 'bottom-left', 'bottom', 'bottom-right'])),
-      fontSize: tOptional(tInt),
-      cursor: tOptional(tEnum(['none', 'pointer'])),
-      style: tOptional(tObject({
-        point: tOptional(tString),
-        highlight: tOptional(tString),
-        title: tOptional(tString),
-      })),
-    })),
-  })),
-  strictSelectors: tOptional(tBoolean),
-  locateOnlyVisible: tOptional(tBoolean),
-  serviceWorkers: tOptional(tEnum(['allow', 'block'])),
-  selectorEngines: tOptional(tArray(tType('SelectorEngine'))),
-  testIdAttributeName: tOptional(tString),
-  userDataDir: tString,
-  slowMo: tOptional(tFloat),
+    }),
+    fps: tInt,
+    showActions: tObject({}, {
+      duration: tFloat,
+      position: tEnum(['top-left', 'top', 'top-right', 'bottom-left', 'bottom', 'bottom-right']),
+      fontSize: tInt,
+      cursor: tEnum(['none', 'pointer']),
+      style: tObject({}, {
+        point: tString,
+        highlight: tString,
+        title: tString,
+      }),
+    }),
+  }),
+  strictSelectors: tBoolean,
+  locateOnlyVisible: tBoolean,
+  serviceWorkers: tEnum(['allow', 'block']),
+  selectorEngines: tArray(tType('SelectorEngine')),
+  testIdAttributeName: tString,
+  slowMo: tFloat,
 });
 scheme.BrowserTypeLaunchPersistentContextResult = tObject({
   browser: tChannel(['Browser']),
   context: tChannel(['BrowserContext']),
 });
-scheme.BrowserTypeConnectOverCDPParams = tObject({
-  endpointURL: tOptional(tString),
-  headers: tOptional(tArray(tType('NameValue'))),
-  slowMo: tOptional(tFloat),
-  isLocal: tOptional(tBoolean),
-  noDefaults: tOptional(tBoolean),
-  isWebView: tOptional(tBoolean),
-  maxPageAttachTime: tOptional(tFloat),
-  artifactsDir: tOptional(tString),
-  transport: tOptional(tBinary),
+scheme.BrowserTypeConnectOverCDPParams = tObject({}, {
+  endpointURL: tString,
+  headers: tArray(tType('NameValue')),
+  slowMo: tFloat,
+  isLocal: tBoolean,
+  noDefaults: tBoolean,
+  isWebView: tBoolean,
+  maxPageAttachTime: tFloat,
+  artifactsDir: tString,
+  transport: tBinary,
 });
 scheme.BrowserTypeConnectOverCDPResult = tObject({
   browser: tChannel(['Browser']),
-  defaultContext: tOptional(tChannel(['BrowserContext'])),
+}, {
+  defaultContext: tChannel(['BrowserContext']),
 });
-scheme.Metadata = tObject({
-  location: tOptional(tObject({
+scheme.Metadata = tObject({}, {
+  location: tObject({
     file: tString,
-    line: tOptional(tInt),
-    column: tOptional(tInt),
-  })),
-  title: tOptional(tString),
-  internal: tOptional(tBoolean),
-  timeout: tOptional(tFloat),
+  }, {
+    line: tInt,
+    column: tInt,
+  }),
+  title: tString,
+  internal: tBoolean,
+  timeout: tFloat,
 });
 scheme.ClientSideCallMetadata = tObject({
   id: tString,
-  stack: tOptional(tArray(tType('StackFrame'))),
+}, {
+  stack: tArray(tType('StackFrame')),
 });
 scheme.SDKLanguage = tEnum(['javascript', 'python', 'java', 'csharp']);
 scheme.DisposableInitializer = tOptional(tObject({}));
@@ -1150,56 +1197,58 @@ scheme.DisposableDisposeResult = tOptional(tObject({}));
 scheme.WaitInfo = tObject({
   waitId: tString,
   phase: tEnum(['before', 'after', 'log']),
-  event: tOptional(tString),
-  message: tOptional(tString),
-  error: tOptional(tString),
+}, {
+  event: tString,
+  message: tString,
+  error: tString,
 });
 scheme.ElectronInitializer = tOptional(tObject({}));
-scheme.ElectronLaunchParams = tObject({
-  executablePath: tOptional(tString),
-  args: tOptional(tArray(tString)),
-  chromiumSandbox: tOptional(tBoolean),
-  cwd: tOptional(tString),
-  env: tOptional(tArray(tType('NameValue'))),
-  acceptDownloads: tOptional(tEnum(['accept', 'deny', 'internal-browser-default'])),
-  bypassCSP: tOptional(tBoolean),
-  colorScheme: tOptional(tEnum(['dark', 'light', 'no-preference', 'no-override'])),
-  extraHTTPHeaders: tOptional(tArray(tType('NameValue'))),
-  geolocation: tOptional(tObject({
+scheme.ElectronLaunchParams = tObject({}, {
+  executablePath: tString,
+  args: tArray(tString),
+  chromiumSandbox: tBoolean,
+  cwd: tString,
+  env: tArray(tType('NameValue')),
+  acceptDownloads: tEnum(['accept', 'deny', 'internal-browser-default']),
+  bypassCSP: tBoolean,
+  colorScheme: tEnum(['dark', 'light', 'no-preference', 'no-override']),
+  extraHTTPHeaders: tArray(tType('NameValue')),
+  geolocation: tObject({
     longitude: tFloat,
     latitude: tFloat,
-    accuracy: tOptional(tFloat),
-  })),
-  httpCredentials: tOptional(tArray(tType('HttpCredentials'))),
-  ignoreHTTPSErrors: tOptional(tBoolean),
-  locale: tOptional(tString),
-  offline: tOptional(tBoolean),
-  recordVideo: tOptional(tObject({
-    dir: tOptional(tString),
-    size: tOptional(tObject({
+  }, {
+    accuracy: tFloat,
+  }),
+  httpCredentials: tArray(tType('HttpCredentials')),
+  ignoreHTTPSErrors: tBoolean,
+  locale: tString,
+  offline: tBoolean,
+  recordVideo: tObject({}, {
+    dir: tString,
+    size: tObject({
       width: tInt,
       height: tInt,
-    })),
-    fps: tOptional(tInt),
-    showActions: tOptional(tObject({
-      duration: tOptional(tFloat),
-      position: tOptional(tEnum(['top-left', 'top', 'top-right', 'bottom-left', 'bottom', 'bottom-right'])),
-      fontSize: tOptional(tInt),
-      cursor: tOptional(tEnum(['none', 'pointer'])),
-      style: tOptional(tObject({
-        point: tOptional(tString),
-        highlight: tOptional(tString),
-        title: tOptional(tString),
-      })),
-    })),
-  })),
-  strictSelectors: tOptional(tBoolean),
-  locateOnlyVisible: tOptional(tBoolean),
-  timezoneId: tOptional(tString),
-  tracesDir: tOptional(tString),
-  artifactsDir: tOptional(tString),
-  selectorEngines: tOptional(tArray(tType('SelectorEngine'))),
-  testIdAttributeName: tOptional(tString),
+    }),
+    fps: tInt,
+    showActions: tObject({}, {
+      duration: tFloat,
+      position: tEnum(['top-left', 'top', 'top-right', 'bottom-left', 'bottom', 'bottom-right']),
+      fontSize: tInt,
+      cursor: tEnum(['none', 'pointer']),
+      style: tObject({}, {
+        point: tString,
+        highlight: tString,
+        title: tString,
+      }),
+    }),
+  }),
+  strictSelectors: tBoolean,
+  locateOnlyVisible: tBoolean,
+  timezoneId: tString,
+  tracesDir: tString,
+  artifactsDir: tString,
+  selectorEngines: tArray(tType('SelectorEngine')),
+  testIdAttributeName: tString,
 });
 scheme.ElectronLaunchResult = tObject({
   electronApplication: tChannel(['ElectronApplication']),
@@ -1227,16 +1276,18 @@ scheme.ElectronApplicationBrowserWindowResult = tObject({
 });
 scheme.ElectronApplicationEvaluateExpressionParams = tObject({
   expression: tString,
-  isFunction: tOptional(tBoolean),
   arg: tType('SerializedArgument'),
+}, {
+  isFunction: tBoolean,
 });
 scheme.ElectronApplicationEvaluateExpressionResult = tObject({
   value: tType('SerializedValue'),
 });
 scheme.ElectronApplicationEvaluateExpressionHandleParams = tObject({
   expression: tString,
-  isFunction: tOptional(tBoolean),
   arg: tType('SerializedArgument'),
+}, {
+  isFunction: tBoolean,
 });
 scheme.ElectronApplicationEvaluateExpressionHandleResult = tObject({
   handle: tChannel(['ElementHandle', 'JSHandle']),
@@ -1249,27 +1300,30 @@ scheme.ElectronApplicationUpdateSubscriptionResult = tOptional(tObject({}));
 scheme.FrameInitializer = tObject({
   url: tString,
   name: tString,
-  parentFrame: tOptional(tChannel(['Frame'])),
   loadStates: tArray(tType('LifecycleEvent')),
+}, {
+  parentFrame: tChannel(['Frame']),
 });
-scheme.FrameLoadstateEvent = tObject({
-  add: tOptional(tType('LifecycleEvent')),
-  remove: tOptional(tType('LifecycleEvent')),
+scheme.FrameLoadstateEvent = tObject({}, {
+  add: tType('LifecycleEvent'),
+  remove: tType('LifecycleEvent'),
 });
 scheme.FrameNavigatedEvent = tObject({
   url: tString,
   name: tString,
-  newDocument: tOptional(tObject({
-    request: tOptional(tChannel(['Request'])),
-  })),
-  error: tOptional(tString),
+}, {
+  newDocument: tObject({}, {
+    request: tChannel(['Request']),
+  }),
+  error: tString,
 });
 scheme.FrameEvalOnSelectorParams = tObject({
   selector: tString,
-  strict: tOptional(tBoolean),
   expression: tString,
-  isFunction: tOptional(tBoolean),
   arg: tType('SerializedArgument'),
+}, {
+  strict: tBoolean,
+  isFunction: tBoolean,
 });
 scheme.FrameEvalOnSelectorResult = tObject({
   value: tType('SerializedValue'),
@@ -1277,76 +1331,80 @@ scheme.FrameEvalOnSelectorResult = tObject({
 scheme.FrameEvalOnSelectorAllParams = tObject({
   selector: tString,
   expression: tString,
-  isFunction: tOptional(tBoolean),
   arg: tType('SerializedArgument'),
+}, {
+  isFunction: tBoolean,
 });
 scheme.FrameEvalOnSelectorAllResult = tObject({
   value: tType('SerializedValue'),
 });
-scheme.FrameAddScriptTagParams = tObject({
-  url: tOptional(tString),
-  content: tOptional(tString),
-  type: tOptional(tString),
+scheme.FrameAddScriptTagParams = tObject({}, {
+  url: tString,
+  content: tString,
+  type: tString,
 });
 scheme.FrameAddScriptTagResult = tObject({
   element: tChannel(['ElementHandle']),
 });
-scheme.FrameAddStyleTagParams = tObject({
-  url: tOptional(tString),
-  content: tOptional(tString),
+scheme.FrameAddStyleTagParams = tObject({}, {
+  url: tString,
+  content: tString,
 });
 scheme.FrameAddStyleTagResult = tObject({
   element: tChannel(['ElementHandle']),
 });
-scheme.FrameAriaSnapshotParams = tObject({
-  mode: tOptional(tEnum(['ai', 'default'])),
-  selector: tOptional(tString),
-  depth: tOptional(tInt),
-  boxes: tOptional(tBoolean),
+scheme.FrameAriaSnapshotParams = tObject({}, {
+  mode: tEnum(['ai', 'default']),
+  selector: tString,
+  depth: tInt,
+  boxes: tBoolean,
 });
 scheme.FrameAriaSnapshotResult = tObject({
   snapshot: tString,
 });
-scheme.FrameAriaSnapshotJSONParams = tObject({
-  mode: tOptional(tEnum(['ai', 'default'])),
-  selector: tOptional(tString),
-  depth: tOptional(tInt),
-  boxes: tOptional(tBoolean),
+scheme.FrameAriaSnapshotJSONParams = tObject({}, {
+  mode: tEnum(['ai', 'default']),
+  selector: tString,
+  depth: tInt,
+  boxes: tBoolean,
 });
 scheme.FrameAriaSnapshotJSONResult = tObject({
   snapshot: tAny,
 });
 scheme.FrameBlurParams = tObject({
   selector: tString,
-  strict: tOptional(tBoolean),
+}, {
+  strict: tBoolean,
 });
 scheme.FrameBlurResult = tOptional(tObject({}));
 scheme.FrameCheckParams = tObject({
   selector: tString,
-  strict: tOptional(tBoolean),
-  force: tOptional(tBoolean),
-  scroll: tOptional(tEnum(['auto', 'none'])),
-  position: tOptional(tType('Point')),
-  trial: tOptional(tBoolean),
+}, {
+  strict: tBoolean,
+  force: tBoolean,
+  scroll: tEnum(['auto', 'none']),
+  position: tType('Point'),
+  trial: tBoolean,
 });
 scheme.FrameCheckResult = tOptional(tObject({}));
 scheme.FrameClickParams = tObject({
   selector: tString,
-  strict: tOptional(tBoolean),
-  force: tOptional(tBoolean),
-  scroll: tOptional(tEnum(['auto', 'none'])),
-  noWaitAfter: tOptional(tBoolean),
-  modifiers: tOptional(tArray(tEnum(['Alt', 'Control', 'ControlOrMeta', 'Meta', 'Shift']))),
-  position: tOptional(tType('Point')),
-  delay: tOptional(tFloat),
-  button: tOptional(tEnum(['left', 'right', 'middle'])),
-  clickCount: tOptional(tInt),
-  trial: tOptional(tBoolean),
-  steps: tOptional(tInt),
+}, {
+  strict: tBoolean,
+  force: tBoolean,
+  scroll: tEnum(['auto', 'none']),
+  noWaitAfter: tBoolean,
+  modifiers: tArray(tEnum(['Alt', 'Control', 'ControlOrMeta', 'Meta', 'Shift'])),
+  position: tType('Point'),
+  delay: tFloat,
+  button: tEnum(['left', 'right', 'middle']),
+  clickCount: tInt,
+  trial: tBoolean,
+  steps: tInt,
 });
 scheme.FrameClickResult = tOptional(tObject({}));
-scheme.FrameContentParams = tObject({
-  includeShadow: tOptional(tBoolean),
+scheme.FrameContentParams = tObject({}, {
+  includeShadow: tBoolean,
 });
 scheme.FrameContentResult = tObject({
   value: tString,
@@ -1354,78 +1412,87 @@ scheme.FrameContentResult = tObject({
 scheme.FrameDragAndDropParams = tObject({
   source: tString,
   target: tString,
-  force: tOptional(tBoolean),
-  scroll: tOptional(tEnum(['auto', 'none'])),
-  trial: tOptional(tBoolean),
-  sourcePosition: tOptional(tType('Point')),
-  targetPosition: tOptional(tType('Point')),
-  strict: tOptional(tBoolean),
-  steps: tOptional(tInt),
+}, {
+  force: tBoolean,
+  scroll: tEnum(['auto', 'none']),
+  trial: tBoolean,
+  sourcePosition: tType('Point'),
+  targetPosition: tType('Point'),
+  strict: tBoolean,
+  steps: tInt,
 });
 scheme.FrameDragAndDropResult = tOptional(tObject({}));
 scheme.FrameDropParams = tObject({
   selector: tString,
-  strict: tOptional(tBoolean),
-  position: tOptional(tType('Point')),
-  payloads: tOptional(tArray(tObject({
+}, {
+  strict: tBoolean,
+  position: tType('Point'),
+  payloads: tArray(tObject({
     name: tString,
-    mimeType: tOptional(tString),
     buffer: tBinary,
-  }))),
-  localPaths: tOptional(tArray(tString)),
-  streams: tOptional(tArray(tChannel(['WritableStream']))),
-  data: tOptional(tArray(tObject({
+  }, {
+    mimeType: tString,
+  })),
+  localPaths: tArray(tString),
+  streams: tArray(tChannel(['WritableStream'])),
+  data: tArray(tObject({
     mimeType: tString,
     value: tString,
-  }))),
+  })),
 });
 scheme.FrameDropResult = tOptional(tObject({}));
 scheme.FrameDblclickParams = tObject({
   selector: tString,
-  strict: tOptional(tBoolean),
-  force: tOptional(tBoolean),
-  scroll: tOptional(tEnum(['auto', 'none'])),
-  modifiers: tOptional(tArray(tEnum(['Alt', 'Control', 'ControlOrMeta', 'Meta', 'Shift']))),
-  position: tOptional(tType('Point')),
-  delay: tOptional(tFloat),
-  button: tOptional(tEnum(['left', 'right', 'middle'])),
-  trial: tOptional(tBoolean),
-  steps: tOptional(tInt),
+}, {
+  strict: tBoolean,
+  force: tBoolean,
+  scroll: tEnum(['auto', 'none']),
+  modifiers: tArray(tEnum(['Alt', 'Control', 'ControlOrMeta', 'Meta', 'Shift'])),
+  position: tType('Point'),
+  delay: tFloat,
+  button: tEnum(['left', 'right', 'middle']),
+  trial: tBoolean,
+  steps: tInt,
 });
 scheme.FrameDblclickResult = tOptional(tObject({}));
 scheme.FrameDispatchEventParams = tObject({
   selector: tString,
-  strict: tOptional(tBoolean),
   type: tString,
   eventInit: tType('SerializedArgument'),
+}, {
+  strict: tBoolean,
 });
 scheme.FrameDispatchEventResult = tOptional(tObject({}));
 scheme.FrameEvaluateExpressionParams = tObject({
   expression: tString,
-  isFunction: tOptional(tBoolean),
   arg: tType('SerializedArgument'),
+}, {
+  isFunction: tBoolean,
 });
 scheme.FrameEvaluateExpressionResult = tObject({
   value: tType('SerializedValue'),
 });
 scheme.FrameEvaluateExpressionHandleParams = tObject({
   expression: tString,
-  isFunction: tOptional(tBoolean),
   arg: tType('SerializedArgument'),
+}, {
+  isFunction: tBoolean,
 });
 scheme.FrameEvaluateExpressionHandleResult = tObject({
   handle: tChannel(['ElementHandle', 'JSHandle']),
 });
 scheme.FrameFillParams = tObject({
   selector: tString,
-  strict: tOptional(tBoolean),
   value: tString,
-  force: tOptional(tBoolean),
+}, {
+  strict: tBoolean,
+  force: tBoolean,
 });
 scheme.FrameFillResult = tOptional(tObject({}));
 scheme.FrameFocusParams = tObject({
   selector: tString,
-  strict: tOptional(tBoolean),
+}, {
+  strict: tBoolean,
 });
 scheme.FrameFocusResult = tOptional(tObject({}));
 scheme.FrameFrameElementParams = tOptional(tObject({}));
@@ -1434,15 +1501,18 @@ scheme.FrameFrameElementResult = tObject({
 });
 scheme.FrameResolveSelectorParams = tObject({
   selector: tString,
-  sdkLanguage: tOptional(tType('SDKLanguage')),
+}, {
+  sdkLanguage: tType('SDKLanguage'),
 });
 scheme.FrameResolveSelectorResult = tObject({
   resolvedSelector: tString,
-  locatorCode: tOptional(tString),
+}, {
+  locatorCode: tString,
 });
 scheme.FrameHighlightParams = tObject({
   selector: tString,
-  style: tOptional(tString),
+}, {
+  style: tString,
 });
 scheme.FrameHighlightResult = tOptional(tObject({}));
 scheme.FrameHideHighlightParams = tObject({
@@ -1451,107 +1521,121 @@ scheme.FrameHideHighlightParams = tObject({
 scheme.FrameHideHighlightResult = tOptional(tObject({}));
 scheme.FrameGetAttributeParams = tObject({
   selector: tString,
-  strict: tOptional(tBoolean),
   name: tString,
+}, {
+  strict: tBoolean,
 });
-scheme.FrameGetAttributeResult = tObject({
-  value: tOptional(tString),
+scheme.FrameGetAttributeResult = tObject({}, {
+  value: tString,
 });
 scheme.FrameGotoParams = tObject({
   url: tString,
-  waitUntil: tOptional(tType('LifecycleEvent')),
-  referer: tOptional(tString),
+}, {
+  waitUntil: tType('LifecycleEvent'),
+  referer: tString,
 });
-scheme.FrameGotoResult = tObject({
-  response: tOptional(tChannel(['Response'])),
+scheme.FrameGotoResult = tObject({}, {
+  response: tChannel(['Response']),
 });
 scheme.FrameHoverParams = tObject({
   selector: tString,
-  strict: tOptional(tBoolean),
-  force: tOptional(tBoolean),
-  scroll: tOptional(tEnum(['auto', 'none'])),
-  modifiers: tOptional(tArray(tEnum(['Alt', 'Control', 'ControlOrMeta', 'Meta', 'Shift']))),
-  position: tOptional(tType('Point')),
-  trial: tOptional(tBoolean),
+}, {
+  strict: tBoolean,
+  force: tBoolean,
+  scroll: tEnum(['auto', 'none']),
+  modifiers: tArray(tEnum(['Alt', 'Control', 'ControlOrMeta', 'Meta', 'Shift'])),
+  position: tType('Point'),
+  trial: tBoolean,
 });
 scheme.FrameHoverResult = tOptional(tObject({}));
 scheme.FrameInnerHTMLParams = tObject({
   selector: tString,
-  strict: tOptional(tBoolean),
+}, {
+  strict: tBoolean,
 });
 scheme.FrameInnerHTMLResult = tObject({
   value: tString,
 });
 scheme.FrameInnerTextParams = tObject({
   selector: tString,
-  strict: tOptional(tBoolean),
+}, {
+  strict: tBoolean,
 });
 scheme.FrameInnerTextResult = tObject({
   value: tString,
 });
 scheme.FrameInputValueParams = tObject({
   selector: tString,
-  strict: tOptional(tBoolean),
+}, {
+  strict: tBoolean,
 });
 scheme.FrameInputValueResult = tObject({
   value: tString,
 });
 scheme.FrameIsCheckedParams = tObject({
   selector: tString,
-  strict: tOptional(tBoolean),
+}, {
+  strict: tBoolean,
 });
 scheme.FrameIsCheckedResult = tObject({
   value: tBoolean,
 });
 scheme.FrameIsDisabledParams = tObject({
   selector: tString,
-  strict: tOptional(tBoolean),
+}, {
+  strict: tBoolean,
 });
 scheme.FrameIsDisabledResult = tObject({
   value: tBoolean,
 });
 scheme.FrameIsEnabledParams = tObject({
   selector: tString,
-  strict: tOptional(tBoolean),
+}, {
+  strict: tBoolean,
 });
 scheme.FrameIsEnabledResult = tObject({
   value: tBoolean,
 });
 scheme.FrameIsHiddenParams = tObject({
   selector: tString,
-  strict: tOptional(tBoolean),
+}, {
+  strict: tBoolean,
 });
 scheme.FrameIsHiddenResult = tObject({
   value: tBoolean,
 });
 scheme.FrameIsVisibleParams = tObject({
   selector: tString,
-  strict: tOptional(tBoolean),
+}, {
+  strict: tBoolean,
 });
 scheme.FrameIsVisibleResult = tObject({
   value: tBoolean,
 });
 scheme.FrameIsEditableParams = tObject({
   selector: tString,
-  strict: tOptional(tBoolean),
+}, {
+  strict: tBoolean,
 });
 scheme.FrameIsEditableResult = tObject({
   value: tBoolean,
 });
 scheme.FramePressParams = tObject({
   selector: tString,
-  strict: tOptional(tBoolean),
   key: tString,
-  delay: tOptional(tFloat),
-  noWaitAfter: tOptional(tBoolean),
+}, {
+  strict: tBoolean,
+  delay: tFloat,
+  noWaitAfter: tBoolean,
 });
 scheme.FramePressResult = tOptional(tObject({}));
 scheme.FrameQuerySelectorParams = tObject({
   selector: tString,
-  strict: tOptional(tBoolean),
+}, {
+  strict: tBoolean,
 });
-scheme.FrameQuerySelectorResult = tObject({
-  element: tOptional(tChannel(['ElementHandle'])),
+scheme.FrameQuerySelectorResult = tObject({}, {
+  element: tChannel(['ElementHandle']),
 });
 scheme.FrameQuerySelectorAllParams = tObject({
   selector: tString,
@@ -1567,54 +1651,60 @@ scheme.FrameQueryCountResult = tObject({
 });
 scheme.FrameSelectOptionParams = tObject({
   selector: tString,
-  strict: tOptional(tBoolean),
-  elements: tOptional(tArray(tChannel(['ElementHandle']))),
-  options: tOptional(tArray(tObject({
-    valueOrLabel: tOptional(tString),
-    value: tOptional(tString),
-    label: tOptional(tString),
-    index: tOptional(tInt),
-  }))),
-  force: tOptional(tBoolean),
+}, {
+  strict: tBoolean,
+  elements: tArray(tChannel(['ElementHandle'])),
+  options: tArray(tObject({}, {
+    valueOrLabel: tString,
+    value: tString,
+    label: tString,
+    index: tInt,
+  })),
+  force: tBoolean,
 });
 scheme.FrameSelectOptionResult = tObject({
   values: tArray(tString),
 });
 scheme.FrameSetContentParams = tObject({
   html: tString,
-  waitUntil: tOptional(tType('LifecycleEvent')),
+}, {
+  waitUntil: tType('LifecycleEvent'),
 });
 scheme.FrameSetContentResult = tOptional(tObject({}));
 scheme.FrameSetInputFilesParams = tObject({
   selector: tString,
-  strict: tOptional(tBoolean),
-  payloads: tOptional(tArray(tObject({
+}, {
+  strict: tBoolean,
+  payloads: tArray(tObject({
     name: tString,
-    mimeType: tOptional(tString),
     buffer: tBinary,
-  }))),
-  localDirectory: tOptional(tString),
-  directoryStream: tOptional(tChannel(['WritableStream'])),
-  localPaths: tOptional(tArray(tString)),
-  streams: tOptional(tArray(tChannel(['WritableStream']))),
+  }, {
+    mimeType: tString,
+  })),
+  localDirectory: tString,
+  directoryStream: tChannel(['WritableStream']),
+  localPaths: tArray(tString),
+  streams: tArray(tChannel(['WritableStream'])),
 });
 scheme.FrameSetInputFilesResult = tOptional(tObject({}));
 scheme.FrameTapParams = tObject({
   selector: tString,
-  strict: tOptional(tBoolean),
-  force: tOptional(tBoolean),
-  scroll: tOptional(tEnum(['auto', 'none'])),
-  modifiers: tOptional(tArray(tEnum(['Alt', 'Control', 'ControlOrMeta', 'Meta', 'Shift']))),
-  position: tOptional(tType('Point')),
-  trial: tOptional(tBoolean),
+}, {
+  strict: tBoolean,
+  force: tBoolean,
+  scroll: tEnum(['auto', 'none']),
+  modifiers: tArray(tEnum(['Alt', 'Control', 'ControlOrMeta', 'Meta', 'Shift'])),
+  position: tType('Point'),
+  trial: tBoolean,
 });
 scheme.FrameTapResult = tOptional(tObject({}));
 scheme.FrameTextContentParams = tObject({
   selector: tString,
-  strict: tOptional(tBoolean),
+}, {
+  strict: tBoolean,
 });
-scheme.FrameTextContentResult = tObject({
-  value: tOptional(tString),
+scheme.FrameTextContentResult = tObject({}, {
+  value: tString,
 });
 scheme.FrameTitleParams = tOptional(tObject({}));
 scheme.FrameTitleResult = tObject({
@@ -1622,18 +1712,20 @@ scheme.FrameTitleResult = tObject({
 });
 scheme.FrameTypeParams = tObject({
   selector: tString,
-  strict: tOptional(tBoolean),
   text: tString,
-  delay: tOptional(tFloat),
+}, {
+  strict: tBoolean,
+  delay: tFloat,
 });
 scheme.FrameTypeResult = tOptional(tObject({}));
 scheme.FrameUncheckParams = tObject({
   selector: tString,
-  strict: tOptional(tBoolean),
-  force: tOptional(tBoolean),
-  scroll: tOptional(tEnum(['auto', 'none'])),
-  position: tOptional(tType('Point')),
-  trial: tOptional(tBoolean),
+}, {
+  strict: tBoolean,
+  force: tBoolean,
+  scroll: tEnum(['auto', 'none']),
+  position: tType('Point'),
+  trial: tBoolean,
 });
 scheme.FrameUncheckResult = tOptional(tObject({}));
 scheme.FrameWaitForTimeoutParams = tObject({
@@ -1642,55 +1734,59 @@ scheme.FrameWaitForTimeoutParams = tObject({
 scheme.FrameWaitForTimeoutResult = tOptional(tObject({}));
 scheme.FrameWaitForFunctionParams = tObject({
   expression: tString,
-  isFunction: tOptional(tBoolean),
   arg: tType('SerializedArgument'),
-  pollingInterval: tOptional(tFloat),
-  selector: tOptional(tString),
-  strict: tOptional(tBoolean),
+}, {
+  isFunction: tBoolean,
+  pollingInterval: tFloat,
+  selector: tString,
+  strict: tBoolean,
 });
-scheme.FrameWaitForFunctionResult = tObject({
-  handle: tOptional(tChannel(['ElementHandle', 'JSHandle'])),
+scheme.FrameWaitForFunctionResult = tObject({}, {
+  handle: tChannel(['ElementHandle', 'JSHandle']),
 });
 scheme.FrameWaitForSelectorParams = tObject({
   selector: tString,
-  strict: tOptional(tBoolean),
-  state: tOptional(tEnum(['attached', 'detached', 'visible', 'hidden'])),
-  omitReturnValue: tOptional(tBoolean),
+}, {
+  strict: tBoolean,
+  state: tEnum(['attached', 'detached', 'visible', 'hidden']),
+  omitReturnValue: tBoolean,
 });
-scheme.FrameWaitForSelectorResult = tObject({
-  element: tOptional(tChannel(['ElementHandle'])),
+scheme.FrameWaitForSelectorResult = tObject({}, {
+  element: tChannel(['ElementHandle']),
 });
 scheme.FrameExpectParams = tObject({
-  selector: tOptional(tString),
   expression: tString,
-  expressionArg: tOptional(tAny),
-  pseudo: tOptional(tEnum(['before', 'after'])),
-  expectedText: tOptional(tArray(tType('ExpectedTextValue'))),
-  expectedNumber: tOptional(tFloat),
-  expectedValue: tOptional(tType('SerializedArgument')),
-  useInnerText: tOptional(tBoolean),
   isNot: tBoolean,
+}, {
+  selector: tString,
+  expressionArg: tAny,
+  pseudo: tEnum(['before', 'after']),
+  expectedText: tArray(tType('ExpectedTextValue')),
+  expectedNumber: tFloat,
+  expectedValue: tType('SerializedArgument'),
+  useInnerText: tBoolean,
 });
 scheme.FrameExpectResult = tOptional(tObject({}));
-scheme.FrameExpectErrorDetails = tObject({
-  received: tOptional(tObject({
-    value: tOptional(tType('SerializedValue')),
-    ariaSnapshot: tOptional(tString),
-  })),
-  timedOut: tOptional(tBoolean),
-  customErrorMessage: tOptional(tString),
+scheme.FrameExpectErrorDetails = tObject({}, {
+  received: tObject({}, {
+    value: tType('SerializedValue'),
+    ariaSnapshot: tString,
+  }),
+  timedOut: tBoolean,
+  customErrorMessage: tString,
 });
 scheme.FrameWebmcpToolsParams = tOptional(tObject({}));
 scheme.FrameWebmcpToolsResult = tObject({
   tools: tArray(tObject({
     name: tString,
     description: tString,
-    inputSchema: tOptional(tAny),
-    annotations: tOptional(tObject({
-      readOnly: tOptional(tBoolean),
-      untrustedContent: tOptional(tBoolean),
-      consequential: tOptional(tBoolean),
-    })),
+  }, {
+    inputSchema: tAny,
+    annotations: tObject({}, {
+      readOnly: tBoolean,
+      untrustedContent: tBoolean,
+      consequential: tBoolean,
+    }),
   })),
 });
 scheme.FrameWebmcpCallToolParams = tObject({
@@ -1713,8 +1809,9 @@ scheme.JSHandleDisposeResult = tOptional(tObject({}));
 scheme.ElementHandleDisposeResult = tType('JSHandleDisposeResult');
 scheme.JSHandleEvaluateExpressionParams = tObject({
   expression: tString,
-  isFunction: tOptional(tBoolean),
   arg: tType('SerializedArgument'),
+}, {
+  isFunction: tBoolean,
 });
 scheme.ElementHandleEvaluateExpressionParams = tType('JSHandleEvaluateExpressionParams');
 scheme.JSHandleEvaluateExpressionResult = tObject({
@@ -1723,8 +1820,9 @@ scheme.JSHandleEvaluateExpressionResult = tObject({
 scheme.ElementHandleEvaluateExpressionResult = tType('JSHandleEvaluateExpressionResult');
 scheme.JSHandleEvaluateExpressionHandleParams = tObject({
   expression: tString,
-  isFunction: tOptional(tBoolean),
   arg: tType('SerializedArgument'),
+}, {
+  isFunction: tBoolean,
 });
 scheme.ElementHandleEvaluateExpressionHandleParams = tType('JSHandleEvaluateExpressionHandleParams');
 scheme.JSHandleEvaluateExpressionHandleResult = tObject({
@@ -1759,10 +1857,11 @@ scheme.ElementHandleInitializer = tObject({
 });
 scheme.ElementHandleEvalOnSelectorParams = tObject({
   selector: tString,
-  strict: tOptional(tBoolean),
   expression: tString,
-  isFunction: tOptional(tBoolean),
   arg: tType('SerializedArgument'),
+}, {
+  strict: tBoolean,
+  isFunction: tBoolean,
 });
 scheme.ElementHandleEvalOnSelectorResult = tObject({
   value: tType('SerializedValue'),
@@ -1770,49 +1869,50 @@ scheme.ElementHandleEvalOnSelectorResult = tObject({
 scheme.ElementHandleEvalOnSelectorAllParams = tObject({
   selector: tString,
   expression: tString,
-  isFunction: tOptional(tBoolean),
   arg: tType('SerializedArgument'),
+}, {
+  isFunction: tBoolean,
 });
 scheme.ElementHandleEvalOnSelectorAllResult = tObject({
   value: tType('SerializedValue'),
 });
 scheme.ElementHandleBoundingBoxParams = tOptional(tObject({}));
-scheme.ElementHandleBoundingBoxResult = tObject({
-  value: tOptional(tType('Rect')),
+scheme.ElementHandleBoundingBoxResult = tObject({}, {
+  value: tType('Rect'),
 });
-scheme.ElementHandleCheckParams = tObject({
-  force: tOptional(tBoolean),
-  scroll: tOptional(tEnum(['auto', 'none'])),
-  position: tOptional(tType('Point')),
-  trial: tOptional(tBoolean),
+scheme.ElementHandleCheckParams = tObject({}, {
+  force: tBoolean,
+  scroll: tEnum(['auto', 'none']),
+  position: tType('Point'),
+  trial: tBoolean,
 });
 scheme.ElementHandleCheckResult = tOptional(tObject({}));
-scheme.ElementHandleClickParams = tObject({
-  force: tOptional(tBoolean),
-  scroll: tOptional(tEnum(['auto', 'none'])),
-  noWaitAfter: tOptional(tBoolean),
-  modifiers: tOptional(tArray(tEnum(['Alt', 'Control', 'ControlOrMeta', 'Meta', 'Shift']))),
-  position: tOptional(tType('Point')),
-  delay: tOptional(tFloat),
-  button: tOptional(tEnum(['left', 'right', 'middle'])),
-  clickCount: tOptional(tInt),
-  trial: tOptional(tBoolean),
-  steps: tOptional(tInt),
+scheme.ElementHandleClickParams = tObject({}, {
+  force: tBoolean,
+  scroll: tEnum(['auto', 'none']),
+  noWaitAfter: tBoolean,
+  modifiers: tArray(tEnum(['Alt', 'Control', 'ControlOrMeta', 'Meta', 'Shift'])),
+  position: tType('Point'),
+  delay: tFloat,
+  button: tEnum(['left', 'right', 'middle']),
+  clickCount: tInt,
+  trial: tBoolean,
+  steps: tInt,
 });
 scheme.ElementHandleClickResult = tOptional(tObject({}));
 scheme.ElementHandleContentFrameParams = tOptional(tObject({}));
-scheme.ElementHandleContentFrameResult = tObject({
-  frame: tOptional(tChannel(['Frame'])),
+scheme.ElementHandleContentFrameResult = tObject({}, {
+  frame: tChannel(['Frame']),
 });
-scheme.ElementHandleDblclickParams = tObject({
-  force: tOptional(tBoolean),
-  scroll: tOptional(tEnum(['auto', 'none'])),
-  modifiers: tOptional(tArray(tEnum(['Alt', 'Control', 'ControlOrMeta', 'Meta', 'Shift']))),
-  position: tOptional(tType('Point')),
-  delay: tOptional(tFloat),
-  button: tOptional(tEnum(['left', 'right', 'middle'])),
-  trial: tOptional(tBoolean),
-  steps: tOptional(tInt),
+scheme.ElementHandleDblclickParams = tObject({}, {
+  force: tBoolean,
+  scroll: tEnum(['auto', 'none']),
+  modifiers: tArray(tEnum(['Alt', 'Control', 'ControlOrMeta', 'Meta', 'Shift'])),
+  position: tType('Point'),
+  delay: tFloat,
+  button: tEnum(['left', 'right', 'middle']),
+  trial: tBoolean,
+  steps: tInt,
 });
 scheme.ElementHandleDblclickResult = tOptional(tObject({}));
 scheme.ElementHandleDispatchEventParams = tObject({
@@ -1822,7 +1922,8 @@ scheme.ElementHandleDispatchEventParams = tObject({
 scheme.ElementHandleDispatchEventResult = tOptional(tObject({}));
 scheme.ElementHandleFillParams = tObject({
   value: tString,
-  force: tOptional(tBoolean),
+}, {
+  force: tBoolean,
 });
 scheme.ElementHandleFillResult = tOptional(tObject({}));
 scheme.ElementHandleFocusParams = tOptional(tObject({}));
@@ -1830,15 +1931,15 @@ scheme.ElementHandleFocusResult = tOptional(tObject({}));
 scheme.ElementHandleGetAttributeParams = tObject({
   name: tString,
 });
-scheme.ElementHandleGetAttributeResult = tObject({
-  value: tOptional(tString),
+scheme.ElementHandleGetAttributeResult = tObject({}, {
+  value: tString,
 });
-scheme.ElementHandleHoverParams = tObject({
-  force: tOptional(tBoolean),
-  scroll: tOptional(tEnum(['auto', 'none'])),
-  modifiers: tOptional(tArray(tEnum(['Alt', 'Control', 'ControlOrMeta', 'Meta', 'Shift']))),
-  position: tOptional(tType('Point')),
-  trial: tOptional(tBoolean),
+scheme.ElementHandleHoverParams = tObject({}, {
+  force: tBoolean,
+  scroll: tEnum(['auto', 'none']),
+  modifiers: tArray(tEnum(['Alt', 'Control', 'ControlOrMeta', 'Meta', 'Shift'])),
+  position: tType('Point'),
+  trial: tBoolean,
 });
 scheme.ElementHandleHoverResult = tOptional(tObject({}));
 scheme.ElementHandleInnerHTMLParams = tOptional(tObject({}));
@@ -1878,21 +1979,23 @@ scheme.ElementHandleIsVisibleResult = tObject({
   value: tBoolean,
 });
 scheme.ElementHandleOwnerFrameParams = tOptional(tObject({}));
-scheme.ElementHandleOwnerFrameResult = tObject({
-  frame: tOptional(tChannel(['Frame'])),
+scheme.ElementHandleOwnerFrameResult = tObject({}, {
+  frame: tChannel(['Frame']),
 });
 scheme.ElementHandlePressParams = tObject({
   key: tString,
-  delay: tOptional(tFloat),
-  noWaitAfter: tOptional(tBoolean),
+}, {
+  delay: tFloat,
+  noWaitAfter: tBoolean,
 });
 scheme.ElementHandlePressResult = tOptional(tObject({}));
 scheme.ElementHandleQuerySelectorParams = tObject({
   selector: tString,
-  strict: tOptional(tBoolean),
+}, {
+  strict: tBoolean,
 });
-scheme.ElementHandleQuerySelectorResult = tObject({
-  element: tOptional(tChannel(['ElementHandle'])),
+scheme.ElementHandleQuerySelectorResult = tObject({}, {
+  element: tChannel(['ElementHandle']),
 });
 scheme.ElementHandleQuerySelectorAllParams = tObject({
   selector: tString,
@@ -1900,76 +2003,78 @@ scheme.ElementHandleQuerySelectorAllParams = tObject({
 scheme.ElementHandleQuerySelectorAllResult = tObject({
   elements: tArray(tChannel(['ElementHandle'])),
 });
-scheme.ElementHandleScreenshotParams = tObject({
-  type: tOptional(tEnum(['png', 'jpeg', 'webp'])),
-  quality: tOptional(tInt),
-  omitBackground: tOptional(tBoolean),
-  caret: tOptional(tEnum(['hide', 'initial'])),
-  animations: tOptional(tEnum(['disabled', 'allow'])),
-  scale: tOptional(tEnum(['css', 'device'])),
-  mask: tOptional(tArray(tObject({
+scheme.ElementHandleScreenshotParams = tObject({}, {
+  type: tEnum(['png', 'jpeg', 'webp']),
+  quality: tInt,
+  omitBackground: tBoolean,
+  caret: tEnum(['hide', 'initial']),
+  animations: tEnum(['disabled', 'allow']),
+  scale: tEnum(['css', 'device']),
+  mask: tArray(tObject({
     frame: tChannel(['Frame']),
     selector: tString,
-  }))),
-  maskColor: tOptional(tString),
-  style: tOptional(tString),
+  })),
+  maskColor: tString,
+  style: tString,
 });
 scheme.ElementHandleScreenshotResult = tObject({
   binary: tBinary,
 });
 scheme.ElementHandleScrollIntoViewIfNeededParams = tOptional(tObject({}));
 scheme.ElementHandleScrollIntoViewIfNeededResult = tOptional(tObject({}));
-scheme.ElementHandleSelectOptionParams = tObject({
-  elements: tOptional(tArray(tChannel(['ElementHandle']))),
-  options: tOptional(tArray(tObject({
-    valueOrLabel: tOptional(tString),
-    value: tOptional(tString),
-    label: tOptional(tString),
-    index: tOptional(tInt),
-  }))),
-  force: tOptional(tBoolean),
+scheme.ElementHandleSelectOptionParams = tObject({}, {
+  elements: tArray(tChannel(['ElementHandle'])),
+  options: tArray(tObject({}, {
+    valueOrLabel: tString,
+    value: tString,
+    label: tString,
+    index: tInt,
+  })),
+  force: tBoolean,
 });
 scheme.ElementHandleSelectOptionResult = tObject({
   values: tArray(tString),
 });
-scheme.ElementHandleSelectTextParams = tObject({
-  force: tOptional(tBoolean),
+scheme.ElementHandleSelectTextParams = tObject({}, {
+  force: tBoolean,
 });
 scheme.ElementHandleSelectTextResult = tOptional(tObject({}));
-scheme.ElementHandleSetInputFilesParams = tObject({
-  payloads: tOptional(tArray(tObject({
+scheme.ElementHandleSetInputFilesParams = tObject({}, {
+  payloads: tArray(tObject({
     name: tString,
-    mimeType: tOptional(tString),
     buffer: tBinary,
-  }))),
-  localDirectory: tOptional(tString),
-  directoryStream: tOptional(tChannel(['WritableStream'])),
-  localPaths: tOptional(tArray(tString)),
-  streams: tOptional(tArray(tChannel(['WritableStream']))),
+  }, {
+    mimeType: tString,
+  })),
+  localDirectory: tString,
+  directoryStream: tChannel(['WritableStream']),
+  localPaths: tArray(tString),
+  streams: tArray(tChannel(['WritableStream'])),
 });
 scheme.ElementHandleSetInputFilesResult = tOptional(tObject({}));
-scheme.ElementHandleTapParams = tObject({
-  force: tOptional(tBoolean),
-  scroll: tOptional(tEnum(['auto', 'none'])),
-  modifiers: tOptional(tArray(tEnum(['Alt', 'Control', 'ControlOrMeta', 'Meta', 'Shift']))),
-  position: tOptional(tType('Point')),
-  trial: tOptional(tBoolean),
+scheme.ElementHandleTapParams = tObject({}, {
+  force: tBoolean,
+  scroll: tEnum(['auto', 'none']),
+  modifiers: tArray(tEnum(['Alt', 'Control', 'ControlOrMeta', 'Meta', 'Shift'])),
+  position: tType('Point'),
+  trial: tBoolean,
 });
 scheme.ElementHandleTapResult = tOptional(tObject({}));
 scheme.ElementHandleTextContentParams = tOptional(tObject({}));
-scheme.ElementHandleTextContentResult = tObject({
-  value: tOptional(tString),
+scheme.ElementHandleTextContentResult = tObject({}, {
+  value: tString,
 });
 scheme.ElementHandleTypeParams = tObject({
   text: tString,
-  delay: tOptional(tFloat),
+}, {
+  delay: tFloat,
 });
 scheme.ElementHandleTypeResult = tOptional(tObject({}));
-scheme.ElementHandleUncheckParams = tObject({
-  force: tOptional(tBoolean),
-  scroll: tOptional(tEnum(['auto', 'none'])),
-  position: tOptional(tType('Point')),
-  trial: tOptional(tBoolean),
+scheme.ElementHandleUncheckParams = tObject({}, {
+  force: tBoolean,
+  scroll: tEnum(['auto', 'none']),
+  position: tType('Point'),
+  trial: tBoolean,
 });
 scheme.ElementHandleUncheckResult = tOptional(tObject({}));
 scheme.ElementHandleWaitForElementStateParams = tObject({
@@ -1978,11 +2083,12 @@ scheme.ElementHandleWaitForElementStateParams = tObject({
 scheme.ElementHandleWaitForElementStateResult = tOptional(tObject({}));
 scheme.ElementHandleWaitForSelectorParams = tObject({
   selector: tString,
-  strict: tOptional(tBoolean),
-  state: tOptional(tEnum(['attached', 'detached', 'visible', 'hidden'])),
+}, {
+  strict: tBoolean,
+  state: tEnum(['attached', 'detached', 'visible', 'hidden']),
 });
-scheme.ElementHandleWaitForSelectorResult = tObject({
-  element: tOptional(tChannel(['ElementHandle'])),
+scheme.ElementHandleWaitForSelectorResult = tObject({}, {
+  element: tChannel(['ElementHandle']),
 });
 scheme.LocalUtilsInitializer = tObject({
   deviceDescriptors: tArray(tObject({
@@ -1993,48 +2099,52 @@ scheme.LocalUtilsInitializer = tObject({
         width: tInt,
         height: tInt,
       }),
-      screen: tOptional(tObject({
-        width: tInt,
-        height: tInt,
-      })),
       deviceScaleFactor: tFloat,
       isMobile: tBoolean,
       hasTouch: tBoolean,
       defaultBrowserType: tEnum(['chromium', 'firefox', 'webkit']),
+    }, {
+      screen: tObject({
+        width: tInt,
+        height: tInt,
+      }),
     }),
   })),
 });
 scheme.LocalUtilsZipParams = tObject({
   zipFile: tString,
   entries: tArray(tType('NameValue')),
-  stacksId: tOptional(tString),
   mode: tEnum(['write', 'append']),
   includeSources: tBoolean,
-  additionalSources: tOptional(tArray(tString)),
+}, {
+  stacksId: tString,
+  additionalSources: tArray(tString),
 });
 scheme.LocalUtilsZipResult = tOptional(tObject({}));
 scheme.LocalUtilsHarOpenParams = tObject({
   file: tString,
 });
-scheme.LocalUtilsHarOpenResult = tObject({
-  harId: tOptional(tString),
-  error: tOptional(tString),
+scheme.LocalUtilsHarOpenResult = tObject({}, {
+  harId: tString,
+  error: tString,
 });
 scheme.LocalUtilsHarLookupParams = tObject({
   harId: tString,
   url: tString,
   method: tString,
   headers: tArray(tType('NameValue')),
-  postData: tOptional(tBinary),
   isNavigationRequest: tBoolean,
+}, {
+  postData: tBinary,
 });
 scheme.LocalUtilsHarLookupResult = tObject({
   action: tEnum(['error', 'redirect', 'fulfill', 'noentry']),
-  message: tOptional(tString),
-  redirectURL: tOptional(tString),
-  status: tOptional(tInt),
-  headers: tOptional(tArray(tType('NameValue'))),
-  body: tOptional(tBinary),
+}, {
+  message: tString,
+  redirectURL: tString,
+  status: tInt,
+  headers: tArray(tType('NameValue')),
+  body: tBinary,
 });
 scheme.LocalUtilsHarCloseParams = tObject({
   harId: tString,
@@ -2043,24 +2153,27 @@ scheme.LocalUtilsHarCloseResult = tOptional(tObject({}));
 scheme.LocalUtilsHarUnzipParams = tObject({
   zipFile: tString,
   harFile: tString,
-  resourcesDir: tOptional(tString),
+}, {
+  resourcesDir: tString,
 });
 scheme.LocalUtilsHarUnzipResult = tOptional(tObject({}));
 scheme.LocalUtilsConnectParams = tObject({
   endpoint: tString,
-  headers: tOptional(tAny),
-  exposeNetwork: tOptional(tString),
-  slowMo: tOptional(tFloat),
-  socksProxyRedirectPortForTest: tOptional(tInt),
+}, {
+  headers: tAny,
+  exposeNetwork: tString,
+  slowMo: tFloat,
+  socksProxyRedirectPortForTest: tInt,
 });
 scheme.LocalUtilsConnectResult = tObject({
   pipe: tChannel(['JsonPipe']),
   headers: tArray(tType('NameValue')),
 });
 scheme.LocalUtilsTracingStartedParams = tObject({
-  tracesDir: tOptional(tString),
   traceName: tString,
-  live: tOptional(tBoolean),
+}, {
+  tracesDir: tString,
+  live: tBoolean,
 });
 scheme.LocalUtilsTracingStartedResult = tObject({
   stacksId: tString,
@@ -2075,8 +2188,9 @@ scheme.LocalUtilsTraceDiscardedParams = tObject({
 scheme.LocalUtilsTraceDiscardedResult = tOptional(tObject({}));
 scheme.LocalUtilsGlobToRegexParams = tObject({
   glob: tString,
-  baseURL: tOptional(tString),
-  webSocketUrl: tOptional(tBoolean),
+}, {
+  baseURL: tString,
+  webSocketUrl: tBoolean,
 });
 scheme.LocalUtilsGlobToRegexResult = tObject({
   regex: tString,
@@ -2091,21 +2205,23 @@ scheme.LocalUtilsAsLocatorDescriptionResult = tObject({
 scheme.HttpCredentials = tObject({
   username: tString,
   password: tString,
-  origin: tOptional(tString),
-  send: tOptional(tEnum(['always', 'unauthorized'])),
+}, {
+  origin: tString,
+  send: tEnum(['always', 'unauthorized']),
 });
 scheme.SetNetworkCookie = tObject({
   name: tString,
   value: tString,
-  url: tOptional(tString),
-  domain: tOptional(tString),
-  path: tOptional(tString),
-  expires: tOptional(tFloat),
-  httpOnly: tOptional(tBoolean),
-  secure: tOptional(tBoolean),
-  sameSite: tOptional(tEnum(['Strict', 'Lax', 'None'])),
-  partitionKey: tOptional(tString),
-  _crHasCrossSiteAncestor: tOptional(tBoolean),
+}, {
+  url: tString,
+  domain: tString,
+  path: tString,
+  expires: tFloat,
+  httpOnly: tBoolean,
+  secure: tBoolean,
+  sameSite: tEnum(['Strict', 'Lax', 'None']),
+  partitionKey: tString,
+  _crHasCrossSiteAncestor: tBoolean,
 });
 scheme.NetworkCookie = tObject({
   name: tString,
@@ -2116,23 +2232,25 @@ scheme.NetworkCookie = tObject({
   httpOnly: tBoolean,
   secure: tBoolean,
   sameSite: tEnum(['Strict', 'Lax', 'None']),
-  partitionKey: tOptional(tString),
-  _crHasCrossSiteAncestor: tOptional(tBoolean),
+}, {
+  partitionKey: tString,
+  _crHasCrossSiteAncestor: tBoolean,
 });
 scheme.RequestInitializer = tObject({
-  frame: tOptional(tChannel(['Frame'])),
-  serviceWorker: tOptional(tChannel(['Worker'])),
   url: tString,
   resourceType: tString,
   method: tString,
-  postData: tOptional(tBinary),
   headers: tArray(tType('NameValue')),
   isNavigationRequest: tBoolean,
-  redirectedFrom: tOptional(tChannel(['Request'])),
+}, {
+  frame: tChannel(['Frame']),
+  serviceWorker: tChannel(['Worker']),
+  postData: tBinary,
+  redirectedFrom: tChannel(['Request']),
 });
 scheme.RequestResponseParams = tOptional(tObject({}));
-scheme.RequestResponseResult = tObject({
-  response: tOptional(tChannel(['Response'])),
+scheme.RequestResponseResult = tObject({}, {
+  response: tChannel(['Response']),
 });
 scheme.RequestRawRequestHeadersParams = tOptional(tObject({}));
 scheme.RequestRawRequestHeadersResult = tObject({
@@ -2145,24 +2263,25 @@ scheme.RouteRedirectNavigationRequestParams = tObject({
   url: tString,
 });
 scheme.RouteRedirectNavigationRequestResult = tOptional(tObject({}));
-scheme.RouteAbortParams = tObject({
-  errorCode: tOptional(tString),
+scheme.RouteAbortParams = tObject({}, {
+  errorCode: tString,
 });
 scheme.RouteAbortResult = tOptional(tObject({}));
 scheme.RouteContinueParams = tObject({
-  url: tOptional(tString),
-  method: tOptional(tString),
-  headers: tOptional(tArray(tType('NameValue'))),
-  postData: tOptional(tBinary),
   isFallback: tBoolean,
+}, {
+  url: tString,
+  method: tString,
+  headers: tArray(tType('NameValue')),
+  postData: tBinary,
 });
 scheme.RouteContinueResult = tOptional(tObject({}));
-scheme.RouteFulfillParams = tObject({
-  status: tOptional(tInt),
-  headers: tOptional(tArray(tType('NameValue'))),
-  body: tOptional(tString),
-  isBase64: tOptional(tBoolean),
-  fetchResponseUid: tOptional(tString),
+scheme.RouteFulfillParams = tObject({}, {
+  status: tInt,
+  headers: tArray(tType('NameValue')),
+  body: tString,
+  isBase64: tBoolean,
+  fetchResponseUid: tString,
 });
 scheme.RouteFulfillResult = tOptional(tObject({}));
 scheme.WebSocketRouteInitializer = tObject({
@@ -2178,14 +2297,16 @@ scheme.WebSocketRouteMessageFromServerEvent = tObject({
   isBase64: tBoolean,
 });
 scheme.WebSocketRouteClosePageEvent = tObject({
-  code: tOptional(tInt),
-  reason: tOptional(tString),
   wasClean: tBoolean,
+}, {
+  code: tInt,
+  reason: tString,
 });
 scheme.WebSocketRouteCloseServerEvent = tObject({
-  code: tOptional(tInt),
-  reason: tOptional(tString),
   wasClean: tBoolean,
+}, {
+  code: tInt,
+  reason: tString,
 });
 scheme.WebSocketRouteConnectParams = tOptional(tObject({}));
 scheme.WebSocketRouteConnectResult = tOptional(tObject({}));
@@ -2202,15 +2323,17 @@ scheme.WebSocketRouteSendToServerParams = tObject({
 });
 scheme.WebSocketRouteSendToServerResult = tOptional(tObject({}));
 scheme.WebSocketRouteClosePageParams = tObject({
-  code: tOptional(tInt),
-  reason: tOptional(tString),
   wasClean: tBoolean,
+}, {
+  code: tInt,
+  reason: tString,
 });
 scheme.WebSocketRouteClosePageResult = tOptional(tObject({}));
 scheme.WebSocketRouteCloseServerParams = tObject({
-  code: tOptional(tInt),
-  reason: tOptional(tString),
   wasClean: tBoolean,
+}, {
+  code: tInt,
+  reason: tString,
 });
 scheme.WebSocketRouteCloseServerResult = tOptional(tObject({}));
 scheme.ResourceTiming = tObject({
@@ -2237,12 +2360,12 @@ scheme.ResponseBodyResult = tObject({
   binary: tBinary,
 });
 scheme.ResponseSecurityDetailsParams = tOptional(tObject({}));
-scheme.ResponseSecurityDetailsResult = tObject({
-  value: tOptional(tType('SecurityDetails')),
+scheme.ResponseSecurityDetailsResult = tObject({}, {
+  value: tType('SecurityDetails'),
 });
 scheme.ResponseServerAddrParams = tOptional(tObject({}));
-scheme.ResponseServerAddrResult = tObject({
-  value: tOptional(tType('RemoteAddr')),
+scheme.ResponseServerAddrResult = tObject({}, {
+  value: tType('RemoteAddr'),
 });
 scheme.ResponseRawResponseHeadersParams = tOptional(tObject({}));
 scheme.ResponseRawResponseHeadersResult = tObject({
@@ -2256,12 +2379,12 @@ scheme.ResponseSizesParams = tOptional(tObject({}));
 scheme.ResponseSizesResult = tObject({
   sizes: tType('RequestSizes'),
 });
-scheme.SecurityDetails = tObject({
-  issuer: tOptional(tString),
-  protocol: tOptional(tString),
-  subjectName: tOptional(tString),
-  validFrom: tOptional(tFloat),
-  validTo: tOptional(tFloat),
+scheme.SecurityDetails = tObject({}, {
+  issuer: tString,
+  protocol: tString,
+  subjectName: tString,
+  validFrom: tFloat,
+  validTo: tFloat,
 });
 scheme.RequestSizes = tObject({
   requestBodySize: tInt,
@@ -2291,13 +2414,14 @@ scheme.WebSocketSocketErrorEvent = tObject({
 scheme.WebSocketCloseEvent = tOptional(tObject({}));
 scheme.PageInitializer = tObject({
   mainFrame: tChannel(['Frame']),
-  viewportSize: tOptional(tObject({
+  isClosed: tBoolean,
+}, {
+  viewportSize: tObject({
     width: tInt,
     height: tInt,
-  })),
-  isClosed: tBoolean,
-  opener: tOptional(tChannel(['Page'])),
-  video: tOptional(tChannel(['Artifact'])),
+  }),
+  opener: tChannel(['Page']),
+  video: tChannel(['Artifact']),
 });
 scheme.PageBindingCallEvent = tObject({
   binding: tChannel(['BindingCall']),
@@ -2309,11 +2433,11 @@ scheme.PageDownloadEvent = tObject({
   suggestedFilename: tString,
   artifact: tChannel(['Artifact']),
 });
-scheme.PageViewportSizeChangedEvent = tObject({
-  viewportSize: tOptional(tObject({
+scheme.PageViewportSizeChangedEvent = tObject({}, {
+  viewportSize: tObject({
     width: tInt,
     height: tInt,
-  })),
+  }),
 });
 scheme.PageFileChooserEvent = tObject({
   element: tChannel(['ElementHandle']),
@@ -2353,16 +2477,16 @@ scheme.PageAddInitScriptParams = tObject({
 scheme.PageAddInitScriptResult = tObject({
   disposable: tChannel(['Disposable']),
 });
-scheme.PageCloseParams = tObject({
-  reason: tOptional(tString),
+scheme.PageCloseParams = tObject({}, {
+  reason: tString,
 });
 scheme.PageCloseResult = tOptional(tObject({}));
 scheme.PageRunBeforeUnloadParams = tOptional(tObject({}));
 scheme.PageRunBeforeUnloadResult = tOptional(tObject({}));
 scheme.PageClearConsoleMessagesParams = tOptional(tObject({}));
 scheme.PageClearConsoleMessagesResult = tOptional(tObject({}));
-scheme.PageConsoleMessagesParams = tObject({
-  filter: tOptional(tType('ConsoleMessagesFilter')),
+scheme.PageConsoleMessagesParams = tObject({}, {
+  filter: tType('ConsoleMessagesFilter'),
 });
 scheme.PageConsoleMessagesResult = tObject({
   messages: tArray(tObject({
@@ -2377,108 +2501,112 @@ scheme.PageConsoleMessagesResult = tObject({
     timestamp: tFloat,
   })),
 });
-scheme.PageEmulateMediaParams = tObject({
-  media: tOptional(tEnum(['screen', 'print', 'no-override'])),
-  colorScheme: tOptional(tEnum(['dark', 'light', 'no-preference', 'no-override'])),
-  reducedMotion: tOptional(tEnum(['reduce', 'no-preference', 'no-override'])),
-  forcedColors: tOptional(tEnum(['active', 'none', 'no-override'])),
-  contrast: tOptional(tEnum(['no-preference', 'more', 'no-override'])),
+scheme.PageEmulateMediaParams = tObject({}, {
+  media: tEnum(['screen', 'print', 'no-override']),
+  colorScheme: tEnum(['dark', 'light', 'no-preference', 'no-override']),
+  reducedMotion: tEnum(['reduce', 'no-preference', 'no-override']),
+  forcedColors: tEnum(['active', 'none', 'no-override']),
+  contrast: tEnum(['no-preference', 'more', 'no-override']),
 });
 scheme.PageEmulateMediaResult = tOptional(tObject({}));
 scheme.PageExposeBindingParams = tObject({
   name: tString,
-  noGlobal: tOptional(tBoolean),
+}, {
+  noGlobal: tBoolean,
 });
 scheme.PageExposeBindingResult = tObject({
   disposable: tChannel(['Disposable']),
 });
-scheme.PageGoBackParams = tObject({
-  waitUntil: tOptional(tType('LifecycleEvent')),
+scheme.PageGoBackParams = tObject({}, {
+  waitUntil: tType('LifecycleEvent'),
 });
-scheme.PageGoBackResult = tObject({
-  response: tOptional(tChannel(['Response'])),
+scheme.PageGoBackResult = tObject({}, {
+  response: tChannel(['Response']),
 });
-scheme.PageGoForwardParams = tObject({
-  waitUntil: tOptional(tType('LifecycleEvent')),
+scheme.PageGoForwardParams = tObject({}, {
+  waitUntil: tType('LifecycleEvent'),
 });
-scheme.PageGoForwardResult = tObject({
-  response: tOptional(tChannel(['Response'])),
+scheme.PageGoForwardResult = tObject({}, {
+  response: tChannel(['Response']),
 });
 scheme.PageRequestGCParams = tOptional(tObject({}));
 scheme.PageRequestGCResult = tOptional(tObject({}));
 scheme.PageRegisterLocatorHandlerParams = tObject({
   selector: tString,
-  noWaitAfter: tOptional(tBoolean),
+}, {
+  noWaitAfter: tBoolean,
 });
 scheme.PageRegisterLocatorHandlerResult = tObject({
   uid: tInt,
 });
 scheme.PageResolveLocatorHandlerNoReplyParams = tObject({
   uid: tInt,
-  remove: tOptional(tBoolean),
+}, {
+  remove: tBoolean,
 });
 scheme.PageResolveLocatorHandlerNoReplyResult = tOptional(tObject({}));
 scheme.PageUnregisterLocatorHandlerParams = tObject({
   uid: tInt,
 });
 scheme.PageUnregisterLocatorHandlerResult = tOptional(tObject({}));
-scheme.PageReloadParams = tObject({
-  waitUntil: tOptional(tType('LifecycleEvent')),
+scheme.PageReloadParams = tObject({}, {
+  waitUntil: tType('LifecycleEvent'),
 });
-scheme.PageReloadResult = tObject({
-  response: tOptional(tChannel(['Response'])),
+scheme.PageReloadResult = tObject({}, {
+  response: tChannel(['Response']),
 });
 scheme.PageExpectScreenshotParams = tObject({
-  expected: tOptional(tBinary),
   isNot: tBoolean,
-  locator: tOptional(tObject({
+}, {
+  expected: tBinary,
+  locator: tObject({
+    frame: tChannel(['Frame']),
+    selector: tString,
+  }),
+  comparator: tString,
+  maxDiffPixels: tInt,
+  maxDiffPixelRatio: tFloat,
+  threshold: tFloat,
+  fullPage: tBoolean,
+  clip: tType('Rect'),
+  type: tEnum(['png', 'webp']),
+  omitBackground: tBoolean,
+  caret: tEnum(['hide', 'initial']),
+  animations: tEnum(['disabled', 'allow']),
+  scale: tEnum(['css', 'device']),
+  mask: tArray(tObject({
     frame: tChannel(['Frame']),
     selector: tString,
   })),
-  comparator: tOptional(tString),
-  maxDiffPixels: tOptional(tInt),
-  maxDiffPixelRatio: tOptional(tFloat),
-  threshold: tOptional(tFloat),
-  fullPage: tOptional(tBoolean),
-  clip: tOptional(tType('Rect')),
-  type: tOptional(tEnum(['png', 'webp'])),
-  omitBackground: tOptional(tBoolean),
-  caret: tOptional(tEnum(['hide', 'initial'])),
-  animations: tOptional(tEnum(['disabled', 'allow'])),
-  scale: tOptional(tEnum(['css', 'device'])),
-  mask: tOptional(tArray(tObject({
+  maskColor: tString,
+  style: tString,
+});
+scheme.PageExpectScreenshotResult = tObject({}, {
+  actual: tBinary,
+});
+scheme.PageExpectScreenshotErrorDetails = tObject({}, {
+  diff: tBinary,
+  customErrorMessage: tString,
+  actual: tBinary,
+  previous: tBinary,
+  timedOut: tBoolean,
+  log: tArray(tString),
+});
+scheme.PageScreenshotParams = tObject({}, {
+  type: tEnum(['png', 'jpeg', 'webp']),
+  quality: tInt,
+  fullPage: tBoolean,
+  clip: tType('Rect'),
+  omitBackground: tBoolean,
+  caret: tEnum(['hide', 'initial']),
+  animations: tEnum(['disabled', 'allow']),
+  scale: tEnum(['css', 'device']),
+  mask: tArray(tObject({
     frame: tChannel(['Frame']),
     selector: tString,
-  }))),
-  maskColor: tOptional(tString),
-  style: tOptional(tString),
-});
-scheme.PageExpectScreenshotResult = tObject({
-  actual: tOptional(tBinary),
-});
-scheme.PageExpectScreenshotErrorDetails = tObject({
-  diff: tOptional(tBinary),
-  customErrorMessage: tOptional(tString),
-  actual: tOptional(tBinary),
-  previous: tOptional(tBinary),
-  timedOut: tOptional(tBoolean),
-  log: tOptional(tArray(tString)),
-});
-scheme.PageScreenshotParams = tObject({
-  type: tOptional(tEnum(['png', 'jpeg', 'webp'])),
-  quality: tOptional(tInt),
-  fullPage: tOptional(tBoolean),
-  clip: tOptional(tType('Rect')),
-  omitBackground: tOptional(tBoolean),
-  caret: tOptional(tEnum(['hide', 'initial'])),
-  animations: tOptional(tEnum(['disabled', 'allow'])),
-  scale: tOptional(tEnum(['css', 'device'])),
-  mask: tOptional(tArray(tObject({
-    frame: tChannel(['Frame']),
-    selector: tString,
-  }))),
-  maskColor: tOptional(tString),
-  style: tOptional(tString),
+  })),
+  maskColor: tString,
+  style: tString,
 });
 scheme.PageScreenshotResult = tObject({
   binary: tBinary,
@@ -2488,20 +2616,20 @@ scheme.PageSetExtraHTTPHeadersParams = tObject({
 });
 scheme.PageSetExtraHTTPHeadersResult = tOptional(tObject({}));
 scheme.PageSetNetworkInterceptionPatternsParams = tObject({
-  patterns: tArray(tObject({
-    glob: tOptional(tString),
-    regexSource: tOptional(tString),
-    regexFlags: tOptional(tString),
-    urlPattern: tOptional(tType('URLPattern')),
+  patterns: tArray(tObject({}, {
+    glob: tString,
+    regexSource: tString,
+    regexFlags: tString,
+    urlPattern: tType('URLPattern'),
   })),
 });
 scheme.PageSetNetworkInterceptionPatternsResult = tOptional(tObject({}));
 scheme.PageSetWebSocketInterceptionPatternsParams = tObject({
-  patterns: tArray(tObject({
-    glob: tOptional(tString),
-    regexSource: tOptional(tString),
-    regexFlags: tOptional(tString),
-    urlPattern: tOptional(tType('URLPattern')),
+  patterns: tArray(tObject({}, {
+    glob: tString,
+    regexSource: tString,
+    regexFlags: tString,
+    urlPattern: tType('URLPattern'),
   })),
 });
 scheme.PageSetWebSocketInterceptionPatternsResult = tOptional(tObject({}));
@@ -2526,36 +2654,40 @@ scheme.PageKeyboardInsertTextParams = tObject({
 scheme.PageKeyboardInsertTextResult = tOptional(tObject({}));
 scheme.PageKeyboardTypeParams = tObject({
   text: tString,
-  delay: tOptional(tFloat),
+}, {
+  delay: tFloat,
 });
 scheme.PageKeyboardTypeResult = tOptional(tObject({}));
 scheme.PageKeyboardPressParams = tObject({
   key: tString,
-  delay: tOptional(tFloat),
+}, {
+  delay: tFloat,
 });
 scheme.PageKeyboardPressResult = tOptional(tObject({}));
 scheme.PageMouseMoveParams = tObject({
   x: tFloat,
   y: tFloat,
-  steps: tOptional(tInt),
+}, {
+  steps: tInt,
 });
 scheme.PageMouseMoveResult = tOptional(tObject({}));
-scheme.PageMouseDownParams = tObject({
-  button: tOptional(tEnum(['left', 'right', 'middle'])),
-  clickCount: tOptional(tInt),
+scheme.PageMouseDownParams = tObject({}, {
+  button: tEnum(['left', 'right', 'middle']),
+  clickCount: tInt,
 });
 scheme.PageMouseDownResult = tOptional(tObject({}));
-scheme.PageMouseUpParams = tObject({
-  button: tOptional(tEnum(['left', 'right', 'middle'])),
-  clickCount: tOptional(tInt),
+scheme.PageMouseUpParams = tObject({}, {
+  button: tEnum(['left', 'right', 'middle']),
+  clickCount: tInt,
 });
 scheme.PageMouseUpResult = tOptional(tObject({}));
 scheme.PageMouseClickParams = tObject({
   x: tFloat,
   y: tFloat,
-  delay: tOptional(tFloat),
-  button: tOptional(tEnum(['left', 'right', 'middle'])),
-  clickCount: tOptional(tInt),
+}, {
+  delay: tFloat,
+  button: tEnum(['left', 'right', 'middle']),
+  clickCount: tInt,
 });
 scheme.PageMouseClickResult = tOptional(tObject({}));
 scheme.PageMouseWheelParams = tObject({
@@ -2570,32 +2702,32 @@ scheme.PageTouchscreenTapParams = tObject({
 scheme.PageTouchscreenTapResult = tOptional(tObject({}));
 scheme.PageClearPageErrorsParams = tOptional(tObject({}));
 scheme.PageClearPageErrorsResult = tOptional(tObject({}));
-scheme.PagePageErrorsParams = tObject({
-  filter: tOptional(tType('ConsoleMessagesFilter')),
+scheme.PagePageErrorsParams = tObject({}, {
+  filter: tType('ConsoleMessagesFilter'),
 });
 scheme.PagePageErrorsResult = tObject({
   errors: tArray(tType('SerializedError')),
 });
-scheme.PagePdfParams = tObject({
-  scale: tOptional(tFloat),
-  displayHeaderFooter: tOptional(tBoolean),
-  headerTemplate: tOptional(tString),
-  footerTemplate: tOptional(tString),
-  printBackground: tOptional(tBoolean),
-  landscape: tOptional(tBoolean),
-  pageRanges: tOptional(tString),
-  format: tOptional(tString),
-  width: tOptional(tString),
-  height: tOptional(tString),
-  preferCSSPageSize: tOptional(tBoolean),
-  margin: tOptional(tObject({
-    top: tOptional(tString),
-    bottom: tOptional(tString),
-    left: tOptional(tString),
-    right: tOptional(tString),
-  })),
-  tagged: tOptional(tBoolean),
-  outline: tOptional(tBoolean),
+scheme.PagePdfParams = tObject({}, {
+  scale: tFloat,
+  displayHeaderFooter: tBoolean,
+  headerTemplate: tString,
+  footerTemplate: tString,
+  printBackground: tBoolean,
+  landscape: tBoolean,
+  pageRanges: tString,
+  format: tString,
+  width: tString,
+  height: tString,
+  preferCSSPageSize: tBoolean,
+  margin: tObject({}, {
+    top: tString,
+    bottom: tString,
+    left: tString,
+    right: tString,
+  }),
+  tagged: tBoolean,
+  outline: tBoolean,
 });
 scheme.PagePdfResult = tObject({
   pdf: tBinary,
@@ -2604,9 +2736,9 @@ scheme.PageRequestsParams = tOptional(tObject({}));
 scheme.PageRequestsResult = tObject({
   requests: tArray(tChannel(['Request'])),
 });
-scheme.PageStartJSCoverageParams = tObject({
-  resetOnNavigation: tOptional(tBoolean),
-  reportAnonymousScripts: tOptional(tBoolean),
+scheme.PageStartJSCoverageParams = tObject({}, {
+  resetOnNavigation: tBoolean,
+  reportAnonymousScripts: tBoolean,
 });
 scheme.PageStartJSCoverageResult = tOptional(tObject({}));
 scheme.PageStopJSCoverageParams = tOptional(tObject({}));
@@ -2614,7 +2746,6 @@ scheme.PageStopJSCoverageResult = tObject({
   entries: tArray(tObject({
     url: tString,
     scriptId: tString,
-    source: tOptional(tString),
     functions: tArray(tObject({
       functionName: tString,
       isBlockCoverage: tBoolean,
@@ -2624,21 +2755,24 @@ scheme.PageStopJSCoverageResult = tObject({
         count: tInt,
       })),
     })),
+  }, {
+    source: tString,
   })),
 });
-scheme.PageStartCSSCoverageParams = tObject({
-  resetOnNavigation: tOptional(tBoolean),
+scheme.PageStartCSSCoverageParams = tObject({}, {
+  resetOnNavigation: tBoolean,
 });
 scheme.PageStartCSSCoverageResult = tOptional(tObject({}));
 scheme.PageStopCSSCoverageParams = tOptional(tObject({}));
 scheme.PageStopCSSCoverageResult = tObject({
   entries: tArray(tObject({
     url: tString,
-    text: tOptional(tString),
     ranges: tArray(tObject({
       start: tInt,
       end: tInt,
     })),
+  }, {
+    text: tString,
   })),
 });
 scheme.PageBringToFrontParams = tOptional(tObject({}));
@@ -2653,7 +2787,8 @@ scheme.PageHideHighlightParams = tOptional(tObject({}));
 scheme.PageHideHighlightResult = tOptional(tObject({}));
 scheme.PageScreencastShowOverlayParams = tObject({
   html: tString,
-  duration: tOptional(tFloat),
+}, {
+  duration: tFloat,
 });
 scheme.PageScreencastShowOverlayResult = tObject({
   id: tString,
@@ -2664,40 +2799,41 @@ scheme.PageScreencastRemoveOverlayParams = tObject({
 scheme.PageScreencastRemoveOverlayResult = tOptional(tObject({}));
 scheme.PageScreencastChapterParams = tObject({
   title: tString,
-  description: tOptional(tString),
-  duration: tOptional(tFloat),
+}, {
+  description: tString,
+  duration: tFloat,
 });
 scheme.PageScreencastChapterResult = tOptional(tObject({}));
 scheme.PageScreencastSetOverlayVisibleParams = tObject({
   visible: tBoolean,
 });
 scheme.PageScreencastSetOverlayVisibleResult = tOptional(tObject({}));
-scheme.PageScreencastShowActionsParams = tObject({
-  duration: tOptional(tFloat),
-  position: tOptional(tEnum(['top-left', 'top', 'top-right', 'bottom-left', 'bottom', 'bottom-right'])),
-  fontSize: tOptional(tInt),
-  cursor: tOptional(tEnum(['none', 'pointer'])),
-  style: tOptional(tObject({
-    point: tOptional(tString),
-    highlight: tOptional(tString),
-    title: tOptional(tString),
-  })),
+scheme.PageScreencastShowActionsParams = tObject({}, {
+  duration: tFloat,
+  position: tEnum(['top-left', 'top', 'top-right', 'bottom-left', 'bottom', 'bottom-right']),
+  fontSize: tInt,
+  cursor: tEnum(['none', 'pointer']),
+  style: tObject({}, {
+    point: tString,
+    highlight: tString,
+    title: tString,
+  }),
 });
 scheme.PageScreencastShowActionsResult = tOptional(tObject({}));
 scheme.PageScreencastHideActionsParams = tOptional(tObject({}));
 scheme.PageScreencastHideActionsResult = tOptional(tObject({}));
-scheme.PageScreencastStartParams = tObject({
-  size: tOptional(tObject({
+scheme.PageScreencastStartParams = tObject({}, {
+  size: tObject({
     width: tInt,
     height: tInt,
-  })),
-  quality: tOptional(tInt),
-  fps: tOptional(tInt),
-  sendFrames: tOptional(tBoolean),
-  record: tOptional(tBoolean),
+  }),
+  quality: tInt,
+  fps: tInt,
+  sendFrames: tBoolean,
+  record: tBoolean,
 });
-scheme.PageScreencastStartResult = tObject({
-  artifact: tOptional(tChannel(['Artifact'])),
+scheme.PageScreencastStartResult = tObject({}, {
+  artifact: tChannel(['Artifact']),
 });
 scheme.PageScreencastFrameAckParams = tObject({
   frameId: tInt,
@@ -2724,8 +2860,8 @@ scheme.PageWebStorageGetItemParams = tObject({
   kind: tEnum(['local', 'session']),
   name: tString,
 });
-scheme.PageWebStorageGetItemResult = tObject({
-  value: tOptional(tString),
+scheme.PageWebStorageGetItemResult = tObject({}, {
+  value: tString,
 });
 scheme.PageWebStorageSetItemParams = tObject({
   kind: tEnum(['local', 'session']),
@@ -2745,7 +2881,8 @@ scheme.PageWebStorageClearResult = tOptional(tObject({}));
 scheme.RootInitializer = tOptional(tObject({}));
 scheme.RootInitializeParams = tObject({
   sdkLanguage: tType('SDKLanguage'),
-  supportsLoneSurrogates: tOptional(tBoolean),
+}, {
+  supportsLoneSurrogates: tBoolean,
 });
 scheme.RootInitializeResult = tObject({
   playwright: tChannel(['Playwright']),
@@ -2756,37 +2893,40 @@ scheme.PlaywrightInitializer = tObject({
   webkit: tChannel(['BrowserType']),
   android: tChannel(['Android']),
   electron: tChannel(['Electron']),
-  utils: tOptional(tChannel(['LocalUtils'])),
-  preLaunchedBrowser: tOptional(tChannel(['Browser'])),
-  preConnectedAndroidDevice: tOptional(tChannel(['AndroidDevice'])),
-  socksSupport: tOptional(tChannel(['SocksSupport'])),
+}, {
+  utils: tChannel(['LocalUtils']),
+  preLaunchedBrowser: tChannel(['Browser']),
+  preConnectedAndroidDevice: tChannel(['AndroidDevice']),
+  socksSupport: tChannel(['SocksSupport']),
 });
-scheme.PlaywrightNewRequestParams = tObject({
-  baseURL: tOptional(tString),
-  userAgent: tOptional(tString),
-  ignoreHTTPSErrors: tOptional(tBoolean),
-  extraHTTPHeaders: tOptional(tArray(tType('NameValue'))),
-  failOnStatusCode: tOptional(tBoolean),
-  clientCertificates: tOptional(tArray(tObject({
+scheme.PlaywrightNewRequestParams = tObject({}, {
+  baseURL: tString,
+  userAgent: tString,
+  ignoreHTTPSErrors: tBoolean,
+  extraHTTPHeaders: tArray(tType('NameValue')),
+  failOnStatusCode: tBoolean,
+  clientCertificates: tArray(tObject({
     origin: tString,
-    cert: tOptional(tBinary),
-    key: tOptional(tBinary),
-    passphrase: tOptional(tString),
-    pfx: tOptional(tBinary),
-  }))),
-  maxRedirects: tOptional(tInt),
-  httpCredentials: tOptional(tArray(tType('HttpCredentials'))),
-  proxy: tOptional(tObject({
+  }, {
+    cert: tBinary,
+    key: tBinary,
+    passphrase: tString,
+    pfx: tBinary,
+  })),
+  maxRedirects: tInt,
+  httpCredentials: tArray(tType('HttpCredentials')),
+  proxy: tObject({
     server: tString,
-    bypass: tOptional(tString),
-    username: tOptional(tString),
-    password: tOptional(tString),
-  })),
-  storageState: tOptional(tObject({
-    cookies: tOptional(tArray(tType('NetworkCookie'))),
-    origins: tOptional(tArray(tType('SetOriginStorage'))),
-  })),
-  tracesDir: tOptional(tString),
+  }, {
+    bypass: tString,
+    username: tString,
+    password: tString,
+  }),
+  storageState: tObject({}, {
+    cookies: tArray(tType('NetworkCookie')),
+    origins: tArray(tType('SetOriginStorage')),
+  }),
+  tracesDir: tString,
 });
 scheme.PlaywrightNewRequestResult = tObject({
   request: tChannel(['APIRequestContext']),
@@ -2805,9 +2945,10 @@ scheme.DebugControllerStateChangedEvent = tObject({
 });
 scheme.DebugControllerSourceChangedEvent = tObject({
   text: tString,
-  header: tOptional(tString),
-  footer: tOptional(tString),
-  actions: tOptional(tArray(tString)),
+}, {
+  header: tString,
+  footer: tString,
+  actions: tArray(tString),
 });
 scheme.DebugControllerPausedEvent = tObject({
   paused: tBoolean,
@@ -2823,13 +2964,14 @@ scheme.DebugControllerSetReportStateChangedParams = tObject({
 scheme.DebugControllerSetReportStateChangedResult = tOptional(tObject({}));
 scheme.DebugControllerSetRecorderModeParams = tObject({
   mode: tEnum(['inspecting', 'recording', 'none']),
-  testIdAttributeName: tOptional(tString),
-  generateAutoExpect: tOptional(tBoolean),
+}, {
+  testIdAttributeName: tString,
+  generateAutoExpect: tBoolean,
 });
 scheme.DebugControllerSetRecorderModeResult = tOptional(tObject({}));
-scheme.DebugControllerHighlightParams = tObject({
-  selector: tOptional(tString),
-  ariaTemplate: tOptional(tString),
+scheme.DebugControllerHighlightParams = tObject({}, {
+  selector: tString,
+  ariaTemplate: tString,
 });
 scheme.DebugControllerHighlightResult = tOptional(tObject({}));
 scheme.DebugControllerHideHighlightParams = tOptional(tObject({}));
@@ -2880,8 +3022,8 @@ scheme.JsonPipeInitializer = tOptional(tObject({}));
 scheme.JsonPipeMessageEvent = tObject({
   message: tAny,
 });
-scheme.JsonPipeClosedEvent = tObject({
-  reason: tOptional(tString),
+scheme.JsonPipeClosedEvent = tObject({}, {
+  reason: tString,
 });
 scheme.JsonPipeSendParams = tObject({
   message: tAny,
@@ -2889,27 +3031,30 @@ scheme.JsonPipeSendParams = tObject({
 scheme.JsonPipeSendResult = tOptional(tObject({}));
 scheme.JsonPipeCloseParams = tOptional(tObject({}));
 scheme.JsonPipeCloseResult = tOptional(tObject({}));
-scheme.ExpectedTextValue = tObject({
-  string: tOptional(tString),
-  regexSource: tOptional(tString),
-  regexFlags: tOptional(tString),
-  matchSubstring: tOptional(tBoolean),
-  ignoreCase: tOptional(tBoolean),
-  normalizeWhiteSpace: tOptional(tBoolean),
+scheme.ExpectedTextValue = tObject({}, {
+  string: tString,
+  regexSource: tString,
+  regexFlags: tString,
+  matchSubstring: tBoolean,
+  ignoreCase: tBoolean,
+  normalizeWhiteSpace: tBoolean,
 });
 scheme.SelectorEngine = tObject({
   name: tString,
   source: tString,
-  contentScript: tOptional(tBoolean),
+}, {
+  contentScript: tBoolean,
 });
 scheme.FormField = tObject({
   name: tString,
-  value: tOptional(tString),
-  file: tOptional(tObject({
+}, {
+  value: tString,
+  file: tObject({
     name: tString,
-    mimeType: tOptional(tString),
     buffer: tBinary,
-  })),
+  }, {
+    mimeType: tString,
+  }),
 });
 scheme.LifecycleEvent = tEnum(['load', 'domcontentloaded', 'networkidle', 'commit']);
 scheme.ConsoleMessagesFilter = tEnum(['all', 'since-navigation']);
@@ -2923,8 +3068,9 @@ scheme.RecorderSource = tObject({
     line: tInt,
     type: tString,
   })),
-  revealLine: tOptional(tInt),
-  group: tOptional(tString),
+}, {
+  revealLine: tInt,
+  group: tString,
 });
 scheme.IndexedDBDatabase = tObject({
   name: tString,
@@ -2932,58 +3078,65 @@ scheme.IndexedDBDatabase = tObject({
   stores: tArray(tObject({
     name: tString,
     autoIncrement: tBoolean,
-    keyPath: tOptional(tString),
-    keyPathArray: tOptional(tArray(tString)),
-    records: tArray(tObject({
-      key: tOptional(tAny),
-      keyEncoded: tOptional(tAny),
-      value: tOptional(tAny),
-      valueEncoded: tOptional(tAny),
+    records: tArray(tObject({}, {
+      key: tAny,
+      keyEncoded: tAny,
+      value: tAny,
+      valueEncoded: tAny,
     })),
     indexes: tArray(tObject({
       name: tString,
-      keyPath: tOptional(tString),
-      keyPathArray: tOptional(tArray(tString)),
       multiEntry: tBoolean,
       unique: tBoolean,
+    }, {
+      keyPath: tString,
+      keyPathArray: tArray(tString),
     })),
+  }, {
+    keyPath: tString,
+    keyPathArray: tArray(tString),
   })),
 });
 scheme.OPFSEntry = tObject({
   path: tString,
   type: tEnum(['file', 'directory']),
-  base64: tOptional(tString),
+}, {
+  base64: tString,
 });
 scheme.SetOriginStorage = tObject({
   origin: tString,
   localStorage: tArray(tType('NameValue')),
-  indexedDB: tOptional(tArray(tType('IndexedDBDatabase'))),
-  opfs: tOptional(tArray(tType('OPFSEntry'))),
+}, {
+  indexedDB: tArray(tType('IndexedDBDatabase')),
+  opfs: tArray(tType('OPFSEntry')),
 });
 scheme.OriginStorage = tObject({
   origin: tString,
   localStorage: tArray(tType('NameValue')),
-  indexedDB: tOptional(tArray(tType('IndexedDBDatabase'))),
-  opfs: tOptional(tArray(tType('OPFSEntry'))),
+}, {
+  indexedDB: tArray(tType('IndexedDBDatabase')),
+  opfs: tArray(tType('OPFSEntry')),
 });
-scheme.RecordHarOptions = tObject({
-  content: tOptional(tEnum(['embed', 'attach', 'omit'])),
-  mode: tOptional(tEnum(['full', 'minimal'])),
-  urlGlob: tOptional(tString),
-  urlRegexSource: tOptional(tString),
-  urlRegexFlags: tOptional(tString),
-  harPath: tOptional(tString),
-  resourcesDir: tOptional(tString),
+scheme.RecordHarOptions = tObject({}, {
+  content: tEnum(['embed', 'attach', 'omit']),
+  mode: tEnum(['full', 'minimal']),
+  urlGlob: tString,
+  urlRegexSource: tString,
+  urlRegexFlags: tString,
+  harPath: tString,
+  resourcesDir: tString,
 });
 scheme.CDPSessionInitializer = tOptional(tObject({}));
 scheme.CDPSessionEventEvent = tObject({
   method: tString,
-  params: tOptional(tAny),
+}, {
+  params: tAny,
 });
 scheme.CDPSessionCloseEvent = tOptional(tObject({}));
 scheme.CDPSessionSendParams = tObject({
   method: tString,
-  params: tOptional(tAny),
+}, {
+  params: tAny,
 });
 scheme.CDPSessionSendResult = tObject({
   result: tAny,
@@ -3004,30 +3157,34 @@ scheme.BindingCallResolveParams = tObject({
 });
 scheme.BindingCallResolveResult = tOptional(tObject({}));
 scheme.DebuggerInitializer = tOptional(tObject({}));
-scheme.DebuggerPausedStateChangedEvent = tObject({
-  pausedDetails: tOptional(tObject({
+scheme.DebuggerPausedStateChangedEvent = tObject({}, {
+  pausedDetails: tObject({
     location: tObject({
       file: tString,
-      line: tOptional(tInt),
-      column: tOptional(tInt),
+    }, {
+      line: tInt,
+      column: tInt,
     }),
     title: tString,
-    stack: tOptional(tString),
-  })),
+  }, {
+    stack: tString,
+  }),
 });
 scheme.DebuggerApiCallsUpdatedEvent = tObject({
   apiCalls: tArray(tObject({
     id: tString,
     title: tString,
-    location: tOptional(tObject({
-      file: tString,
-      line: tOptional(tInt),
-      column: tOptional(tInt),
-    })),
     newLogEntries: tArray(tString),
-    actionPoint: tOptional(tType('Point')),
     status: tEnum(['running', 'success', 'error']),
-    error: tOptional(tString),
+  }, {
+    location: tObject({
+      file: tString,
+    }, {
+      line: tInt,
+      column: tInt,
+    }),
+    actionPoint: tType('Point'),
+    error: tString,
   })),
 });
 scheme.DebuggerRequestPauseParams = tOptional(tObject({}));
@@ -3039,74 +3196,78 @@ scheme.DebuggerNextResult = tOptional(tObject({}));
 scheme.DebuggerRunToParams = tObject({
   location: tObject({
     file: tString,
-    line: tOptional(tInt),
-    column: tOptional(tInt),
+  }, {
+    line: tInt,
+    column: tInt,
   }),
 });
 scheme.DebuggerRunToResult = tOptional(tObject({}));
 scheme.DebuggerEnableParams = tOptional(tObject({}));
 scheme.DebuggerEnableResult = tOptional(tObject({}));
 scheme.DialogInitializer = tObject({
-  page: tOptional(tChannel(['Page'])),
   type: tString,
   message: tString,
   defaultValue: tString,
+}, {
+  page: tChannel(['Page']),
 });
-scheme.DialogAcceptParams = tObject({
-  promptText: tOptional(tString),
+scheme.DialogAcceptParams = tObject({}, {
+  promptText: tString,
 });
 scheme.DialogAcceptResult = tOptional(tObject({}));
 scheme.DialogDismissParams = tOptional(tObject({}));
 scheme.DialogDismissResult = tOptional(tObject({}));
-scheme.SerializedValue = tObject({
-  n: tOptional(tFloat),
-  b: tOptional(tBoolean),
-  s: tOptional(tString),
-  v: tOptional(tEnum(['null', 'undefined', 'NaN', 'Infinity', '-Infinity', '-0'])),
-  d: tOptional(tString),
-  u: tOptional(tString),
-  bi: tOptional(tString),
-  ta: tOptional(tObject({
+scheme.SerializedValue = tObject({}, {
+  n: tFloat,
+  b: tBoolean,
+  s: tString,
+  v: tEnum(['null', 'undefined', 'NaN', 'Infinity', '-Infinity', '-0']),
+  d: tString,
+  u: tString,
+  bi: tString,
+  ta: tObject({
     b: tBinary,
     k: tEnum(['i8', 'ui8', 'ui8c', 'i16', 'ui16', 'i32', 'ui32', 'f32', 'f64', 'bi64', 'bui64']),
-  })),
-  e: tOptional(tObject({
+  }),
+  e: tObject({
     m: tString,
     n: tString,
     s: tString,
-  })),
-  r: tOptional(tObject({
+  }),
+  r: tObject({
     p: tString,
     f: tString,
-  })),
-  a: tOptional(tArray(tType('SerializedValue'))),
-  o: tOptional(tArray(tObject({
+  }),
+  a: tArray(tType('SerializedValue')),
+  o: tArray(tObject({
     k: tString,
     v: tType('SerializedValue'),
-  }))),
-  h: tOptional(tInt),
-  fn: tOptional(tString),
-  id: tOptional(tInt),
-  ref: tOptional(tInt),
+  })),
+  h: tInt,
+  fn: tString,
+  id: tInt,
+  ref: tInt,
 });
 scheme.SerializedArgument = tObject({
   value: tType('SerializedValue'),
   handles: tArray(tChannel('*')),
 });
-scheme.SerializedError = tObject({
-  error: tOptional(tObject({
+scheme.SerializedError = tObject({}, {
+  error: tObject({
     message: tString,
     name: tString,
-    stack: tOptional(tString),
-    code: tOptional(tString),
-  })),
-  value: tOptional(tType('SerializedValue')),
+  }, {
+    stack: tString,
+    code: tString,
+  }),
+  value: tType('SerializedValue'),
 });
 scheme.StackFrame = tObject({
   file: tString,
   line: tInt,
   column: tInt,
-  function: tOptional(tString),
+}, {
+  function: tString,
 });
 scheme.VirtualCredential = tObject({
   id: tString,
@@ -3122,7 +3283,8 @@ scheme.SetVirtualCredential = tObject({
   userHandle: tString,
   privateKey: tString,
   publicKey: tString,
-  signCount: tOptional(tInt),
+}, {
+  signCount: tInt,
 });
 scheme.Point = tObject({
   x: tFloat,
@@ -3149,30 +3311,32 @@ scheme.NameValue = tObject({
   value: tString,
 });
 scheme.TracingInitializer = tOptional(tObject({}));
-scheme.TracingTracingStartParams = tObject({
-  name: tOptional(tString),
-  snapshotDom: tOptional(tBoolean),
-  snapshotAria: tOptional(tBoolean),
-  snapshotScreen: tOptional(tBoolean),
-  screencast: tOptional(tBoolean),
-  coverage: tOptional(tBoolean),
-  live: tOptional(tBoolean),
+scheme.TracingTracingStartParams = tObject({}, {
+  name: tString,
+  snapshotDom: tBoolean,
+  snapshotAria: tBoolean,
+  snapshotScreen: tBoolean,
+  screencast: tBoolean,
+  coverage: tBoolean,
+  live: tBoolean,
 });
 scheme.TracingTracingStartResult = tOptional(tObject({}));
-scheme.TracingTracingStartChunkParams = tObject({
-  name: tOptional(tString),
-  title: tOptional(tString),
+scheme.TracingTracingStartChunkParams = tObject({}, {
+  name: tString,
+  title: tString,
 });
 scheme.TracingTracingStartChunkResult = tObject({
   traceName: tString,
 });
 scheme.TracingTracingGroupParams = tObject({
   name: tString,
-  location: tOptional(tObject({
+}, {
+  location: tObject({
     file: tString,
-    line: tOptional(tInt),
-    column: tOptional(tInt),
-  })),
+  }, {
+    line: tInt,
+    column: tInt,
+  }),
 });
 scheme.TracingTracingGroupResult = tOptional(tObject({}));
 scheme.TracingTracingGroupEndParams = tOptional(tObject({}));
@@ -3180,26 +3344,28 @@ scheme.TracingTracingGroupEndResult = tOptional(tObject({}));
 scheme.TracingTracingStopChunkParams = tObject({
   mode: tEnum(['archive', 'discard', 'entries']),
 });
-scheme.TracingTracingStopChunkResult = tObject({
-  artifact: tOptional(tChannel(['Artifact'])),
-  entries: tOptional(tArray(tType('NameValue'))),
+scheme.TracingTracingStopChunkResult = tObject({}, {
+  artifact: tChannel(['Artifact']),
+  entries: tArray(tType('NameValue')),
 });
 scheme.TracingTracingStopParams = tOptional(tObject({}));
 scheme.TracingTracingStopResult = tOptional(tObject({}));
 scheme.TracingHarStartParams = tObject({
-  page: tOptional(tChannel(['Page'])),
   options: tType('RecordHarOptions'),
+}, {
+  page: tChannel(['Page']),
 });
 scheme.TracingHarStartResult = tObject({
   harId: tString,
 });
 scheme.TracingHarExportParams = tObject({
-  harId: tOptional(tString),
   mode: tEnum(['archive', 'entries']),
+}, {
+  harId: tString,
 });
-scheme.TracingHarExportResult = tObject({
-  artifact: tOptional(tChannel(['Artifact'])),
-  entries: tOptional(tArray(tType('NameValue'))),
+scheme.TracingHarExportResult = tObject({}, {
+  artifact: tChannel(['Artifact']),
+  entries: tArray(tType('NameValue')),
 });
 scheme.WorkerInitializer = tObject({
   url: tString,
@@ -3218,16 +3384,18 @@ scheme.WorkerConsoleEvent = tObject({
 scheme.WorkerCloseEvent = tOptional(tObject({}));
 scheme.WorkerEvaluateExpressionParams = tObject({
   expression: tString,
-  isFunction: tOptional(tBoolean),
   arg: tType('SerializedArgument'),
+}, {
+  isFunction: tBoolean,
 });
 scheme.WorkerEvaluateExpressionResult = tObject({
   value: tType('SerializedValue'),
 });
 scheme.WorkerEvaluateExpressionHandleParams = tObject({
   expression: tString,
-  isFunction: tOptional(tBoolean),
   arg: tType('SerializedArgument'),
+}, {
+  isFunction: tBoolean,
 });
 scheme.WorkerEvaluateExpressionHandleResult = tObject({
   handle: tChannel(['ElementHandle', 'JSHandle']),
