@@ -120,6 +120,8 @@ export const tObject = (s: { [key: string]: Validator }): Validator => {
   return (arg: any, path: string, context: ValidatorContext) => {
     if (Object.is(arg, null))
       throw new ValidationError(`${path}: expected object, got null`);
+    if (Array.isArray(arg))
+      throw new ValidationError(`${path}: expected object, got array`);
     if (typeof arg !== 'object')
       throw new ValidationError(`${path}: expected object, got ${typeof arg}`);
     const result: any = {};
