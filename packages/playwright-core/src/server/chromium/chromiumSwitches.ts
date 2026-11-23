@@ -31,6 +31,9 @@ const disabledFeatures = [
   'MediaRouter',
   // See https://github.com/microsoft/playwright/issues/28023
   'PaintHolding',
+  // Fullscreen should work with emulated focus, without bringing the page to front.
+  // See https://github.com/microsoft/playwright/issues/44288
+  'SuppressFullscreenFromUnfocusedView',
   // See https://github.com/microsoft/playwright/issues/32230
   'ThirdPartyStoragePartitioning',
   // Chromium 155 aborts preflighted cross-origin redirects with net::ERR_ABORTED while

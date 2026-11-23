@@ -242,7 +242,7 @@ it('CA-019 window.GestureEvent in WebKit', async ({ page, server, browserName })
   expect(type).toBe(browserName === 'webkit' ? 'function' : 'undefined');
 });
 
-it('CA-020 requestFullscreen', async ({ page, server, browserName, headless }) => {
+it('CA-020 requestFullscreen', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44288' } }, async ({ page, server, browserName, headless }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22832' });
   it.fixme(browserName === 'firefox' && !headless, 'Error: Request for fullscreen was denied because requesting element is not in the currently focused tab');
   await page.goto(server.EMPTY_PAGE);
@@ -258,6 +258,21 @@ it('CA-020 requestFullscreen', async ({ page, server, browserName, headless }) =
     return result;
   });
   expect(await page.evaluate(() => !!document.fullscreenElement)).toBeFalsy();
+
+  const [popup] = await Promise.all([
+    page.waitForEvent('popup'),
+    page.evaluate(url => window.open(url, 'popup', 'popup'), server.EMPTY_PAGE),
+  ]);
+  await popup.waitForLoadState();
+  await popup.evaluate(() => {
+    document.addEventListener('keydown', event => {
+      if (event.key === 'f')
+        document.documentElement.requestFullscreen().then(() => window['fullscreenResult'] = 'success', error => window['fullscreenResult'] = String(error));
+    });
+  });
+  await popup.keyboard.press('f');
+  await expect.poll(() => popup.evaluate(() => window['fullscreenResult'])).toBe('success');
+  expect(await popup.evaluate(() => document.fullscreenElement === document.documentElement)).toBe(true);
 });
 
 it('CA-021 should send no Content-Length header for GET requests with a Content-Type', async ({ page, server }) => {
