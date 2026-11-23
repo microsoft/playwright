@@ -67,6 +67,11 @@ test('install adds .playwright-cli/ to .gitignore', async ({ cli }, testInfo) =>
   expect(await fs.promises.readFile(testInfo.outputPath('.gitignore'), 'utf8')).toBe(expectedContent);
 });
 
+test('should git-ignore the default output directory', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44289' } }, async ({ cli, server }, testInfo) => {
+  await cli('open', server.HELLO_WORLD);
+  expect(await fs.promises.readFile(testInfo.outputPath('.playwright-cli', '.gitignore'), 'utf-8')).toBe('*\n');
+});
+
 test('install workspace w/skills', async ({ cli }, testInfo) => {
   const { output } = await cli('install', '--skills');
   expect(output).toContain(`Skill installed to \`.claude${path.sep}skills${path.sep}playwright-cli\`.`);

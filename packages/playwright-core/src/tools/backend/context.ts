@@ -588,19 +588,24 @@ export function isSuitableOutputDirectory(options: ContextOptions, dir: string):
 }
 
 export async function outputFile(options: ContextOptions, fileName: string, flags: { origin: 'code' | 'llm' }): Promise<string> {
-  const output = outputDir(options);
-  const resolvedFile = path.resolve(output, fileName);
+  const resolvedFile = path.resolve(outputDir(options), fileName);
   await checkFile(options, resolvedFile, flags);
-  if (!options.config.outputDir && !options.config.skillMode) {
-    await fs.promises.mkdir(output, { recursive: true });
-    await fs.promises.writeFile(path.join(output, '.gitignore'), '*\n', { flag: 'wx' }).catch(error => {
-      if (error.code !== 'EEXIST')
-        throw error;
-    });
-  }
+  await gitIgnoreDefaultOutputDir(options);
   await fs.promises.mkdir(path.dirname(resolvedFile), { recursive: true });
   debug('pw:mcp:file')(resolvedFile);
   return resolvedFile;
+}
+
+// The default output directory is in the workspace, and its files can contain credentials.
+async function gitIgnoreDefaultOutputDir(options: ContextOptions) {
+  if (options.config.outputDir)
+    return;
+  const dir = outputDir(options);
+  await fs.promises.mkdir(dir, { recursive: true });
+  await fs.promises.writeFile(path.join(dir, '.gitignore'), '*\n', { flag: 'wx' }).catch(error => {
+    if (error.code !== 'EEXIST')
+      throw error;
+  });
 }
 
 async function checkFile(options: ContextOptions, resolvedFilename: string, flags: { origin: 'code' | 'llm' }) {

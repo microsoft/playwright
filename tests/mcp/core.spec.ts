@@ -19,13 +19,7 @@ import fs from 'fs/promises';
 import { pathToFileURL } from 'url';
 import { test, expect } from './fixtures';
 
-test('browser_navigate', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44289' } }, async ({ client, server }, testInfo) => {
-  const cwd = testInfo.outputPath();
-  execFileSync('git', ['init', '--quiet', cwd]);
-  server.setContent('/hello-world', `
-    <title>Title</title>
-    <body>Hello, world!<script>console.log('hello')</script></body>
-  `, 'text/html');
+test('browser_navigate', async ({ client, server }) => {
   expect(await client.callTool({
     name: 'browser_navigate',
     arguments: { url: server.HELLO_WORLD },
@@ -35,11 +29,32 @@ test('browser_navigate', { annotation: { type: 'issue', description: 'https://gi
 - Page Title: Title`,
     snapshot: `- generic [active] [ref=e1]: Hello, world!`,
   });
+});
+
+test('should git-ignore the default output directory', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44289' } }, async ({ client, server }, testInfo) => {
+  const cwd = testInfo.outputPath();
+  execFileSync('git', ['init', '--quiet', cwd]);
+  server.setContent('/', `<body>Hello, world!<script>console.log('hello')</script></body>`, 'text/html');
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX },
+  });
 
   const files = await fs.readdir(testInfo.outputPath('.playwright-mcp'));
   expect(files.some(file => file.startsWith('page-') && file.endsWith('.yml'))).toBe(true);
   expect(files.some(file => file.startsWith('console-') && file.endsWith('.log'))).toBe(true);
   expect(execFileSync('git', ['status', '--porcelain', '--untracked-files=all', '--', '.playwright-mcp'], { cwd, encoding: 'utf-8' })).toBe('');
+});
+
+test('should keep an existing .gitignore in the default output directory', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44289' } }, async ({ client, server }, testInfo) => {
+  const gitIgnore = testInfo.outputPath('.playwright-mcp', '.gitignore');
+  await fs.mkdir(testInfo.outputPath('.playwright-mcp'), { recursive: true });
+  await fs.writeFile(gitIgnore, '*.log\n');
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  });
+  expect(await fs.readFile(gitIgnore, 'utf-8')).toBe('*.log\n');
 });
 
 test('browser_navigate with bare host', async ({ client, server }) => {
