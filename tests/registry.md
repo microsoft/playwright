@@ -1504,6 +1504,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `CR-042` | `library/chromium/bfcache.spec.ts` | bindings should work after restoring from bfcache |
 | `CR-045` | `library/chromium/disable-web-security.spec.ts` | test utility world in popup w/ --disable-web-security |
 | `CR-046` | `library/chromium/disable-web-security.spec.ts` | test init script w/ --disable-web-security |
+| `CR-047` | `library/chromium/chromium.spec.ts` | should navigate while a newer service worker takes over |
 
 ### CS — CSP
 

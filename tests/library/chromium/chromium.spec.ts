@@ -18,6 +18,7 @@
 import { contextTest as test, expect } from '../../config/browserTest';
 import { browserTest, playwrightTest } from '../../config/browserTest';
 
+import type http from 'http';
 import type { Page } from 'playwright-core';
 
 test('CR-001 should create a worker from a service worker', async ({ page, server }) => {
@@ -804,4 +805,71 @@ browserTest('CR-032 should not leak service worker session after context close',
   ]);
   await context.close();
   await expect.poll(() => sessions.size).toBe(sessionCount);
+});
+
+// Chromium terminates the outgoing worker with a fetch event in flight when DevTools is attached to it,
+// see ServiceWorkerVersion::OnRequestTermination. The navigation then never settles.
+test.fixme('CR-047 should navigate while a newer service worker takes over', {
+  annotation: [
+    { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44287' },
+    { type: 'issue', description: 'https://issues.chromium.org/issues/589233823' },
+  ],
+}, async ({ context, page, server }) => {
+  let version = 1;
+  server.setRoute('/sw.js', (req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/javascript', 'Cache-Control': 'no-cache' });
+    res.end(`
+      self.PW_VERSION = ${version};
+      self.addEventListener('install', () => self.skipWaiting());
+      self.addEventListener('activate', event => event.waitUntil((async () => {
+        await self.registration.navigationPreload.enable();
+        await self.clients.claim();
+      })()));
+      self.addEventListener('fetch', event => {
+        if (event.request.mode === 'navigate')
+          event.respondWith((async () => (await event.preloadResponse) ?? fetch(event.request))());
+      });
+    `);
+  });
+  const html = (text: string) => `<!DOCTYPE html><div>${text}</div><script>navigator.serviceWorker.register('/sw.js')</script>`;
+  for (const path of ['/one', '/two', '/next', '/after']) {
+    server.setRoute(path, (req, res) => {
+      res.writeHead(200, { 'Content-Type': 'text/html', 'Cache-Control': 'no-cache' });
+      res.end(html(path));
+    });
+  }
+  const held: http.ServerResponse[] = [];
+  server.setRoute('/hold', (req, res) => held.push(res));
+  const swState = (p: Page) => p.evaluate(async () => {
+    const registration = await navigator.serviceWorker.getRegistration();
+    return { controlled: !!navigator.serviceWorker.controller, waiting: registration?.waiting?.state ?? null };
+  });
+
+  try {
+    // Given a page controlled by worker v1, kept busy by a navigation that the server holds,
+    await page.goto(server.PREFIX + '/one');
+    await expect.poll(async () => (await swState(page)).controlled).toBe(true);
+    const holdRequest = server.waitForRequest('/hold');
+    page.evaluate(() => window.location.href = '/hold').catch(() => {});
+    await holdRequest;
+
+    // and worker v2 installed and waiting to take over,
+    version = 2;
+    const page2 = await context.newPage();
+    await page2.goto(server.PREFIX + '/two');
+    await page2.evaluate(() => navigator.serviceWorker.getRegistration().then(registration => registration?.update()));
+    await expect.poll(async () => (await swState(page2)).waiting).toBe('installed');
+    await page2.goto(server.PREFIX + '/next');
+
+    // when the held navigation completes and v2 takes over while another page navigates,
+    for (const res of held.splice(0))
+      res.end(html('/hold'));
+    await page2.goto(server.PREFIX + '/after', { timeout: 10_000 });
+
+    // then that navigation completes.
+    await expect(page2.locator('div')).toHaveText('/after');
+  } finally {
+    for (const res of held)
+      res.end();
+  }
 });
