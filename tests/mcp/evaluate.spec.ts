@@ -18,10 +18,7 @@ import fs from 'fs';
 
 import { test, expect } from './fixtures';
 
-test('browser_evaluate', { annotation: [
-  { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43752' },
-  { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44295' },
-] }, async ({ client, server }, testInfo) => {
+test('browser_evaluate', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43752' } }, async ({ client, server }) => {
   expect(await client.callTool({
     name: 'browser_navigate',
     arguments: { url: server.HELLO_WORLD },
@@ -38,21 +35,6 @@ test('browser_evaluate', { annotation: [
     result: `"Title"`,
     code: `await page.evaluate('() => document.title');`,
   });
-
-  const expression = `() => ['first line', 'second line', ''].join('\\n')`;
-  expect(await client.callTool({
-    name: 'browser_evaluate',
-    arguments: { function: expression },
-  })).toHaveResponse({
-    result: JSON.stringify('first line\nsecond line\n'),
-  });
-  expect(await client.callTool({
-    name: 'browser_evaluate',
-    arguments: { function: expression, filename: 'eval-out.txt' },
-  })).toHaveResponse({
-    result: expect.stringContaining('eval-out.txt'),
-  });
-  expect(await fs.promises.readFile(testInfo.outputPath('eval-out.txt'), 'utf8')).toBe('first line\nsecond line\n');
 
   server.setRoute('/sandboxed', (req, res) => {
     res.writeHead(200, {
@@ -218,6 +200,34 @@ test('browser_evaluate expression', async ({ client, server }) => {
     result: `42`,
     code: `await page.evaluate('() => (Promise.resolve(42))');`,
   });
+});
+
+test('browser_evaluate should save string result to file as plain text', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44295' } }, async ({ client, server }, testInfo) => {
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  });
+
+  const expression = `() => 'first line\\nsecond line\\n'`;
+  expect(await client.callTool({
+    name: 'browser_evaluate',
+    arguments: { function: expression, filename: 'eval-out.txt' },
+  })).toHaveResponse({
+    result: expect.stringContaining('eval-out.txt'),
+  });
+  expect(await fs.promises.readFile(testInfo.outputPath('eval-out.txt'), 'utf8')).toBe('first line\nsecond line\n');
+
+  await client.callTool({
+    name: 'browser_evaluate',
+    arguments: { function: expression, filename: 'eval-out.json' },
+  });
+  expect(await fs.promises.readFile(testInfo.outputPath('eval-out.json'), 'utf8')).toBe(JSON.stringify('first line\nsecond line\n'));
+
+  await client.callTool({
+    name: 'browser_evaluate',
+    arguments: { function: `() => ({ a: 1 })`, filename: 'eval-object.txt' },
+  });
+  expect(await fs.promises.readFile(testInfo.outputPath('eval-object.txt'), 'utf8')).toBe(JSON.stringify({ a: 1 }, null, 2));
 });
 
 test('browser_evaluate (error)', async ({ client, server }) => {

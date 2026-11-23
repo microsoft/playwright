@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import path from 'path';
 import { inspect } from 'util';
 
 import * as z from 'zod';
@@ -69,7 +70,8 @@ const evaluate = defineTabTool({
       else
         response.addCode(`await page.evaluate(${escapeWithQuotes(codeExpression)});`);
 
-      const text = isJSONValue(evalResult.result) ? JSON.stringify(evalResult.result, null, 2) : inspect(evalResult.result, {
+      const saveAsPlainText = typeof evalResult.result === 'string' && !!params.filename && path.extname(params.filename).toLowerCase() !== '.json';
+      const text = saveAsPlainText ? evalResult.result as string : isJSONValue(evalResult.result) ? JSON.stringify(evalResult.result, null, 2) : inspect(evalResult.result, {
         depth: null,
         maxArrayLength: null,
         maxStringLength: null,
@@ -77,8 +79,7 @@ const evaluate = defineTabTool({
         colors: false,
         customInspect: false,
       });
-      const data = params.filename && typeof evalResult.result === 'string' ? evalResult.result : text;
-      await response.addResult('Evaluation result', data, { prefix: 'result', ext: 'json', suggestedFilename: params.filename });
+      await response.addResult('Evaluation result', text, { prefix: 'result', ext: 'json', suggestedFilename: params.filename });
     }).catch(e => {
       response.addError(e instanceof Error ? e.message : String(e));
     });
