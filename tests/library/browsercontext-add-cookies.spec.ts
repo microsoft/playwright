@@ -309,6 +309,19 @@ it('CO-032 should set cookie with reasonable defaults', async ({ context, server
   }]);
 });
 
+it('should set the default cookie path from the URL', async ({ context, server }) => {
+  const url = server.PREFIX + '/foo/bar';
+
+  await context.addCookies([{
+    url,
+    name: 'default-path',
+    value: 'test',
+  }]);
+
+  const cookies = await context.cookies();
+  expect(cookies.find(cookie => cookie.name === 'default-path')?.path).toBe('/foo');
+});
+
 it('CO-033 should set a cookie with a path', async ({ context, page, server, browserName, isWindows, channel }) => {
   await page.goto(server.PREFIX + '/grid.html');
   await context.addCookies([{

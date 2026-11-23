@@ -173,7 +173,8 @@ export function rewriteCookies(cookies: channels.SetNetworkCookie[]): channels.S
       assert(!copy.url.startsWith('data:'), `Data URL page can not have cookie "${c.name}"`);
       const url = new URL(copy.url);
       copy.domain = url.hostname;
-      copy.path = url.pathname.substring(0, url.pathname.lastIndexOf('/') + 1);
+      const lastSlash = url.pathname.lastIndexOf('/');
+      copy.path = lastSlash > 0 ? url.pathname.substring(0, lastSlash) : '/';
       copy.secure = url.protocol === 'https:';
     }
     return copy;
