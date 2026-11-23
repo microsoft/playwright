@@ -17,34 +17,37 @@
 import { debugLogger } from '@utils/debugLogger';
 
 import type { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../transport';
-import type * as bidiMapper from 'chromium-bidi/lib/cjs/bidiMapper/BidiMapper';
-import type * as bidiCdpConnection from 'chromium-bidi/lib/cjs/cdp/CdpConnection';
-import type { ChromiumBidi } from 'chromium-bidi/lib/cjs/protocol/protocol';
-import type * as bidiTransport from 'chromium-bidi/lib/cjs/utils/transport';
+import type { BidiMapper, Protocol } from 'chromium-bidi';
+import type * as bidiCdpConnection from 'chromium-bidi/out/Default/gen/src/cdp/CdpConnection.js';
+import type * as bidiTransport from 'chromium-bidi/out/Default/gen/src/utils/transport.js';
 
-const bidiServerLogger = (prefix: string, ...args: unknown[]): void => {
-  debugLogger.log(prefix as any, args);
+const bidiServerLogger = (prefix: string) => {
+  if (!debugLogger.isEnabled(prefix as any))
+    return undefined;
+  return (...args: unknown[]): void => {
+    debugLogger.log(prefix as any, args);
+  };
 };
 
 export async function connectBidiOverCdp(cdp: ConnectionTransport): Promise<ConnectionTransport> {
   // chromium-bidi is not in our dependencies. Bundlers do not fail on a
   // missing module if its require() is inside a try block.
-  let bidiMapperModule: typeof bidiMapper;
+  let bidiMapper: typeof BidiMapper;
   let bidiCdpConnectionModule: typeof bidiCdpConnection;
   try {
-    bidiMapperModule = require('chromium-bidi/lib/cjs/bidiMapper/BidiMapper');
-    bidiCdpConnectionModule = require('chromium-bidi/lib/cjs/cdp/CdpConnection');
+    bidiMapper = require('chromium-bidi').BidiMapper;
+    bidiCdpConnectionModule = require('chromium-bidi/out/Default/gen/src/cdp/CdpConnection.js');
   } catch (error) {
     throw error;
   }
-  let server: bidiMapper.BidiServer | undefined = undefined;
+  let server: BidiMapper.BidiServer | undefined = undefined;
   const bidiTransport = new BidiTransportImpl();
   const bidiConnection = new BidiConnection(bidiTransport, () => server?.close());
   const cdpTransportImpl = new CdpTransportImpl(cdp);
   const cdpConnection = new bidiCdpConnectionModule.MapperCdpConnection(cdpTransportImpl, bidiServerLogger);
   // Make sure onclose event is propagated.
   cdp.onclose = () => bidiConnection.onclose?.();
-  server = await bidiMapperModule.BidiServer.createAndStart(
+  server = await bidiMapper.BidiServer.createAndStart(
       bidiTransport,
       cdpConnection,
       await cdpConnection.createBrowserSession(),
@@ -54,14 +57,14 @@ export async function connectBidiOverCdp(cdp: ConnectionTransport): Promise<Conn
   return bidiConnection;
 }
 
-class BidiTransportImpl implements bidiMapper.BidiTransport {
-  _handler?: (message: ChromiumBidi.Command) => Promise<void> | void;
+class BidiTransportImpl implements BidiMapper.BidiTransport {
+  _handler?: (message: Protocol.ChromiumBidi.Command) => Promise<void> | void;
   _bidiConnection!: BidiConnection;
 
-  setOnMessage(handler: (message: ChromiumBidi.Command) => Promise<void> | void) {
+  setOnMessage(handler: (message: Protocol.ChromiumBidi.Command) => Promise<void> | void) {
     this._handler = handler;
   }
-  sendMessage(message: ChromiumBidi.Message): Promise<void> | void {
+  sendMessage(message: Protocol.ChromiumBidi.Message): Promise<void> | void {
     return this._bidiConnection.onmessage?.(message as any);
   }
   close() {
