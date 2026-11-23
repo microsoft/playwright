@@ -141,7 +141,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       expect(result.exitCode).toBe(0);
     });
 
-    test('should render stdout', async ({ runInlineTest }) => {
+    test('should render stdout', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44292' } }, async ({ runInlineTest }) => {
       const result = await runInlineTest({
         'a.test.ts': `
           import colors from 'colors/safe';
@@ -151,6 +151,11 @@ for (const useIntermediateMergeReport of [false, true] as const) {
             console.log('Hello again');
             console.error('My error');
             console.error('\\0'); // null control character
+            const bytes = Buffer.from('\\u{1f916}');
+            for (const stream of [process.stdout, process.stderr]) {
+              stream.write(bytes.subarray(0, 2));
+              stream.write(bytes.subarray(2));
+            }
             test.expect("abc").toBe('abcd');
           });
         `,
@@ -159,10 +164,12 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       const testcase = xml['testsuites']['testsuite'][0]['testcase'][0];
       expect(testcase['system-out'].length).toBe(1);
       expect(testcase['system-out'][0]).toContain('[33mHello world[39m\nHello again');
+      expect(testcase['system-out'][0]).toContain('\u{1f916}');
       expect(testcase['system-out'][0]).not.toContain('u00');
       expect(testcase['system-err'][0]).toContain('My error');
+      expect(testcase['system-err'][0]).toContain('\u{1f916}');
       expect(testcase['system-err'][0]).not.toContain('\u0000'); // null control character
-      expect(testcase['failure'][0]['_']).toContain(`>  9 |             test.expect("abc").toBe('abcd');`);
+      expect(testcase['failure'][0]['_']).toContain(`> 14 |             test.expect("abc").toBe('abcd');`);
       expect(result.exitCode).toBe(1);
     });
 
