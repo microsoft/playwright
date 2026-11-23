@@ -601,9 +601,9 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `BT-096` | `library/browsertype-connect.spec.ts` | should not retain closed browsers in launch mode |
 | `BT-097` | `library/browsertype-launch-selenium.spec.ts` | selenium grid 3.141.59 standalone chromium |
 | `BT-098` | `library/browsertype-launch-selenium.spec.ts` | selenium grid 3.141.59 hub + node chromium |
-| `BT-099` | `library/browsertype-launch-selenium.spec.ts` | selenium grid 4.8.3 standalone chromium |
-| `BT-100` | `library/browsertype-launch-selenium.spec.ts` | selenium grid 4.8.3 hub + node chromium |
-| `BT-101` | `library/browsertype-launch-selenium.spec.ts` | selenium grid 4.8.3 standalone chromium broken driver |
+| `BT-099` | `library/browsertype-launch-selenium.spec.ts` | selenium grid 4.11.0 standalone chromium |
+| `BT-100` | `library/browsertype-launch-selenium.spec.ts` | selenium grid 4.11.0 hub + node chromium |
+| `BT-101` | `library/browsertype-launch-selenium.spec.ts` | selenium grid 4.11.0 standalone chromium broken driver |
 | `BT-102` | `library/browsertype-launch-selenium.spec.ts` | selenium grid 3.141.59 standalone non-chromium |
 | `BT-103` | `library/browsertype-launch-selenium.spec.ts` | selenium grid 3.141.59 standalone chromium through run-driver |
 | `BT-104` | `library/browsertype-launch-server.spec.ts` | launch server › should handle timeout |

@@ -23,7 +23,7 @@ import { oop } from '../../packages/playwright-core/lib/coreBundle';
 const chromeDriver = process.env.PWTEST_CHROMEDRIVER;
 const brokenDriver = path.join(__dirname, '..', 'assets', 'selenium-grid', 'broken-selenium-driver.js');
 let standalone_3_141_59: string;
-let selenium_4_8_3: string;
+let selenium_4_11_0: string;
 
 function writeSeleniumConfig(testInfo: TestInfo, port: number) {
   const template = path.join(__dirname, '..', 'assets', 'selenium-grid', `selenium-config-standalone.json`);
@@ -39,7 +39,7 @@ test.slow();
 
 test.beforeAll(() => {
   standalone_3_141_59 = path.join(process.env.PWTEST_SELENIUM!, 'selenium-server-standalone-3.141.59.jar');
-  selenium_4_8_3 = path.join(process.env.PWTEST_SELENIUM!, 'selenium-server-4.8.3.jar');
+  selenium_4_11_0 = path.join(process.env.PWTEST_SELENIUM!, 'selenium-server-4.11.0.jar');
 });
 
 test('BT-097 selenium grid 3.141.59 standalone chromium', async ({ browserName, childProcess, waitForPort, browserType }, testInfo) => {
@@ -98,12 +98,12 @@ test('BT-098 selenium grid 3.141.59 hub + node chromium', async ({ browserName, 
   await node.waitForOutput('Removing session');
 });
 
-test('BT-099 selenium grid 4.8.3 standalone chromium', async ({ browserName, childProcess, waitForPort, browserType }, testInfo) => {
+test('BT-099 selenium grid 4.11.0 standalone chromium', async ({ browserName, childProcess, waitForPort, browserType }, testInfo) => {
   test.skip(browserName !== 'chromium');
 
   const port = (testInfo.workerIndex * 5) + 15123;
   const grid = childProcess({
-    command: ['java', `-Dwebdriver.chrome.driver=${chromeDriver}`, '-jar', selenium_4_8_3, 'standalone', '--config', writeSeleniumConfig(testInfo, port)],
+    command: ['java', `-Dwebdriver.chrome.driver=${chromeDriver}`, '-jar', selenium_4_11_0, 'standalone', '--config', writeSeleniumConfig(testInfo, port)],
     cwd: __dirname,
   });
   await waitForPort(port);
@@ -116,24 +116,31 @@ test('BT-099 selenium grid 4.8.3 standalone chromium', async ({ browserName, chi
   await expect(page).toHaveTitle('Hello world');
   await browser.close();
 
-  expect(grid.output).toContain('Starting ChromeDriver');
-  expect(grid.output).toContain('Session created');
+  expect(grid.output).toContain('Session created by the Node');
   await grid.waitForOutput('Deleted session');
 });
 
-test('BT-100 selenium grid 4.8.3 hub + node chromium', async ({ browserName, childProcess, waitForPort, browserType }, testInfo) => {
+test('BT-100 selenium grid 4.11.0 hub + node chromium', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44231' } }, async ({ browserName, childProcess, waitForPort, browserType }, testInfo) => {
   test.skip(browserName !== 'chromium');
 
   const port = (testInfo.workerIndex * 5) + 15123;
+  const help = childProcess({
+    command: ['java', '-jar', selenium_4_11_0, 'node', '--grid-url', `http://127.0.0.1:${port}`, '--port', String(port + 1), '--help'],
+    cwd: __dirname,
+  });
+  await help.cleanExit();
+  expect(help.output).not.toContain('Was passed main parameter');
+  expect(help.output).toContain('--grid-url');
+
   const hub = childProcess({
-    command: ['java', '-jar', selenium_4_8_3, 'hub', '--port', String(port)],
+    command: ['java', '-jar', selenium_4_11_0, 'hub', '--port', String(port)],
     cwd: __dirname,
   });
   await waitForPort(port);
   const __testHookSeleniumRemoteURL = `http://127.0.0.1:${port}/`;
 
   const node = childProcess({
-    command: ['java', `-Dwebdriver.chrome.driver=${chromeDriver}`, '-jar', selenium_4_8_3, 'node', '--grid-url', `http://127.0.0.1:${port}`, '--port', String(port + 1)],
+    command: ['java', `-Dwebdriver.chrome.driver=${chromeDriver}`, '-jar', selenium_4_11_0, 'node', '--grid-url', `http://127.0.0.1:${port}`, '--port', String(port + 1)],
     cwd: __dirname,
   });
   await Promise.all([
@@ -149,16 +156,16 @@ test('BT-100 selenium grid 4.8.3 hub + node chromium', async ({ browserName, chi
   await browser.close();
 
   expect(hub.output.toLocaleLowerCase()).toContain('session request received by the distributor');
-  expect(node.output).toContain('Starting ChromeDriver');
+  expect(node.output).toContain('Session created by the Node');
   await hub.waitForOutput('Deleted session');
 });
 
-test('BT-101 selenium grid 4.8.3 standalone chromium broken driver', async ({ browserName, childProcess, waitForPort, browserType }, testInfo) => {
+test('BT-101 selenium grid 4.11.0 standalone chromium broken driver', async ({ browserName, childProcess, waitForPort, browserType }, testInfo) => {
   test.skip(browserName !== 'chromium');
 
   const port = (testInfo.workerIndex * 5) + 15123;
   const grid = childProcess({
-    command: ['java', `-Dwebdriver.chrome.driver=${brokenDriver}`, '-jar', selenium_4_8_3, 'standalone', '--config', writeSeleniumConfig(testInfo, port)],
+    command: ['java', `-Dwebdriver.chrome.driver=${brokenDriver}`, '-jar', selenium_4_11_0, 'standalone', '--config', writeSeleniumConfig(testInfo, port)],
     cwd: __dirname,
   });
   await waitForPort(port);
@@ -167,7 +174,7 @@ test('BT-101 selenium grid 4.8.3 standalone chromium broken driver', async ({ br
   const error = await browserType.launch({ __testHookSeleniumRemoteURL } as any).catch(e => e);
   expect(error.message).toContain(`Error connecting to Selenium at http://127.0.0.1:${port}/session: Could not start a new session`);
 
-  expect(grid.output).not.toContain('Starting ChromeDriver');
+  expect(grid.output).not.toContain('Session created by the Node');
 });
 
 test('BT-102 selenium grid 3.141.59 standalone non-chromium', async ({ browserName, browserType }, testInfo) => {
