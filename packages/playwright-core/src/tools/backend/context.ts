@@ -36,8 +36,6 @@ import type { SessionLog } from './sessionLog';
 import type { Disposable } from '@isomorphic/disposable';
 import type { ToolCapability } from './tool';
 import type { WebMCPToolDefinition } from './webmcp';
-// eslint-disable-next-line no-restricted-imports
-import type { Page as ClientPage } from '../../client/page';
 
 const testDebug = debug('pw:mcp:test');
 
@@ -229,7 +227,7 @@ export class Context {
     await this.ensureBrowserContext();
     const crashed = this._currentTab?.crashed;
     if (crashed) {
-      await this._currentTab!.page.close().catch(() => {});
+      await this._currentTab!.close().catch(() => {});
       this._setCurrentTab(undefined);
     }
     if (!this._currentTab)
@@ -245,7 +243,7 @@ export class Context {
     if (!tab)
       throw new Error(`Tab ${index} not found`);
     const url = tab.page.url();
-    await tab.page.close();
+    await tab.close();
     return url;
   }
 
@@ -395,7 +393,7 @@ export class Context {
     if (this._currentTab === tab)
       this._setCurrentTab(this._tabs[Math.min(index, this._tabs.length - 1)]);
 
-    if (!this._tabs.length && this.options.onLastPageClosed && !(tab.page as ClientPage)._closeWasCalled)
+    if (!this._tabs.length && this.options.onLastPageClosed && !tab.closeWasCalled)
       this.options.onLastPageClosed();
   }
 
