@@ -110,13 +110,22 @@ test('user changes the title and the color of the group of a client', async ({ u
   await expect.poll(user.groups).toEqual([{ title: 'Research', color: 'green', tabs: ['Alpha', 'Beta'] }]);
 });
 
-test('tabs that the user picks from two windows go into one group', async ({ user, connect }) => {
+test('tabs that the user picks from two windows go into one group', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44302' },
+}, async ({ user, connect }) => {
   await user.openTab('Alpha');
   await user.openTab('Beta');
   await user.dragIntoNewWindow('Beta');
+  const windowId = await user.chrome(async (chrome, tabOf) => {
+    await chrome.windows.update((await tabOf('Beta')).windowId, { focused: true });
+    return (await tabOf('Alpha')).windowId;
+  });
 
   const client = await connect('worker', { tabs: ['Alpha', 'Beta'] });
   await client.expectControls('Alpha');
   await client.expectControls('Beta');
   await expect.poll(user.groups).toEqual([{ title: 'Playwright · worker', color: 'green', tabs: ['Alpha', 'Beta'] }]);
+  expect(await user.chrome(async (chrome, tabOf) => {
+    return [(await tabOf('Alpha')).windowId, (await tabOf('Beta')).windowId];
+  })).toEqual([windowId, windowId]);
 });
