@@ -223,6 +223,7 @@ export class FullProjectInternal {
     this.workers = projectConfig.workers ? resolveWorkers(projectConfig.workers) : undefined;
     if (configCLIOverrides.debug && this.workers)
       this.workers = 1;
+    this.project.workers = this.workers;
     this.default = projectConfig.default ?? true;
   }
 }

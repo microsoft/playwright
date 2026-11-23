@@ -1000,7 +1000,7 @@ test('onError in the report', async ({ runInlineTest, mergeReports, showReport, 
   await expect(page.getByTestId('report-errors')).toContainText('(@macos-node16-ttest) Error: Error in teardown');
 });
 
-test('preserve config fields', async ({ runInlineTest, mergeReports }) => {
+test('preserve config fields', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44264' } }, async ({ runInlineTest, mergeReports }) => {
   const reportDir = test.info().outputPath('blob-report');
   const config: PlaywrightTestConfig = {
     // Runner options:
@@ -1012,6 +1012,10 @@ test('preserve config fields', async ({ runInlineTest, mergeReports }) => {
       'b': 100,
     },
     workers: 1,
+    projects: [
+      { name: 'limited', workers: 10 },
+      { name: 'unlimited' },
+    ],
     retries: 1,
     reporter: [['blob', { outputDir: `${reportDir.replace(/\\/g, '/')}` }]],
     // Reporter options:
@@ -1080,6 +1084,10 @@ test('preserve config fields', async ({ runInlineTest, mergeReports }) => {
   expect(json.failOnFlakyTests).toBe(config.failOnFlakyTests);
   expect(json.metadata).toEqual(expect.objectContaining(config.metadata));
   expect(json.workers).toBe(2);
+  expect(json.projects.map(project => [project.name, project.workers])).toEqual([
+    ['limited', 10],
+    ['unlimited', undefined],
+  ]);
   expect(json.version).toBeTruthy();
   expect(json.version).not.toEqual(test.info().config.version);
   // Reporter config parameters.

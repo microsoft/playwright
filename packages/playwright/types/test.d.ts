@@ -964,6 +964,16 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
    * See [testProject.timeout](https://playwright.dev/docs/api/class-testproject#test-project-timeout).
    */
   timeout: number;
+
+  /**
+   * The project-specific worker limit from
+   * [testProject.workers](https://playwright.dev/docs/api/class-testproject#test-project-workers), with percentages
+   * resolved to a number. This is `undefined` when no project-specific limit is configured. The global
+   * [fullConfig.workers](https://playwright.dev/docs/api/class-fullconfig#full-config-workers) limit still applies, so
+   * this value can be larger than the number of workers available to the project. When running with `--debug`, a
+   * configured project-specific limit is set to `1`.
+   */
+  workers?: number;
 }
 
 type LiteralUnion<T extends U, U = string> = T | (U & { zz_IGNORE_ME?: never });

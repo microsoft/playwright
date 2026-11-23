@@ -57,6 +57,7 @@ export type JsonProject = {
   testMatch: JsonPattern[];
   timeout: number;
   use: { [key: string]: any };
+  workers?: number;
   ignoreSnapshots?: boolean;
 };
 
@@ -483,6 +484,7 @@ export class TeleReporterReceiver {
       grepInvert: parseRegexPatterns(project.grepInvert) as RegExp[],
       dependencies: project.dependencies,
       teardown: project.teardown,
+      workers: project.workers,
       snapshotDir: this._absolutePath(project.snapshotDir),
       ignoreSnapshots: project.ignoreSnapshots ?? false,
       use: project.use,
