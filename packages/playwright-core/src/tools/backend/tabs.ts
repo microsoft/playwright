@@ -35,6 +35,7 @@ const browserTabs = defineTool({
   },
 
   handle: async (context, params, response) => {
+    await context.ensureBrowserContext();
     switch (params.action) {
       case 'list': {
         await context.ensureTab();
