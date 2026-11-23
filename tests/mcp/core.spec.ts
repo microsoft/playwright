@@ -14,11 +14,18 @@
  * limitations under the License.
  */
 
+import { execFileSync } from 'child_process';
 import fs from 'fs/promises';
 import { pathToFileURL } from 'url';
 import { test, expect } from './fixtures';
 
-test('browser_navigate', async ({ client, server }) => {
+test('browser_navigate', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44289' } }, async ({ client, server }, testInfo) => {
+  const cwd = testInfo.outputPath();
+  execFileSync('git', ['init', '--quiet', cwd]);
+  server.setContent('/hello-world', `
+    <title>Title</title>
+    <body>Hello, world!<script>console.log('hello')</script></body>
+  `, 'text/html');
   expect(await client.callTool({
     name: 'browser_navigate',
     arguments: { url: server.HELLO_WORLD },
@@ -28,6 +35,11 @@ test('browser_navigate', async ({ client, server }) => {
 - Page Title: Title`,
     snapshot: `- generic [active] [ref=e1]: Hello, world!`,
   });
+
+  const files = await fs.readdir(testInfo.outputPath('.playwright-mcp'));
+  expect(files.some(file => file.startsWith('page-') && file.endsWith('.yml'))).toBe(true);
+  expect(files.some(file => file.startsWith('console-') && file.endsWith('.log'))).toBe(true);
+  expect(execFileSync('git', ['status', '--porcelain', '--untracked-files=all', '--', '.playwright-mcp'], { cwd, encoding: 'utf-8' })).toBe('');
 });
 
 test('browser_navigate with bare host', async ({ client, server }) => {

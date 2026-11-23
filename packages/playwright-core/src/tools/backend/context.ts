@@ -588,8 +588,16 @@ export function isSuitableOutputDirectory(options: ContextOptions, dir: string):
 }
 
 export async function outputFile(options: ContextOptions, fileName: string, flags: { origin: 'code' | 'llm' }): Promise<string> {
-  const resolvedFile = path.resolve(outputDir(options), fileName);
+  const output = outputDir(options);
+  const resolvedFile = path.resolve(output, fileName);
   await checkFile(options, resolvedFile, flags);
+  if (!options.config.outputDir && !options.config.skillMode) {
+    await fs.promises.mkdir(output, { recursive: true });
+    await fs.promises.writeFile(path.join(output, '.gitignore'), '*\n', { flag: 'wx' }).catch(error => {
+      if (error.code !== 'EEXIST')
+        throw error;
+    });
+  }
   await fs.promises.mkdir(path.dirname(resolvedFile), { recursive: true });
   debug('pw:mcp:file')(resolvedFile);
   return resolvedFile;
