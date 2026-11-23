@@ -26,7 +26,6 @@ import { registryDirectory } from './registry';
 import { nullProgress, ProgressController } from './progress';
 
 import type { BrowserType } from './browserType';
-import type { CRPage } from './chromium/crPage';
 import type { Page } from './page';
 import type * as types from './types';
 
@@ -92,10 +91,7 @@ export async function launchApp(browserType: BrowserType, options: {
 
 async function installAppIcon(page: Page) {
   const icon = await fs.promises.readFile(libPath('server', 'chromium', 'appIcon.png'));
-  const crPage = page.delegate as CRPage;
-  await crPage._mainFrameSession._client.send('Browser.setDockTile', {
-    image: icon.toString('base64')
-  });
+  await page.setDockTile(icon);
 }
 
 // The settings file is data. Only an object with string values gets into the page.
