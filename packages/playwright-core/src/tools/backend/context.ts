@@ -596,7 +596,6 @@ export async function outputFile(options: ContextOptions, fileName: string, flag
   return resolvedFile;
 }
 
-// The default output directory is in the workspace, and its files can contain credentials.
 async function gitIgnoreDefaultOutputDir(options: ContextOptions) {
   if (options.config.outputDir)
     return;
