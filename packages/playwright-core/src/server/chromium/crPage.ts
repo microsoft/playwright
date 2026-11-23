@@ -109,10 +109,10 @@ export class CRPage implements PageDelegate {
     this._networkManager = new CRNetworkManager(this._page, null);
     // Sync any browser context state to the network manager. This does not talk over CDP because
     // we have not connected any sessions to the network manager yet.
-    this.updateOffline();
-    this.updateExtraHTTPHeaders();
-    this.updateHttpCredentials();
-    this.updateRequestInterception();
+    void this.updateOffline();
+    void this.updateExtraHTTPHeaders();
+    void this.updateHttpCredentials();
+    void this.updateRequestInterception();
     this._mainFrameSession = new FrameSession(this, client, targetId, null);
     this._sessions.set(targetId, this._mainFrameSession);
     if (opener && !browserContext._options.noDefaultViewport) {
@@ -510,7 +510,7 @@ class FrameSession {
 
         for (const frame of localFrames) {
           // Note: frames might be removed before we send these.
-          this._client._sendMayFail('Page.createIsolatedWorld', {
+          void this._client._sendMayFail('Page.createIsolatedWorld', {
             frameId: frame._id,
             grantUniveralAccess: true,
             worldName: this._crPage.utilityWorldName,
@@ -523,7 +523,7 @@ class FrameSession {
           // Ignore lifecycle events, worlds and bindings for the initial empty page. It is never the final page
           // hence we are going to get more lifecycle updates after the actual navigation has
           // started (even if the target url is about:blank).
-          lifecycleEventsEnabled.catch(e => {}).then(() => {
+          void lifecycleEventsEnabled.catch(e => {}).then(() => {
             this._eventListeners.push(eventsHelper.addEventListener(this._client, 'Page.lifecycleEvent', event => this._onLifecycleEvent(event)));
           });
         } else {
@@ -794,7 +794,7 @@ class FrameSession {
       // with the browser-level session's Network.enable and lose the main script's Network.responseReceived.
       // See https://issues.chromium.org/issues/578112291.
       // TODO: remove this whole workaround block once the upstream issue is fixed.
-      parentSession._sendMayFail('Target.detachFromTarget', { sessionId: event.sessionId });
+      void parentSession._sendMayFail('Target.detachFromTarget', { sessionId: event.sessionId });
       return;
     }
 
@@ -819,15 +819,15 @@ class FrameSession {
     else
       worker.workerScriptLoaded();
     // This might fail if the target is closed before we initialize.
-    session._sendMayFail('Runtime.enable');
+    void session._sendMayFail('Runtime.enable');
     // Dedicated workers inherit the user agent, but not the Accept-Language and
     // navigator.languages that the page's user agent override sets from the locale.
     const options = this._crPage._browserContext._options;
     if (options.userAgent || options.locale)
       this._updateUserAgent(session).catch(() => {});
     this._crPage._networkManager.addSession(session, this._page.frameManager.frame(event.targetInfo.parentFrameId ?? this._targetId) ?? undefined).catch(() => {});
-    session._sendMayFail('Runtime.runIfWaitingForDebugger');
-    session._sendMayFail('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true });
+    void session._sendMayFail('Runtime.runIfWaitingForDebugger');
+    void session._sendMayFail('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true });
     session.on('Target.attachedToTarget', event => this._onAttachedToTarget(session, event));
     session.on('Target.detachedFromTarget', event => this._onDetachedFromTarget(session, event));
     session.on('Runtime.consoleAPICalled', event => {
@@ -871,7 +871,7 @@ class FrameSession {
     // In this case we don't know whether this is a remote frame detach,
     // or just a remote -> local transition. In the latter case, frameAttached
     // is already inflight, so let's make a safe roundtrip to ensure it arrives.
-    this._client.send('Page.enable').catch(e => null).then(() => {
+    void this._client.send('Page.enable').catch(e => null).then(() => {
       // Child was not swapped in - that means frameAttached did not happen and
       // this is remote detach rather than remote -> local swap.
       if (!childFrameSession._swappedIn)
@@ -953,8 +953,8 @@ class FrameSession {
 
   _onLogEntryAdded(event: Protocol.Log.entryAddedPayload) {
     const { level, text, args, source, url, lineNumber } = event.entry;
-    if (args)
-      args.map(arg => releaseObject(this._client, arg.objectId!));
+    for (const arg of args || [])
+      void releaseObject(this._client, arg.objectId!);
     if (source !== 'worker') {
       const location: types.ConsoleMessageLocation = {
         url: url || '',
@@ -998,7 +998,7 @@ class FrameSession {
       viewportWidth: payload.metadata.deviceWidth,
       viewportHeight: payload.metadata.deviceHeight,
     }).then(() => {
-      this._client._sendMayFail('Page.screencastFrameAck', { sessionId: payload.sessionId });
+      void this._client._sendMayFail('Page.screencastFrameAck', { sessionId: payload.sessionId });
     });
   }
 

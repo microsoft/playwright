@@ -152,7 +152,7 @@ export class BidiPage implements PageDelegate {
     const context = new dom.FrameExecutionContext(delegate, frame, 'main');
     frame.contextCreated('main', context);
     this._contextIdToContext.set(realmInfo.realm, context);
-    this._createUtilityWorld(realmInfo, frame, context);
+    void this._createUtilityWorld(realmInfo, frame, context);
   }
 
   private async _createUtilityWorld(realmInfo: bidi.Script.WindowRealmInfo, frame: frames.Frame, mainContext: dom.FrameExecutionContext) {
@@ -502,7 +502,7 @@ export class BidiPage implements PageDelegate {
 
   async closePage(runBeforeUnload: boolean): Promise<void> {
     if (runBeforeUnload) {
-      this._session.sendMayFail('browsingContext.close', {
+      void this._session.sendMayFail('browsingContext.close', {
         context: this._session.sessionId,
         promptUnload: runBeforeUnload,
       });

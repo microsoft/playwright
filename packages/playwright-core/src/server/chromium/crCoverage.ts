@@ -95,7 +95,7 @@ class JSCoverage {
   }
 
   _onDebuggerPaused() {
-    this._client.send('Debugger.resume');
+    void this._client._sendMayFail('Debugger.resume');
   }
 
   _onExecutionContextsCleared() {

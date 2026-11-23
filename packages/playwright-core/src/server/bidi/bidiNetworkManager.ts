@@ -85,7 +85,7 @@ export class BidiNetworkManager {
           ];
           if (requestHeaders['access-control-request-headers'])
             responseHeaders.push({ name: 'Access-Control-Allow-Headers', value: requestHeaders['access-control-request-headers'] });
-          this._session.sendMayFail('network.provideResponse', {
+          void this._session.sendMayFail('network.provideResponse', {
             request: param.request.request,
             statusCode: 204,
             headers: toBidiHeaders(responseHeaders),
@@ -111,7 +111,7 @@ export class BidiNetworkManager {
           params = toBidiRequestHeaders(headersOverride);
         }
 
-        this._session.sendMayFail('network.continueRequest', {
+        void this._session.sendMayFail('network.continueRequest', {
           request: param.request.request,
           ...params,
         });
@@ -209,13 +209,13 @@ export class BidiNetworkManager {
     const attemptKey = authAttemptKey(params.request.request, isProxy);
     if (credentials) {
       if (this._attemptedAuthentications.has(attemptKey)) {
-        this._session.sendMayFail('network.continueWithAuth', {
+        void this._session.sendMayFail('network.continueWithAuth', {
           request: params.request.request,
           action: 'cancel',
         });
       } else {
         this._attemptedAuthentications.add(attemptKey);
-        this._session.sendMayFail('network.continueWithAuth', {
+        void this._session.sendMayFail('network.continueWithAuth', {
           request: params.request.request,
           action: 'provideCredentials',
           credentials: {
@@ -226,7 +226,7 @@ export class BidiNetworkManager {
         });
       }
     } else {
-      this._session.sendMayFail('network.continueWithAuth', {
+      void this._session.sendMayFail('network.continueWithAuth', {
         request: params.request.request,
         action: 'cancel',
       });

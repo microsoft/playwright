@@ -86,7 +86,7 @@ export class FFConnection extends EventEmitter {
     this._transport.onclose = undefined;
     this._browserDisconnectedLogs = helper.formatBrowserLogs(this._browserLogsCollector.recentLogs(), reason);
     this.rootSession.dispose();
-    Promise.resolve().then(() => this.emit(ConnectionEvents.Disconnected));
+    void Promise.resolve().then(() => this.emit(ConnectionEvents.Disconnected));
   }
 
   close() {
@@ -163,7 +163,7 @@ export class FFSession extends EventEmitter<Protocol.EventMap> {
         }
       }
     } else {
-      Promise.resolve().then(() => (this.emit as any)(object.method, object.params));
+      void Promise.resolve().then(() => (this.emit as any)(object.method, object.params));
     }
   }
 

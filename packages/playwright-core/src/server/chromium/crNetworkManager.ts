@@ -240,7 +240,7 @@ export class CRNetworkManager {
       this._attemptedAuthentications.add(attemptKey);
     }
     const { username, password } = credentials || { username: undefined, password: undefined };
-    sessionInfo.session._sendMayFail('Fetch.continueWithAuth', {
+    void sessionInfo.session._sendMayFail('Fetch.continueWithAuth', {
       requestId: event.requestId,
       authChallengeResponse: { response, username, password },
     });
@@ -250,7 +250,7 @@ export class CRNetworkManager {
     if (!event.networkId) {
       // Fetch without networkId means that request was not recognized by inspector, and
       // it will never receive Network.requestWillBeSent. Continue the request to not affect it.
-      sessionInfo.session._sendMayFail('Fetch.continueRequest', { requestId: event.requestId });
+      void sessionInfo.session._sendMayFail('Fetch.continueRequest', { requestId: event.requestId });
       return;
     }
     if (event.request.url.startsWith('data:'))
@@ -274,7 +274,7 @@ export class CRNetworkManager {
         //
         // Note: make sure not to prematurely continue the redirect, which shares the
         // `networkId` between the original request and the redirect.
-        sessionInfo.session._sendMayFail('Fetch.continueRequest', {
+        void sessionInfo.session._sendMayFail('Fetch.continueRequest', {
           ...alreadyContinuedParams,
           requestId: event.requestId,
         });
@@ -285,7 +285,7 @@ export class CRNetworkManager {
         // It can still be paused if interception is enabled again before the request
         // reaches the network, for example when a service worker holds it. Nothing else
         // will continue it, so continue it now.
-        sessionInfo.session._sendMayFail('Fetch.continueRequest', { requestId: event.requestId });
+        void sessionInfo.session._sendMayFail('Fetch.continueRequest', { requestId: event.requestId });
         return;
       }
       this._requestIdToRequestPausedEvent.set(requestId, { sessionInfo, event });
@@ -333,7 +333,7 @@ export class CRNetworkManager {
       ];
       if (requestHeaders['Access-Control-Request-Headers'])
         responseHeaders.push({ name: 'Access-Control-Allow-Headers', value: requestHeaders['Access-Control-Request-Headers'] });
-      requestPausedSessionInfo!.session._sendMayFail('Fetch.fulfillRequest', {
+      void requestPausedSessionInfo!.session._sendMayFail('Fetch.fulfillRequest', {
         requestId: requestPausedEvent.requestId,
         responseCode: 204,
         responsePhrase: network.statusText(204),
@@ -346,7 +346,7 @@ export class CRNetworkManager {
     // Non-service-worker requests MUST have a frame—if they don't, we pretend there was no request
     if (!frame && !this._serviceWorker) {
       if (requestPausedEvent)
-        requestPausedSessionInfo!.session._sendMayFail('Fetch.continueRequest', { requestId: requestPausedEvent.requestId });
+        void requestPausedSessionInfo!.session._sendMayFail('Fetch.continueRequest', { requestId: requestPausedEvent.requestId });
       return;
     }
 
@@ -361,7 +361,7 @@ export class CRNetworkManager {
           const originalHeaders = Object.entries(requestPausedEvent.request.headers).map(([name, value]) => ({ name, value }));
           headersOverride = removeCookieHeader(network.applyHeadersOverrides(originalHeaders, headersOverride));
         }
-        requestPausedSessionInfo!.session._sendMayFail('Fetch.continueRequest', { requestId: requestPausedEvent.requestId, headers: headersOverride });
+        void requestPausedSessionInfo!.session._sendMayFail('Fetch.continueRequest', { requestId: requestPausedEvent.requestId, headers: headersOverride });
       } else {
         route = new RouteImpl(requestPausedSessionInfo!.session, requestPausedEvent.requestId);
       }
@@ -496,7 +496,7 @@ export class CRNetworkManager {
     const response = request.request._existingResponse();
     if (response) {
       response.setTransferSize(event.encodedDataLength);
-      response.responseHeadersSize().then(size => response.setEncodedBodySize(event.encodedDataLength - size));
+      void response.responseHeadersSize().then(size => response.setEncodedBodySize(event.encodedDataLength - size));
       response._requestFinished(helper.secondsToRoundishMillis(event.timestamp - request._timestamp));
     }
     this._deleteRequest(request);

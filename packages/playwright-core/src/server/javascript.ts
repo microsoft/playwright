@@ -292,7 +292,8 @@ export async function evaluateExpression(context: ExecutionContext, expression: 
   try {
     return await context._evaluateWithArguments(script, options.returnByValue || false, utilityScriptValues, utilityScriptObjects);
   } finally {
-    toDispose.map(handlePromise => handlePromise.then(handle => handle.dispose()));
+    for (const handlePromise of toDispose)
+      void handlePromise.then(handle => handle.dispose());
   }
 }
 

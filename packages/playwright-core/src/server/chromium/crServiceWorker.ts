@@ -51,11 +51,11 @@ export class CRServiceWorker extends Worker {
       session.on('Inspector.workerScriptLoaded', () => this.workerScriptLoaded());
 
     if (this._networkManager && this._isNetworkInspectionEnabled()) {
-      this.updateRequestInterception();
-      this.updateExtraHTTPHeaders();
-      this.updateHttpCredentials();
-      this.updateOffline();
-      this.updateUserAgent();
+      void this.updateRequestInterception();
+      void this.updateExtraHTTPHeaders();
+      void this.updateHttpCredentials();
+      void this.updateOffline();
+      void this.updateUserAgent();
       this._networkManager.addSession(session, undefined, true /* isMain */).catch(() => {});
     }
 
@@ -73,7 +73,7 @@ export class CRServiceWorker extends Worker {
     session.send('Runtime.runIfWaitingForDebugger').catch(e => {});
     session.on('Inspector.targetReloadedAfterCrash', () => {
       // Resume service worker after restart.
-      session._sendMayFail('Runtime.runIfWaitingForDebugger', {});
+      void session._sendMayFail('Runtime.runIfWaitingForDebugger', {});
     });
   }
 

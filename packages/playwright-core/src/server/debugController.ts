@@ -108,8 +108,8 @@ export class DebugController extends SdkObject {
     }
     // Toggle the mode.
     for (const recorder of await progress.race(this._allRecorders())) {
-      recorder.hideHighlightedSelector();
-      recorder.setMode(params.mode);
+      void recorder.hideHighlightedSelector();
+      void recorder.setMode(params.mode);
     }
   }
 

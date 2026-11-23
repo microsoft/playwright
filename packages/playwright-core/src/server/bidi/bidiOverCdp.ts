@@ -79,7 +79,7 @@ class BidiConnection implements ConnectionTransport {
     this._closeCallback = closeCallback;
   }
   send(s: ProtocolRequest): void {
-    this._bidiTransport._handler?.(s as any);
+    void this._bidiTransport._handler?.(s as any);
   }
   close(): void {
     this._closeCallback();
@@ -96,7 +96,7 @@ class CdpTransportImpl implements bidiTransport.Transport {
   constructor(connection: ConnectionTransport) {
     this._connection = connection;
     this._connection.onmessage = message => {
-      this._handler?.(JSON.stringify(message));
+      void this._handler?.(JSON.stringify(message));
     };
   }
   setOnMessage(handler: (message: string) => Promise<void> | void) {

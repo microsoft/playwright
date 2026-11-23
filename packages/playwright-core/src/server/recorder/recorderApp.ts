@@ -81,7 +81,7 @@ export class RecorderApp {
     this._selectedGeneratorId = this._primaryGeneratorId;
     for (const languageGenerator of languageSet()) {
       if (languageGenerator.id === this._primaryGeneratorId)
-        this._recorder.setLanguage(languageGenerator.highlighter);
+        void this._recorder.setLanguage(languageGenerator.highlighter);
     }
   }
 
@@ -98,7 +98,7 @@ export class RecorderApp {
 
         const uri = route.request().url().substring('https://playwright/'.length);
         const file = path.join(libPath('vite', 'recorder'), uri);
-        fs.promises.readFile(file).then(buffer => {
+        void fs.promises.readFile(file).then(buffer => {
           route.fulfill({
             status: 200,
             headers: [
