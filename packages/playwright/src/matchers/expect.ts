@@ -407,16 +407,16 @@ function invokeMatcher(
   if (typeof actual === 'function')
     actual = actual();
   if (!isPromise(actual))
-    return { pass: false, message: createExpectedPromiseMessage(matcherName, isNot, promise, actual) };
+    return { pass: isNot, message: createExpectedPromiseMessage(matcherName, isNot, promise, actual) };
 
   if (promise === 'resolves') {
     return actual.then(
         result => matcher.call(matcherContext, result, ...args) as MatcherResult | Promise<MatcherResult>,
-        error => ({ pass: false, message: createExpectedToResolveMessage(matcherName, isNot, promise, error) }),
+        error => ({ pass: isNot, message: createExpectedToResolveMessage(matcherName, isNot, promise, error) }),
     );
   } else {
     return actual.then(
-        result => ({ pass: false, message: createExpectedToRejectMessage(matcherName, isNot, promise, result) }),
+        result => ({ pass: isNot, message: createExpectedToRejectMessage(matcherName, isNot, promise, result) }),
         error => matcher.call(matcherContext, error, ...args) as MatcherResult | Promise<MatcherResult>,
     );
   }

@@ -1378,3 +1378,30 @@ test('should account for undefined matcherResult', async ({ runInlineTest }) => 
   expect(result.output).toContain('Received promise resolved instead of rejected');
   expect(result.output).toContain('Resolved to value: undefined');
 });
+
+test('should preserve promise failures with negated matchers', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44331' } }, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'example.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('resolves.not fails on rejection', async () => {
+        await expect(Promise.reject(new Error('request failed'))).resolves.not.toBe('cached');
+      });
+      test('rejects.not fails on fulfillment', async () => {
+        await expect(Promise.resolve('saved')).rejects.not.toThrow('timeout');
+      });
+      test('resolves.not fails without a promise', async () => {
+        await expect('saved').resolves.not.toBe('cached');
+      });
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(0);
+  expect(result.failed).toBe(3);
+  expect(result.output).toContain('Error: expect(received).resolves.not.toBe()');
+  expect(result.output).toContain('Received promise rejected instead of resolved');
+  expect(result.output).toContain('Rejected to value: [Error: request failed]');
+  expect(result.output).toContain('Error: expect(received).rejects.not.toThrow()');
+  expect(result.output).toContain('Received promise resolved instead of rejected');
+  expect(result.output).toContain('Resolved to value: "saved"');
+  expect(result.output).toContain('received value must be a promise or a function returning a promise');
+});
