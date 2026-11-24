@@ -35,9 +35,10 @@ const kLineBreak = /\r\n|[\n\r\u2028\u2029]/;
 export function codeFrame(source: string, location: CodeFrameLocation, options: CodeFrameOptions = {}): string {
   const colors = options.colors ?? noColors;
   const rawLines = source.split(kLineBreak);
-  const lines = colors.enabled ? highlight(source, colors).split(kLineBreak) : rawLines;
   const first = Math.max(location.line - (options.linesAbove ?? 2), 1);
   const last = Math.min(location.line + (options.linesBelow ?? 3), rawLines.length);
+  const excerpt = rawLines.slice(first - 1, last);
+  const lines = colors.enabled ? highlight(excerpt.join('\n'), colors).split(kLineBreak) : excerpt;
   const width = String(last).length;
   const column = location.column || 0;
 
@@ -46,7 +47,7 @@ export function codeFrame(source: string, location: CodeFrameLocation, options: 
     const rawLine = rawLines[lineNumber - 1];
     const isMarked = lineNumber === location.line;
     const gutter = colors.gray(` ${String(lineNumber).padStart(width)} |`);
-    frame.push((isMarked ? colors.red(colors.bold('>')) : ' ') + gutter + (rawLine ? ' ' + lines[lineNumber - 1] : ''));
+    frame.push((isMarked ? colors.red(colors.bold('>')) : ' ') + gutter + (rawLine ? ' ' + lines[lineNumber - first] : ''));
     if (!isMarked || !column)
       continue;
     const spacing = rawLine.slice(0, column - 1).replace(/[^\t]/g, ' ');

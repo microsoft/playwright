@@ -121,7 +121,7 @@ test('CF-010 should split lines on all line terminators', () => {
   ].join('\n'));
 });
 
-test('CF-011 should highlight code', () => {
+test('CF-011 should highlight code', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44354' } }, () => {
   const code = `const page = new Page(/re/g, 'a', 42) + x; // comment`;
   expect(codeFrame(code, { line: 1, column: 7 }, { colors: tagColors, message: 'Boom' })).toBe([
     '<red><bold>></bold></red><gray> 1 |</gray> ' +
@@ -129,6 +129,19 @@ test('CF-011 should highlight code', () => {
       `<green>'a'</green><yellow>,</yellow> <magenta>42</magenta>) <yellow>+</yellow> x<yellow>;</yellow> <gray>// comment</gray>`,
     ' <gray>   |</gray>       <red><bold>^</bold></red> <red><bold>Boom</bold></red>',
   ].join('\n'));
+
+  let highlightedKeywords = 0;
+  const colors = {
+    ...tagColors,
+    cyan: (text: string) => {
+      highlightedKeywords++;
+      return tagColors.cyan(text);
+    },
+  };
+  const largeSource = 'const hidden = 42;\n'.repeat(300000) + code + '\nconst hidden = 42;';
+  const frame = codeFrame(largeSource, { line: 300001, column: 7 }, { colors, linesAbove: 0, linesBelow: 0, message: 'Boom' });
+  expect(frame).toContain('<gray> 300001 |</gray> <cyan>const</cyan>');
+  expect(highlightedKeywords).toBe(2);
 });
 
 test('CF-012 should highlight multi-line tokens on each line', () => {
