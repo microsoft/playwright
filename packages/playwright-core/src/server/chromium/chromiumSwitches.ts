@@ -33,6 +33,7 @@ const disabledFeatures = [
   'PaintHolding',
   // Fullscreen should work with emulated focus, without bringing the page to front.
   // See https://github.com/microsoft/playwright/issues/44288
+  // See https://issues.chromium.org/issues/589825018
   'SuppressFullscreenFromUnfocusedView',
   // See https://github.com/microsoft/playwright/issues/32230
   'ThirdPartyStoragePartitioning',
