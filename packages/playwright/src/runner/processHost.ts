@@ -72,10 +72,7 @@ export class ProcessHost extends EventEmitter {
     });
     this.process.on('exit', async (code, signal) => {
       this._processDidExit = true;
-      const timeout = +(process.env.PWTEST_CHILD_PROCESS_TIMEOUT || 5 * 60 * 1000);
-      const result = await raceAgainstDeadline(() => this.onExit(), monotonicTime() + timeout);
-      if (result.timedOut)
-        this.emit('processError', { message: `Error: ${this._processName} timed out after ${timeout}ms while removing the output directory` });
+      await this.onExit();
       this._didExitAndRanOnExit = true;
       this.emit('exit', { unexpectedly: !this._didSendStop, code, signal } as ProcessExitData);
     });
@@ -166,25 +163,27 @@ export class ProcessHost extends EventEmitter {
   }
 
   async stop() {
-    this._stopPromise ??= this._stop();
+    this._stopPromise ??= this._stop().then(async () => {
+      if (this._processDidExit && !this._didExitAndRanOnExit)
+        await new Promise<void>(f => this.once('exit', () => f()));
+    });
     await this._stopPromise;
   }
 
   private async _stop() {
-    if (!this._processDidExit && !this._didSendStop) {
+    if (this._processDidExit)
+      return;
+    if (!this._didSendStop) {
       this.send({ method: '__stop__' });
       this._didSendStop = true;
     }
-    if (this._didExitAndRanOnExit)
-      return;
-    const exitPromise = new Promise<void>(f => this.once('exit', () => f()));
+    const exitPromise = new Promise<void>(f => this.process?.once('exit', () => f()));
     const timeout = +(process.env.PWTEST_CHILD_PROCESS_TIMEOUT || 5 * 60 * 1000);
     // Child sends heartbeats while gracefully closing, e.g. running a slow fixture
     // teardown with "timeout: 0". Only force-kill when heartbeats stop coming.
     let lastHeartbeat = monotonicTime();
     const onHeartbeat = () => lastHeartbeat = monotonicTime();
     this.on('__heartbeat__', onHeartbeat);
-    this.process?.on('exit', onHeartbeat);
     let didForceKill = false;
     try {
       while (true) {
@@ -192,9 +191,6 @@ export class ProcessHost extends EventEmitter {
         if (!result.timedOut)
           return;
         if (monotonicTime() < lastHeartbeat + timeout)
-          continue;
-        // onExit() has its own deadline and emits 'exit' even if cleanup times out.
-        if (this._processDidExit)
           continue;
         if (didForceKill)
           return;
@@ -205,7 +201,6 @@ export class ProcessHost extends EventEmitter {
       }
     } finally {
       this.off('__heartbeat__', onHeartbeat);
-      this.process?.off('exit', onHeartbeat);
     }
   }
 

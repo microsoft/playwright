@@ -17,6 +17,8 @@
 import fs from 'fs';
 import path from 'path';
 
+import { monotonicTime } from '@isomorphic/time';
+import { raceAgainstDeadline } from '@isomorphic/timeoutRunner';
 import { removeFolders } from '@utils/fileUtils';
 
 import { ProcessHost } from './processHost';
@@ -76,7 +78,10 @@ export class WorkerHost extends ProcessHost {
   }
 
   override async onExit() {
-    await removeFolders([this._params.artifactsDir]);
+    const timeout = +(process.env.PWTEST_CHILD_PROCESS_TIMEOUT || 5 * 60 * 1000);
+    const result = await raceAgainstDeadline(() => removeFolders([this._params.artifactsDir]), monotonicTime() + timeout);
+    if (result.timedOut)
+      this.emit('processError', { message: `Error: worker-${this.workerIndex} timed out after ${timeout}ms while removing the output directory` });
   }
 
   override async stop(didFail?: boolean) {
