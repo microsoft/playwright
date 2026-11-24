@@ -305,7 +305,8 @@ export class StorageScript {
       this._global.localStorage.setItem(name, value);
 
     try {
-      await this._restoreOPFS(originState);
+      if (originState?.opfs !== undefined)
+        await this._restoreOPFS(originState);
     } catch (e) {
       throw new Error('Unable to restore OPFS: ' + e.message);
     }

@@ -51,7 +51,7 @@ it('ST-001 should capture local storage', async ({ contextFactory }) => {
   }]);
 });
 
-it('ST-002 should set local storage', async ({ contextFactory, channel }) => {
+it('ST-002 should set local storage', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44329' } }, async ({ contextFactory, channel }) => {
   it.fixme(channel?.startsWith('msedge'), 'Network.clearBrowserCache sometimes stalls');
 
   const context = await contextFactory({
@@ -93,6 +93,17 @@ it('ST-002 should set local storage', async ({ contextFactory, channel }) => {
   await page.goto('https://www.example.com');
   const localStorage2 = await page.evaluate('window.localStorage');
   expect(localStorage2).toEqual({ name2: 'value2' });
+
+  const disabledContext = await contextFactory({
+    javaScriptEnabled: false,
+    storageState: await context.storageState(),
+  });
+  const disabledPage = await disabledContext.newPage();
+  await disabledPage.route('**/*', route => route.fulfill({
+    body: '<script>localStorage.clear()</script>',
+  }));
+  await disabledPage.goto('https://www.example.com');
+  expect(await disabledPage.evaluate('window.localStorage')).toEqual({ name2: 'value2' });
 
   await context.close();
 });
