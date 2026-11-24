@@ -499,6 +499,15 @@ export default [
     },
   },
   {
+    files: [
+      "packages/playwright-core/src/server/**/*.ts",
+    ],
+    languageOptions: languageOptionsWithTsConfig,
+    rules: {
+      ...noFloatingPromisesRules,
+    },
+  },
+  {
     files: ["tests/**/*.spec.js", "tests/**/*.ts"],
     languageOptions: {
       parser: tsParser,

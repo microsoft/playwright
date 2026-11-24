@@ -91,7 +91,7 @@ export class CRConnection extends SdkObject {
     this._browserDisconnectedLogs = helper.formatBrowserLogs(this._browserLogsCollector.recentLogs(), reason);
     for (const session of [...this._sessions.values()])
       session.dispose();
-    Promise.resolve().then(() => this.emit(ConnectionEvents.Disconnected));
+    void Promise.resolve().then(() => this.emit(ConnectionEvents.Disconnected));
   }
 
   close() {
@@ -175,7 +175,7 @@ export class CRSession extends SdkObject<Protocol.EventMap & ConnectionEventMap>
       // _markAsCrashed() has already rejected all pending calls, nothing to do here.
     } else {
       assert(!object.id, object?.error?.message || undefined);
-      Promise.resolve().then(() => {
+      void Promise.resolve().then(() => {
         if (this._eventListener)
           this._eventListener(object.method!, object.params);
         (this.emit as any)(object.method as any, object.params);

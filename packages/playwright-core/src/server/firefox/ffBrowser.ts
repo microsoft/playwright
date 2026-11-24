@@ -393,7 +393,7 @@ export class FFBrowserContext extends BrowserContext {
   }
 
   override async doExposePlaywrightBinding() {
-    this._browser.session.send('Browser.addBinding', { browserContextId: this._browserContextId, name: PageBinding.kBindingName, script: '' });
+    await this._browser.session.send('Browser.addBinding', { browserContextId: this._browserContextId, name: PageBinding.kBindingName, script: '' });
   }
 
   override async clearCache(): Promise<void> {

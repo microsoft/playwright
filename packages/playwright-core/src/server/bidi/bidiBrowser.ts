@@ -175,7 +175,7 @@ export class BidiBrowser extends Browser {
       context = this._defaultContext as BidiBrowserContext;
     if (!context)
       return;
-    context.doGrantGlobalPermissionsForURL(event.url);
+    context.doGrantGlobalPermissionsForURL(event.url).catch(() => {});
     const session = this._connection.createMainFrameBrowsingContextSession(event.context);
     const opener = event.originalOpener && this._findPageForFrame(event.originalOpener);
     const page = new BidiPage(context, session, opener || null);

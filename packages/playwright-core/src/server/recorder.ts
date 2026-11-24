@@ -396,7 +396,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
     this._updateUserSources();
     this._updateCallLog([metadata]);
     if (isScreenshotCommand(metadata))
-      this.hideHighlightedSelector();
+      void this.hideHighlightedSelector();
     else if (!metadata.internal && metadata.params && metadata.params.selector)
       this._updateHighlightedSelector(metadata.params.selector).catch(() => {});
   }
@@ -484,7 +484,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
     this._enabled = enabled;
   }
 
-  private async _onPage(page: Page) {
+  private _onPage(page: Page) {
     const frame = page.mainFrame();
     if (this._highlightedSelector)
       page.highlightController.addHighlight(this._highlightedSelector.selector, { anyFrame: this._highlightedSelector.anyFrame }).catch(() => {});

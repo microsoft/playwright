@@ -512,7 +512,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       // Do not await here, just in case the renderer is stuck (e.g. on alert)
       // and we won't be able to cleanup.
       const stopPromise = hitTargetInterceptionHandle?.evaluate(h => h.stop()).catch(() => {});
-      stopPromise?.then(() => hitTargetInterceptionHandle?.dispose());
+      void stopPromise?.then(() => hitTargetInterceptionHandle?.dispose());
     });
     if (actionResult !== 'done')
       return actionResult;

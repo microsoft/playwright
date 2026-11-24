@@ -684,7 +684,7 @@ export class Frame extends SdkObject<FrameEventMap> {
       gotoPromise: controller.run(progress => this.gotoImpl(progress, url, { referer }), 0),
     };
     this._redirectedNavigations.set(documentId, data);
-    data.gotoPromise.finally(() => this._redirectedNavigations.delete(documentId));
+    void data.gotoPromise.finally(() => this._redirectedNavigations.delete(documentId));
   }
 
   async goto(progress: Progress, url: string, options: types.GotoOptions = {}): Promise<network.Response | null> {

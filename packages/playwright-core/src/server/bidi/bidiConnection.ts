@@ -261,7 +261,7 @@ export class BidiSession extends EventEmitter {
     } else if (object.id) {
       // Response might come after session has been disposed and rejected all callbacks.
     } else {
-      Promise.resolve().then(() => this.emit(object.method, object.params));
+      void Promise.resolve().then(() => this.emit(object.method, object.params));
     }
   }
 }

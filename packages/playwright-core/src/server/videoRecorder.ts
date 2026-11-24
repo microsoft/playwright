@@ -79,7 +79,9 @@ export class VideoRecorder {
 
     this._screencast.removeClient(client);
     await videoRecorder._stop();
-    await artifact.reportFinished();
+    artifact.reportFinished();
+    // Pending saves must complete before the page or context closes.
+    await artifact.waitForFinished();
   }
 }
 
@@ -232,7 +234,7 @@ class FfmpegVideoRecorder {
   }
 
   writeFrame(frame: Buffer, timestamp: number) {
-    this._launchPromise.then(error => {
+    void this._launchPromise.then(error => {
       if (error)
         return;
       this._writeFrame(frame, timestamp);

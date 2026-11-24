@@ -210,7 +210,7 @@ export class HarTracer {
       return;
     const race = target.openScope.safeRace(promise);
     this._barrierPromises.add(race);
-    race.then(() => this._barrierPromises.delete(race));
+    void race.then(() => this._barrierPromises.delete(race));
   }
 
   private _onAPIRequest(event: APIRequestEvent) {

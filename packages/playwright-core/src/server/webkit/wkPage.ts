@@ -200,7 +200,8 @@ export class WKPage implements PageDelegate {
     const bootstrapScript = this._calculateBootstrapScript();
     if (bootstrapScript.length)
       promises.push(session.send('Page.setBootstrapScript', { source: bootstrapScript }));
-    this._page.frames().map(frame => frame.evaluateExpression(nullProgress, bootstrapScript).catch(e => {}));
+    for (const frame of this._page.frames())
+      void frame.evaluateExpression(nullProgress, bootstrapScript).catch(e => {});
     if (contextOptions.bypassCSP)
       promises.push(session.send('Page.setBypassCSP', { enabled: true }));
     const emulatedSize = this._page.emulatedSize();
@@ -341,7 +342,7 @@ export class WKPage implements PageDelegate {
       }
 
       if (targetInfo.isPaused)
-        this._pageProxySession.sendMayFail('Target.resume', { targetId: targetInfo.targetId });
+        void this._pageProxySession.sendMayFail('Target.resume', { targetId: targetInfo.targetId });
       if ((pageOrError instanceof Page) && this._page.mainFrame().url() === '') {
         try {
           // Initial empty page has an empty url. We should wait until the first real url has been loaded,
@@ -352,14 +353,14 @@ export class WKPage implements PageDelegate {
           pageOrError = e;
         }
       }
-      this._page.reportAsNew(this._opener?._page, pageOrError instanceof Page ? undefined : pageOrError);
+      void this._page.reportAsNew(this._opener?._page, pageOrError instanceof Page ? undefined : pageOrError);
     } else {
       assert(targetInfo.isProvisional);
       assert(!this._provisionalPage);
       this._provisionalPage = new WKProvisionalPage(session, this);
       if (targetInfo.isPaused) {
-        this._provisionalPage.initializationPromise.then(() => {
-          this._pageProxySession.sendMayFail('Target.resume', { targetId: targetInfo.targetId });
+        void this._provisionalPage.initializationPromise.then(() => {
+          void this._pageProxySession.sendMayFail('Target.resume', { targetId: targetInfo.targetId });
         });
       }
     }
@@ -955,7 +956,7 @@ export class WKPage implements PageDelegate {
   }
 
   stopScreencast() {
-    this._pageProxySession.sendMayFail('Screencast.stopScreencast');
+    void this._pageProxySession.sendMayFail('Screencast.stopScreencast');
   }
 
   private _onScreencastFrame(event: Protocol.Screencast.screencastFramePayload) {
@@ -970,7 +971,7 @@ export class WKPage implements PageDelegate {
       viewportWidth: event.deviceWidth,
       viewportHeight: event.deviceHeight,
     }).then(() => {
-      this._pageProxySession.sendMayFail('Screencast.screencastFrameAck', { generation });
+      void this._pageProxySession.sendMayFail('Screencast.screencastFrameAck', { generation });
     });
   }
 
@@ -1123,7 +1124,7 @@ export class WKPage implements PageDelegate {
     if (!requestWillBeSentEvent) {
       // Intercepted, although we do not intend to allow interception.
       // Just continue.
-      session.sendMayFail('Network.interceptWithRequest', { requestId: event.requestId });
+      void session.sendMayFail('Network.interceptWithRequest', { requestId: event.requestId });
       return;
     }
     this._requestIdToRequestWillBeSentEvent.delete(event.requestId);

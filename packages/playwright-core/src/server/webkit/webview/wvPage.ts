@@ -281,7 +281,7 @@ export class WVPage implements PageDelegate {
       // frame targets are not attached. Resume any paused ones so navigation in
       // the owning page is not blocked waiting on them.
       if (targetInfo.isPaused)
-        this._outerSession.sendMayFail('Target.resume', { targetId: targetInfo.targetId });
+        void this._outerSession.sendMayFail('Target.resume', { targetId: targetInfo.targetId });
       return;
     }
     const session = this._createSession(targetInfo.targetId);
@@ -295,15 +295,19 @@ export class WVPage implements PageDelegate {
         pageOrError = e as Error;
       }
       if (targetInfo.isPaused)
-        this._outerSession.sendMayFail('Target.resume', { targetId: targetInfo.targetId });
+        void this._outerSession.sendMayFail('Target.resume', { targetId: targetInfo.targetId });
+      // There is no utility world, so the injected script needs the snapshot of the globals.
+      // The bootstrap script takes it in new documents, this call takes it in the existing ones.
+      if (pageOrError instanceof Page)
+        await this._page.safeNonStallingEvaluateInAllFrames(saveGlobalsSnapshotSource, 'main');
       await this._page.reportAsNew(undefined, pageOrError instanceof Page ? undefined : pageOrError);
       this._initializedPromise.resolve();
     } else {
       assert(!this._provisionalPage);
       this._provisionalPage = new WVProvisionalPage(session, this);
       if (targetInfo.isPaused) {
-        this._provisionalPage.initializationPromise.then(() => {
-          this._outerSession.sendMayFail('Target.resume', { targetId: targetInfo.targetId });
+        void this._provisionalPage.initializationPromise.then(() => {
+          void this._outerSession.sendMayFail('Target.resume', { targetId: targetInfo.targetId });
         });
       }
     }
@@ -502,7 +506,7 @@ export class WVPage implements PageDelegate {
       this._pendingMainFrameLoaderResolvers.set(frame._id, resolve);
     });
     try {
-      this._session.sendMayFail('Runtime.evaluate', {
+      void this._session.sendMayFail('Runtime.evaluate', {
         expression: `window.location.href = ${JSON.stringify(url)}`,
         returnByValue: true,
       } as any);
@@ -612,7 +616,7 @@ export class WVPage implements PageDelegate {
   private _bindingCallContext(parameters: Protocol.Runtime.RemoteObject[]): dom.FrameExecutionContext | undefined {
     const contextObject = parameters[2];
     if (contextObject?.objectId) {
-      this._session.sendMayFail('Runtime.releaseObject', { objectId: contextObject.objectId });
+      void this._session.sendMayFail('Runtime.releaseObject', { objectId: contextObject.objectId });
       return this._contextIdToContext.get(JSON.parse(contextObject.objectId).injectedScriptId);
     }
     return [...this._contextIdToContext.values()].find(c => c.frame === this._page.mainFrame());
@@ -1095,7 +1099,7 @@ export class WVPage implements PageDelegate {
     if (!requestWillBeSentEvent) {
       // Intercepted, although we do not intend to allow interception.
       // Just continue.
-      session.sendMayFail('Network.interceptWithRequest', { requestId: event.requestId });
+      void session.sendMayFail('Network.interceptWithRequest', { requestId: event.requestId });
       return;
     }
     this._requestIdToRequestWillBeSentEvent.delete(event.requestId);

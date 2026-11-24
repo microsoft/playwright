@@ -113,7 +113,7 @@ export class Debugger extends SdkObject<DebuggerEventMap> implements Instrumenta
     this.resume();
   }
 
-  async setMuted(muted: boolean) {
+  setMuted(muted: boolean) {
     this._muted = muted;
   }
 

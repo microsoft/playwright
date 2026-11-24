@@ -118,24 +118,27 @@ export class Artifact extends SdkObject {
     this._deleted = true;
     if (!this._unaccessibleErrorMessage)
       await fs.promises.unlink(this._localPath).catch(e => {});
-    await this.reportFinished(new TargetClosedError(this.closeReason()));
+    this.reportFinished(new TargetClosedError(this.closeReason()));
   }
 
-  async reportFinished(error?: Error) {
+  reportFinished(error?: Error) {
     if (this._finished)
       return;
     this._finished = true;
     this._failureErrorValue = error;
+    void this._runSaveCallbacks(error);
+  }
 
-    if (error) {
-      for (const callback of this._saveCallbacks)
-        await callback('', error);
-    } else {
-      for (const callback of this._saveCallbacks)
-        await callback(this._localPath);
-    }
+  async waitForFinished(): Promise<void> {
+    await this._finishedPromise;
+  }
+
+  private async _runSaveCallbacks(error?: Error) {
+    const saveCallbacks = this._saveCallbacks;
     this._saveCallbacks = [];
-
+    // Finish only after the pending saves, so that "delete" does not remove the file under them.
+    for (const callback of saveCallbacks)
+      await callback(error ? '' : this._localPath, error).catch(() => {});
     this._finishedPromise.resolve();
   }
 }

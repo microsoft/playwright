@@ -150,7 +150,7 @@ export class WVSession extends EventEmitter<Protocol.EventMap> {
       // Response might come after session has been disposed and rejected all callbacks.
       assert(this.isDisposed(), JSON.stringify(object));
     } else {
-      Promise.resolve().then(() => this.emit(object.method, object.params));
+      void Promise.resolve().then(() => this.emit(object.method, object.params));
     }
   }
 }

@@ -122,7 +122,7 @@ export class FFPage implements PageDelegate {
     if (this._reportedAsNew)
       return;
     this._reportedAsNew = true;
-    this._page.reportAsNew(this._opener?._page, error);
+    void this._page.reportAsNew(this._opener?._page, error);
   }
 
   _onWebSocketCreated(event: Protocol.Page.webSocketCreatedPayload) {
@@ -537,11 +537,11 @@ export class FFPage implements PageDelegate {
   }
 
   startScreencast(options: { width: number, height: number, quality: number }) {
-    this._session.sendMayFail('Page.startScreencast', { width: options.width, height: options.height, quality: options.quality });
+    void this._session.sendMayFail('Page.startScreencast', { width: options.width, height: options.height, quality: options.quality });
   }
 
   stopScreencast() {
-    this._session.sendMayFail('Page.stopScreencast');
+    void this._session.sendMayFail('Page.stopScreencast');
   }
 
   private _onScreencastFrame(event: Protocol.Page.screencastFramePayload) {
@@ -555,7 +555,7 @@ export class FFPage implements PageDelegate {
       viewportWidth: event.deviceWidth,
       viewportHeight: event.deviceHeight,
     }).then(() => {
-      this._session.sendMayFail('Page.screencastFrameAck');
+      void this._session.sendMayFail('Page.screencastFrameAck');
     });
   }
 
