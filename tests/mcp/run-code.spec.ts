@@ -284,6 +284,7 @@ test('browser_run_code_unsafe with filename', async ({ client, server }) => {
     name: 'browser_run_code_unsafe',
     arguments: { filename: 'test-code.js' },
   }));
+  expect(response.code).toBe('// Run code from test-code.js');
   const content = await consoleEntries(response);
   expect(content).toContain('[LOG] Clicked');
 });
