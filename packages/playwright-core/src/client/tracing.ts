@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import path from 'path';
+
 import { isRegExp, isString } from '@isomorphic/rtti';
 import { Artifact } from './artifact';
 import { ChannelOwner, apiCall, internal } from './channelOwner';
@@ -102,13 +104,13 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
   }
 
   @apiCall()
-  async startHar(path: string, options: { content?: 'embed' | 'attach' | 'omit', mode?: 'full' | 'minimal', urlFilter?: string | RegExp, resourcesDir?: string } = {}) {
+  async startHar(harPath: string, options: { content?: 'embed' | 'attach' | 'omit', mode?: 'full' | 'minimal', urlFilter?: string | RegExp, resourcesDir?: string } = {}) {
     if (this._harId)
       throw new Error('HAR recording has already been started');
-    if (options.resourcesDir && /\.zip$/i.test(path))
+    if (options.resourcesDir && /\.zip$/i.test(harPath))
       throw new Error('resourcesDir option is not compatible with a .zip har file');
-    const defaultContent = /\.zip$/i.test(path) ? 'attach' : 'embed';
-    this._harId = await this._recordIntoHAR(path, null, {
+    const defaultContent = /\.zip$/i.test(harPath) ? 'attach' : 'embed';
+    this._harId = await this._recordIntoHAR(harPath, null, {
       url: options.urlFilter,
       updateContent: options.content ?? defaultContent,
       updateMode: options.mode ?? 'full',
@@ -127,6 +129,8 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
   }
 
   async _recordIntoHAR(har: string, page: Page | null, options: { url?: string | RegExp, updateContent?: 'attach' | 'embed' | 'omit', updateMode?: 'minimal' | 'full', resourcesDir?: string } = {}): Promise<string> {
+    har = path.resolve(har);
+    const resourcesDir = options.resourcesDir ? path.resolve(options.resourcesDir) : undefined;
     const isZip = /\.zip$/i.test(har);
     const { harId } = await this._channel.harStart({
       page: page?._channel,
@@ -137,10 +141,10 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
         urlRegexFlags: isRegExp(options.url) ? options.url.flags : undefined,
         mode: options.updateMode ?? 'minimal',
         harPath: isZip ? undefined : har,
-        resourcesDir: options.resourcesDir,
+        resourcesDir,
       },
     }, kNoTimeout);
-    this._harRecorders.set(harId, { path: har, resourcesDir: options.resourcesDir });
+    this._harRecorders.set(harId, { path: har, resourcesDir });
     return harId;
   }
 
@@ -216,6 +220,7 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
     if (!localUtils)
       throw new Error('Cannot save trace in thin clients');
 
+    filePath = path.resolve(filePath);
     const isLocal = !this._connection.isRemote();
 
     if (isLocal) {

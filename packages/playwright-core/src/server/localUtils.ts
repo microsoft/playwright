@@ -41,7 +41,13 @@ export type StackSession = {
   live?: boolean;
 };
 
+function assertAbsolutePath(name: string, value: string) {
+  if (!path.isAbsolute(value))
+    throw new Error(`${name}: expected an absolute path, received "${value}"`);
+}
+
 export async function zip(progress: Progress, stackSessions: Map<string, StackSession>, params: channels.LocalUtilsZipParams): Promise<void> {
+  assertAbsolutePath('zipFile', params.zipFile);
   const promise = new ManualPromise<void>();
   const zipFile = new yazl.ZipFile();
   (zipFile as any as EventEmitter).on('error', error => promise.reject(error));
@@ -148,6 +154,7 @@ async function deleteStackSession(progress: Progress, stackSessions: Map<string,
 }
 
 export async function harOpen(progress: Progress, harBackends: Map<string, HarBackend>, params: channels.LocalUtilsHarOpenParams): Promise<channels.LocalUtilsHarOpenResult> {
+  assertAbsolutePath('file', params.file);
   let harBackend: HarBackend;
   if (/\.zip$/i.test(params.file)) {
     const zipFile = new ZipFile(params.file);
@@ -187,6 +194,10 @@ export function harClose(harBackends: Map<string, HarBackend>, params: channels.
 }
 
 export async function harUnzip(progress: Progress, params: channels.LocalUtilsHarUnzipParams): Promise<void> {
+  assertAbsolutePath('zipFile', params.zipFile);
+  assertAbsolutePath('harFile', params.harFile);
+  if (params.resourcesDir)
+    assertAbsolutePath('resourcesDir', params.resourcesDir);
   const resourcesDir = params.resourcesDir ?? path.dirname(params.zipFile);
   const zipFile = new ZipFile(params.zipFile);
   let resourcesDirCreated = false;
@@ -213,6 +224,8 @@ export async function harUnzip(progress: Progress, params: channels.LocalUtilsHa
 }
 
 export async function tracingStarted(progress: Progress, stackSessions: Map<string, StackSession>, params: channels.LocalUtilsTracingStartedParams): Promise<channels.LocalUtilsTracingStartedResult> {
+  if (params.tracesDir)
+    assertAbsolutePath('tracesDir', params.tracesDir);
   let tmpDir = undefined;
   if (!params.tracesDir)
     tmpDir = await progress.race(fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-tracing-')));

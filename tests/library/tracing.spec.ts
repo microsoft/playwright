@@ -323,7 +323,8 @@ test('TR-013 should respect tracesDir and name', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44086' }
 }, async ({ browserType, server, mode }, testInfo) => {
   const tracesDir = testInfo.outputPath('traces');
-  const browser = await browserType.launch({ tracesDir });
+  // A relative path resolves against the current directory.
+  const browser = await browserType.launch({ tracesDir: path.relative(process.cwd(), tracesDir) });
   const context = await browser.newContext();
   const page = await context.newPage();
 
@@ -445,19 +446,20 @@ test('TR-015 should overwrite existing file', async ({ context, page, server }, 
   await page.goto(server.EMPTY_PAGE);
   await page.setContent('<button>Click</button>');
   await page.click('"Click"');
-  const path = testInfo.outputPath('trace1.zip');
-  await context.tracing.stop({ path });
+  const tracePath = testInfo.outputPath('trace1.zip');
+  await context.tracing.stop({ path: tracePath });
   {
-    const { resources } = await parseTraceRaw(path);
+    const { resources } = await parseTraceRaw(tracePath);
     const names = Array.from(resources.keys());
     expect(names.filter(n => n.endsWith('.html')).length).toBe(1);
   }
 
   await context.tracing.start({ screenshots: true, snapshots: true, sources: true });
-  await context.tracing.stop({ path });
+  // A relative path resolves against the current directory.
+  await context.tracing.stop({ path: path.relative(process.cwd(), tracePath) });
 
   {
-    const { resources } = await parseTraceRaw(path);
+    const { resources } = await parseTraceRaw(tracePath);
     const names = Array.from(resources.keys());
     expect(names.filter(n => n.endsWith('.html')).length).toBe(0);
   }

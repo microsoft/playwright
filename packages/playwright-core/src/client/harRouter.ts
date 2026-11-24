@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import path from 'path';
+
 import { debugLogger } from '@utils/debugLogger';
 
 import type { BrowserContext } from './browserContext';
@@ -31,7 +33,7 @@ export class HarRouter {
   private _options: { urlMatch?: URLMatch; baseURL?: string; };
 
   static async create(localUtils: LocalUtils, file: string, notFoundAction: HarNotFoundAction, options: { urlMatch?: URLMatch }): Promise<HarRouter> {
-    const { harId, error } = await localUtils.harOpen({ file });
+    const { harId, error } = await localUtils.harOpen({ file: path.resolve(file) });
     if (error)
       throw new Error(error);
     return new HarRouter(localUtils, harId!, notFoundAction, options);

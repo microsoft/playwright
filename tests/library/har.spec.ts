@@ -1248,7 +1248,8 @@ it.describe('tracing.startHar', () => {
     const context = await contextFactory();
     const harPath = testInfo.outputPath('tracing.har');
     const resourcesDir = testInfo.outputPath('har-resources');
-    await context.tracing.startHar(harPath, { content: 'attach', resourcesDir });
+    // Relative paths resolve against the current directory.
+    await context.tracing.startHar(path.relative(process.cwd(), harPath), { content: 'attach', resourcesDir: path.relative(process.cwd(), resourcesDir) });
     const page = await context.newPage();
     await page.goto(server.PREFIX + '/one-style.html');
     await context.tracing.stopHar();

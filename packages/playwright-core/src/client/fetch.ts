@@ -77,18 +77,20 @@ export class APIRequest implements api.APIRequest {
     const storageState = typeof options.storageState === 'string' ?
       JSON.parse(await fs.promises.readFile(options.storageState, 'utf8')) :
       options.storageState;
+    const defaultTracesDir = this._playwright._defaultLaunchOptions?.tracesDir;
+    const tracesDir = defaultTracesDir ? path.resolve(defaultTracesDir) : undefined;
     const context = APIRequestContext.from((await this._playwright._channel.newRequest({
       ...options,
       extraHTTPHeaders: options.extraHTTPHeaders ? headersObjectToArray(options.extraHTTPHeaders) : undefined,
       storageState,
-      tracesDir: this._playwright._defaultLaunchOptions?.tracesDir, // We do not expose tracesDir in the API, so do not allow options to accidentally override it.
+      tracesDir, // We do not expose tracesDir in the API, so do not allow options to accidentally override it.
       clientCertificates: await toClientCertificatesProtocol(options.clientCertificates),
       httpCredentials: toHttpCredentialsProtocol(options.httpCredentials),
     }, kNoTimeout)).request);
     this._contexts.add(context);
     context._request = this;
     context._timeoutSettings.setDefaultTimeout(options.timeout ?? this._playwright._defaultContextTimeout);
-    context.tracing._tracesDir = this._playwright._defaultLaunchOptions?.tracesDir;
+    context.tracing._tracesDir = tracesDir;
     await context._instrumentation.runAfterCreateRequestContext(context);
     return context;
   }
