@@ -91,6 +91,7 @@ export namespace Protocol {
     export type removeBrowserContextReturnValue = void;
     export type newPageParameters = {
       browserContextId?: string;
+      background?: boolean;
     };
     export type newPageReturnValue = {
       targetId: string;
