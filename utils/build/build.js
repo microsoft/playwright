@@ -883,6 +883,9 @@ steps.push(new EsbuildStep({
   bundle: true,
   entryPoints: [filePath('packages/playwright/src/worker/workerProcessEntry.ts')],
   outfile: filePath('packages/playwright/lib/worker/workerProcessEntry.js'),
+  banner: {
+    js: "'use strict'; require('module').enableCompileCache?.();",
+  },
   external: [
     'playwright-core',
     'playwright-core/*',

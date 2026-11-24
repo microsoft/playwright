@@ -5,6 +5,8 @@ title: "Command line"
 
 Playwright provides a powerful command line interface for running tests, generating code, debugging, and more. The most up to date list of commands and arguments available on the CLI can always be retrieved via `npx playwright --help`.
 
+On Node.js 22.8 and later, the CLI and test workers enable the [Node.js module compile cache](https://nodejs.org/api/module.html#module-compile-cache) to reduce startup time on subsequent runs. Node.js stores the cache in a temporary directory by default; set `NODE_COMPILE_CACHE` to use another directory. Set `NODE_DISABLE_COMPILE_CACHE=1` to disable it, including when collecting precise V8 code coverage.
+
 ## Essential Commands
 
 ### Run Tests

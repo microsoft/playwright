@@ -19,6 +19,35 @@ import * as path from 'path';
 
 import { test, expect } from './playwright-test-fixtures';
 
+test('should enable the Node.js compile cache in the runner and workers', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44347' } }, async ({ runInlineTest, nodeVersion }, testInfo) => {
+  test.skip(nodeVersion.major < 22 || (nodeVersion.major === 22 && nodeVersion.minor < 8), 'Node.js compile cache requires Node.js 22.8');
+  test.skip(!!process.env.PW_BUN, 'Node.js compile cache is not available in Bun');
+
+  const result = await runInlineTest({
+    'playwright.config.js': `
+      const { getCompileCacheDir } = require('node:module');
+      if (!getCompileCacheDir())
+        throw new Error('Runner compile cache is disabled');
+      module.exports = {};
+    `,
+    'a.spec.js': `
+      const { test, expect } = require('@playwright/test');
+      const { getCompileCacheDir } = require('node:module');
+      test('compile cache', () => {
+        expect(getCompileCacheDir()).toBeTruthy();
+      });
+    `,
+  }, {}, {
+    NODE_COMPILE_CACHE: undefined,
+    NODE_DISABLE_COMPILE_CACHE: undefined,
+    TMPDIR: testInfo.outputPath(),
+    TMP: testInfo.outputPath(),
+    TEMP: testInfo.outputPath(),
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
 test('should clear cache with type:module', async ({ runCLICommand }) => {
   const result = await runCLICommand({
     'playwright.config.ts': `
