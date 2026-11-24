@@ -48,7 +48,7 @@ class Fixture {
     const isUserFixture = this.registration.location && filterStackFile(this.registration.location.file);
     const title = this.registration.customTitle || this.registration.name;
     const location = isUserFixture ? this.registration.location : undefined;
-    this._stepInfo = { title: `Fixture ${escapeWithQuotes(title, '"')}`, category: 'fixture', stack: location ? [location] : undefined };
+    this._stepInfo = { title: `Fixture ${escapeWithQuotes(title, '"')}`, category: 'fixture', stack: location ? [location] : [] };
     if (this.registration.box === 'self')
       this._stepInfo = undefined;
     else if (this.registration.box)
