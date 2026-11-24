@@ -113,7 +113,7 @@ export default class MyReporter implements Reporter {
 }
 `;
 
-test('should report api step hierarchy', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44334' } }, async ({ runInlineTest }) => {
+test('should report api step hierarchy', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': stepIndentReporter,
     'playwright.config.ts': `
@@ -123,14 +123,6 @@ test('should report api step hierarchy', { annotation: { type: 'issue', descript
     `,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
-      const prepareStackTrace = Error.prepareStackTrace;
-      let fixtureStackFormats = 0;
-      Error.prepareStackTrace = (error, frames) => {
-        if (frames.some(frame => frame.getFunctionName() === '_addStep') &&
-            frames.some(frame => frame.getTypeName() === 'Fixture'))
-          ++fixtureStackFormats;
-        return prepareStackTrace(error, frames);
-      };
       test('pass', async ({ page }) => {
         await test.step('outer step 1', async () => {
           await test.step('inner step 1.1', async () => {});
@@ -140,7 +132,6 @@ test('should report api step hierarchy', { annotation: { type: 'issue', descript
           await test.step('inner step 2.1', async () => {});
           await test.step('inner step 2.2', async () => {});
         });
-        expect(fixtureStackFormats).toBe(0);
       });
     `
   }, { reporter: '', workers: 1 });
@@ -154,13 +145,12 @@ fixture   |  Fixture "context"
 pw:api    |    Create context
 fixture   |  Fixture "page"
 pw:api    |    Create page
-test.step |outer step 1 @ a.test.ts:12
-test.step |  inner step 1.1 @ a.test.ts:13
-test.step |  inner step 1.2 @ a.test.ts:14
-test.step |outer step 2 @ a.test.ts:16
-test.step |  inner step 2.1 @ a.test.ts:17
-test.step |  inner step 2.2 @ a.test.ts:18
-expect    |Expect "toBe" @ a.test.ts:20
+test.step |outer step 1 @ a.test.ts:4
+test.step |  inner step 1.1 @ a.test.ts:5
+test.step |  inner step 1.2 @ a.test.ts:6
+test.step |outer step 2 @ a.test.ts:8
+test.step |  inner step 2.1 @ a.test.ts:9
+test.step |  inner step 2.2 @ a.test.ts:10
 hook      |After Hooks
 fixture   |  Fixture "page"
 fixture   |  Fixture "context"

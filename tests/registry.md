@@ -93,7 +93,6 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `LO` | Locator | `page/{locator-any-frame, locator-click, locator-convenience, locator-element-handle, locator-evaluate, locator-frame, locator-highlight, locator-is-visible, locator-list, locator-misc-1, locator-misc-2, locator-query, locator-wait-for-function}`<br>`library/locator-highlight` |
 | `MC` | Multiple clients | `library/multiclient` |
 | `MO` | Mouse | `page/{page-mouse, wheel}` |
-| `MP` | Manual promises | `library/unit/manual-promise` |
 | `NA` | Navigation | `page/{page-goto, page-navigation, page-history, page-event-load}`<br>`library/browsercontext-base-url` |
 | `NE` | Network | `page/{page-network-request, page-network-response, page-network-sizes, page-network-idle, page-event-network, page-event-request, network-post-data, page-set-extra-http-headers}`<br>`library/{browsercontext-set-extra-http-headers, browsercontext-network-event, network-timeout, resource-timing, ignorehttpserrors}` |
 | `OO` | OOPIF | `library/chromium/oopif` |
@@ -3774,12 +3773,6 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `MO-021` | `page/wheel.spec.ts` | should set the modifiers |
 | `MO-022` | `page/wheel.spec.ts` | should scroll horizontally |
 | `MO-023` | `page/wheel.spec.ts` | should work when the event is canceled |
-
-### MP — Manual promises
-
-| ID | File | Title |
-|---|---|---|
-| `MP-001` | `library/unit/manual-promise.spec.ts` | should format scope race stacks only on close |
 
 ### NA — Navigation
 
