@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-import { test } from '../playwright-test/stable-test-runner';
+import { mock } from 'node:test';
+import { PNG } from 'playwright-core/lib/utilsBundle';
+import { test, expect } from '../playwright-test/stable-test-runner';
 import { utils } from '../../packages/playwright-core/lib/coreBundle';
 
 import referenceSSIM from 'ssim.js';
@@ -22,6 +24,29 @@ import { randomPNG, assertEqual, grayChannel } from './utils';
 
 const { ssim, FastStats, ImageChannel, srgb2xyz, xyz2lab, colorDeltaE94 } = utils;
 type ImageChannel = InstanceType<typeof ImageChannel>;
+
+test('image comparator should skip decoding identical buffers', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44333' },
+}, () => {
+  const image = randomPNG(10, 10, 239);
+  const expected = PNG.sync.write(image, { filterType: 0 });
+  const actual = Buffer.from(expected);
+  const differentEncoding = PNG.sync.write(image, { filterType: 1 });
+  expect(differentEncoding.equals(expected)).toBe(false);
+  const comparator = utils.getComparator('image/png');
+  const read = mock.method(PNG.sync, 'read');
+  try {
+    expect(comparator(actual, expected)).toBeNull();
+    expect(read.mock.callCount()).toBe(0);
+    expect(comparator(actual, expected, { comparator: 'ssim-cie94' })).toBeNull();
+    expect(() => comparator(actual, expected, { comparator: 'unknown' })).toThrow('Configuration specifies unknown comparator "unknown"');
+    expect(read.mock.callCount()).toBe(0);
+    expect(comparator(differentEncoding, expected)).toBeNull();
+    expect(read.mock.callCount()).toBe(2);
+  } finally {
+    read.mock.restore();
+  }
+});
 
 test('srgb to lab conversion should work', async () => {
   const srgb = [123, 81, 252];
