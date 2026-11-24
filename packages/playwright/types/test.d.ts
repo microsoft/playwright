@@ -970,8 +970,7 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
    * [testProject.workers](https://playwright.dev/docs/api/class-testproject#test-project-workers), with percentages
    * resolved to a number. This is `undefined` when no project-specific limit is configured. The global
    * [fullConfig.workers](https://playwright.dev/docs/api/class-fullconfig#full-config-workers) limit still applies, so
-   * this value can be larger than the number of workers available to the project. When running with `--debug`, a
-   * configured project-specific limit is set to `1`.
+   * this value can be larger than the number of workers available to the project.
    */
   workers?: number;
 }

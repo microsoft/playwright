@@ -626,10 +626,6 @@ test('should validate workers option set to percent', { annotation: { type: 'iss
   }, { reporter: '' });
   expect(result.exitCode).toBe(0);
   expect(result.output).toContain('project workers: limited=10, percent=' + percentWorkers + ', unlimited=undefined');
-
-  const debugResult = await runInlineTest({}, { reporter: '' }, undefined, { additionalArgs: ['--debug', '--list'] });
-  expect(debugResult.exitCode).toBe(0);
-  expect(debugResult.output).toContain('project workers: limited=1, percent=1, unlimited=undefined');
 });
 
 test('should throw when workers option is invalid', async ({ runInlineTest }) => {

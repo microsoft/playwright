@@ -115,4 +115,3 @@ This property is an empty array in merged reports because server configuration i
 The project-specific worker limit from [`property: TestProject.workers`], with percentages resolved to a number.
 This is `undefined` when no project-specific limit is configured. The global [`property: FullConfig.workers`]
 limit still applies, so this value can be larger than the number of workers available to the project.
-When running with `--debug`, a configured project-specific limit is set to `1`.
