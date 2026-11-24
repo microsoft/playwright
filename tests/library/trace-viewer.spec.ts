@@ -433,8 +433,8 @@ test('TV-019 should show params and return value', async ({ showTraceViewer }) =
     /start:[\d\.]+m?s/,
     /duration:[\d]+ms/,
     /expression:"\({↵    a↵  }\) => {↵    console\.log\(\'Info\'\);↵    console\.warn\(\'Warning\'\);↵    console/,
-    'isFunction:true',
     'arg:{"a":"paramA","b":4}',
+    'isFunction:true',
     'value:"return paramA"'
   ]);
 
@@ -443,8 +443,8 @@ test('TV-019 should show params and return value', async ({ showTraceViewer }) =
     /toHaveText/,
     /start:[\d\.]+m?s/,
     /duration:[\d]+ms/,
-    /locator:locator\('button'\)/,
     /expression:"to.have.text"/,
+    /locator:locator\('button'\)/,
     /timeout:10000/,
   ]);
 });
@@ -457,8 +457,8 @@ test('TV-020 should show null as a param', async ({ showTraceViewer, browserName
     /start:[\d\.]+m?s/,
     /duration:[\d]+ms/,
     'expression:"() => 1 + 1"',
-    'isFunction:true',
     'arg:null',
+    'isFunction:true',
     'value:2'
   ]);
 });
