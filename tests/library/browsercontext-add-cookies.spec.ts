@@ -65,7 +65,7 @@ it('CO-021 should add cookies with empty value', async ({ context, page, server 
   expect(await page.evaluate(() => document.cookie)).toEqual('marker=');
 });
 
-it('CO-022 should set cookies with SameSite attribute and no secure attribute', async ({ context, browserName, isWindows, isLinux, defaultSameSiteCookieValue, channel, isBidi }) => {
+it('CO-022 should set cookies with SameSite attribute and no secure attribute', async ({ context, browserName, isLinux, defaultSameSiteCookieValue, channel, isBidi }) => {
   // Use domain instead of URL to ensure that the `secure` attribute is not set.
   await context.addCookies([{
     domain: 'foo.com',
@@ -118,7 +118,7 @@ it('CO-022 should set cookies with SameSite attribute and no secure attribute', 
     expires: -1,
     httpOnly: false,
     secure: false,
-    sameSite: (browserName === 'webkit' && isWindows && channel !== 'webkit-wsl') ? 'None' : 'Lax',
+    sameSite: 'Lax',
   }, {
     name: 'same-site-strict',
     value: '1',
@@ -127,7 +127,7 @@ it('CO-022 should set cookies with SameSite attribute and no secure attribute', 
     expires: -1,
     httpOnly: false,
     secure: false,
-    sameSite: (browserName === 'webkit' && isWindows && channel !== 'webkit-wsl') ? 'None' : 'Strict',
+    sameSite: 'Strict',
   }]));
 });
 
@@ -309,7 +309,7 @@ it('CO-032 should set cookie with reasonable defaults', async ({ context, server
   }]);
 });
 
-it('CO-033 should set a cookie with a path', async ({ context, page, server, browserName, isWindows, channel }) => {
+it('CO-033 should set a cookie with a path', async ({ context, page, server }) => {
   await page.goto(server.PREFIX + '/grid.html');
   await context.addCookies([{
     domain: server.HOSTNAME,
@@ -326,7 +326,7 @@ it('CO-033 should set a cookie with a path', async ({ context, page, server, bro
     expires: -1,
     httpOnly: false,
     secure: false,
-    sameSite: (browserName === 'webkit' && isWindows && channel !== 'webkit-wsl') ? 'None' : 'Lax',
+    sameSite: 'Lax',
   }]);
   expect(await page.evaluate('document.cookie')).toBe('gridcookie=GRID');
   await page.goto(server.EMPTY_PAGE);
@@ -384,7 +384,7 @@ it('CO-037 should be able to set unsecure cookie for HTTP website', async ({ con
   expect(cookie.secure).toBe(false);
 });
 
-it('CO-038 should set a cookie on a different domain', async ({ context, page, server, browserName, isWindows, channel }) => {
+it('CO-038 should set a cookie on a different domain', async ({ context, page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await context.addCookies([{
     url: 'https://www.example.com',
@@ -401,7 +401,7 @@ it('CO-038 should set a cookie on a different domain', async ({ context, page, s
     expires: -1,
     httpOnly: false,
     secure: true,
-    sameSite: (browserName === 'webkit' && isWindows && channel !== 'webkit-wsl') ? 'None' : 'Lax',
+    sameSite: 'Lax',
   }]);
 });
 

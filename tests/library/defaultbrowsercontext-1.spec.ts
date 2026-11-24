@@ -45,7 +45,7 @@ it('DC-001 context.cookies() should work @smoke', async ({ server, launchPersist
   }]);
 });
 
-it('DC-002 context.addCookies() should work', async ({ server, launchPersistent, browserName, isWindows, channel }) => {
+it('DC-002 context.addCookies() should work', async ({ server, launchPersistent, channel }) => {
   const { page } = await launchPersistent();
   await page.goto(server.EMPTY_PAGE);
   await page.context().addCookies([{
@@ -63,7 +63,7 @@ it('DC-002 context.addCookies() should work', async ({ server, launchPersistent,
     expires: -1,
     httpOnly: false,
     secure: false,
-    sameSite: (browserName === 'webkit' && isWindows && channel !== 'webkit-wsl') ? 'None' : 'Lax',
+    sameSite: 'Lax',
   }]);
 });
 
