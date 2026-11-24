@@ -5411,6 +5411,26 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        * Composition due to association with an element that is a backdrop root
        */
       backdropRoot?: boolean;
+      /**
+       * Composition due to association with an element that scrolls differently from the composited layer it paints into.
+       */
+      overflowScrollPositioning?: boolean;
+      /**
+       * Composition due to association with an anchor-positioned element that moves with the scrolling of its anchor.
+       */
+      anchorPositioning?: boolean;
+      /**
+       * Composition due to association with a spatial portal element.
+       */
+      spatialPortal?: boolean;
+      /**
+       * Composition due to association with an element hosted by a spatial portal.
+       */
+      spatialPortalHosting?: boolean;
+      /**
+       * Composition due to association with an element that is protected from screen capture.
+       */
+      screenCaptureProtection?: boolean;
     }
     
     export type layerTreeDidChangePayload = void;
@@ -6106,6 +6126,14 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        * WebSocket request URL.
        */
       url: string;
+      /**
+       * Identifier of the frame whose document created the WebSocket.
+       */
+      frameId?: FrameId;
+      /**
+       * Loader identifier of the document that created the WebSocket.
+       */
+      loaderId?: LoaderId;
     }
     /**
      * Fired when WebSocket is closed.
