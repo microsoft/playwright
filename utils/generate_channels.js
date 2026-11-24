@@ -74,7 +74,7 @@ function inlineType(type, indent, wrapEnums = false) {
     const inner = properties(type.properties, indent + '  ');
     return {
       ts: `{\n${inner.ts}\n${indent}}`,
-      scheme: `tObject({\n${inner.scheme}\n${indent}})`,
+      scheme: objectScheme(inner, indent),
       optional
     };
   }
@@ -83,7 +83,8 @@ function inlineType(type, indent, wrapEnums = false) {
 
 function properties(properties, indent, onlyOptional) {
   const ts = [];
-  const scheme = [];
+  const required = [];
+  const optional = [];
   const visitProperties = props => {
     for (const [name, value] of Object.entries(props)) {
       if (name.startsWith('$mixin')) {
@@ -94,19 +95,26 @@ function properties(properties, indent, onlyOptional) {
       if (onlyOptional && !inner.optional)
         continue;
       ts.push(`${indent}${name}${inner.optional ? '?' : ''}: ${inner.ts},`);
-      const wrapped = inner.optional ? `tOptional(${inner.scheme})` : inner.scheme;
-      scheme.push(`${indent}${name}: ${wrapped},`);
+      (inner.optional ? optional : required).push(`${indent}${name}: ${inner.scheme},`);
     }
   };
   visitProperties(properties);
-  return { ts: ts.join('\n'), scheme: scheme.join('\n') };
+  return { ts: ts.join('\n'), required, optional };
+}
+
+// Generates tObject(required, optional). The second argument is omitted when there are no optional fields.
+function objectScheme(inner, indent) {
+  const fields = list => list.length ? `{\n${list.join('\n')}\n${indent}}` : `{}`;
+  if (!inner.optional.length)
+    return `tObject(${fields(inner.required)})`;
+  return `tObject(${fields(inner.required)}, ${fields(inner.optional)})`;
 }
 
 function objectType(props, indent, onlyOptional = false) {
   if (!Object.entries(props).length)
     return { ts: `{}`, scheme: `tObject({})` };
   const inner = properties(props, indent + '  ', onlyOptional);
-  return { ts: `{\n${inner.ts}\n${indent}}`, scheme: `tObject({\n${inner.scheme}\n${indent}})` };
+  return { ts: `{\n${inner.ts}\n${indent}}`, scheme: objectScheme(inner, indent) };
 }
 
 function channelsHeader(target) {

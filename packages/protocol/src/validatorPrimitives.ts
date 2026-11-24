@@ -116,15 +116,26 @@ export const tArray = (v: Validator): Validator => {
     return arg.map((x, index) => v(x, path + '[' + index + ']', context));
   };
 };
-export const tObject = (s: { [key: string]: Validator }): Validator => {
+type Fields = { [key: string]: Validator };
+export const tObject = (required: Fields, optional: Fields = {}): Validator => {
+  const requiredFields = Object.entries(required);
+  const optionalFields = Object.entries(optional);
   return (arg: any, path: string, context: ValidatorContext) => {
     if (Object.is(arg, null))
       throw new ValidationError(`${path}: expected object, got null`);
     if (typeof arg !== 'object')
       throw new ValidationError(`${path}: expected object, got ${typeof arg}`);
     const result: any = {};
-    for (const [key, v] of Object.entries(s)) {
+    for (const [key, v] of requiredFields) {
       const value = v(arg[key], path ? path + '.' + key : key, context);
+      if (!Object.is(value, undefined))
+        result[key] = value;
+    }
+    for (const [key, v] of optionalFields) {
+      const fieldValue = arg[key];
+      if (fieldValue === undefined)
+        continue;
+      const value = v(fieldValue, path ? path + '.' + key : key, context);
       if (!Object.is(value, undefined))
         result[key] = value;
     }
