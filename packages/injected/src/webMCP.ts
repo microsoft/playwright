@@ -30,6 +30,7 @@ type RegisteredTool = {
   description?: string;
   inputSchema?: unknown;
   annotations?: Record<string, boolean | undefined>;
+  source?: Window | null;
   window?: Window;
 };
 
@@ -93,8 +94,15 @@ export class WebMCPScript {
 
   private async _ownTools(): Promise<RegisteredTool[]> {
     const tools = await this._modelContext?.getTools?.() ?? [];
-    // Chromium's getTools() aggregates same-origin descendant frames, Firefox's does not.
-    return tools.filter(tool => !('window' in tool) || tool.window === this._global.window);
+    // Chromium's getTools() aggregates same-origin frames, Firefox's does not.
+    // Chromium 160+ names the owner window `source`, older versions name it `window`.
+    return tools.filter(tool => {
+      if ('source' in tool)
+        return tool.source === this._global.window;
+      if ('window' in tool)
+        return tool.window === this._global.window;
+      return true;
+    });
   }
 
   private _describe(tool: RegisteredTool): WebMCPToolDescription {
