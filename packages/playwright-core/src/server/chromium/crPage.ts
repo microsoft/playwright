@@ -31,6 +31,7 @@ import { createHandle, CRExecutionContext } from './crExecutionContext';
 import { RawKeyboardImpl, RawMouseImpl, RawTouchscreenImpl } from './crInput';
 import { CRNetworkManager } from './crNetworkManager';
 import { CRPDF } from './crPdf';
+import { CRVideoRecorder } from './crVideoRecorder';
 import { exceptionToError, releaseObject, stackTraceToLocation } from './crProtocolHelper';
 import { platformToFontFamilies } from './defaultFontFamilies';
 import { TargetClosedError } from '../errors';
@@ -69,6 +70,7 @@ export class CRPage implements PageDelegate {
   readonly utilityWorldName: string;
   readonly _mainFrameSession: FrameSession;
   readonly _sessions = new Map<Protocol.Target.TargetID, FrameSession>();
+  readonly _videoRecorders = new Set<CRVideoRecorder>();
   readonly _page: Page;
   readonly rawMouse: RawMouseImpl;
   readonly rawKeyboard: RawKeyboardImpl;
@@ -162,6 +164,7 @@ export class CRPage implements PageDelegate {
   }
 
   didClose() {
+    void this.stopMp4Recordings();
     for (const session of this._sessions.values())
       session.dispose();
     this._page._didClose();
@@ -330,6 +333,14 @@ export class CRPage implements PageDelegate {
 
   stopScreencast() {
     this._mainFrameSession._client._sendMayFail('Page.stopScreencast').catch(() => {});
+  }
+
+  startMp4Recording(options: { size?: types.Size, fps?: number }) {
+    return new CRVideoRecorder(this, options);
+  }
+
+  async stopMp4Recordings() {
+    await Promise.all([...this._videoRecorders].map(recorder => recorder.stop()));
   }
 
   rafCountForStablePosition(): number {
