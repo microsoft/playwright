@@ -133,18 +133,20 @@ test('should merge specs from all projects when testDir is not cwd', async ({ ru
         expect(1 + 1).toBe(2);
       });
       test.describe('suite', () => {
-        test('nested math works!', async ({}) => {
-          expect(1 + 1).toBe(2);
+        test('only passes in p1', async ({}, testInfo) => {
+          expect(testInfo.project.name).toBe('p1');
         });
       });
     `
   });
-  expect(result.exitCode).toBe(0);
+  expect(result.exitCode).toBe(1);
   const fileSuite = result.report.suites[0];
   expect(fileSuite.specs.length).toBe(1);
+  expect(fileSuite.specs[0].ok).toBe(true);
   expect(fileSuite.specs[0].tests.map(t => t.projectName)).toEqual(['p1', 'p2']);
   expect(fileSuite.suites!.length).toBe(1);
   expect(fileSuite.suites![0].specs.length).toBe(1);
+  expect(fileSuite.suites![0].specs[0].ok).toBe(false);
   expect(fileSuite.suites![0].specs[0].tests.map(t => t.projectName)).toEqual(['p1', 'p2']);
 });
 

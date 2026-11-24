@@ -157,10 +157,12 @@ class JSONReporter implements ReporterV2 {
 
     for (const spec of from.specs || []) {
       const toSpec = to.specs.find(s => s.title === spec.title && this._locationMatches(s, spec));
-      if (toSpec)
+      if (toSpec) {
         toSpec.tests.push(...spec.tests);
-      else
+        toSpec.ok &&= spec.ok;
+      } else {
         to.specs.push(spec);
+      }
     }
   }
 
