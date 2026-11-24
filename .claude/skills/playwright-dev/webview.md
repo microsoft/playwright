@@ -13,25 +13,27 @@ Stock Mobile Safari only exposes the upstream Web Inspector Protocol. Anything
 Playwright added to its forked WebKit is not available here.
 
 **Available** — methods/events in `Source/JavaScriptCore/inspector/protocol/*.json`
-on `browser_upstream/main`:
+on `upstream/main` of a `microsoft/playwright-webkit` checkout:
 
 ```bash
-git -C ~/webkit show browser_upstream/main:Source/JavaScriptCore/inspector/protocol/<Domain>.json
+git -C ~/playwright-webkit show upstream/main:Source/JavaScriptCore/inspector/protocol/<Domain>.json
 ```
 
-**Not available** — anything added by the Playwright WebKit patches:
+**Not available** — anything added by the Playwright commits on top of upstream
+WebKit. [bootstrap.diff](../../../browser_patches/webkit/patches/bootstrap.diff) is a copy
+of them as one patch; the commits themselves are:
 
 ```bash
-ls ~/playwright-browsers/browser_patches/webkit/patches/  # bootstrap.diff lives here
+git -C ~/playwright-webkit log --first-parent --oneline upstream/main..main
 ```
 
-Quick provenance check for a symbol — in `~/webkit`:
+Quick provenance check for a symbol — in `~/playwright-webkit`:
 
 ```bash
-git log --all -S "<symbol>" -- <path>
+git log -S "<symbol>" upstream/main -- <path>
 ```
 
-If every hit is a `chore(webkit): bootstrap build` commit, it's a Playwright
+If there is no hit on `upstream/main`, it's a Playwright
 patch. Some traps where the upstream name overlaps with a Playwright-only
 helper of similar intent:
 
