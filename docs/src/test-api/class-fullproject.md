@@ -107,3 +107,11 @@ See [`property: TestProject.use`].
 The servers configured in [`property: TestProject.webServer`], normalized to an array.
 Does not include top-level servers.
 This property is an empty array in merged reports because server configuration is not serialized.
+
+## property: FullProject.workers
+* since: v1.66
+- type: ?<[int]>
+
+The project-specific worker limit from [`property: TestProject.workers`], with percentages resolved to a number.
+This is `undefined` when no project-specific limit is configured. The global [`property: FullConfig.workers`]
+limit still applies, so this value can be larger than the number of workers available to the project.

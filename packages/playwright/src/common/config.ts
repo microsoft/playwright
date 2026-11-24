@@ -165,7 +165,6 @@ export class FullProjectInternal {
   readonly expect: Project['expect'];
   readonly respectGitIgnore: boolean;
   readonly snapshotPathTemplate: string | undefined;
-  readonly workers: number | undefined;
   readonly retries: RetriesEntry[];
   readonly default: boolean;
   id = '';
@@ -220,9 +219,9 @@ export class FullProjectInternal {
       this.expect.toHaveScreenshot.stylePath = stylePaths.map(stylePath => path.resolve(configDir, stylePath));
     }
     this.respectGitIgnore = takeFirst(projectConfig.respectGitIgnore, config.respectGitIgnore, !projectConfig.testDir && !config.testDir);
-    this.workers = projectConfig.workers ? resolveWorkers(projectConfig.workers) : undefined;
-    if (configCLIOverrides.debug && this.workers)
-      this.workers = 1;
+    this.project.workers = projectConfig.workers ? resolveWorkers(projectConfig.workers) : undefined;
+    if (configCLIOverrides.debug && this.project.workers)
+      this.project.workers = 1;
     this.default = projectConfig.default ?? true;
   }
 }

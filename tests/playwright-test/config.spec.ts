@@ -15,6 +15,7 @@
  */
 
 import * as fs from 'fs';
+import * as os from 'os';
 import * as path from 'path';
 import { test, expect } from './playwright-test-fixtures';
 
@@ -590,21 +591,41 @@ test('should support ignoreSnapshots config option', async ({ runInlineTest }) =
   expect(result.output).toContain(`pass-1-p2.txt, writing actual.`);
 });
 
-test('should validate workers option set to percent', async ({ runInlineTest }, testInfo) => {
+test('should validate workers option set to percent', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44264' } }, async ({ runInlineTest }, testInfo) => {
+  const percentWorkers = Math.max(1, Math.floor(os.cpus().length / 2));
   const result = await runInlineTest({
     'playwright.config.ts': `
       export default {
-        workers: '50%'
+        workers: '50%',
+        reporter: [['./reporter.ts']],
+        projects: [
+          { name: 'limited', workers: 10 },
+          { name: 'percent', workers: '50%' },
+          { name: 'unlimited' },
+        ],
       };
+    `,
+    'reporter.ts': `
+      import type { FullConfig, Reporter } from '@playwright/test/reporter';
+      export default class implements Reporter {
+        onBegin(config: FullConfig) {
+          console.log('project workers: ' + config.projects.map(p => p.name + '=' + p.workers).join(', '));
+        }
+      }
     `,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
-      test('pass', async () => {
+      test('pass', async ({}, testInfo) => {
+        expect(testInfo.project.workers).toBe({
+          limited: 10,
+          percent: ${percentWorkers},
+          unlimited: undefined,
+        }[testInfo.project.name]);
       });
     `
-  });
+  }, { reporter: '' });
   expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(1);
+  expect(result.output).toContain('project workers: limited=10, percent=' + percentWorkers + ', unlimited=undefined');
 });
 
 test('should throw when workers option is invalid', async ({ runInlineTest }) => {

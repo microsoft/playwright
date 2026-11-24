@@ -57,8 +57,8 @@ export class Dispatcher {
     this._testRun = testRun;
     this._ignoreMaxFailures = !!options.ignoreMaxFailures;
     for (const project of testRun.config.projects) {
-      if (project.workers)
-        this._workerLimitPerProjectId.set(project.id, project.workers);
+      if (project.project.workers)
+        this._workerLimitPerProjectId.set(project.id, project.project.workers);
     }
   }
 
