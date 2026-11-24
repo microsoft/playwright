@@ -3874,6 +3874,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `NA-094` | `library/browsercontext-base-url.spec.ts` | should not construct a new URL when valid URLs are passed |
 | `NA-095` | `library/browsercontext-base-url.spec.ts` | should be able to match a URL relative to its given URL with urlMatcher |
 | `NA-096` | `library/browsercontext-base-url.spec.ts` | should not construct a new URL with baseURL when a glob was used |
+| `NA-097` | `page/page-goto.spec.ts` | should navigate while a new service worker takes over |
 
 ### NE — Network
 
