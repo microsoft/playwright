@@ -38,11 +38,6 @@ Rolling firefox requires a playwright-browsers checkout
 next to the playwright checkout, to roll browser patches from upstream.
 Set PW_BROWSERS_CHECKOUT to point to a checkout in a custom location.
 
-Rolling webkit rolls browser patches from a playwright-webkit checkout
-next to the playwright checkout, at the commit of the build. Without
-the checkout the patches are not rolled.
-Set PW_WEBKIT_CHECKOUT to point to a checkout in a custom location.
-
 Example:
   ${SCRIPT_NAME} chromium 123456 123.0.1234.56
   ${SCRIPT_NAME} webkit 123456
@@ -98,14 +93,6 @@ Example:
     console.log(`Use PW_BROWSERS_CHECKOUT to point to a custom location.`);
     process.exit(1);
   }
-  // WebKit patches come from a playwright-webkit checkout. It is optional: the roll
-  // still works without it, but browser_patches/webkit stays as it was.
-  const webkitCheckoutPath = process.env.PW_WEBKIT_CHECKOUT || path.resolve(__dirname, '..', '..', 'playwright-webkit');
-  const hasWebKitCheckout = fs.existsSync(path.join(webkitCheckoutPath, 'playwright', 'series.sh'));
-  if (browserTypeName === 'webkit' && process.env.PW_WEBKIT_CHECKOUT && !hasWebKitCheckout) {
-    console.log(`PW_WEBKIT_CHECKOUT="${webkitCheckoutPath}" is not a playwright-webkit checkout.`);
-    process.exit(1);
-  }
 
   // 3. Update browser revisions in browsers.json.
   console.log('\nUpdating revision in browsers.json...');
@@ -148,17 +135,11 @@ Example:
     }
   }
 
-  // 6. Roll browser patches: firefox from the playwright-browsers checkout, webkit from
-  // the playwright-webkit checkout.
-  const rollScript = path.join(__dirname, '..', 'browser_patches', 'roll_from_upstream.sh');
+  // 6. Roll firefox browser patches from the playwright-browsers checkout.
   if (browserTypeName === 'firefox') {
     console.log('\nRolling firefox browser patches from the playwright-browsers checkout...');
+    const rollScript = path.join(__dirname, '..', 'browser_patches', 'roll_from_upstream.sh');
     execFileSync(rollScript, [browsersCheckoutPath, 'firefox'], { stdio: 'inherit' });
-  } else if (browserTypeName === 'webkit' && hasWebKitCheckout) {
-    console.log('\nRolling webkit browser patches from the playwright-webkit checkout...');
-    execFileSync(rollScript, [webkitCheckoutPath, 'webkit'], { stdio: 'inherit' });
-  } else if (browserTypeName === 'webkit') {
-    console.log(`\nNo playwright-webkit checkout at "${webkitCheckoutPath}": browser_patches/webkit is not rolled.`);
   }
 
   if (browserType && descriptors[0].installByDefault) {
