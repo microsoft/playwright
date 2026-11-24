@@ -290,7 +290,7 @@ it('CO-031 should have |expires| set to |-1| for session cookies', async ({ cont
   expect(cookies[0].expires).toBe(-1);
 });
 
-it('CO-032 should set cookie with reasonable defaults', async ({ context, server, defaultSameSiteCookieValue }) => {
+it('CO-032 should set cookie with reasonable defaults', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44340' } }, async ({ context, server, defaultSameSiteCookieValue }) => {
   await context.addCookies([{
     url: server.EMPTY_PAGE,
     name: 'defaults',
@@ -307,6 +307,14 @@ it('CO-032 should set cookie with reasonable defaults', async ({ context, server
     secure: false,
     sameSite: defaultSameSiteCookieValue,
   }]);
+
+  await context.addCookies([{
+    url: server.PREFIX + '/foo/bar',
+    name: 'default-path',
+    value: 'test',
+  }]);
+  expect((await context.cookies()).find(cookie => cookie.name === 'default-path')?.path).toBe('/foo');
+  expect((await context.cookies(server.PREFIX + '/foo')).map(cookie => cookie.name).sort()).toEqual(['default-path', 'defaults']);
 });
 
 it('CO-033 should set a cookie with a path', async ({ context, page, server, browserName, isWindows, channel }) => {
