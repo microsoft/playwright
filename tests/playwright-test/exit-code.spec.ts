@@ -208,9 +208,24 @@ test('should exit with code 1 when config is not found', async ({ runInlineTest 
   expect(result.output).toContain(`foo.config.js does not exist`);
 });
 
-test('should force-kill a worker that does not exit on stop', async ({ runInlineTest }) => {
+test('should force-kill a worker that does not exit on stop', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44304' },
+}, async ({ runInlineTest }) => {
   const now = monotonicTime();
   const result = await runInlineTest({
+    'playwright.config.ts': `
+      import fs from 'fs';
+      import path from 'path';
+      const rm = fs.promises.rm;
+      fs.promises.rm = async (target, ...args) => {
+        if (path.basename(String(target)).startsWith('.playwright-artifacts-')) {
+          await new Promise(f => setTimeout(f, 6000));
+          console.log('artifacts removed');
+        }
+        return rm(target, ...args);
+      };
+      export default {};
+    `,
     'a.spec.ts': `
       import { test as base, expect } from '@playwright/test';
       const test = base.extend({
@@ -227,13 +242,32 @@ test('should force-kill a worker that does not exit on stop', async ({ runInline
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(1);
   expect(result.output).toContain('process did not exit within 2000ms after stop, force-killed it');
+  expect(result.report.errors.map(error => error.message)).toEqual([
+    'Error: worker-0 process did not exit within 2000ms after stop, force-killed it',
+    'Error: worker-0 timed out after 2000ms while removing the output directory',
+  ]);
+  expect(result.output).not.toContain('artifacts removed');
   // Should complete well within a minute thanks to the watchdog.
   expect(monotonicTime() - now).toBeLessThan(60000);
 });
 
 test('should not force-kill a worker that is running a slow fixture teardown', async ({ runInlineTest }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42007' });
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44304' });
   const result = await runInlineTest({
+    'playwright.config.ts': `
+      import fs from 'fs';
+      import path from 'path';
+      const rm = fs.promises.rm;
+      fs.promises.rm = async (target, ...args) => {
+        if (path.basename(String(target)).startsWith('.playwright-artifacts-')) {
+          await new Promise(f => setTimeout(f, 1000));
+          console.log('artifacts removed');
+        }
+        return rm(target, ...args);
+      };
+      export default {};
+    `,
     'a.spec.ts': `
       import { test as base, expect } from '@playwright/test';
       const test = base.extend<{}, { slowTeardown: void }>({
@@ -249,5 +283,37 @@ test('should not force-kill a worker that is running a slow fixture teardown', a
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
   expect(result.output).toContain('slow teardown finished');
+  expect(result.output).toContain('artifacts removed');
   expect(result.output).not.toContain('force-killed');
+});
+
+test('should time out when removing an exited worker output directory', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44304' },
+}, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      import fs from 'fs';
+      import path from 'path';
+      const rm = fs.promises.rm;
+      fs.promises.rm = async (target, ...args) => {
+        if (path.basename(String(target)).startsWith('.playwright-artifacts-')) {
+          await new Promise(f => setTimeout(f, 6000));
+          console.log('artifacts removed');
+        }
+        return rm(target, ...args);
+      };
+      export default {};
+    `,
+    'a.spec.ts': `
+      import { test } from '@playwright/test';
+      test('passes', async () => {});
+    `,
+  }, undefined, { PWTEST_CHILD_PROCESS_TIMEOUT: '2000' });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(1);
+  expect(result.report.errors.map(error => error.message)).toEqual([
+    'Error: worker-0 timed out after 2000ms while removing the output directory',
+  ]);
+  expect(result.output).not.toContain('force-killed');
+  expect(result.output).not.toContain('artifacts removed');
 });

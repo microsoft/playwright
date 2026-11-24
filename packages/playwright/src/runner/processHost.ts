@@ -36,6 +36,7 @@ export class ProcessHost extends EventEmitter {
   private _didSendStop = false;
   private _processDidExit = false;
   private _didExitAndRanOnExit = false;
+  private _stopPromise: Promise<void> | undefined;
   private _entryScript: string;
   private _lastMessageId = 0;
   private _callbacks = new Map<number, { resolve: (result: any) => void, reject: (error: Error) => void }>();
@@ -71,7 +72,10 @@ export class ProcessHost extends EventEmitter {
     });
     this.process.on('exit', async (code, signal) => {
       this._processDidExit = true;
-      await this.onExit();
+      const timeout = +(process.env.PWTEST_CHILD_PROCESS_TIMEOUT || 5 * 60 * 1000);
+      const result = await raceAgainstDeadline(() => this.onExit(), monotonicTime() + timeout);
+      if (result.timedOut)
+        this.emit('processError', { message: `Error: ${this._processName} timed out after ${timeout}ms while removing the output directory` });
       this._didExitAndRanOnExit = true;
       this.emit('exit', { unexpectedly: !this._didSendStop, code, signal } as ProcessExitData);
     });
@@ -162,6 +166,11 @@ export class ProcessHost extends EventEmitter {
   }
 
   async stop() {
+    this._stopPromise ??= this._stop();
+    await this._stopPromise;
+  }
+
+  private async _stop() {
     if (!this._processDidExit && !this._didSendStop) {
       this.send({ method: '__stop__' });
       this._didSendStop = true;
@@ -175,6 +184,8 @@ export class ProcessHost extends EventEmitter {
     let lastHeartbeat = monotonicTime();
     const onHeartbeat = () => lastHeartbeat = monotonicTime();
     this.on('__heartbeat__', onHeartbeat);
+    this.process?.on('exit', onHeartbeat);
+    let didForceKill = false;
     try {
       while (true) {
         const result = await raceAgainstDeadline(() => exitPromise, lastHeartbeat + timeout);
@@ -182,13 +193,19 @@ export class ProcessHost extends EventEmitter {
           return;
         if (monotonicTime() < lastHeartbeat + timeout)
           continue;
+        // onExit() has its own deadline and emits 'exit' even if cleanup times out.
+        if (this._processDidExit)
+          continue;
+        if (didForceKill)
+          return;
         this.emit('processError', { message: `Error: ${this._processName} process did not exit within ${timeout}ms after stop, force-killed it` });
+        didForceKill = true;
         this._forceKill();
-        await exitPromise;
-        return;
+        lastHeartbeat = monotonicTime();
       }
     } finally {
       this.off('__heartbeat__', onHeartbeat);
+      this.process?.off('exit', onHeartbeat);
     }
   }
 
