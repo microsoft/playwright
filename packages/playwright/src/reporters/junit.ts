@@ -16,6 +16,7 @@
 
 import fs from 'fs';
 import path from 'path';
+import { StringDecoder } from 'string_decoder';
 
 import { getAsBooleanFromENV } from '@utils/env';
 import { toPosixPath } from '@utils/fileUtils';
@@ -254,10 +255,10 @@ class JUnitReporter implements ReporterV2 {
     const systemOut: string[] = [];
     const systemErr: string[] = [];
     for (const result of results) {
-      for (const item of result.stdout)
-        systemOut.push(item.toString());
-      for (const item of result.stderr)
-        systemErr.push(item.toString());
+      if (result.stdout.length)
+        systemOut.push(decodeOutput(result.stdout));
+      if (result.stderr.length)
+        systemErr.push(decodeOutput(result.stderr));
       for (const attachment of result.attachments) {
         if (!attachment.path)
           continue;
@@ -298,6 +299,14 @@ class JUnitReporter implements ReporterV2 {
     await this._appendStdIO(entry, [result]);
     return entry;
   }
+}
+
+function decodeOutput(chunks: (string | Buffer)[]): string {
+  const decoder = new StringDecoder('utf8');
+  let output = '';
+  for (const chunk of chunks)
+    output += typeof chunk === 'string' ? decoder.end() + chunk : decoder.write(chunk);
+  return output + decoder.end();
 }
 
 type ErrorInfo = { elementName: 'failure' | 'error'; type: string; message: string };
