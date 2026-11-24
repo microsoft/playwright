@@ -19,7 +19,7 @@ import { test, expect } from './playwright-test-fixtures';
 
 test.describe.configure({ mode: 'parallel' });
 
-test('should print dependencies in CJS mode', async ({ runInlineTest }) => {
+test('should print dependencies in CJS mode', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44363' } }, async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       import { defineConfig } from '@playwright/test';
@@ -37,7 +37,10 @@ test('should print dependencies in CJS mode', async ({ runInlineTest }) => {
     'b.test.ts': `
       import './helperB';
       import { test, expect } from '@playwright/test';
-      test('passes', () => {});
+      import { cc } from 'playwright/lib/common';
+      test('passes', () => {
+        expect(cc.fileDependenciesForTest()).toEqual({});
+      });
     `,
     'globalTeardown.ts': `
       import { cc } from 'playwright/lib/common';
