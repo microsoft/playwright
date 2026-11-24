@@ -681,8 +681,9 @@ steps.push(new EsbuildStep({
   external: ['express', '@anthropic-ai/sdk'],
   alias: {
     'raw-body': filePath('utils/build/raw-body.ts'),
+    'source-map-support': filePath('packages/utils/third_party/source-map-support.js'),
   },
-}, [filePath('packages/playwright-core/src/utilsBundle.ts'), filePath('utils/build/raw-body.ts')]));
+}, [filePath('packages/playwright-core/src/utilsBundle.ts'), filePath('utils/build/raw-body.ts'), filePath('packages/utils/third_party/source-map-support.js')]));
 
 // Build playwright-core as a single bundle.
 steps.push(new EsbuildStep({
