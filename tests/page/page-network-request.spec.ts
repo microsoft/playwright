@@ -574,15 +574,24 @@ it('NE-146 should report cookies with an unrelated route', { annotation: { type:
   await page.route('**/never-match', route => route.continue());
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(() => document.cookie = 'myCookie=myValue; path=/');
-  server.setRoute('/headers', (req, res) => res.end());
+  const requestPromise = page.waitForRequest('**/headers');
+  const headersPromise = requestPromise.then(request => request.allHeaders());
+  server.setRoute('/headers', async (req, res) => {
+    await headersPromise;
+    res.setHeader('Set-Cookie', 'myCookie=updatedValue; path=/');
+    res.end();
+  });
 
-  const [request, serverRequest] = await Promise.all([
-    page.waitForRequest('**/headers'),
+  const [request, serverRequest, headers] = await Promise.all([
+    requestPromise,
     server.waitForRequest('/headers'),
+    headersPromise,
     page.evaluate(() => fetch('/headers').then(response => response.text())),
   ]);
   expect(serverRequest.headers.cookie).toBe('myCookie=myValue');
-  expect((await request.allHeaders())['cookie']).toBe('myCookie=myValue');
+  expect(await page.evaluate(() => document.cookie)).toBe('myCookie=updatedValue');
+  expect(headers['cookie']).toBe('myCookie=myValue');
+  expect(await request.allHeaders()).toEqual(headers);
   expect(await request.headerValue('cookie')).toBe('myCookie=myValue');
   expect((await request.headersArray()).find(header => header.name.toLowerCase() === 'cookie')?.value).toBe('myCookie=myValue');
 });

@@ -23,6 +23,8 @@ import { eventsHelper } from '@utils/eventsHelper';
 import { hostPlatform } from '@utils/hostPlatform';
 import { encodeWebp } from '@utils/webp/webp';
 import { assert } from '@isomorphic/assert';
+import { debugLogger } from '@utils/debugLogger';
+import { serializeCookieNameValue } from '../cookieStore';
 import * as dialog from '../dialog';
 import * as dom from '../dom';
 import { TargetClosedError } from '../errors';
@@ -39,6 +41,7 @@ import { translatePathToWSL } from './webkit';
 import { registry } from '../registry';
 import { startAutomaticVideoRecording } from '../videoRecorder';
 import { nullProgress } from '../progress';
+import { isSessionClosedError } from '../protocolError';
 
 import type { Protocol } from './protocol';
 import type { WKBrowserContext } from './wkBrowser';
@@ -1075,7 +1078,7 @@ export class WKPage implements PageDelegate {
       this._onRequest(session, event, false);
   }
 
-  private _onRequest(session: WKSession, event: Protocol.Network.requestWillBeSentPayload, intercepted: boolean) {
+  private _onRequest(session: WKSession, event: Protocol.Network.requestWillBeSentPayload, intercepted: boolean, interceptedHeaders?: types.HeadersArray) {
     let redirectedFrom: WKInterceptableRequest | null = null;
     if (event.redirectResponse) {
       const request = this._requestIdToRequest.get(event.requestId);
@@ -1099,8 +1102,8 @@ export class WKPage implements PageDelegate {
     if (intercepted) {
       route = new WKRouteImpl(session, event.requestId);
       // There is no point in waiting for the raw headers in Network.responseReceived when intercepting.
-      // Use provisional headers as raw headers, so that client can call allHeaders() from the route handler.
-      request.request.setRawRequestHeaders(null);
+      // Use provisional headers with cookies from the cookie jar, so that allHeaders() works in the route handler.
+      request.request.setRawRequestHeaders(interceptedHeaders || null);
     }
     this._requestIdToRequest.set(event.requestId, request);
     this._page.frameManager.requestStarted(request.request, route);
@@ -1119,7 +1122,7 @@ export class WKPage implements PageDelegate {
     this._page.frameManager.reportRequestFinished(request.request, response);
   }
 
-  _onRequestIntercepted(session: WKSession, event: Protocol.Network.requestInterceptedPayload) {
+  async _onRequestIntercepted(session: WKSession, event: Protocol.Network.requestInterceptedPayload) {
     const requestWillBeSentEvent = this._requestIdToRequestWillBeSentEvent.get(event.requestId);
     if (!requestWillBeSentEvent) {
       // Intercepted, although we do not intend to allow interception.
@@ -1128,7 +1131,20 @@ export class WKPage implements PageDelegate {
       return;
     }
     this._requestIdToRequestWillBeSentEvent.delete(event.requestId);
-    this._onRequest(session, requestWillBeSentEvent, true);
+    const headers = headersObjectToArray(requestWillBeSentEvent.request.headers);
+    if (!headers.some(header => header.name.toLowerCase() === 'cookie')) {
+      try {
+        const cookies = await this._browserContext.doGetCookies([requestWillBeSentEvent.request.url]);
+        if (cookies.length)
+          headers.push({ name: 'Cookie', value: cookies.map(serializeCookieNameValue).join('; ') });
+      } catch (error) {
+        if (!isSessionClosedError(error))
+          throw error;
+        debugLogger.log('error', error);
+        return;
+      }
+    }
+    this._onRequest(session, requestWillBeSentEvent, true, headers);
   }
 
   _onResponseReceived(session: WKSession, event: Protocol.Network.responseReceivedPayload) {

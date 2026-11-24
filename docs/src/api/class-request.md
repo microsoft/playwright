@@ -23,6 +23,13 @@ request is  issued to a redirected url.
 
 An object with all the request HTTP headers associated with this request. The header names are lower-cased.
 
+:::note
+For requests intercepted with [`method: Page.route`] or [`method: BrowserContext.route`], headers may not exactly
+match those sent over the network. In WebKit, cookie headers are taken from the browser context's cookie jar
+before the request is continued. This does not account for all browser cookie policies, such as `SameSite`
+restrictions or the request's credentials mode.
+:::
+
 ## method: Request.failure
 * since: v1.8
 - returns: <[null]|[string]>

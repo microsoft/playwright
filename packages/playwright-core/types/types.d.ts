@@ -22822,6 +22822,14 @@ export const webkit: BrowserType;
 export interface Request {
   /**
    * An object with all the request HTTP headers associated with this request. The header names are lower-cased.
+   *
+   * **NOTE** For requests intercepted with
+   * [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route) or
+   * [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route),
+   * headers may not exactly match those sent over the network. In WebKit, cookie headers are taken from the browser
+   * context's cookie jar before the request is continued. This does not account for all browser cookie policies, such
+   * as `SameSite` restrictions or the request's credentials mode.
+   *
    */
   allHeaders(): Promise<{ [key: string]: string; }>;
 
