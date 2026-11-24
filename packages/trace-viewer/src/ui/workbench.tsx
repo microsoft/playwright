@@ -376,7 +376,7 @@ const PartitionedWorkbench: React.FunctionComponent<WorkbenchProps & { partition
       selectedTime={selectedTime}
       setSelectedTime={setSelectedTime}
       highlightedTime={highlightedTime}
-      scrubber={<PlaybackScrubber playback={playback} />}
+      scrubber={<PlaybackScrubber playback={playback} model={model} selectedAction={selectedAction} />}
     />}
     <SplitView
       sidebarSize={250}

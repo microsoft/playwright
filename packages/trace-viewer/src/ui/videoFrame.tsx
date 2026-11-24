@@ -15,11 +15,30 @@
 */
 
 import * as React from 'react';
+import { upperBound } from '@web/uiUtils';
 
 import type * as trace from '@isomorphic/trace/trace';
+import type { PageEntry } from '@isomorphic/trace/entries';
 
 // Playback runs the video on its own clock and only resyncs when it drifts this far away.
 const maxDriftSeconds = 0.25;
+
+export type ScreencastFrameView = {
+  content: React.ReactNode;
+  size: { width: number, height: number };
+  wallTime?: number;
+  approximate?: boolean;
+};
+
+export function screencastFrameAtTime(pages: PageEntry[], time: number): PageEntry['screencastFrames'][number] | undefined {
+  let frame: PageEntry['screencastFrames'][number] | undefined;
+  for (const page of pages) {
+    const candidate = page.screencastFrames[upperBound(page.screencastFrames, time, (t, f) => t - f.timestamp) - 1];
+    if (candidate && (!frame || candidate.timestamp > frame.timestamp))
+      frame = candidate;
+  }
+  return frame;
+}
 
 // Video that was recording at the given trace time, -1 when none has started yet.
 export function lastVideoIndex(videos: trace.VideoTraceEvent[], time: number): number {

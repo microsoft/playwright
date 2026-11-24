@@ -15,11 +15,13 @@
  */
 
 import { getActionGroup, renderFullTitleForCall } from '../protocolFormatter';
+import { isValidWallTime, wallTimeForMonotonicTime } from './traceTime';
 
 import type { Language } from '../locatorGenerators';
 import type * as trace from './trace';
 import type { ActionTraceEvent, ResourceSnapshot } from './trace';
 import type { ActionEntry, ContextEntry, PageEntry } from './entries';
+import type { ClockAnchor } from './traceTime';
 import type { ActionGroup } from '../protocolFormatter';
 
 const prevByEndTimeSymbol = Symbol('prevByEndTime');
@@ -66,6 +68,7 @@ export class TraceModel {
   readonly platform?: string;
   readonly playwrightVersion?: string;
   readonly wallTime?: number;
+  readonly traceStartWallTime?: number;
   readonly title?: string;
   readonly options: trace.BrowserContextEventOptions;
   readonly pages: PageEntry[];
@@ -94,6 +97,11 @@ export class TraceModel {
   private _screenshots = new Map<string, trace.ScreenshotTraceEvent>();
   private _ariaSnapshots = new Map<string, trace.AriaSnapshotTraceEvent>();
   private _domSnapshots = new Set<string>();
+  private _actionContexts = new WeakMap<ActionEntry, ContextEntry>();
+  private _frameContexts = new WeakMap<PageEntry['screencastFrames'][number], ContextEntry>();
+  private _screenshotContexts = new WeakMap<trace.ScreenshotTraceEvent, ContextEntry>();
+  private _domSnapshotClockAnchors = new Map<string, ClockAnchor>();
+  private _timelineClockAnchor: ClockAnchor | undefined;
 
   constructor(traceUri: string, contexts: ContextEntry[]) {
     const libraryContext = contexts.find(context => context.origin === 'library' && context.browserName) || contexts.find(context => context.origin === 'library');
@@ -109,11 +117,21 @@ export class TraceModel {
     this.options = libraryContext?.options || {};
     this.testTimeout = contexts.find(c => c.origin === 'testRunner')?.testTimeout;
     this.annotations = contexts.find(c => c.origin === 'testRunner')?.annotations;
+    // DOM snapshot timestamps keep the recorded clock, so keep the anchors from before the clocks are aligned.
+    for (const context of contexts) {
+      if (!context.clockAnchor)
+        continue;
+      const anchor = { ...context.clockAnchor };
+      for (const entry of context.domSnapshots || [])
+        this._domSnapshotClockAnchors.set(`${entry.callId}/${entry.phase}`, anchor);
+    }
     // Next call updates all timestamps for all events in library contexts, so it must be done first.
-    this.actions = mergeActionsAndUpdateTiming(contexts);
+    this.actions = mergeActionsAndUpdateTiming(contexts, this._actionContexts);
     this.pages = ([] as PageEntry[]).concat(...contexts.map(c => c.pages));
     this.videos = [];
     this.wallTime = contexts.map(c => c.wallTime).reduce((prev, cur) => Math.min(prev || Number.MAX_VALUE, cur!), Number.MAX_VALUE);
+    const recordedWallTimes = contexts.map(c => c.recordedWallTime ?? c.clockAnchor?.wallTime).filter(isValidWallTime);
+    this.traceStartWallTime = recordedWallTimes.length ? recordedWallTimes.reduce((a, b) => Math.min(a, b)) : undefined;
     this.startTime = contexts.map(c => c.startTime).reduce((prev, cur) => Math.min(prev, cur), Number.MAX_VALUE);
     this.endTime = contexts.map(c => c.endTime).reduce((prev, cur) => Math.max(prev, cur), Number.MIN_VALUE);
     this.events = ([] as (trace.EventTraceEvent | trace.ConsoleMessageTraceEvent)[]).concat(...contexts.map(c => c.events));
@@ -127,14 +145,27 @@ export class TraceModel {
         this.resources.push({ ...entry, id: `${resourceOwnerRef(entry) ?? i}-${entry.startedDateTime}-${entry.request.url}` });
     }
     for (const context of contexts) {
-      for (const event of context.screenshots || [])
+      for (const page of context.pages) {
+        for (const frame of page.screencastFrames)
+          this._frameContexts.set(frame, context);
+      }
+      for (const event of context.screenshots || []) {
         this._screenshots.set(`${event.callId}/${event.phase}`, event);
+        this._screenshotContexts.set(event, context);
+      }
       for (const event of context.ariaSnapshots || [])
         this._ariaSnapshots.set(`${event.callId}/${event.phase}`, event);
       for (const entry of context.domSnapshots || [])
         this._domSnapshots.add(`${entry.callId}/${entry.phase}`);
       this.videos.push(...(context.videos || []));
     }
+    const timedContexts = contexts.filter(context => context.actions.length || context.events.length || context.stdio.length ||
+      context.pages.some(page => page.screencastFrames.length) || context.screenshots?.length || context.videos?.length);
+    const firstAnchor = timedContexts[0]?.clockAnchor;
+    // Independent contexts can use different monotonic clocks, so interpolate only when their origins agree.
+    if (firstAnchor && timedContexts.every(context => context.clockAnchor &&
+      Math.abs(context.clockAnchor.wallTime - context.clockAnchor.monotonicTime - (firstAnchor.wallTime - firstAnchor.monotonicTime)) <= 1))
+      this._timelineClockAnchor = timedContexts.find(context => context.origin === 'testRunner')?.clockAnchor ?? firstAnchor;
     this.hasDomSnapshots = !!this._domSnapshots.size;
     this.hasAriaSnapshots = !!this._screenshots.size || !!this._ariaSnapshots.size;
     this.attachments = this.actions.flatMap(action => action.attachments?.map(attachment => ({ ...attachment, callId: action.callId, traceUri })) ?? []);
@@ -177,6 +208,28 @@ export class TraceModel {
 
   screenshotForCall(callId: string, phase: trace.ActionPhase): trace.ScreenshotTraceEvent | undefined {
     return this._screenshots.get(`${callId}/${phase}`);
+  }
+
+  frameWallTime(frame: PageEntry['screencastFrames'][number]): number | undefined {
+    if (isValidWallTime(frame.frameSwapWallTime))
+      return frame.frameSwapWallTime;
+    return wallTimeForMonotonicTime(this._frameContexts.get(frame)?.clockAnchor, frame.timestamp);
+  }
+
+  screenshotWallTime(screenshot: trace.ScreenshotTraceEvent): number | undefined {
+    return wallTimeForMonotonicTime(this._screenshotContexts.get(screenshot)?.clockAnchor, screenshot.timestamp);
+  }
+
+  domSnapshotWallTime(callId: string, phase: trace.ActionPhase, timestamp: number): number | undefined {
+    return wallTimeForMonotonicTime(this._domSnapshotClockAnchors.get(`${callId}/${phase}`), timestamp);
+  }
+
+  actionWallTime(action: ActionEntry): number | undefined {
+    return wallTimeForMonotonicTime(this._actionContexts.get(action)?.clockAnchor, action.startTime);
+  }
+
+  timelineWallTime(timestamp: number): number | undefined {
+    return wallTimeForMonotonicTime(this._timelineClockAnchor, timestamp);
   }
 
   hasDomSnapshotForCall(callId: string, phase: trace.ActionPhase): boolean {
@@ -260,8 +313,8 @@ export class TraceModel {
   }
 }
 
-function mergeActionsAndUpdateTiming(contexts: ContextEntry[]) {
-  const result = mergeActionsAndUpdateTimingSameTrace(contexts);
+function mergeActionsAndUpdateTiming(contexts: ContextEntry[], actionContexts: WeakMap<ActionEntry, ContextEntry>) {
+  const result = mergeActionsAndUpdateTimingSameTrace(contexts, actionContexts);
 
   result.sort((a1, a2) => {
     if (a2.parentId === a1.callId)
@@ -288,7 +341,7 @@ function mergeActionsAndUpdateTiming(contexts: ContextEntry[]) {
   return result;
 }
 
-function mergeActionsAndUpdateTimingSameTrace(contexts: ContextEntry[]): ActionEntry[] {
+function mergeActionsAndUpdateTimingSameTrace(contexts: ContextEntry[], actionContexts: WeakMap<ActionEntry, ContextEntry>): ActionEntry[] {
   const map = new Map<string, ActionEntry>();
 
   const libraryContexts = contexts.filter(context => context.origin === 'library');
@@ -297,7 +350,11 @@ function mergeActionsAndUpdateTimingSameTrace(contexts: ContextEntry[]): ActionE
   // With library-only or test-runner-only traces there is nothing to match.
   if (!testRunnerContexts.length || !libraryContexts.length) {
     return contexts.map(context => {
-      return context.actions.map(action => ({ ...action }));
+      return context.actions.map(action => {
+        const copy = { ...action };
+        actionContexts.set(copy, context);
+        return copy;
+      });
     }).flat();
   }
 
@@ -309,17 +366,23 @@ function mergeActionsAndUpdateTimingSameTrace(contexts: ContextEntry[]): ActionE
   }
 
   for (const context of libraryContexts) {
-    for (const action of context.actions)
-      map.set(action.callId, { ...action });
+    for (const action of context.actions) {
+      const copy = { ...action };
+      actionContexts.set(copy, context);
+      map.set(action.callId, copy);
+    }
   }
 
   for (const context of testRunnerContexts) {
     for (const action of context.actions) {
       const existing = map.get(action.callId);
       if (!existing) {
-        map.set(action.callId, { ...action });
+        const copy = { ...action };
+        actionContexts.set(copy, context);
+        map.set(action.callId, copy);
         continue;
       }
+      actionContexts.set(existing, context);
       if (action.error)
         existing.error = action.error;
       if (action.attachments)
@@ -345,6 +408,8 @@ function adjustMonotonicTime(context: ContextEntry, monotonicTimeDelta: number) 
   context.startTime += monotonicTimeDelta;
   context.endTime += monotonicTimeDelta;
   context.monotonicTime += monotonicTimeDelta;
+  if (context.clockAnchor)
+    context.clockAnchor.monotonicTime += monotonicTimeDelta;
   for (const action of context.actions) {
     if (action.startTime)
       action.startTime += monotonicTimeDelta;

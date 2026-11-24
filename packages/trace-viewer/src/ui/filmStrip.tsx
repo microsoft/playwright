@@ -23,6 +23,7 @@ import { useTraceModel } from './traceModelContext';
 import { useVideoSources } from './videoThumbnails';
 import type { VideoSource, VideoThumbnail } from './videoThumbnails';
 import { VideoFrame, lastVideoIndex } from './videoFrame';
+import { TimestampOverlay } from './timestampOverlay';
 import type * as trace from '@isomorphic/trace/trace';
 
 export type FilmStripPreviewPoint = {
@@ -70,7 +71,12 @@ export const FilmStrip: React.FunctionComponent<{
     const videoUrl = videoIndex === -1 ? undefined : lane.sources[videoIndex].url;
     if (frame) {
       previewSize = inscribe(frame, fitInto);
-      preview = <img src={model.createRelativeUrl(`file/${frame.file}`)} width={previewSize.width} height={previewSize.height} />;
+      const wallTime = model.frameWallTime(frame);
+      preview = <FilmStripFramePreview
+        url={model.createRelativeUrl(`file/${frame.file}`)}
+        size={previewSize}
+        wallTime={wallTime}
+        approximate={wallTime !== frame.frameSwapWallTime} />;
     } else if (videoUrl) {
       const video = lane.videos[videoIndex];
       previewSize = inscribe(video, fitInto);
@@ -104,6 +110,19 @@ export const FilmStrip: React.FunctionComponent<{
       </div>
     }
   </div>;
+};
+
+const FilmStripFramePreview: React.FunctionComponent<{
+  url: string,
+  size: Size,
+  wallTime: number | undefined,
+  approximate: boolean,
+}> = ({ url, size, wallTime, approximate }) => {
+  const [loadedUrl, setLoadedUrl] = React.useState<string>();
+  return <>
+    <img src={url} width={size.width} height={size.height} onLoad={() => setLoadedUrl(url)} />
+    <TimestampOverlay wallTime={loadedUrl === url ? wallTime : undefined} approximate={approximate} />
+  </>;
 };
 
 type VideoLane = {

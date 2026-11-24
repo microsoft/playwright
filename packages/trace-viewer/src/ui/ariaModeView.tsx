@@ -20,10 +20,12 @@ import { nextActionByStartTime, previousActionByEndTime } from '@isomorphic/trac
 import { renderAriaSnapshotAsYaml } from '@isomorphic/ariaSnapshotRenderer';
 import { clsx, useMeasure } from '@web/uiUtils';
 import { PlaceholderPanel } from './placeholderPanel';
+import { TimestampOverlay } from './timestampOverlay';
 
 import type { ActionPhase, ActionTraceEvent } from '@isomorphic/trace/trace';
 import type { AriaNodeJSON, AriaSnapshotJSON } from '@isomorphic/ariaSnapshot';
 import type { TraceModel } from '@isomorphic/trace/traceModel';
+import type { ScreencastFrameView } from './videoFrame';
 
 export type AriaModeTarget = {
   callId: string;
@@ -146,7 +148,7 @@ export const AriaModeView: React.FunctionComponent<{
   target: AriaModeTarget | undefined,
   point?: Point,
   box?: Box,
-  screencastFrame?: React.ReactNode,
+  screencastFrame?: ScreencastFrameView,
 }> = ({ model, target, point, box, screencastFrame }) => {
   const screenshot = model && target ? model.screenshotForCall(target.callId, target.phase) : undefined;
   const ariaSnapshot = model && target ? model.ariaSnapshotForCall(target.callId, target.phase) : undefined;
@@ -181,6 +183,7 @@ export const AriaModeView: React.FunctionComponent<{
   return <div className='aria-mode-view hbox'>
     <AriaModeScreenshot
       imageUrl={model && screenshot ? model.createRelativeUrl(`file/${screenshot.file}`) : undefined}
+      screenshotWallTime={model && screenshot ? model.screenshotWallTime(screenshot) : undefined}
       screencastFrame={screencastFrame}
       highlightedBox={screencastFrame ? undefined : highlightedBox}
       point={screencastFrame ? undefined : point}
@@ -200,13 +203,15 @@ export const AriaModeView: React.FunctionComponent<{
 
 const AriaModeScreenshot: React.FunctionComponent<{
   imageUrl: string | undefined,
-  screencastFrame: React.ReactNode,
+  screenshotWallTime: number | undefined,
+  screencastFrame: ScreencastFrameView | undefined,
   highlightedBox: Box | undefined,
   point: Point | undefined,
   box: Box | undefined,
-}> = ({ imageUrl, screencastFrame, highlightedBox, point, box }) => {
+}> = ({ imageUrl, screenshotWallTime, screencastFrame, highlightedBox, point, box }) => {
   const [measure, ref] = useMeasure<HTMLDivElement>();
-  const [naturalSize, setNaturalSize] = React.useState<{ width: number, height: number } | undefined>();
+  const imageRef = React.useRef<HTMLImageElement>(null);
+  const [naturalSize, setNaturalSize] = React.useState<{ url: string, element: HTMLImageElement, width: number, height: number } | undefined>();
 
   // Trace screenshots are taken with css scale, so image pixels match the aria box viewport
   // coordinates. The image is scaled to fit into the available area, scale the boxes and
@@ -238,14 +243,31 @@ const AriaModeScreenshot: React.FunctionComponent<{
     </>;
   }
 
+  const imageSize = screencastFrame?.size ?? (naturalSize && naturalSize.url === imageUrl && naturalSize.element === imageRef.current ? naturalSize : undefined);
+  let timestampStyle: React.CSSProperties | undefined;
+  if (imageSize && imageSize.width > 0 && imageSize.height > 0 && measure.width > 20 && measure.height > 20) {
+    const availableWidth = measure.width - 20;
+    const availableHeight = measure.height - 20;
+    const scale = Math.min(availableWidth / imageSize.width, availableHeight / imageSize.height, 1);
+    timestampStyle = {
+      right: (measure.width - imageSize.width * scale) / 2 + 4,
+      bottom: (measure.height - imageSize.height * scale) / 2 + 4,
+    };
+  }
+
   return <div ref={ref} className='aria-mode-screenshot'>
-    {screencastFrame}
+    {screencastFrame?.content}
     {!screencastFrame && imageUrl && <img
+      ref={imageRef}
       src={imageUrl}
       alt='Screenshot'
-      onLoad={event => setNaturalSize({ width: event.currentTarget.naturalWidth, height: event.currentTarget.naturalHeight })}
+      onLoad={event => setNaturalSize({ url: imageUrl, element: event.currentTarget, width: event.currentTarget.naturalWidth, height: event.currentTarget.naturalHeight })}
     />}
     {!screencastFrame && !imageUrl && <PlaceholderPanel text='No screenshot' />}
     {overlays}
+    {timestampStyle && <TimestampOverlay
+      wallTime={screencastFrame ? screencastFrame.wallTime : screenshotWallTime}
+      approximate={screencastFrame ? screencastFrame.approximate : true}
+      style={timestampStyle} />}
   </div>;
 };

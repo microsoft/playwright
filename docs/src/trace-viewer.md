@@ -699,6 +699,10 @@ In the Actions tab you can see what locator was used for every action and how lo
 
 When tracing with the [`option: Tracing.start.screenshots`] option turned on (default), each trace records a screencast and renders it as a film strip. You can hover over the film strip to see a magnified image of for each action and state which helps you easily find the action you want to inspect.
 
+In Trace Viewer settings, you can enable **Display snapshot timestamp** and **Display timeline timestamp** independently. Choose **UTC** or **Local** under **Time zone** to control these timestamps and the start time in the Metadata tab. The default is **Local**. In **UTC** mode, the Metadata tab shows the start time in ISO 8601 format, for example `2024-01-02T21:42:18.000Z`. The timestamps supplement the elapsed times and are hidden when the trace does not contain a reliable wall-clock time.
+
+The screenshot setting applies to recorded screenshots, screencast frames, and DOM snapshots. Screencast capture times may be approximate. Video frames without individual capture times do not show an overlay.
+
 Double click on an action to see the time range for that action. You can use the slider in the timeline to increase the actions selected and these will be shown in the Actions tab and all console logs and network logs will be filtered to only show the logs for the actions selected.
 
 <img src="https://github.com/microsoft/playwright/assets/13063165/b04a7d75-54bb-4ab2-9e30-e76f6f74a2c8" alt="timeline view in trace viewer" width="3598" height="2218" />

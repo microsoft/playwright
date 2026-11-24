@@ -40,6 +40,25 @@ export function msToString(ms: number): string {
   return days.toFixed(1) + 'd';
 }
 
+export type TimeZone = 'utc' | 'local';
+
+export function formatWallTime(timestamp: number | undefined, timeZone: TimeZone): string | undefined {
+  if (timestamp === undefined || !Number.isFinite(timestamp) || Math.abs(timestamp) > 8.64e15)
+    return undefined;
+  // eslint-disable-next-line no-restricted-globals
+  const date = new Date(timestamp);
+  if (timeZone === 'utc')
+    return date.toISOString().split('T')[1];
+  return date.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    fractionalSecondDigits: 3,
+    hourCycle: 'h23',
+    timeZoneName: 'short',
+  });
+}
+
 export function bytesToString(bytes: number): string {
   if (bytes < 0 || !isFinite(bytes))
     return '-';

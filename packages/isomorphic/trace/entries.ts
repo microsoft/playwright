@@ -16,6 +16,7 @@
 
 import type { Language } from '../locatorGenerators';
 import type * as trace from './trace';
+import type { ClockAnchor } from './traceTime';
 
 // *Entry structures are used to pass the trace between the sw and the page.
 
@@ -28,7 +29,9 @@ export type ContextEntry = {
   platform?: string;
   playwrightVersion?: string;
   wallTime: number;
+  recordedWallTime?: number;
   monotonicTime: number;
+  clockAnchor?: ClockAnchor;
   sdkLanguage?: Language;
   testIdAttributeName?: string;
   title?: string;

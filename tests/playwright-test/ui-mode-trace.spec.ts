@@ -52,6 +52,40 @@ test('should merge trace events', async ({ runUITest }) => {
   ]);
 });
 
+test('should sync timestamp settings with the trace viewer', async ({ runUITest }) => {
+  const { page } = await runUITest({
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      test('timestamp test', async ({ page }) => {
+        await page.setContent('<button>Submit</button>');
+        await page.getByRole('button').click();
+      });
+    `,
+  });
+  await page.getByText('timestamp test').dblclick();
+  const trace = traceFrame(page);
+  await expect(trace.getByRole('slider', { name: 'Playback position' })).toBeVisible();
+  await expect(trace.getByTestId('timeline-timestamp')).toHaveCount(0);
+  await trace.getByRole('tab', { name: 'Metadata' }).click();
+  const startTime = trace.getByRole('tabpanel', { name: 'Metadata' }).locator('.datetime');
+
+  await page.getByText('Settings', { exact: true }).click();
+  await page.getByLabel('Time zone').selectOption('utc');
+  await expect(startTime).toHaveText(/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/);
+  await page.getByLabel('Display timeline timestamp').check();
+  await expect(trace.getByTestId('timeline-timestamp')).toHaveText(/\d\d:\d\d:\d\d\.\d{3}Z/);
+  await page.getByLabel('Time zone').selectOption('local');
+  await expect(trace.getByTestId('timeline-timestamp')).not.toContainText('Z');
+  await page.getByLabel('Display snapshot timestamp').check();
+  await page.getByLabel('Display timeline timestamp').uncheck();
+  await expect(trace.getByTestId('timeline-timestamp')).toHaveCount(0);
+  await page.getByText('Settings', { exact: true }).click();
+  await trace.locator('.film-strip-lane').first().hover();
+  const screenshotTimestamp = trace.locator('.film-strip-hover').getByTestId('snapshot-timestamp');
+  await expect(screenshotTimestamp).toBeVisible();
+  await expect(screenshotTimestamp).not.toContainText('Z');
+});
+
 test('should work with non-existing rootDir and testDir outside of it', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/38367' },
 }, async ({ runUITest }) => {

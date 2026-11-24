@@ -15,6 +15,7 @@
  */
 
 import { legacyCallId, parseClientSideCallMetadata } from './traceUtils';
+import { createClockAnchor, isValidWallTime } from './traceTime';
 
 import type { SerializedStack } from './traceUtils';
 import type * as trace from './trace';
@@ -99,7 +100,17 @@ export class TraceModernizer {
   private _appendEvent(line: string) {
     if (!line)
       return;
-    const events = this._modernize(JSON.parse(line));
+    const rawEvent = JSON.parse(line);
+    const version = this._version ?? rawEvent.version ?? 6;
+    if (rawEvent.type === 'context-options' && isValidWallTime(rawEvent.wallTime))
+      this._contextEntry.recordedWallTime = rawEvent.wallTime;
+    if (rawEvent.type === 'context-options' && version >= 7) {
+      this._contextEntry.clockAnchor = createClockAnchor(rawEvent.wallTime, rawEvent.monotonicTime);
+    } else if (version < 7 && !this._contextEntry.clockAnchor && (rawEvent.type === 'before' || rawEvent.type === 'action')) {
+      const metadata = rawEvent.metadata || rawEvent;
+      this._contextEntry.clockAnchor = createClockAnchor(metadata.wallTime, metadata.startTime);
+    }
+    const events = this._modernize(rawEvent);
     for (const event of events)
       this._innerAppendEvent(event);
   }

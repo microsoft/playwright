@@ -118,7 +118,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `TA` | Tap | `library/{tap, locator-dispatchevent-touch}` |
 | `TO` | Timeout runner | `library/unit/timeout-runner` |
 | `TR` | Tracing | `library/tracing`<br>`library/chromium/tracing` |
-| `TV` | Trace viewer | `library/{trace-viewer, snapshot-renderer}` |
+| `TV` | Trace viewer | `library/{trace-viewer, snapshot-renderer, trace-timestamps}` |
 | `TZ` | Timezone | `library/browsercontext-timezone-id` |
 | `UA` | User agent | `library/browsercontext-user-agent` |
 | `VI` | Video | `library/video` |
@@ -5258,6 +5258,27 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `TV-135` | `library/snapshot-renderer.spec.ts` | stripAnsiEscapes handles common ANSI sequences after fix |
 | `TV-136` | `library/snapshot-renderer.spec.ts` | snapshot renderer selects the nearest out-of-order screencast frame |
 | `TV-137` | `library/snapshot-renderer.spec.ts` | snapshot renderer neutralizes declarative shadow roots |
+| `TV-138` | `library/trace-timestamps.spec.ts` | maps events using their own context clocks |
+| `TV-139` | `library/trace-timestamps.spec.ts` | preserves timestamps when runner and library clocks are aligned |
+| `TV-140` | `library/trace-timestamps.spec.ts` | uses an action clock anchor in older traces |
+| `TV-141` | `library/trace-timestamps.spec.ts` | does not use a synthesized clock for older traces |
+| `TV-142` | `library/trace-timestamps.spec.ts` | uses an actual frame wall time without a context anchor |
+| `TV-143` | `library/trace-timestamps.spec.ts` | formats UTC wall times with millisecond precision |
+| `TV-144` | `library/trace-timestamps.spec.ts` | formats local wall times with millisecond precision |
+| `TV-145` | `library/trace-timestamps.spec.ts` | switches independent timestamp settings and time zones without reloading |
+| `TV-146` | `library/trace-timestamps.spec.ts` | uses the displayed frame time while scrubbing |
+| `TV-147` | `library/trace-timestamps.spec.ts` | shows the hovered film strip frame time |
+| `TV-148` | `library/trace-timestamps.spec.ts` | keeps old traces usable without an absolute clock |
+| `TV-149` | `library/trace-timestamps.spec.ts` | displays screenshot timestamps from a recorded trace zip |
+| `TV-150` | `library/trace-timestamps.spec.ts` | preserves millisecond precision in clock conversion |
+| `TV-151` | `library/trace-timestamps.spec.ts` | keeps frame timestamps readable in a scaled snapshot |
+| `TV-152` | `library/trace-timestamps.spec.ts` | switches metadata start time between local and UTC |
+| `TV-153` | `library/trace-timestamps.spec.ts` | hides the timestamp while a replacement screenshot loads |
+| `TV-154` | `library/trace-timestamps.spec.ts` | hides the timestamp while a replacement screencast frame loads |
+| `TV-155` | `library/trace-timestamps.spec.ts` | hides the timestamp while a film strip preview loads |
+| `TV-156` | `library/trace-timestamps.spec.ts` | maps DOM snapshot timestamps with the recorded clock |
+| `TV-157` | `library/trace-timestamps.spec.ts` | displays DOM snapshot timestamps for each snapshot tab |
+| `TV-158` | `library/trace-timestamps.spec.ts` | keeps the frame timestamp on a downscaled aria mode screencast frame |
 
 ### TZ — Timezone
 

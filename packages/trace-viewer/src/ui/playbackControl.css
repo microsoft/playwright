@@ -73,6 +73,20 @@
   transition: left 150ms ease-out;
 }
 
+.playback-timestamp {
+  position: absolute;
+  bottom: 100%;
+  z-index: 2;
+  transform: translateX(-50%);
+  padding: 2px 5px;
+  border-radius: 3px;
+  background: var(--vscode-editor-background);
+  color: var(--vscode-editor-foreground);
+  font-size: 12px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
 .playback-speed {
   background: none;
   border: none;

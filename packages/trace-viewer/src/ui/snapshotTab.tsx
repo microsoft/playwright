@@ -21,7 +21,7 @@ import { nextActionByStartTime, previousActionByEndTime } from '@isomorphic/trac
 import type { TraceModel } from '@isomorphic/trace/traceModel';
 import { Toolbar } from '@web/components/toolbar';
 import { ToolbarButton } from '@web/components/toolbarButton';
-import { clsx, upperBound, useMeasure, useSetting } from '@web/uiUtils';
+import { clsx, useMeasure, useSetting } from '@web/uiUtils';
 import { InjectedScript } from '@injected/injectedScript';
 import { Recorder } from '@injected/recorder/recorder';
 import { asLocator } from '@isomorphic/locatorGenerators';
@@ -37,7 +37,9 @@ import { PlaybackButtons } from './playbackControl';
 import type { PlaybackState } from './playbackControl';
 import { AriaModeView, collectAriaModeTargets, shouldDisplayAriaMode } from './ariaModeView';
 import { useVideoSources } from './videoThumbnails';
-import { VideoFrame, lastVideoIndex } from './videoFrame';
+import { VideoFrame, lastVideoIndex, screencastFrameAtTime } from './videoFrame';
+import type { ScreencastFrameView } from './videoFrame';
+import { TimestampOverlay } from './timestampOverlay';
 
 export type HighlightedElement = {
   locator?: string,
@@ -82,6 +84,10 @@ export const SnapshotTabsView: React.FunctionComponent<{
   }, [snapshots, snapshotTab, shouldPopulateCanvasFromScreenshot, model]);
 
   const snapshotUrls = React.useMemo((): SnapshotUrls | undefined => snapshotInfoUrl !== undefined ? { snapshotInfoUrl, snapshotUrl, popoutUrl } : undefined, [snapshotInfoUrl, snapshotUrl, popoutUrl]);
+  const snapshot = snapshots[snapshotTab];
+  const snapshotWallTime = React.useCallback((timestamp: number | undefined) => {
+    return model && snapshot && timestamp !== undefined ? model.domSnapshotWallTime(snapshot.action.callId, snapshot.phase, timestamp) : undefined;
+  }, [model, snapshot]);
 
   return <div className='snapshot-tab vbox'>
     <Toolbar>
@@ -123,6 +129,7 @@ export const SnapshotTabsView: React.FunctionComponent<{
       highlightedElement={highlightedElement}
       setHighlightedElement={setHighlightedElement}
       screencastFrame={screencastFrame}
+      snapshotWallTime={snapshotWallTime}
     />}
   </div>;
 };
@@ -135,12 +142,22 @@ export const SnapshotView: React.FunctionComponent<{
   setIsInspecting: (isInspecting: boolean) => void,
   highlightedElement: HighlightedElement,
   setHighlightedElement: (element: HighlightedElement) => void,
-  screencastFrame?: React.ReactNode,
-}> = ({ snapshotUrls, sdkLanguage, testIdAttributeName, isInspecting, setIsInspecting, highlightedElement, setHighlightedElement, screencastFrame }) => {
+  screencastFrame?: ScreencastFrameView,
+  snapshotWallTime?: (timestamp: number | undefined) => number | undefined,
+}> = ({ snapshotUrls, sdkLanguage, testIdAttributeName, isInspecting, setIsInspecting, highlightedElement, setHighlightedElement, screencastFrame, snapshotWallTime }) => {
   const iframeRef0 = React.useRef<HTMLIFrameElement>(null);
   const iframeRef1 = React.useRef<HTMLIFrameElement>(null);
   const [snapshotInfo, setSnapshotInfo] = React.useState<SnapshotInfo>({ viewport: kDefaultViewport, url: '' });
+  const [domSnapshotWallTime, setDomSnapshotWallTime] = React.useState<number | undefined>();
   const loadingRef = React.useRef({ iteration: 0, visibleIframe: 0 });
+  let overlayStyle: React.CSSProperties | undefined = screencastFrame ? undefined : { right: 4, bottom: 4 };
+  if (screencastFrame && screencastFrame.size.width > 0 && screencastFrame.size.height > 0) {
+    const scale = Math.min(snapshotInfo.viewport.width / screencastFrame.size.width, snapshotInfo.viewport.height / screencastFrame.size.height);
+    overlayStyle = {
+      right: (snapshotInfo.viewport.width - screencastFrame.size.width * scale) / 2 + 4,
+      bottom: (snapshotInfo.viewport.height - screencastFrame.size.height * scale) / 2 + 4,
+    };
+  }
 
   React.useEffect(() => {
     (async () => {
@@ -184,8 +201,9 @@ export const SnapshotView: React.FunctionComponent<{
       if (iframe)
         loadingRef.current.visibleIframe = newVisibleIframe;
       setSnapshotInfo(newSnapshotInfo);
+      setDomSnapshotWallTime(iframe && snapshotUrls ? snapshotWallTime?.(newSnapshotInfo.timestamp) : undefined);
     })();
-  }, [snapshotUrls, screencastFrame]);
+  }, [snapshotUrls, screencastFrame, snapshotWallTime]);
 
   return <div
     className='vbox'
@@ -214,18 +232,27 @@ export const SnapshotView: React.FunctionComponent<{
       iframe={iframeRef1.current}
       iteration={loadingRef.current.iteration} />
     <SnapshotWrapper snapshotInfo={snapshotInfo}>
-      <div className='snapshot-switcher'>
+      {scale => <div className='snapshot-switcher'>
         <iframe ref={iframeRef0} name='snapshot' title='DOM Snapshot' sandbox='allow-same-origin allow-scripts' className={clsx(loadingRef.current.visibleIframe === 0 && 'snapshot-visible')}></iframe>
         <iframe ref={iframeRef1} name='snapshot' title='DOM Snapshot' sandbox='allow-same-origin allow-scripts' className={clsx(loadingRef.current.visibleIframe === 1 && 'snapshot-visible')}></iframe>
-        {screencastFrame}
-      </div>
+        {screencastFrame?.content}
+        {overlayStyle && scale > 0 && <TimestampOverlay
+          wallTime={screencastFrame ? screencastFrame.wallTime : domSnapshotWallTime}
+          approximate={screencastFrame?.approximate}
+          style={{
+            ...overlayStyle,
+            transform: `scale(${1 / scale})`,
+            transformOrigin: 'bottom right',
+          }} />}
+      </div>}
     </SnapshotWrapper>
   </div>;
 };
 
-const SnapshotWrapper: React.FunctionComponent<React.PropsWithChildren<{
+const SnapshotWrapper: React.FunctionComponent<{
   snapshotInfo: SnapshotInfo,
-}>> = ({ snapshotInfo, children }) => {
+  children: (scale: number) => React.ReactNode,
+}> = ({ snapshotInfo, children }) => {
   const [measure, ref] = useMeasure<HTMLDivElement>();
 
   const windowHeaderHeight = 40;
@@ -263,7 +290,7 @@ const SnapshotWrapper: React.FunctionComponent<React.PropsWithChildren<{
           width: snapshotContainerSize.width + 'px',
           height: snapshotContainerSize.height + 'px',
         }}>
-          {children}
+          {children(scale)}
         </div>
       </div>
     </div>
@@ -490,7 +517,9 @@ export async function fetchSnapshotInfo(snapshotInfoUrl: string | undefined) {
 
 export const kDefaultViewport = { width: 1280, height: 720 };
 
-function useScreencastFrame(model: TraceModel | undefined, time: number | undefined, playing: boolean, speed: number): React.ReactNode | undefined {
+function useScreencastFrame(model: TraceModel | undefined, time: number | undefined, playing: boolean, speed: number): ScreencastFrameView | undefined {
+  const imageRef = React.useRef<HTMLImageElement>(null);
+  const [loadedImage, setLoadedImage] = React.useState<{ url: string, element: HTMLImageElement, width: number, height: number } | undefined>();
   const videos = model && time !== undefined ? model.videos.map(video => ({ video, url: model.createRelativeUrl(`file/${video.file}`) })) : [];
   const videoSources = useVideoSources(videos);
   if (!model || time === undefined)
@@ -498,18 +527,27 @@ function useScreencastFrame(model: TraceModel | undefined, time: number | undefi
 
   // A trace has either screencast frames or videos, never both.
   // Show the page that painted most recently.
-  let frame: { timestamp: number, file: string } | undefined;
-  for (const page of model.pages) {
-    const candidate = page.screencastFrames[upperBound(page.screencastFrames, time, (t, f) => t - f.timestamp) - 1];
-    if (candidate && (!frame || candidate.timestamp > frame.timestamp))
-      frame = candidate;
+  const frame = screencastFrameAtTime(model.pages, time);
+  if (frame) {
+    const wallTime = model.frameWallTime(frame);
+    const url = model.createRelativeUrl(`file/${frame.file}`);
+    const loaded = loadedImage && loadedImage.url === url && loadedImage.element === imageRef.current ? loadedImage : undefined;
+    return {
+      content: <img ref={imageRef} className='screencast-frame' src={url} alt='Screencast frame' onLoad={event => setLoadedImage({ url, element: event.currentTarget, width: event.currentTarget.naturalWidth, height: event.currentTarget.naturalHeight })} />,
+      // The stored image can be smaller than the recorded viewport, and aria mode draws it at most at its stored size.
+      size: loaded ?? frame,
+      wallTime: loaded ? wallTime : undefined,
+      approximate: wallTime !== frame.frameSwapWallTime,
+    };
   }
-  if (frame)
-    return <img className='screencast-frame' src={model.createRelativeUrl(`file/${frame.file}`)} alt='Screencast frame' />;
 
   const index = lastVideoIndex(videos.map(({ video }) => video), time);
   const url = videoSources[index]?.url;
   if (!url)
     return undefined;
-  return <VideoFrame className='screencast-frame' url={url} startTime={videos[index].video.timestamp} time={time} playing={playing} speed={speed} />;
+  const video = videos[index].video;
+  return {
+    content: <VideoFrame className='screencast-frame' url={url} startTime={video.timestamp} time={time} playing={playing} speed={speed} />,
+    size: video,
+  };
 }

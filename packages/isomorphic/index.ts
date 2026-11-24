@@ -44,5 +44,6 @@ export * from './selectorParser';
 export * from './trace/snapshotStorage';
 export * from './trace/traceLoader';
 export * from './trace/traceModel';
+export * from './trace/traceTime';
 export * from './trace/traceUtils';
 export * from './yaml';

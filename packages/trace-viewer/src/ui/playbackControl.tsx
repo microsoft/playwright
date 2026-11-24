@@ -16,8 +16,13 @@
 
 import { ToolbarButton } from '@web/components/toolbarButton';
 import * as React from 'react';
+import { useSetting } from '@web/uiUtils';
+import { formatWallTime } from '@isomorphic/formatUtils';
+import type { TimeZone } from '@isomorphic/formatUtils';
 import type { ActionEntry } from '@isomorphic/trace/entries';
+import type { TraceModel } from '@isomorphic/trace/traceModel';
 import type { Boundaries } from './geometry';
+import { screencastFrameAtTime } from './videoFrame';
 import './playbackControl.css';
 
 const speeds = [0.5, 1, 2];
@@ -29,6 +34,7 @@ export type PlaybackState = {
   percent: number;
   animating: boolean;
   screencastTime: number | undefined;
+  positionTime: number;
   togglePlay: () => void;
   stop: () => void;
   prev: () => void;
@@ -255,7 +261,7 @@ export function usePlayback(
   const canStop = playing || currentIndex > firstWindowIndex;
 
   return {
-    playing, speed, currentIndex, percent, animating, screencastTime,
+    playing, speed, currentIndex, percent, animating, screencastTime, positionTime,
     togglePlay, stop, prev, next, cycleSpeed, selectAction, showSelectedAction,
     onScrubberMouseDown, scrubberRef, actionsLength: actions.length,
     canPrev, canNext, canStop, ticks,
@@ -278,7 +284,16 @@ export const PlaybackButtons: React.FC<{
 
 export const PlaybackScrubber: React.FC<{
   playback: PlaybackState;
-}> = ({ playback }) => {
+  model: TraceModel | undefined;
+  selectedAction: ActionEntry | undefined;
+}> = ({ playback, model, selectedAction }) => {
+  const [showTimelineTimestamp] = useSetting('showTimelineTimestamp', false);
+  const [timeZone] = useSetting<TimeZone>('timestampTimeZone', 'local');
+  const frame = model && playback.screencastTime !== undefined ? screencastFrameAtTime(model.pages, playback.screencastTime) : undefined;
+  const wallTime = frame ? model?.frameWallTime(frame) :
+    playback.screencastTime !== undefined ? model?.timelineWallTime(playback.positionTime) :
+      selectedAction ? model?.actionWallTime(selectedAction) : model?.timelineWallTime(playback.positionTime);
+  const timestamp = showTimelineTimestamp ? formatWallTime(wallTime, timeZone) : undefined;
   const onKeyDown = React.useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'ArrowLeft') {
       e.preventDefault();
@@ -313,5 +328,6 @@ export const PlaybackScrubber: React.FC<{
       className={'playback-thumb' + (playback.animating ? ' animated' : '')}
       style={{ 'left': `${playback.percent}%` }}
     />
+    {timestamp && <div className='playback-timestamp' data-testid='timeline-timestamp' style={{ left: `${Math.max(10, Math.min(90, playback.percent))}%` }}>{timestamp}</div>}
   </div>;
 };

@@ -20,6 +20,7 @@ import { kThemeOptions, type Theme, useThemeSetting } from '@web/theme';
 import { useSetting } from '@web/uiUtils';
 import { canToggleAriaMode, shouldDisplayAriaMode } from './ariaModeView';
 import type { AriaModeInfo } from './ariaModeView';
+import type { TimeZone } from '@isomorphic/formatUtils';
 
 
 /**
@@ -36,18 +37,21 @@ export const DefaultSettingsView: React.FC<{
   const [displayAriaMode, setDisplayAriaMode] = useSetting('displayAriaMode', false);
   const [theme, setTheme] = useThemeSetting();
   const [mergeFiles, setMergeFiles] = useSetting('mergeFiles', false);
+  const [timeZone, setTimeZone] = useSetting<TimeZone>('timestampTimeZone', 'local');
+  const [showSnapshotTimestamp, setShowSnapshotTimestamp] = useSetting('showSnapshotTimestamp', false);
+  const [showTimelineTimestamp, setShowTimelineTimestamp] = useSetting('showTimelineTimestamp', false);
   const canToggleAria = canToggleAriaMode(model);
 
   return (
-    <SettingsView
+    <SettingsView<Theme | TimeZone>
       settings={[
         {
           type: 'select',
           value: theme,
-          set: setTheme,
+          set: value => setTheme(value as Theme),
           name: 'Theme',
           options: kThemeOptions
-        } satisfies Setting<Theme>,
+        },
         ...(location === 'ui-mode' ? [{
           type: 'check',
           value: mergeFiles,
@@ -70,6 +74,31 @@ export const DefaultSettingsView: React.FC<{
           title: canToggleAria
             ? 'Display the action screenshot and aria snapshot instead of the DOM snapshot.'
             : 'The trace does not have both DOM and aria snapshots, so there is nothing to switch between.',
+        },
+        {
+          type: 'select',
+          value: timeZone,
+          set: value => setTimeZone(value as TimeZone),
+          name: 'Time zone',
+          options: [
+            { label: 'UTC', value: 'utc' },
+            { label: 'Local', value: 'local' },
+          ],
+          title: 'Display all timestamps in UTC or local time.',
+        },
+        {
+          type: 'check',
+          value: showSnapshotTimestamp,
+          set: setShowSnapshotTimestamp,
+          name: 'Display snapshot timestamp',
+          title: 'Display the current timestamp overlaid on the snapshot view.',
+        },
+        {
+          type: 'check',
+          value: showTimelineTimestamp,
+          set: setShowTimelineTimestamp,
+          name: 'Display timeline timestamp',
+          title: 'Display the timestamp on the timeline slider.',
         },
       ]}
     />
