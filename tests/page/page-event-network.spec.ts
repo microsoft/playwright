@@ -16,6 +16,8 @@
  */
 
 import type { ServerResponse } from 'http';
+import type { Cookie } from 'playwright-core';
+import { ManualPromise } from '../../packages/isomorphic/manualPromise';
 import { test as it, expect } from './pageTest';
 
 it('NE-084 Page.Events.Request @smoke', async ({ page, server }) => {
@@ -90,6 +92,32 @@ it('NE-088 should fire events in proper order', async ({ page, server }) => {
   expect(await response.finished()).toBe(null);
   events.push('requestfinished');
   expect(events).toEqual(['request', 'response', 'requestfinished']);
+});
+
+it('NE-147 should preserve intercepted navigation events during cookie lookup', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44170' } }, async ({ page, server, browserName, toImpl }) => {
+  it.skip(browserName !== 'webkit', 'WebKit looks up intercepted request cookies');
+  await page.goto(server.EMPTY_PAGE);
+  await page.evaluate(() => document.cookie = 'myCookie=myValue; path=/');
+  await page.route('**/never-match', route => route.continue());
+  const context: { doGetCookies(urls: string[]): Promise<Cookie[]> } = toImpl(page).browserContext;
+  const doGetCookies = context.doGetCookies.bind(context);
+  const releaseCookies = new ManualPromise<void>();
+  context.doGetCookies = async urls => {
+    const cookies = await doGetCookies(urls);
+    await releaseCookies;
+    return cookies;
+  };
+  const events = [];
+  page.on('request', () => events.push('request'));
+  page.on('response', () => events.push('response'));
+  page.on('requestfinished', () => events.push('requestfinished'));
+  const [response] = await Promise.all([
+    page.goto(server.PREFIX + '/title.html'),
+    page.waitForEvent('requestfinished'),
+  ]);
+  expect(events).toEqual(['request', 'response', 'requestfinished']);
+  releaseCookies.resolve();
+  expect(await response.request().headerValue('cookie')).toBe('myCookie=myValue');
 });
 
 it('NE-089 should support redirects', async ({ page, server }) => {
