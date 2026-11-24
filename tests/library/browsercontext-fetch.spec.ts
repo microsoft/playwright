@@ -506,7 +506,7 @@ it('FE-115 should remove cookie with expires far in the past', async ({ page, se
   expect(serverRequest.headers.cookie).toBeFalsy();
 });
 
-it('FE-116 should handle cookies on redirects', async ({ context, server, browserName, isWindows, channel }) => {
+it('FE-116 should handle cookies on redirects', async ({ context, server }) => {
   server.setRoute('/redirect1', (req, res) => {
     res.setHeader('Set-Cookie', 'r1=v1;SameSite=Lax');
     res.writeHead(301, { location: '/a/b/redirect2' });
@@ -542,7 +542,7 @@ it('FE-116 should handle cookies on redirects', async ({ context, server, browse
   const cookies = await context.cookies();
   expect(new Set(cookies)).toEqual(new Set([
     {
-      'sameSite': (browserName === 'webkit' && isWindows && channel !== 'webkit-wsl') ? 'None' : 'Lax',
+      'sameSite': 'Lax',
       'name': 'r2',
       'value': 'v2',
       'domain': server.HOSTNAME,
@@ -552,7 +552,7 @@ it('FE-116 should handle cookies on redirects', async ({ context, server, browse
       'secure': false
     },
     {
-      'sameSite': (browserName === 'webkit' && isWindows && channel !== 'webkit-wsl') ? 'None' : 'Lax',
+      'sameSite': 'Lax',
       'name': 'r1',
       'value': 'v1',
       'domain': server.HOSTNAME,
@@ -1451,7 +1451,7 @@ it('FE-169 should work with connectOverCDP', async ({ browserName, browserType, 
   }
 });
 
-it('FE-170 should support SameSite cookie attribute over https', async ({ contextFactory, httpsServer, browserName, isWindows, channel }) => {
+it('FE-170 should support SameSite cookie attribute over https', async ({ contextFactory, httpsServer }) => {
   // Cookies with SameSite=None must also specify the Secure attribute. WebKit navigation
   // to HTTP url will fail if the response contains a cookie with Secure attribute, so
   // we do HTTPS navigation.
@@ -1465,10 +1465,7 @@ it('FE-170 should support SameSite cookie attribute over https', async ({ contex
       });
       await page.request.get(httpsServer.EMPTY_PAGE);
       const [cookie] = await page.context().cookies();
-      if (browserName === 'webkit' && isWindows && channel !== 'webkit-wsl')
-        expect(cookie.sameSite).toBe('None');
-      else
-        expect(cookie.sameSite).toBe(value);
+      expect(cookie.sameSite).toBe(value);
     });
   }
 });
@@ -1496,7 +1493,7 @@ it('FE-172 fetch should not throw on long set-cookie value', async ({ context, s
   expect(cookies.map(c => c.name)).toContain('bar');
 });
 
-it('FE-173 should support set-cookie with SameSite and without Secure attribute over HTTP', async ({ page, server, browserName, isWindows, isLinux, channel, isBidi }) => {
+it('FE-173 should support set-cookie with SameSite and without Secure attribute over HTTP', async ({ page, server, browserName, isLinux, channel, isBidi }) => {
   for (const value of ['None', 'Lax', 'Strict']) {
     await it.step(`SameSite=${value}`, async () => {
       server.setRoute('/empty.html', (req, res) => {
@@ -1509,8 +1506,6 @@ it('FE-173 should support set-cookie with SameSite and without Secure attribute 
         expect(cookie).toBeFalsy();
       else if (browserName === 'webkit' && (isLinux || channel === 'webkit-wsl') && value === 'None')
         expect(cookie).toBeFalsy();
-      else if (browserName === 'webkit' && isWindows && channel !== 'webkit-wsl')
-        expect(cookie.sameSite).toBe('None');
       else
         expect(cookie.sameSite).toBe(value);
     });

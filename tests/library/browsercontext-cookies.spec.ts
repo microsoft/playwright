@@ -115,9 +115,7 @@ it('CO-005 should properly report httpOnly cookie', async ({ context, page, serv
   expect(cookies[0].httpOnly).toBe(true);
 });
 
-it('CO-006 should properly report "Strict" sameSite cookie', async ({ context, page, server, browserName, platform, channel }) => {
-  it.fail(browserName === 'webkit' && platform === 'win32' && channel !== 'webkit-wsl');
-
+it('CO-006 should properly report "Strict" sameSite cookie', async ({ context, page, server }) => {
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('Set-Cookie', 'name=value;SameSite=Strict');
     res.end();
@@ -128,9 +126,7 @@ it('CO-006 should properly report "Strict" sameSite cookie', async ({ context, p
   expect(cookies[0].sameSite).toBe('Strict');
 });
 
-it('CO-007 should properly report "Lax" sameSite cookie', async ({ context, page, server, browserName, platform, channel }) => {
-  it.fail(browserName === 'webkit' && platform === 'win32' && channel !== 'webkit-wsl');
-
+it('CO-007 should properly report "Lax" sameSite cookie', async ({ context, page, server }) => {
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('Set-Cookie', 'name=value;SameSite=Lax');
     res.end();
@@ -174,7 +170,7 @@ it('CO-008 should get multiple cookies', async ({ context, page, server, default
   ]));
 });
 
-it('CO-009 should get cookies from multiple urls', async ({ context, browserName, isWindows, channel }) => {
+it('CO-009 should get cookies from multiple urls', async ({ context }) => {
   await context.addCookies([{
     url: 'https://foo.com',
     name: 'doggo',
@@ -200,7 +196,7 @@ it('CO-009 should get cookies from multiple urls', async ({ context, browserName
     expires: -1,
     httpOnly: false,
     secure: true,
-    sameSite: (browserName === 'webkit' && isWindows && channel !== 'webkit-wsl') ? 'None' : 'Lax',
+    sameSite: 'Lax',
   }, {
     name: 'doggo',
     value: 'woofs',
@@ -213,7 +209,7 @@ it('CO-009 should get cookies from multiple urls', async ({ context, browserName
   }]));
 });
 
-it('CO-010 should work with subdomain cookie', async ({ context, browserName, isWindows, channel }) => {
+it('CO-010 should work with subdomain cookie', async ({ context }) => {
   await context.addCookies([{
     domain: '.foo.com',
     path: '/',
@@ -230,7 +226,7 @@ it('CO-010 should work with subdomain cookie', async ({ context, browserName, is
     expires: -1,
     httpOnly: false,
     secure: true,
-    sameSite: (browserName === 'webkit' && isWindows && channel !== 'webkit-wsl') ? 'None' : 'Lax',
+    sameSite: 'Lax',
   }]);
   expect(await context.cookies('https://sub.foo.com')).toEqual([{
     name: 'doggo',
@@ -240,7 +236,7 @@ it('CO-010 should work with subdomain cookie', async ({ context, browserName, is
     expires: -1,
     httpOnly: false,
     secure: true,
-    sameSite: (browserName === 'webkit' && isWindows && channel !== 'webkit-wsl') ? 'None' : 'Lax',
+    sameSite: 'Lax',
   }]);
 });
 
@@ -278,7 +274,7 @@ it('CO-012 should return cookies with empty value', async ({ context, page, serv
   ]);
 });
 
-it('CO-013 should return secure cookies based on HTTP(S) protocol', async ({ context, browserName, isWindows, channel }) => {
+it('CO-013 should return secure cookies based on HTTP(S) protocol', async ({ context }) => {
   await context.addCookies([{
     url: 'https://foo.com',
     name: 'doggo',
@@ -301,7 +297,7 @@ it('CO-013 should return secure cookies based on HTTP(S) protocol', async ({ con
     expires: -1,
     httpOnly: false,
     secure: false,
-    sameSite: (browserName === 'webkit' && isWindows && channel !== 'webkit-wsl') ? 'None' : 'Lax',
+    sameSite: 'Lax',
   }, {
     name: 'doggo',
     value: 'woofs',
@@ -310,7 +306,7 @@ it('CO-013 should return secure cookies based on HTTP(S) protocol', async ({ con
     expires: -1,
     httpOnly: false,
     secure: true,
-    sameSite: (browserName === 'webkit' && isWindows && channel !== 'webkit-wsl') ? 'None' : 'Lax',
+    sameSite: 'Lax',
   }]));
   expect(await context.cookies('http://foo.com/')).toEqual([{
     name: 'catto',
@@ -320,7 +316,7 @@ it('CO-013 should return secure cookies based on HTTP(S) protocol', async ({ con
     expires: -1,
     httpOnly: false,
     secure: false,
-    sameSite: (browserName === 'webkit' && isWindows && channel !== 'webkit-wsl') ? 'None' : 'Lax',
+    sameSite: 'Lax',
   }]);
 });
 

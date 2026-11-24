@@ -229,7 +229,7 @@ test('browser_cookie_get returns not found for missing cookie', async ({ startCl
   });
 });
 
-test('browser_cookie_set with all options', async ({ startClient, server, mcpBrowser }) => {
+test('browser_cookie_set with all options', async ({ startClient, server }) => {
   const { client } = await startClient({
     config: { capabilities: ['storage'] },
   });
@@ -268,9 +268,8 @@ test('browser_cookie_set with all options', async ({ startClient, server, mcpBro
     result: expect.stringContaining('httpOnly: true'),
   });
 
-  const sameSite = process.platform === 'win32' && mcpBrowser === 'webkit' ? 'None' : 'Lax';
   expect(getResult).toHaveResponse({
-    result: expect.stringContaining(`sameSite: ${sameSite}`),
+    result: expect.stringContaining('sameSite: Lax'),
   });
 });
 
