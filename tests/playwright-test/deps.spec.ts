@@ -713,3 +713,202 @@ test('should allow only in dependent (2)', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 });
+
+test('should run project as soon as its dependencies finish', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44276' },
+}, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      export default {
+        projects: [
+          { name: 'setup', testMatch: '**/setup.ts' },
+          { name: 'independent', testMatch: '**/independent.spec.ts' },
+          { name: 'dependent', testMatch: '**/dependent.spec.ts', dependencies: ['setup'] },
+        ],
+      };`,
+    'setup.ts': `
+      import { test } from '@playwright/test';
+      test('setup', async ({}) => {
+        console.log('\\n%%setup');
+      });
+    `,
+    'independent.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      import fs from 'fs';
+      import path from 'path';
+      test('independent', async ({}, testInfo) => {
+        // This test finishes only after the dependent project starts.
+        await expect.poll(() => fs.existsSync(path.join(testInfo.config.rootDir, 'dependent-started'))).toBe(true);
+        console.log('\\n%%independent');
+      });
+    `,
+    'dependent.spec.ts': `
+      import { test } from '@playwright/test';
+      import fs from 'fs';
+      import path from 'path';
+      test('dependent', async ({}, testInfo) => {
+        console.log('\\n%%dependent');
+        fs.writeFileSync(path.join(testInfo.config.rootDir, 'dependent-started'), '');
+      });
+    `,
+  }, { workers: 2 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(3);
+  expect(result.outputLines).toEqual(['setup', 'dependent', 'independent']);
+});
+
+test('should run teardown as soon as dependents finish', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44276' },
+}, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      export default {
+        projects: [
+          { name: 'setup', testMatch: '**/setup.ts', teardown: 'teardown' },
+          { name: 'teardown', testMatch: '**/teardown.ts' },
+          { name: 'dependent', testMatch: '**/dependent.spec.ts', dependencies: ['setup'] },
+          { name: 'independent', testMatch: '**/independent.spec.ts' },
+        ],
+      };`,
+    'setup.ts': `
+      import { test } from '@playwright/test';
+      test('setup', async ({}) => {
+        console.log('\\n%%setup');
+      });
+    `,
+    'teardown.ts': `
+      import { test } from '@playwright/test';
+      import fs from 'fs';
+      import path from 'path';
+      test('teardown', async ({}, testInfo) => {
+        console.log('\\n%%teardown');
+        fs.writeFileSync(path.join(testInfo.config.rootDir, 'teardown-started'), '');
+      });
+    `,
+    'dependent.spec.ts': `
+      import { test } from '@playwright/test';
+      test('dependent', async ({}) => {
+        console.log('\\n%%dependent');
+      });
+    `,
+    'independent.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      import fs from 'fs';
+      import path from 'path';
+      test('independent', async ({}, testInfo) => {
+        // This test finishes only after the teardown project starts.
+        await expect.poll(() => fs.existsSync(path.join(testInfo.config.rootDir, 'teardown-started'))).toBe(true);
+        console.log('\\n%%independent');
+      });
+    `,
+  }, { workers: 2 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(4);
+  expect(result.outputLines).toEqual(['setup', 'dependent', 'teardown', 'independent']);
+});
+
+test('should tear down worker fixtures of the dependency before running dependents', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      export default {
+        projects: [
+          { name: 'setup', testMatch: '**/setup.ts' },
+          { name: 'dependent', testMatch: '**/dependent.spec.ts', dependencies: ['setup'] },
+        ],
+      };`,
+    'setup.ts': `
+      import { test as base } from '@playwright/test';
+      const test = base.extend({
+        fixture: [async ({}, use) => {
+          await use('value');
+          await new Promise(f => setTimeout(f, 1000));
+          console.log('\\n%%fixture teardown');
+        }, { scope: 'worker' }],
+      });
+      test('setup', async ({ fixture }) => {
+        console.log('\\n%%setup');
+      });
+    `,
+    'dependent.spec.ts': `
+      import { test } from '@playwright/test';
+      test('dependent', async ({}) => {
+        console.log('\\n%%dependent');
+      });
+    `,
+  }, { workers: 2 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(2);
+  expect(result.outputLines).toEqual(['setup', 'fixture teardown', 'dependent']);
+});
+
+test('should run dependent project after isolated retries of the dependency', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      export default {
+        retries: 1,
+        retryStrategy: 'isolated',
+        projects: [
+          { name: 'setup', testMatch: '**/setup.ts' },
+          { name: 'independent', testMatch: '**/independent.spec.ts' },
+          { name: 'dependent', testMatch: '**/dependent.spec.ts', dependencies: ['setup'] },
+        ],
+      };`,
+    'setup.ts': `
+      import { test, expect } from '@playwright/test';
+      test('setup', async ({}, testInfo) => {
+        console.log('\\n%%setup-' + testInfo.retry);
+        expect(testInfo.retry).toBe(1);
+      });
+    `,
+    'independent.spec.ts': `
+      import { test } from '@playwright/test';
+      test('independent', async ({}) => {
+        console.log('\\n%%independent');
+      });
+    `,
+    'dependent.spec.ts': `
+      import { test } from '@playwright/test';
+      test('dependent', async ({}) => {
+        console.log('\\n%%dependent');
+      });
+    `,
+  }, { workers: 1 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(2);
+  expect(result.flaky).toBe(1);
+  expect(result.outputLines).toEqual(['setup-0', 'independent', 'setup-1', 'dependent']);
+});
+
+test('should report workers for projects that run at the same time', async ({ runInlineTest }) => {
+  const files = {
+    'playwright.config.ts': `
+      export default {
+        projects: [
+          { name: 'setup', testMatch: '**/setup.ts', teardown: 'teardown' },
+          { name: 'teardown', testMatch: '**/teardown.ts' },
+          { name: 'independent', testMatch: '**/independent*.spec.ts' },
+          { name: 'dependent', testMatch: '**/dependent*.spec.ts', dependencies: ['setup'] },
+        ],
+      };`,
+    'setup.ts': `
+      import { test } from '@playwright/test';
+      test('setup', async ({}) => {});
+    `,
+    'teardown.ts': `
+      import { test } from '@playwright/test';
+      test('teardown', async ({}) => {});
+    `,
+  };
+  for (const name of ['independent1', 'independent2', 'dependent1', 'dependent2', 'dependent3']) {
+    files[name + '.spec.ts'] = `
+      import { test } from '@playwright/test';
+      test('test', async ({}) => {});
+    `;
+  }
+  const result = await runInlineTest(files, { workers: 10 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(7);
+  // Projects 'independent' and 'dependent' run at the same time,
+  // while 'setup' and 'teardown' never run together with 'dependent'.
+  expect(result.output).toContain('Running 7 tests using 5 workers');
+});

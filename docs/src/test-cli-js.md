@@ -106,7 +106,7 @@ npx playwright test --ui
 | `--retries <retries>` | Maximum retry count for flaky tests, zero for no retries (default: no retries). |
 | `--run-agents <mode>` | Run agents to generate the code for `page.perform`. Possible values are "missing", "all" and "none" (default: "none"). See [test-agents](./test-agents.md). |
 | `--shard <shard>` | Shard tests and execute only the selected shard, specified in the form "current/all", 1-based, e.g., "3/5". |
-| `--shuffle [seed]` | Schedule tests in a random order: test files are shuffled, and so are individual tests in [parallel mode](./test-parallel.md). Tests that must run together, for example in a serial suite, keep their order. The seed is printed at the start of the run, pass it to reproduce the same order. |
+| `--shuffle [seed]` | Schedule tests in a random order: test files are shuffled, and so are individual tests in [parallel mode](./test-parallel.md). Tests that must run together, for example in a serial suite, keep their order. Each project is shuffled separately. The seed is printed at the start of the run, pass it to reproduce the same order. |
 | `--test-list <file>` | Path to a file containing a list of tests to run. See [test list](#test-list) for details. |
 | `--test-list-invert <file>` | Path to a file containing a list of tests to skip. See [test list](#test-list) for details.  |
 | `--timeout <timeout>` | Specify test timeout threshold in milliseconds, zero for unlimited (default: 30 seconds). |

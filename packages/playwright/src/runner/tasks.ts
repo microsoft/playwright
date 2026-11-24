@@ -18,12 +18,11 @@ import fs from 'fs';
 import path from 'path';
 import { promisify } from 'util';
 
-import debug from 'debug';
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { monotonicTime } from '@isomorphic/time';
 import { removeFolders } from '@utils/fileUtils';
 
-import { Dispatcher  } from './dispatcher';
+import { Dispatcher } from './dispatcher';
 import { collectProjectsAndTestFiles, createRootSuite, loadFileSuites, loadGlobalHook, loadTestList } from './loadUtils';
 import { buildDependentProjects, buildProjectsClosure, buildTeardownToSetupsMap, filterProjects } from './projectUtils';
 import { applySuggestedRebaselines, clearSuggestedRebaselines } from './rebase';
@@ -34,25 +33,13 @@ import { createTestGroups, shuffleTestGroups } from '../runner/testGroups';
 import { createTitleMatcher, forceRegExp, removeDirAndLogToConsole } from '../util';
 import { webServerPluginsForProject } from '../plugins/webServerPlugin';
 
-import type { TestGroup } from '../runner/testGroups';
-import type { EnvByProjectId } from './dispatcher';
+import type { ProjectToRun } from './dispatcher';
 import type { Task } from './taskRunner';
 import type { FullResult, TestError } from '../../types/testReporter';
 import type { Matcher, TestCaseFilter } from '../util';
 import type { InternalReporter } from '../reporters/internalReporter';
 
 const readDirAsync = promisify(fs.readdir);
-
-type ProjectWithTestGroups = {
-  project: commonConfig.FullProjectInternal;
-  projectSuite: testNs.Suite;
-  testGroups: TestGroup[];
-};
-
-type Phase = {
-  dispatcher: Dispatcher,
-  projects: ProjectWithTestGroups[]
-};
 
 export type TestRunOptions = {
   locations?: string[];
@@ -85,7 +72,7 @@ export class TestRun {
   readonly options: TestRunOptions;
   readonly reporter: InternalReporter;
   rootSuite: testNs.Suite | undefined = undefined;
-  readonly phases: Phase[] = [];
+  dispatcher: Dispatcher | undefined;
   readonly filteredProjects: commonConfig.FullProjectInternal[];
   projectFiles: Map<commonConfig.FullProjectInternal, string[]> = new Map();
   projectSuites: Map<commonConfig.FullProjectInternal, testNs.Suite[]> = new Map();
@@ -166,7 +153,7 @@ export function createGlobalSetupTasks(config: FullConfigInternal) {
 
 export function createRunTestsTasks(config: FullConfigInternal) {
   return [
-    createPhasesTask(),
+    createDispatcherTask(),
     createReportBeginTask(),
     createRunTestsTask(),
   ];
@@ -388,119 +375,85 @@ export function createApplyRebaselinesTask(): Task<TestRun> {
   };
 }
 
-function createPhasesTask(): Task<TestRun> {
+function createDispatcherTask(): Task<TestRun> {
   return {
-    title: 'create phases',
+    title: 'create dispatcher',
     setup: async testRun => {
-      let maxConcurrentTestGroups = 0;
-
-      const processed = new Set<commonConfig.FullProjectInternal>();
       const projectToSuite = new Map(testRun.rootSuite!.suites.map(suite => [suite._fullProject!, suite]));
       const allProjects = [...projectToSuite.keys()];
       const teardownToSetups = buildTeardownToSetupsMap(allProjects);
-      // Teardown projects keep running after maxFailures is reached, so that cleanup
-      // is not skipped. Nothing to ignore when maxFailures cannot stop the run.
-      const ignoreMaxFailuresProjectIds = new Set(testRun.config.config.maxFailures > 0 ? [...teardownToSetups.keys()].map(project => project.id) : []);
-      const teardownToSetupsDependents = new Map<commonConfig.FullProjectInternal, commonConfig.FullProjectInternal[]>();
-      for (const [teardown, setups] of teardownToSetups) {
-        const closure = buildDependentProjects(setups, allProjects);
-        closure.delete(teardown);
-        teardownToSetupsDependents.set(teardown, [...closure]);
+
+      // Each project starts as soon as all the projects it runs after have finished.
+      const projectsToRun: ProjectToRun[] = [];
+      for (const [project, projectSuite] of projectToSuite) {
+        const setups = teardownToSetups.get(project) || [];
+        // Teardown runs after its setups and all the projects that depend on these setups.
+        const setupsDependents = buildDependentProjects(setups, allProjects);
+        setupsDependents.delete(project);
+        const testGroups = createTestGroups(projectSuite, testRun.config.config.workers);
+        // Shuffle each project separately, so that the order does not depend on which projects start together.
+        if (testRun.config.configCLIOverrides.shuffle)
+          shuffleTestGroups(testGroups, testRun.config.configCLIOverrides.shuffle);
+        projectsToRun.push({
+          project,
+          projectSuite,
+          testGroups,
+          runAfter: [...new Set([...project.deps, ...setupsDependents])],
+          inheritEnvFrom: [...project.deps, ...setups],
+          ignoreMaxFailures: !!setups.length,
+        });
       }
+      testRun.dispatcher = new Dispatcher(testRun, projectsToRun);
 
-      for (let i = 0; i < projectToSuite.size; i++) {
-        // Find all projects that have all their dependencies processed by previous phases.
-        const phaseProjects: commonConfig.FullProjectInternal[] = [];
-        for (const project of projectToSuite.keys()) {
-          if (processed.has(project))
-            continue;
-          const projectsThatShouldFinishFirst = [...project.deps, ...(teardownToSetupsDependents.get(project) || [])];
-          if (projectsThatShouldFinishFirst.find(p => !processed.has(p)))
-            continue;
-          phaseProjects.push(project);
-        }
-
-        for (const project of phaseProjects)
-          processed.add(project);
-        // Projects that ignore maxFailures run in their own phase.
-        for (const ignoreMaxFailures of [false, true]) {
-          const projects = phaseProjects.filter(project => ignoreMaxFailuresProjectIds.has(project.id) === ignoreMaxFailures);
-          if (!projects.length)
-            continue;
-          let testGroupsInPhase = 0;
-          const phase: Phase = { dispatcher: new Dispatcher(testRun, { ignoreMaxFailures }), projects: [] };
-          testRun.phases.push(phase);
-          for (const project of projects) {
-            const projectSuite = projectToSuite.get(project)!;
-            const testGroups = createTestGroups(projectSuite, testRun.config.config.workers);
-            phase.projects.push({ project, projectSuite, testGroups });
-            testGroupsInPhase += Math.min(project.workers ?? Number.MAX_SAFE_INTEGER, testGroups.length);
-          }
-          debug('pw:test:task')(`created phase #${testRun.phases.length} with ${phase.projects.map(p => p.project.project.name).sort()} projects, ${testGroupsInPhase} testGroups`);
-          maxConcurrentTestGroups = Math.max(maxConcurrentTestGroups, testGroupsInPhase);
-        }
-      }
-
-      testRun.config.config.metadata.actualWorkers = Math.min(testRun.config.config.workers, maxConcurrentTestGroups);
+      testRun.config.config.metadata.actualWorkers = maxConcurrentTestGroups(projectsToRun, testRun.config.config.workers);
       if (testRun.config.configCLIOverrides.shuffle)
         testRun.config.config.metadata.shuffleSeed = testRun.config.configCLIOverrides.shuffle;
     },
   };
 }
 
+// Estimates the largest number of test groups that run at the same time, up to the number of workers.
+// Starts the projects one by one, and assumes that each project keeps running until
+// some project that runs after it starts.
+function maxConcurrentTestGroups(projectsToRun: ProjectToRun[], workers: number): number {
+  const testGroups = new Map(projectsToRun.map(p => [p.project, Math.min(p.project.workers ?? workers, p.testGroups.length)]));
+  const countTestGroups = (projects: Iterable<commonConfig.FullProjectInternal>) => [...projects].reduce((sum, project) => sum + (testGroups.get(project) ?? 0), 0);
+  const pending = new Map(projectsToRun.map(p => [p.project, p]));
+  const running = new Set<commonConfig.FullProjectInternal>();
+  let max = 0;
+  while (pending.size) {
+    // Out of the projects that can start now, pick the one that adds the most test groups.
+    let next: ProjectToRun | undefined;
+    let nextChange = 0;
+    for (const p of pending.values()) {
+      if (p.runAfter.some(project => pending.has(project)))
+        continue;
+      const change = countTestGroups([p.project]) - countTestGroups(p.runAfter.filter(project => running.has(project)));
+      if (!next || change > nextChange) {
+        next = p;
+        nextChange = change;
+      }
+    }
+    if (!next)
+      break;
+    pending.delete(next.project);
+    for (const project of next.runAfter)
+      running.delete(project);
+    running.add(next.project);
+    max = Math.max(max, countTestGroups(running));
+  }
+  return Math.min(workers, max);
+}
+
 function createRunTestsTask(): Task<TestRun> {
   return {
     title: 'test suite',
-    setup: async testRun => {
-      const successfulProjects = new Set<commonConfig.FullProjectInternal>();
-      const extraEnvByProjectId: EnvByProjectId = new Map();
-      const teardownToSetups = buildTeardownToSetupsMap(testRun.phases.map(phase => phase.projects.map(p => p.project)).flat());
-
-      for (const { dispatcher, projects } of testRun.phases) {
-        // Each phase contains dispatcher and a set of test groups.
-        // We don't want to run the test groups belonging to the projects
-        // that depend on the projects that failed previously.
-        const phaseTestGroups: TestGroup[] = [];
-        for (const { project, testGroups } of projects) {
-          // Inherit extra environment variables from dependencies.
-          let extraEnv: Record<string, string | undefined> = {};
-          for (const dep of project.deps)
-            extraEnv = { ...extraEnv, ...extraEnvByProjectId.get(dep.id) };
-          for (const setup of teardownToSetups.get(project) || [])
-            extraEnv = { ...extraEnv, ...extraEnvByProjectId.get(setup.id) };
-          extraEnvByProjectId.set(project.id, extraEnv);
-
-          const hasFailedDeps = project.deps.some(p => !successfulProjects.has(p));
-          if (!hasFailedDeps)
-            phaseTestGroups.push(...testGroups);
-        }
-
-        if (testRun.config.configCLIOverrides.shuffle)
-          shuffleTestGroups(phaseTestGroups, testRun.config.configCLIOverrides.shuffle);
-
-        if (phaseTestGroups.length) {
-          await dispatcher!.run(phaseTestGroups, extraEnvByProjectId);
-          await dispatcher.stop();
-          for (const [projectId, envProduced] of dispatcher.producedEnvByProjectId()) {
-            const extraEnv = extraEnvByProjectId.get(projectId) || {};
-            extraEnvByProjectId.set(projectId, { ...extraEnv, ...envProduced });
-          }
-        }
-
-        // If the worker broke, fail everything, we have no way of knowing which
-        // projects failed.
-        if (!testRun.hasWorkerErrors) {
-          for (const { project, projectSuite } of projects) {
-            const hasFailedDeps = project.deps.some(p => !successfulProjects.has(p));
-            if (!hasFailedDeps && !projectSuite.allTests().some(test => !test.ok()))
-              successfulProjects.add(project);
-          }
-        }
-      }
+    setup: async ({ dispatcher }) => {
+      await dispatcher!.run();
+      await dispatcher!.stop();
     },
-    teardown: async ({ phases }) => {
-      for (const { dispatcher } of phases.reverse())
-        await dispatcher.stop();
+    teardown: async ({ dispatcher }) => {
+      await dispatcher?.stop();
     },
   };
 }

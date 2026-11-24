@@ -82,3 +82,25 @@ test('should keep serial suites together in parallel mode', async ({ runInlineTe
   expect(lines.slice(serialStart, serialStart + count)).toEqual(Array.from({ length: count }, (_, i) => `serial${i}`));
   expect(lines.filter(line => line.startsWith('test'))).not.toEqual(Array.from({ length: count }, (_, i) => `test${i}`));
 });
+
+test('should shuffle each project separately', async ({ runInlineTest }) => {
+  const projectFiles = Object.fromEntries(fileNames.map(name => [`${name}.spec.ts`, `
+    import { test } from '@playwright/test';
+    test('test', ({}, testInfo) => console.log('\\n%%' + testInfo.project.name + '-${name}'));
+  `]));
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      export default { projects: [{ name: 'first' }, { name: 'second' }] };
+    `,
+    ...projectFiles,
+  }, { workers: 1, shuffle: '42' });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(2 * fileNames.length);
+  // Tests of different projects are not mixed, and each project has its own order.
+  const first = result.outputLines.slice(0, fileNames.length);
+  const second = result.outputLines.slice(fileNames.length);
+  expect([...first].sort()).toEqual(fileNames.map(name => `first-${name}`));
+  expect([...second].sort()).toEqual(fileNames.map(name => `second-${name}`));
+  expect(first).not.toEqual(fileNames.map(name => `first-${name}`));
+  expect(second.map(line => line.split('-')[1])).not.toEqual(first.map(line => line.split('-')[1]));
+});

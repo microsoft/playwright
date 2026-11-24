@@ -31,9 +31,32 @@ import type { RegisteredListener } from '@utils/eventsHelper';
 import type { ProcessExitData } from './processHost';
 import type { TestRun } from './tasks';
 import type { TestGroup } from './testGroups';
+import type { config as commonConfig } from '../common';
 import type { TestError, TestResult, TestStep } from '../../types/testReporter';
 
-export type EnvByProjectId = Map<string, Record<string, string | undefined>>;
+type Env = Record<string, string | undefined>;
+
+export type ProjectToRun = {
+  project: commonConfig.FullProjectInternal;
+  projectSuite: testNs.Suite;
+  testGroups: TestGroup[];
+  // Projects that must finish before this project starts.
+  runAfter: commonConfig.FullProjectInternal[];
+  // Projects that pass their environment variables to this project.
+  inheritEnvFrom: commonConfig.FullProjectInternal[];
+  // Teardown projects keep running after maxFailures, so that cleanup is not skipped.
+  ignoreMaxFailures: boolean;
+};
+
+type ProjectState = ProjectToRun & {
+  // A project is 'stopping' when all its tests are done, but its workers are still alive.
+  status: 'pending' | 'running' | 'stopping' | 'finished';
+  // Whether the projects that depend on this one can run.
+  successful: boolean;
+  // Environment variables for the workers of this project, and later for the dependent projects.
+  env: Env;
+  producedEnv: Env;
+};
 
 const exclusiveLock = '-exclusive-';
 
@@ -45,17 +68,13 @@ export class Dispatcher {
   private _queuedOrRunningHashCount = new Map<string, number>();
   private _finished = new ManualPromise<void>();
   private _isStopped = true;
-  // Teardown phases keep running after maxFailures, so that cleanup is not skipped.
-  private _ignoreMaxFailures: boolean;
+  private _projects: Map<string, ProjectState>;
 
   private _testRun: TestRun;
 
-  private _extraEnvByProjectId: EnvByProjectId = new Map();
-  private _producedEnvByProjectId: EnvByProjectId = new Map();
-
-  constructor(testRun: TestRun, options: { ignoreMaxFailures?: boolean } = {}) {
+  constructor(testRun: TestRun, projects: ProjectToRun[]) {
     this._testRun = testRun;
-    this._ignoreMaxFailures = !!options.ignoreMaxFailures;
+    this._projects = new Map(projects.map(project => [project.project.id, { ...project, status: 'pending', successful: false, env: {}, producedEnv: {} }]));
     for (const project of testRun.config.projects) {
       if (project.workers)
         this._workerLimitPerProjectId.set(project.id, project.workers);
@@ -124,7 +143,8 @@ export class Dispatcher {
 
     // 3. Claim both the job and the worker slot.
     this._queue.splice(jobIndex, 1);
-    const jobDispatcher = new JobDispatcher(job, this._testRun, this._ignoreMaxFailures ? undefined : () => this.stop().catch(() => {}));
+    const ignoreMaxFailures = this._projects.get(job.projectId)!.ignoreMaxFailures;
+    const jobDispatcher = new JobDispatcher(job, this._testRun, ignoreMaxFailures, () => this._stopAfterMaxFailures());
     this._workerSlots[workerIndex].jobDispatcher = jobDispatcher;
 
     // 4. Run the job. This is the only async operation.
@@ -134,6 +154,7 @@ export class Dispatcher {
       this._workerSlots[workerIndex].jobDispatcher = undefined;
 
       // 6. Check whether we are done or should schedule other jobs.
+      this._stopProjectsWithoutJobs();
       this._checkFinished();
       this._scheduleJobs();
     });
@@ -153,7 +174,7 @@ export class Dispatcher {
     if (worker && (worker.hash() !== job.workerHash || worker.didSendStop())) {
       await worker.stop();
       worker = undefined;
-      if (this._isStopped) // Check stopped signal after async hop.
+      if (this._isProjectStopped(job.projectId)) // Check stopped signal after async hop.
         return;
     }
 
@@ -164,7 +185,7 @@ export class Dispatcher {
       this._workerSlots[index].worker = worker;
       worker.on('exit', () => this._workerSlots[index].worker = undefined);
       startError = await worker.start();
-      if (this._isStopped) // Check stopped signal after async hop.
+      if (this._isProjectStopped(job.projectId)) // Check stopped signal after async hop.
         return;
     }
 
@@ -184,7 +205,7 @@ export class Dispatcher {
       void worker.stop();
 
     // 5. Possibly queue new jobs with leftover tests and/or retries.
-    if (!this._isStopped) {
+    if (!this._isProjectStopped(job.projectId)) {
       if (result.remainingJob) {
         this._queue.unshift(result.remainingJob);
         this._updateCounterForWorkerHash(result.remainingJob.workerHash, +1);
@@ -201,7 +222,7 @@ export class Dispatcher {
       return;
 
     // Check that we have no more work to do.
-    if (this._queue.length && !this._isStopped)
+    if (!this._isStopped && [...this._projects.values()].some(project => project.status !== 'finished'))
       return;
 
     // Make sure all workers have finished the current job.
@@ -224,24 +245,97 @@ export class Dispatcher {
     this._queuedOrRunningHashCount.set(hash, delta + (this._queuedOrRunningHashCount.get(hash) || 0));
   }
 
-  async run(testGroups: TestGroup[], extraEnvByProjectId: EnvByProjectId) {
-    this._extraEnvByProjectId = extraEnvByProjectId;
-    this._queue = testGroups;
-    for (const group of testGroups)
-      this._updateCounterForWorkerHash(group.workerHash, +1);
+  private _isProjectStopped(projectId: string) {
+    return this._isStopped || (!this._projects.get(projectId)!.ignoreMaxFailures && this._testRun.hasReachedMaxFailures());
+  }
+
+  private _startReadyProjects() {
+    if (this._isStopped)
+      return;
+    // A project that finishes right away can make other projects ready, so iterate until nothing changes.
+    for (let changed = true; changed;) {
+      changed = false;
+      for (const project of this._projects.values()) {
+        if (project.status !== 'pending' || project.runAfter.some(p => this._projects.get(p.id)?.status !== 'finished'))
+          continue;
+        changed = true;
+        for (const p of project.inheritEnvFrom)
+          project.env = { ...project.env, ...this._projects.get(p.id)?.env };
+        // Do not run a project when any of its dependencies has failed.
+        if (this._hasFailedDependencies(project) || this._isProjectStopped(project.project.id) || !project.testGroups.length) {
+          this._finishProject(project);
+          continue;
+        }
+        project.status = 'running';
+        for (const group of project.testGroups) {
+          this._queue.push(group);
+          this._updateCounterForWorkerHash(group.workerHash, +1);
+        }
+      }
+    }
+  }
+
+  private _hasFailedDependencies(project: ProjectState) {
+    return project.project.deps.some(dep => !this._projects.get(dep.id)?.successful);
+  }
+
+  private _stopProjectsWithoutJobs() {
+    const projectIdsWithJobs = new Set(this._queue.map(job => job.projectId));
+    for (const slot of this._workerSlots) {
+      if (slot.jobDispatcher)
+        projectIdsWithJobs.add(slot.jobDispatcher.job.projectId);
+    }
+    for (const project of this._projects.values()) {
+      if (project.status !== 'running' || projectIdsWithJobs.has(project.project.id))
+        continue;
+      project.status = 'stopping';
+      // The project finishes after all its workers exit. At this point worker fixtures
+      // are torn down and environment variables are collected, so dependent projects can start.
+      const workers = this._workerSlots.map(slot => slot.worker).filter(worker => worker?.projectId() === project.project.id);
+      void Promise.all(workers.map(worker => worker!.stop())).then(() => {
+        this._finishProject(project);
+        this._startReadyProjects();
+        this._scheduleJobs();
+        this._checkFinished();
+      });
+    }
+  }
+
+  private _finishProject(project: ProjectState) {
+    project.status = 'finished';
+    project.env = { ...project.env, ...project.producedEnv };
+    // If the worker broke, fail everything, we have no way of knowing which projects failed.
+    project.successful = !this._testRun.hasWorkerErrors && !this._hasFailedDependencies(project) && !project.projectSuite.allTests().some(test => !test.ok());
+  }
+
+  private _stopAfterMaxFailures() {
+    // Only projects that ignore maxFailures keep running.
+    this._queue = this._queue.filter(job => {
+      if (!this._isProjectStopped(job.projectId))
+        return true;
+      this._updateCounterForWorkerHash(job.workerHash, -1);
+      return false;
+    });
+    for (const { worker } of this._workerSlots) {
+      if (worker && this._isProjectStopped(worker.projectId()))
+        void worker.stop();
+    }
+    this._stopProjectsWithoutJobs();
+  }
+
+  async run() {
     this._isStopped = false;
     this._workerSlots = [];
-    // 0. Stop right away if we have reached max failures.
-    if (!this._ignoreMaxFailures && this._testRun.hasReachedMaxFailures())
-      void this.stop();
     // 1. Allocate workers.
     for (let i = 0; i < this._testRun.config.config.workers; i++)
       this._workerSlots.push({});
-    // 2. Schedule enough jobs.
+    // 2. Start the projects that do not wait for other projects, and schedule enough jobs.
+    this._startReadyProjects();
     this._scheduleJobs();
     this._checkFinished();
     // 3. More jobs are scheduled when the worker becomes free.
-    // 4. Wait for all jobs to finish.
+    //    More projects are started when the projects they wait for finish.
+    // 4. Wait for all projects to finish.
     await this._finished;
   }
 
@@ -251,7 +345,7 @@ export class Dispatcher {
     const worker = new WorkerHost(testGroup, {
       parallelIndex,
       config: loaderData,
-      extraEnv: this._extraEnvByProjectId.get(testGroup.projectId) || {},
+      extraEnv: this._projects.get(testGroup.projectId)!.env,
       outputDir: project.project.outputDir,
       pauseOnError: !!this._testRun.options.pauseOnError,
       pauseAtEnd,
@@ -295,14 +389,10 @@ export class Dispatcher {
       this._testRun.reporter.onError?.(error);
     });
     worker.on('exit', () => {
-      const producedEnv = this._producedEnvByProjectId.get(testGroup.projectId) || {};
-      this._producedEnvByProjectId.set(testGroup.projectId, { ...producedEnv, ...worker.producedEnv() });
+      const projectState = this._projects.get(testGroup.projectId)!;
+      projectState.producedEnv = { ...projectState.producedEnv, ...worker.producedEnv() };
     });
     return worker;
-  }
-
-  producedEnvByProjectId() {
-    return this._producedEnvByProjectId;
   }
 
   async stop() {
@@ -319,8 +409,9 @@ class JobDispatcher {
 
   readonly job: TestGroup;
   private _testRun: TestRun;
-  // Missing callback means that maxFailures should be ignored, e.g. in teardown phases.
-  private _onMaxFailuresReached?: () => void;
+  // Teardown projects keep running after maxFailures, so that cleanup is not skipped.
+  private _ignoreMaxFailures: boolean;
+  private _onMaxFailuresReached: () => void;
   private _listeners: RegisteredListener[] = [];
   private _failedTests = new Set<testNs.TestCase>();
   private _failedWithNonRetriableError = new Set<testNs.TestCase|testNs.Suite>();
@@ -330,15 +421,16 @@ class JobDispatcher {
   private _workerIndex = 0;
   private _currentlyRunning: { test: testNs.TestCase, result: TestResult } | undefined;
 
-  constructor(job: TestGroup, testRun: TestRun, onMaxFailuresReached?: () => void) {
+  constructor(job: TestGroup, testRun: TestRun, ignoreMaxFailures: boolean, onMaxFailuresReached: () => void) {
     this.job = job;
     this._testRun = testRun;
+    this._ignoreMaxFailures = ignoreMaxFailures;
     this._onMaxFailuresReached = onMaxFailuresReached;
     this._remainingByTestId = new Map(this.job.tests.map(e => [e.id, e]));
   }
 
   private _isStoppedByMaxFailures() {
-    return !!this._onMaxFailuresReached && this._testRun.hasReachedMaxFailures();
+    return !this._ignoreMaxFailures && this._testRun.hasReachedMaxFailures();
   }
 
   private _onTestBegin(params: ipc.TestBeginPayload) {
@@ -698,12 +790,12 @@ class JobDispatcher {
     if (result.status !== test.expectedStatus)
       test.retries = computeRetries(test._retries, result.errors);
     this._testRun.reporter.onTestEnd?.(test, result);
-    const hadMaxFailures = this._isStoppedByMaxFailures();
+    const hadMaxFailures = this._testRun.hasReachedMaxFailures();
     // Test is considered failing after the last retry.
     if (test.outcome() === 'unexpected' && test.results.length > test.retries)
       ++this._testRun.failedTestCount;
-    if (!hadMaxFailures && this._isStoppedByMaxFailures()) {
-      this._onMaxFailuresReached?.();
+    if (!hadMaxFailures && this._testRun.hasReachedMaxFailures()) {
+      this._onMaxFailuresReached();
       this._testRun.reporter.onError?.({ message: colors.red(`Testing stopped early after ${this._testRun.config.config.maxFailures} maximum allowed failures.`) });
     }
   }

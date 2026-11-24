@@ -259,3 +259,57 @@ test('max-failures should not consider retries as failures', async ({ runInlineT
   expect(result.flaky).toBe(2);
   expect(result.passed).toBe(0);
 });
+
+test('max-failures should stop unrelated projects and still run teardown project', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      export default {
+        maxFailures: 1,
+        projects: [
+          { name: 'setup', testMatch: '**/setup.ts', teardown: 'teardown' },
+          { name: 'teardown', testMatch: '**/teardown.ts' },
+          { name: 'a', dependencies: ['setup'], testMatch: '**/a.spec.ts' },
+          { name: 'b', dependencies: ['a'], testMatch: '**/b.spec.ts' },
+          { name: 'x', testMatch: '**/x.spec.ts' },
+        ],
+      };`,
+    'setup.ts': `
+      import { test } from '@playwright/test';
+      test('setup', async ({}) => { console.log('\\n%%setup'); });
+    `,
+    'teardown.ts': `
+      import { test } from '@playwright/test';
+      test('teardown', async ({}) => { console.log('\\n%%teardown'); });
+    `,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      import fs from 'fs';
+      import path from 'path';
+      test('failing', async ({}, testInfo) => {
+        // Fail while the unrelated project 'x' is running.
+        await expect.poll(() => fs.existsSync(path.join(testInfo.config.rootDir, 'x-started'))).toBe(true);
+        expect(1).toBe(2);
+      });
+    `,
+    'b.spec.ts': `
+      import { test } from '@playwright/test';
+      test('b', async ({}) => { console.log('\\n%%b'); });
+    `,
+    'x.spec.ts': `
+      import { test } from '@playwright/test';
+      import fs from 'fs';
+      import path from 'path';
+      test('x1', async ({}, testInfo) => {
+        fs.writeFileSync(path.join(testInfo.config.rootDir, 'x-started'), '');
+        await new Promise(() => {});
+      });
+      test('x2', async ({}) => { console.log('\\n%%x2'); });
+    `,
+  }, { workers: 2 });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.interrupted).toBe(1);
+  expect(result.passed).toBe(2);
+  expect(result.didNotRun).toBe(2);
+  expect(result.outputLines).toEqual(['setup', 'teardown']);
+});
