@@ -1119,9 +1119,9 @@ features, encourage the use of new ones, and provide general guidance.
        */
       partitioningBlobURLInfo: PartitioningBlobURLInfo;
     }
-    export type ElementAccessibilityIssueReason = "DisallowedSelectChild"|"DisallowedOptGroupChild"|"NonPhrasingContentOptionChild"|"InteractiveContentOptionChild"|"InteractiveContentLegendChild"|"InteractiveContentSummaryDescendant";
+    export type ElementAccessibilityIssueReason = "DisallowedSelectChild"|"DisallowedOptGroupChild"|"NonPhrasingContentOptionChild"|"InteractiveContentOptionChild"|"InteractiveContentLegendChild"|"InteractiveContentSummaryDescendant"|"AnchorMenuDescendant"|"InteractiveContentMenuDescendant"|"TextMenuDescendant";
     /**
-     * This issue warns about errors in the select or summary element content model.
+     * This issue warns about errors in the select, summary, or menu element content model.
      */
     export interface ElementAccessibilityIssueDetails {
       nodeId: DOM.BackendNodeId;
@@ -1943,6 +1943,17 @@ by |characteristicId|.
     }
     export type simulateGATTDisconnectionReturnValue = {
     }
+    /**
+     * Simulates the ATT MTU exchange procedure from Bluetooth Core Specification
+Vol 3 Part F 3.4.2 establishing |mtu| for the connection to the peripheral
+with |address|.
+     */
+    export type simulateGATTMtuChangeParameters = {
+      address: string;
+      mtu: number;
+    }
+    export type simulateGATTMtuChangeReturnValue = {
+    }
   }
   
   /**
@@ -2412,15 +2423,6 @@ Must be specified if 'width' is omitted.
       commandId: BrowserCommandId;
     }
     export type executeBrowserCommandReturnValue = {
-    }
-    /**
-     * Allows a site to use privacy sandbox features that require enrollment
-without the site actually being enrolled. Only supported on page targets.
-     */
-    export type addPrivacySandboxEnrollmentOverrideParameters = {
-      url: string;
-    }
-    export type addPrivacySandboxEnrollmentOverrideReturnValue = {
     }
     /**
      * Gets the current globally-applied privacy control status
@@ -4492,7 +4494,7 @@ front-end.
     /**
      * Pseudo element type.
      */
-    export type PseudoType = "first-line"|"first-letter"|"checkmark"|"before"|"after"|"expand-icon"|"picker-icon"|"interest-button"|"marker"|"backdrop"|"column"|"selection"|"search-text"|"target-text"|"spelling-error"|"grammar-error"|"highlight"|"first-line-inherited"|"scroll-marker"|"scroll-marker-group"|"scroll-button"|"scrollbar"|"scrollbar-thumb"|"scrollbar-button"|"scrollbar-track"|"scrollbar-track-piece"|"scrollbar-corner"|"resizer"|"input-list-button"|"view-transition"|"view-transition-group"|"view-transition-image-pair"|"view-transition-group-children"|"view-transition-old"|"view-transition-new"|"placeholder"|"file-selector-button"|"details-content"|"picker"|"select-listbox"|"permission-icon"|"overscroll-area-parent"|"overscroll-backdrop"|"skeleton";
+    export type PseudoType = "first-line"|"first-letter"|"checkmark"|"before"|"after"|"expand-icon"|"picker-icon"|"interest-button"|"marker"|"backdrop"|"column"|"selection"|"search-text"|"target-text"|"spelling-error"|"grammar-error"|"highlight"|"first-line-inherited"|"scroll-marker"|"scroll-marker-group"|"scroll-button"|"scrollbar"|"scrollbar-thumb"|"scrollbar-button"|"scrollbar-track"|"scrollbar-track-piece"|"scrollbar-corner"|"resizer"|"input-list-button"|"view-transition"|"view-transition-group"|"view-transition-image-pair"|"view-transition-group-children"|"view-transition-old"|"view-transition-new"|"placeholder"|"file-selector-button"|"details-content"|"picker"|"select-listbox"|"permission-icon"|"overscroll-area-parent"|"skeleton";
     /**
      * Shadow root type.
      */
@@ -10580,7 +10582,7 @@ file, data and other requests and responses, their headers, bodies, timing, etc.
     /**
      * Resource type as it was perceived by the rendering engine.
      */
-    export type ResourceType = "Document"|"Stylesheet"|"Image"|"Media"|"Font"|"Script"|"TextTrack"|"XHR"|"Fetch"|"Prefetch"|"EventSource"|"WebSocket"|"Manifest"|"SignedExchange"|"Ping"|"CSPViolationReport"|"Preflight"|"FedCM"|"Other";
+    export type ResourceType = "Document"|"Stylesheet"|"Image"|"Media"|"Font"|"Script"|"TextTrack"|"XHR"|"Fetch"|"Prefetch"|"EventSource"|"WebSocket"|"Manifest"|"SignedExchange"|"Ping"|"CSPViolationReport"|"Preflight"|"FedCM"|"EmailVerification"|"Other";
     /**
      * Unique loader identifier.
      */
@@ -11164,7 +11166,7 @@ If the opcode isn't 1, then payloadData is a base64 encoded string representing 
       /**
        * Type of this initiator.
        */
-      type: "parser"|"script"|"preload"|"SignedExchange"|"preflight"|"FedCM"|"other";
+      type: "parser"|"script"|"preload"|"SignedExchange"|"preflight"|"FedCM"|"EmailVerification"|"other";
       /**
        * Initiator JavaScript stack trace, set for Script only.
 Requires the Debugger domain to be enabled.
@@ -11949,7 +11951,7 @@ details; this boolean is true if that value is populated.
      * A fetch result for a device bound session creation or refresh.
 LINT.IfChange(DeviceBoundSessionFetchResult)
      */
-    export type DeviceBoundSessionFetchResult = "Success"|"SigningKeyGenerationError"|"AttestationKeyGenerationError"|"SigningError"|"TransientSigningError"|"ServerRequestedTermination"|"InvalidSessionId"|"InvalidChallenge"|"TooManyChallenges"|"InvalidFetcherUrl"|"InvalidRefreshUrl"|"TransientHttpError"|"ScopeOriginSameSiteMismatch"|"RefreshUrlSameSiteMismatch"|"MismatchedSessionId"|"MissingScope"|"NoCredentials"|"SubdomainRegistrationWellKnownUnavailable"|"SubdomainRegistrationUnauthorized"|"SubdomainRegistrationWellKnownMalformed"|"SessionProviderWellKnownUnavailable"|"RelyingPartyWellKnownUnavailable"|"FederatedKeyThumbprintMismatch"|"InvalidFederatedSessionUrl"|"InvalidFederatedKey"|"TooManyRelyingOriginLabels"|"BoundCookieSetForbidden"|"NetError"|"ProxyError"|"EmptySessionConfig"|"InvalidCredentialsConfig"|"InvalidCredentialsType"|"InvalidCredentialsEmptyName"|"InvalidCredentialsCookie"|"PersistentHttpError"|"RegistrationAttemptedChallenge"|"InvalidScopeOrigin"|"ScopeOriginContainsPath"|"RefreshInitiatorNotString"|"RefreshInitiatorInvalidHostPattern"|"InvalidScopeSpecification"|"MissingScopeSpecificationType"|"EmptyScopeSpecificationDomain"|"EmptyScopeSpecificationPath"|"InvalidScopeSpecificationType"|"InvalidScopeIncludeSite"|"MissingScopeIncludeSite"|"FederatedNotAuthorizedByProvider"|"FederatedNotAuthorizedByRelyingParty"|"SessionProviderWellKnownMalformed"|"SessionProviderWellKnownHasProviderOrigin"|"RelyingPartyWellKnownMalformed"|"RelyingPartyWellKnownHasRelyingOrigins"|"InvalidFederatedSessionProviderSessionMissing"|"InvalidFederatedSessionWrongProviderOrigin"|"InvalidCredentialsCookieCreationTime"|"InvalidCredentialsCookieName"|"InvalidCredentialsCookieParsing"|"InvalidCredentialsCookieUnpermittedAttribute"|"InvalidCredentialsCookieInvalidDomain"|"InvalidCredentialsCookiePrefix"|"InvalidScopeRulePath"|"InvalidScopeRuleHostPattern"|"ScopeRuleOriginScopedHostPatternMismatch"|"ScopeRuleSiteScopedHostPatternMismatch"|"SigningQuotaExceeded"|"InvalidConfigJson"|"InvalidFederatedSessionProviderFailedToRestoreKey"|"FailedToUnwrapKey"|"SessionDeletedDuringRefresh"|"CrossOriginRegistrationSiteNotIncluded"|"InvalidPreProvisionedKeyInitiatorMissing"|"PreProvisionedKeyAccessNotGranted"|"PreProvisionedKeyNotFound"|"AttestationCertificationError"|"AttestationSigningError"|"FederatedRegistrationRedirected";
+    export type DeviceBoundSessionFetchResult = "Success"|"SigningKeyGenerationError"|"AttestationKeyGenerationError"|"SigningError"|"TransientSigningError"|"ServerRequestedTermination"|"InvalidSessionId"|"InvalidChallenge"|"TooManyChallenges"|"InvalidFetcherUrl"|"InvalidRefreshUrl"|"TransientHttpError"|"ScopeOriginSameSiteMismatch"|"RefreshUrlSameSiteMismatch"|"MismatchedSessionId"|"MissingScope"|"NoCredentials"|"SubdomainRegistrationWellKnownUnavailable"|"SubdomainRegistrationUnauthorized"|"SubdomainRegistrationWellKnownMalformed"|"SessionProviderWellKnownUnavailable"|"RelyingPartyWellKnownUnavailable"|"FederatedKeyThumbprintMismatch"|"InvalidFederatedSessionUrl"|"InvalidFederatedKey"|"TooManyRelyingOriginLabels"|"BoundCookieSetForbidden"|"NetError"|"ProxyError"|"EmptySessionConfig"|"InvalidCredentialsConfig"|"InvalidCredentialsType"|"InvalidCredentialsEmptyName"|"InvalidCredentialsCookie"|"PersistentHttpError"|"RegistrationAttemptedChallenge"|"InvalidScopeOrigin"|"ScopeOriginContainsPath"|"RefreshInitiatorNotString"|"RefreshInitiatorInvalidHostPattern"|"InvalidScopeSpecification"|"MissingScopeSpecificationType"|"EmptyScopeSpecificationDomain"|"EmptyScopeSpecificationPath"|"InvalidScopeSpecificationType"|"InvalidScopeIncludeSite"|"MissingScopeIncludeSite"|"FederatedNotAuthorizedByProvider"|"FederatedNotAuthorizedByRelyingParty"|"SessionProviderWellKnownMalformed"|"SessionProviderWellKnownHasProviderOrigin"|"RelyingPartyWellKnownMalformed"|"RelyingPartyWellKnownHasRelyingOrigins"|"InvalidFederatedSessionProviderSessionMissing"|"InvalidFederatedSessionWrongProviderOrigin"|"InvalidCredentialsCookieCreationTime"|"InvalidCredentialsCookieName"|"InvalidCredentialsCookieParsing"|"InvalidCredentialsCookieUnpermittedAttribute"|"InvalidCredentialsCookieInvalidDomain"|"InvalidCredentialsCookiePrefix"|"InvalidScopeRulePath"|"InvalidScopeRuleHostPattern"|"ScopeRuleOriginScopedHostPatternMismatch"|"ScopeRuleSiteScopedHostPatternMismatch"|"SigningQuotaExceeded"|"InvalidConfigJson"|"InvalidFederatedSessionProviderFailedToRestoreKey"|"FailedToUnwrapKey"|"SessionDeletedDuringRefresh"|"CrossOriginRegistrationSiteNotIncluded"|"InvalidPreProvisionedKeyInitiatorMissing"|"PreProvisionedKeyAccessNotGranted"|"PreProvisionedKeyNotFound"|"AttestationCertificationError"|"AttestationSigningError"|"FederatedRegistrationRedirected"|"CrossSiteRefreshSessionConfig";
     /**
      * Details about a failed device bound session network request.
      */
@@ -16256,6 +16258,13 @@ loader id does not match the provided id. This prevents accidentally
 reloading an unintended target in case there's a racing navigation.
        */
       loaderId?: Network.LoaderId;
+      /**
+       * If true and the page has POST data, the browser shows the form
+resubmission dialog before the reload. The command returns after the
+user responds to the dialog. If the user cancels the dialog, the
+command returns an error. The default value is false.
+       */
+      checkForRepost?: boolean;
     }
     export type reloadReturnValue = {
     }
@@ -17062,7 +17071,7 @@ CDP events for them are emitted separately but they share
     /**
      * List of FinalStatus reasons for Prerender2.
      */
-    export type PrerenderFinalStatus = "Activated"|"Destroyed"|"LowEndDevice"|"InvalidSchemeRedirect"|"InvalidSchemeNavigation"|"NavigationRequestBlockedByCsp"|"MojoBinderPolicy"|"RendererProcessCrashed"|"RendererProcessKilled"|"Download"|"TriggerDestroyed"|"NavigationNotCommitted"|"NavigationBadHttpStatus"|"ClientCertRequested"|"NavigationRequestNetworkError"|"CancelAllHostsForTesting"|"DidFailLoad"|"Stop"|"SslCertificateError"|"LoginAuthRequested"|"UaChangeRequiresReload"|"BlockedByClient"|"AudioOutputDeviceRequested"|"MixedContent"|"TriggerBackgrounded"|"MemoryLimitExceeded"|"DataSaverEnabled"|"TriggerUrlHasEffectiveUrl"|"ActivatedBeforeStarted"|"InactivePageRestriction"|"StartFailed"|"TimeoutBackgrounded"|"CrossSiteRedirectInInitialNavigation"|"CrossSiteNavigationInInitialNavigation"|"SameSiteCrossOriginRedirectNotOptInInInitialNavigation"|"SameSiteCrossOriginNavigationNotOptInInInitialNavigation"|"ActivationNavigationParameterMismatch"|"ActivatedInBackground"|"EmbedderHostDisallowed"|"ActivationNavigationDestroyedBeforeSuccess"|"TabClosedByUserGesture"|"TabClosedWithoutUserGesture"|"PrimaryMainFrameRendererProcessCrashed"|"PrimaryMainFrameRendererProcessKilled"|"ActivationFramePolicyNotCompatible"|"PreloadingDisabled"|"BatterySaverEnabled"|"ActivatedDuringMainFrameNavigation"|"PreloadingUnsupportedByWebContents"|"CrossSiteRedirectInMainFrameNavigation"|"CrossSiteNavigationInMainFrameNavigation"|"SameSiteCrossOriginRedirectNotOptInInMainFrameNavigation"|"SameSiteCrossOriginNavigationNotOptInInMainFrameNavigation"|"MemoryPressureOnTrigger"|"MemoryPressureAfterTriggered"|"PrerenderingDisabledByDevTools"|"SpeculationRuleRemoved"|"ActivatedWithAuxiliaryBrowsingContexts"|"MaxNumOfRunningEagerPrerendersExceeded"|"MaxNumOfRunningNonEagerPrerendersExceeded"|"MaxNumOfRunningEmbedderPrerendersExceeded"|"PrerenderingUrlHasEffectiveUrl"|"RedirectedPrerenderingUrlHasEffectiveUrl"|"ActivationUrlHasEffectiveUrl"|"JavaScriptInterfaceAdded"|"JavaScriptInterfaceRemoved"|"AllPrerenderingCanceled"|"WindowClosed"|"SlowNetwork"|"OtherPrerenderedPageActivated"|"V8OptimizerDisabled"|"PrerenderFailedDuringPrefetch"|"BrowsingDataRemoved"|"PrerenderHostReused"|"FormSubmitWhenPrerendering"|"CrossDocumentRestart"|"PrefetchFailedCrossOriginSubframe";
+    export type PrerenderFinalStatus = "Activated"|"Destroyed"|"LowEndDevice"|"InvalidSchemeRedirect"|"InvalidSchemeNavigation"|"NavigationRequestBlockedByCsp"|"MojoBinderPolicy"|"RendererProcessCrashed"|"RendererProcessKilled"|"Download"|"TriggerDestroyed"|"NavigationNotCommitted"|"NavigationBadHttpStatus"|"ClientCertRequested"|"NavigationRequestNetworkError"|"CancelAllHostsForTesting"|"DidFailLoad"|"Stop"|"SslCertificateError"|"LoginAuthRequested"|"UaChangeRequiresReload"|"BlockedByClient"|"AudioOutputDeviceRequested"|"MixedContent"|"TriggerBackgrounded"|"MemoryLimitExceeded"|"DataSaverEnabled"|"TriggerUrlHasEffectiveUrl"|"ActivatedBeforeStarted"|"InactivePageRestriction"|"StartFailed"|"TimeoutBackgrounded"|"CrossSiteRedirectInInitialNavigation"|"CrossSiteNavigationInInitialNavigation"|"SameSiteCrossOriginRedirectNotOptInInInitialNavigation"|"SameSiteCrossOriginNavigationNotOptInInInitialNavigation"|"ActivationNavigationParameterMismatch"|"ActivatedInBackground"|"EmbedderHostDisallowed"|"ActivationNavigationDestroyedBeforeSuccess"|"TabClosedByUserGesture"|"TabClosedWithoutUserGesture"|"PrimaryMainFrameRendererProcessCrashed"|"PrimaryMainFrameRendererProcessKilled"|"ActivationFramePolicyNotCompatible"|"PreloadingDisabled"|"BatterySaverEnabled"|"ActivatedDuringMainFrameNavigation"|"PreloadingUnsupportedByWebContents"|"CrossSiteRedirectInMainFrameNavigation"|"CrossSiteNavigationInMainFrameNavigation"|"SameSiteCrossOriginRedirectNotOptInInMainFrameNavigation"|"SameSiteCrossOriginNavigationNotOptInInMainFrameNavigation"|"MemoryPressureOnTrigger"|"MemoryPressureAfterTriggered"|"PrerenderingDisabledByDevTools"|"SpeculationRuleRemoved"|"ActivatedWithAuxiliaryBrowsingContexts"|"MaxNumOfRunningEagerPrerendersExceeded"|"MaxNumOfRunningNonEagerPrerendersExceeded"|"MaxNumOfRunningEmbedderPrerendersExceeded"|"PrerenderingUrlHasEffectiveUrl"|"RedirectedPrerenderingUrlHasEffectiveUrl"|"ActivationUrlHasEffectiveUrl"|"JavaScriptInterfaceAdded"|"JavaScriptInterfaceRemoved"|"AllPrerenderingCanceled"|"WindowClosed"|"SlowNetwork"|"OtherPrerenderedPageActivated"|"V8OptimizerDisabled"|"PrerenderFailedDuringPrefetch"|"BrowsingDataRemoved"|"PrerenderHostReused"|"FormSubmitWhenPrerendering"|"CrossDocumentRestart"|"PrefetchFailedCrossOriginSubframe"|"UnexpectedMainFrameNavigation";
     /**
      * Preloading status values, see also PreloadingTriggeringOutcome. This
 status is shared by prefetchStatusUpdated and prerenderStatusUpdated.
@@ -18778,7 +18787,13 @@ this is the "ancestor" frame that created the first worker in the nested chain.
       browserContextId?: Browser.BrowserContextID;
       /**
        * Provides additional details for specific target types. For example, for
-the type of "page", this may be set to "prerender".
+the type of "page", this may be set to "prerender", and for "tab", this
+may be set to "unloaded". An unloaded tab has a history entry, but no
+document for it: for example, after the tab was discarded, after
+session restore without load, or after the renderer crashed. The tab
+stays unloaded until a new document commits. A new tab that has not
+navigated is not unloaded. Target.targetInfoChanged reports changes of
+this value for tabs.
        */
       subtype?: string;
       /**
@@ -20957,6 +20972,23 @@ of scripts is used as end of range.
       locations: BreakLocation[];
     }
     /**
+     * Returns the current scope chain of the given call frame. Unlike the scope chain reported
+with the `paused` event, it reflects changes made to variables since then (e.g. via
+`evaluateOnCallFrame` or `setVariableValue`).
+     */
+    export type getScopeChainParameters = {
+      /**
+       * Call frame identifier to get the scope chain for.
+       */
+      callFrameId: CallFrameId;
+    }
+    export type getScopeChainReturnValue = {
+      /**
+       * Scope chain for the call frame.
+       */
+      scopeChain: Scope[];
+    }
+    /**
      * Returns source for the script with given id.
      */
     export type getScriptSourceParameters = {
@@ -22033,11 +22065,12 @@ NOTE: If you change anything here, make sure to also update
       className?: string;
       /**
        * Remote object value in case of primitive values or JSON values (if it was requested).
+Not set in `deep` serialization mode, see `deepSerializedValue`.
        */
       value?: any;
       /**
        * Primitive value which can not be JSON-stringified does not have `value`, but gets this
-property.
+property. Not set in `deep` serialization mode, see `deepSerializedValue`.
        */
       unserializableValue?: UnserializableValue;
       /**
@@ -23573,6 +23606,7 @@ Error was thrown.
     "BluetoothEmulation.addDescriptor": BluetoothEmulation.addDescriptorParameters;
     "BluetoothEmulation.removeDescriptor": BluetoothEmulation.removeDescriptorParameters;
     "BluetoothEmulation.simulateGATTDisconnection": BluetoothEmulation.simulateGATTDisconnectionParameters;
+    "BluetoothEmulation.simulateGATTMtuChange": BluetoothEmulation.simulateGATTMtuChangeParameters;
     "Browser.setPermission": Browser.setPermissionParameters;
     "Browser.grantPermissions": Browser.grantPermissionsParameters;
     "Browser.resetPermissions": Browser.resetPermissionsParameters;
@@ -23592,7 +23626,6 @@ Error was thrown.
     "Browser.setContentsSize": Browser.setContentsSizeParameters;
     "Browser.setDockTile": Browser.setDockTileParameters;
     "Browser.executeBrowserCommand": Browser.executeBrowserCommandParameters;
-    "Browser.addPrivacySandboxEnrollmentOverride": Browser.addPrivacySandboxEnrollmentOverrideParameters;
     "Browser.getGlobalPrivacyControl": Browser.getGlobalPrivacyControlParameters;
     "Browser.setGlobalPrivacyControl": Browser.setGlobalPrivacyControlParameters;
     "CSS.addRule": CSS.addRuleParameters;
@@ -24130,6 +24163,7 @@ Error was thrown.
     "Debugger.enable": Debugger.enableParameters;
     "Debugger.evaluateOnCallFrame": Debugger.evaluateOnCallFrameParameters;
     "Debugger.getPossibleBreakpoints": Debugger.getPossibleBreakpointsParameters;
+    "Debugger.getScopeChain": Debugger.getScopeChainParameters;
     "Debugger.getScriptSource": Debugger.getScriptSourceParameters;
     "Debugger.disassembleWasmModule": Debugger.disassembleWasmModuleParameters;
     "Debugger.nextWasmDisassemblyChunk": Debugger.nextWasmDisassemblyChunkParameters;
@@ -24252,6 +24286,7 @@ Error was thrown.
     "BluetoothEmulation.addDescriptor": BluetoothEmulation.addDescriptorReturnValue;
     "BluetoothEmulation.removeDescriptor": BluetoothEmulation.removeDescriptorReturnValue;
     "BluetoothEmulation.simulateGATTDisconnection": BluetoothEmulation.simulateGATTDisconnectionReturnValue;
+    "BluetoothEmulation.simulateGATTMtuChange": BluetoothEmulation.simulateGATTMtuChangeReturnValue;
     "Browser.setPermission": Browser.setPermissionReturnValue;
     "Browser.grantPermissions": Browser.grantPermissionsReturnValue;
     "Browser.resetPermissions": Browser.resetPermissionsReturnValue;
@@ -24271,7 +24306,6 @@ Error was thrown.
     "Browser.setContentsSize": Browser.setContentsSizeReturnValue;
     "Browser.setDockTile": Browser.setDockTileReturnValue;
     "Browser.executeBrowserCommand": Browser.executeBrowserCommandReturnValue;
-    "Browser.addPrivacySandboxEnrollmentOverride": Browser.addPrivacySandboxEnrollmentOverrideReturnValue;
     "Browser.getGlobalPrivacyControl": Browser.getGlobalPrivacyControlReturnValue;
     "Browser.setGlobalPrivacyControl": Browser.setGlobalPrivacyControlReturnValue;
     "CSS.addRule": CSS.addRuleReturnValue;
@@ -24809,6 +24843,7 @@ Error was thrown.
     "Debugger.enable": Debugger.enableReturnValue;
     "Debugger.evaluateOnCallFrame": Debugger.evaluateOnCallFrameReturnValue;
     "Debugger.getPossibleBreakpoints": Debugger.getPossibleBreakpointsReturnValue;
+    "Debugger.getScopeChain": Debugger.getScopeChainReturnValue;
     "Debugger.getScriptSource": Debugger.getScriptSourceReturnValue;
     "Debugger.disassembleWasmModule": Debugger.disassembleWasmModuleReturnValue;
     "Debugger.nextWasmDisassemblyChunk": Debugger.nextWasmDisassemblyChunkReturnValue;
