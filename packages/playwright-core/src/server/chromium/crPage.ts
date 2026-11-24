@@ -293,7 +293,20 @@ export class CRPage implements PageDelegate {
       const deviceScaleFactor =  this._mainFrameSession._metricsOverride?.deviceScaleFactor || contentSize.width / cssContentSize.width || 1;
       clip.scale /= deviceScaleFactor;
     }
-    const result = await progress.race(this._mainFrameSession._client.send('Page.captureScreenshot', { format, quality, clip, captureBeyondViewport: !fitsViewport }));
+    const retryDelays = [100, 250, 500];
+    let result: Protocol.Page.captureScreenshotReturnValue;
+    for (let attempt = 0; ; ++attempt) {
+      try {
+        result = await progress.race(this._mainFrameSession._client.send('Page.captureScreenshot', { format, quality, clip, captureBeyondViewport: !fitsViewport }));
+        break;
+      } catch (error) {
+        if (error.message !== 'Protocol error (Page.captureScreenshot): Unable to capture screenshot' || attempt === retryDelays.length)
+          throw error;
+        // Chromium can reject a capture before the renderer submits its first frame.
+        progress.log('  unable to capture screenshot, retrying');
+        await progress.wait(retryDelays[attempt]);
+      }
+    }
     if (!fitsViewport && this._browserContext._options.hasTouch) {
       // Capturing beyond viewport resets touch emulation in Chromium, so we re-apply it.
       // See https://issues.chromium.org/issues/558509412 and https://github.com/microsoft/playwright/issues/42607.

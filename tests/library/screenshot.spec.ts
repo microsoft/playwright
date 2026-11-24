@@ -18,6 +18,7 @@
 import { expect, browserTest } from '../config/browserTest';
 import { PNG } from 'playwright-core/lib/utilsBundle';
 import { verifyViewport } from '../config/utils';
+import type { CDPSession } from 'playwright-core';
 
 browserTest.describe('page screenshot', () => {
   browserTest.skip(({ browserName, headless }) => browserName === 'firefox' && !headless, 'Firefox headed produces a different image.');
@@ -37,6 +38,26 @@ browserTest.describe('page screenshot', () => {
     for (let i = 0; i < N; ++i)
       expect(screenshots[i]).toMatchSnapshot(`grid-cell-${i % 2}.png`);
     await Promise.all(pages.map(page => page.close()));
+  });
+
+  browserTest('SS-099 should retry screenshots before the first frame', {
+    annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44327' },
+  }, async ({ contextFactory, browserName, toImpl }) => {
+    const context = await contextFactory({ javaScriptEnabled: false });
+    const page = await context.newPage();
+    await page.setContent('<body style="background: red">first screenshot</body>');
+    if (browserName === 'chromium') {
+      const session: Pick<CDPSession, 'send'> = toImpl(page).delegate._mainFrameSession._client;
+      const send = session.send.bind(session);
+      let captures = 0;
+      session.send = async (method, params) => {
+        if (method === 'Page.captureScreenshot' && ++captures <= 2)
+          throw new Error('Protocol error (Page.captureScreenshot): Unable to capture screenshot');
+        return send(method, params);
+      };
+    }
+    const screenshot = await page.screenshot();
+    expect(PNG.sync.read(screenshot).data.subarray(0, 4)).toEqual(Buffer.from([255, 0, 0, 255]));
   });
 
   browserTest('SS-069 should work with a mobile viewport', async ({ browser, server, browserName }) => {

@@ -5004,6 +5004,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `SS-096` | `page/page-screenshot.spec.ts` | page screenshot › should not wait for unused font face with failed local() source |
 | `SS-097` | `page/page-screenshot.spec.ts` | page screenshot › should take fullPage screenshots of SVG documents |
 | `SS-098` | `page/page-screenshot.spec.ts` | page screenshot animations › should preserve scroll animation progress during screenshots |
+| `SS-099` | `library/screenshot.spec.ts` | page screenshot › should retry screenshots before the first frame |
 
 ### ST — Storage
 
