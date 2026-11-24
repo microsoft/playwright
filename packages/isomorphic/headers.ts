@@ -37,10 +37,7 @@ export function headersObjectToArray(headers: HeadersObject, separator?: string,
 }
 
 export function headersArrayToObject(headers: HeadersArray, lowerCase: boolean): HeadersObject {
-  const result: HeadersObject = {};
-  for (const { name, value } of headers)
-    result[lowerCase ? name.toLowerCase() : name] = value;
-  return result;
+  return Object.fromEntries(headers.map(({ name, value }) => [lowerCase ? name.toLowerCase() : name, value]));
 }
 
 export function splitSetCookieHeader(headers: HeadersArray): HeadersArray {

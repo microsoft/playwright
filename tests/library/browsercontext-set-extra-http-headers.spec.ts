@@ -17,9 +17,13 @@
 
 import { browserTest as it, expect } from '../config/browserTest';
 
-it('NE-119 should override extra headers from browser context', async ({ browser, server }) => {
+it('NE-119 should override extra headers from browser context', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44342' } }, async ({ browser, server }) => {
   const context = await browser.newContext({
-    extraHTTPHeaders: { 'fOo': 'bAr', 'baR': 'foO' },
+    extraHTTPHeaders: Object.fromEntries([
+      ['fOo', 'bAr'],
+      ['baR', 'foO'],
+      ['__proto__', 'test-value'],
+    ]),
   });
   const page = await context.newPage();
   await page.setExtraHTTPHeaders({
@@ -32,6 +36,7 @@ it('NE-119 should override extra headers from browser context', async ({ browser
   await context.close();
   expect(request.headers['foo']).toBe('Bar');
   expect(request.headers['bar']).toBe('foO');
+  expect(request.rawHeaders).toEqual(expect.arrayContaining(['__proto__', 'test-value']));
 });
 
 it('NE-120 should throw for non-string header values', async ({ browser }) => {
