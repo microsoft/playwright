@@ -55,6 +55,7 @@ playwright-cli find --regex "/sign (in|up)/i"
 # save results to a file when a query produces too many matches
 playwright-cli find "Add" --filename=results.md
 playwright-cli eval "document.title"
+playwright-cli eval "document.body.innerText" --format=string --filename=page.txt
 playwright-cli eval "el => el.textContent" e5
 # get element id, class, or any attribute not visible in the snapshot
 playwright-cli eval "el => el.id" e5
