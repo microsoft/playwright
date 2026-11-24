@@ -40,7 +40,10 @@ class ClientTabGroup {
   async add(tabId: number): Promise<void> {
     const isNewGroup = await changeGroups(async () => {
       const isNewGroup = this.groupId === undefined;
-      this.groupId = await chrome.tabs.group({ groupId: this.groupId, tabIds: [tabId] });
+      const options: chrome.tabs.GroupOptions = isNewGroup
+        ? { tabIds: [tabId], createProperties: { windowId: (await chrome.tabs.get(tabId)).windowId } }
+        : { groupId: this.groupId, tabIds: [tabId] };
+      this.groupId = await chrome.tabs.group(options);
       return isNewGroup;
     });
     if (isNewGroup)
