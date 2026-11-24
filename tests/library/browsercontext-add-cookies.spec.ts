@@ -464,3 +464,15 @@ it('CO-041 should set secure cookies on secure WebSocket', async ({ contextFacto
   const headers = await receivedWebSocketHeaders;
   expect(headers.cookie).toBe('foo=bar');
 });
+
+it('CO-042 should set default cookie path according to RFC 6265', async ({ context, server }) => {
+  await context.addCookies([
+    { url: server.PREFIX + '/foo/bar', name: 'c1', value: 'v1' },
+    { url: server.PREFIX + '/foo', name: 'c2', value: 'v2' },
+    { url: server.PREFIX + '/foo/bar/', name: 'c3', value: 'v3' },
+  ]);
+  const cookies = await context.cookies();
+  expect(cookies.find(c => c.name === 'c1')?.path).toBe('/foo');
+  expect(cookies.find(c => c.name === 'c2')?.path).toBe('/');
+  expect(cookies.find(c => c.name === 'c3')?.path).toBe('/foo/bar');
+});
