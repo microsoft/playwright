@@ -15,6 +15,7 @@
  */
 
 import { test, expect, retries, dumpTestTree, traceFrame } from './ui-mode-fixtures';
+import type { WebSocketRoute } from './stable-test-runner';
 import path from 'path';
 
 test.describe.configure({ mode: 'parallel', retries });
@@ -343,7 +344,7 @@ for (const useWeb of [true, false]) {
       ]);
     });
 
-    test('should serve UI mode under a random path', async ({ runUITest }) => {
+    test('should serve UI mode under a random path', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44358' } }, async ({ runUITest }) => {
       const { page } = await runUITest({
         'a.test.js': `
           import { test } from '@playwright/test';
@@ -404,6 +405,20 @@ for (const useWeb of [true, false]) {
         return await result;
       });
       expect(sandboxedWebSocket).toBe('error');
+
+      const sockets: WebSocketRoute[] = [];
+      await page.routeWebSocket('**/ws', ws => {
+        sockets.push(ws);
+        ws.connectToServer();
+      });
+      await page.reload();
+      await expect(page.getByTitle('Run all')).toBeVisible();
+      await sockets[0].close();
+      await expect(page.getByText('UI Mode disconnected')).toBeVisible();
+      await page.getByRole('link', { name: 'Reload the page' }).click();
+      await expect(page).toHaveURL(url.toString());
+      await page.getByTitle('Run all').click();
+      await expect(page.getByTestId('status-line')).toHaveText('1/1 (100%) — 1 passed');
     });
   });
 }
