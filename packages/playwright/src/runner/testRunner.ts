@@ -346,17 +346,19 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
     return { status: await run };
   }
 
-  async watch(fileNames: string[]) {
-    this._watchedTestDependencies = new Set();
+  async watch(paths: string[]) {
+    this._watchedTestDependencies = new Set(paths);
     const testFileNames = cc.testFileNames();
-    for (const fileName of fileNames) {
-      this._watchedTestDependencies.add(fileName);
-      const directoryPrefix = fileName.endsWith(path.sep) ? fileName : fileName + path.sep;
+    const watchedTestFiles = new Set<string>();
+    for (const watchedPath of paths) {
+      const directoryPrefix = watchedPath.endsWith(path.sep) ? watchedPath : watchedPath + path.sep;
       for (const testFile of testFileNames) {
-        if (testFile === fileName || testFile.startsWith(directoryPrefix))
-          cc.dependenciesForTestFile(testFile).forEach(file => this._watchedTestDependencies.add(file));
+        if (testFile === watchedPath || testFile.startsWith(directoryPrefix))
+          watchedTestFiles.add(testFile);
       }
     }
+    for (const testFile of watchedTestFiles)
+      cc.dependenciesForTestFile(testFile).forEach(file => this._watchedTestDependencies.add(file));
     await this._updateWatcher(true);
   }
 
