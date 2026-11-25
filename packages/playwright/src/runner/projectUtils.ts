@@ -186,11 +186,16 @@ async function collectFiles(testDir: string, respectGitIgnore: boolean): Promise
 
   const checkIgnores = (entryPath: string, rules: Rule[], isDirectory: boolean, parentStatus: IgnoreStatus) => {
     let status = parentStatus;
+    const relativePaths = new Map<string, string>();
     for (const rule of rules) {
       const ruleIncludes = rule.negate;
       if ((status === 'included') === ruleIncludes)
         continue;
-      const relative = path.relative(rule.dir, entryPath);
+      let relative = relativePaths.get(rule.dir);
+      if (relative === undefined) {
+        relative = path.relative(rule.dir, entryPath);
+        relativePaths.set(rule.dir, relative);
+      }
       if (rule.match('/' + relative) || rule.match(relative)) {
         // Matches "/dir/file" or "dir/file"
         status = ruleIncludes ? 'included' : 'ignored';

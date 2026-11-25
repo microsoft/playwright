@@ -32,14 +32,32 @@ test('should respect .gitignore', async ({ runInlineTest }) => {
   expect(result.passed).toBe(1);
 });
 
-test('should respect nested .gitignore', async ({ runInlineTest }) => {
+test('should respect nested .gitignore', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44364' }
+}, async ({ runInlineTest }) => {
   const result = await runInlineTest({
-    'a/.gitignore': `a.spec.js`,
+    'playwright.config.js': `
+      const assert = require('assert');
+      const path = require('path');
+      const relative = path.relative;
+      const calls = new Map();
+      path.relative = (from, to) => {
+        if (to === path.join(__dirname, 'a', 'nested')) {
+          const count = (calls.get(from) || 0) + 1;
+          calls.set(from, count);
+          assert.strictEqual(count, 1, 'relative path should be computed once per .gitignore directory');
+        }
+        return relative(from, to);
+      };
+      module.exports = {};
+    `,
+    '.gitignore': `*.log\n*.tmp`,
+    'a/.gitignore': `a.spec.js\n*.bak`,
     'a/a.spec.js': `
       import { test, expect } from '@playwright/test';
       test('pass', ({}) => {});
     `,
-    'a/b.spec.js': `
+    'a/nested/b.spec.js': `
       import { test, expect } from '@playwright/test';
       test('pass', ({}) => {});
     `
