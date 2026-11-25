@@ -741,6 +741,8 @@ declare global {
 }
 
 it.describe('page screenshot animations', () => {
+  it.skip(({ browserName, headless }) => browserName === 'firefox' && !headless, 'Firefox headed produces a different image: https://github.com/microsoft/playwright-browsers/issues/2714');
+
   it('SS-098 should preserve scroll animation progress during screenshots', {
     annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43986' },
   }, async ({ page, isAndroid }) => {
