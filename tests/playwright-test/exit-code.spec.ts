@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
+
 import { test, expect } from './playwright-test-fixtures';
 
 function monotonicTime(): number {
@@ -252,19 +254,17 @@ test('should not force-kill a worker that is running a slow fixture teardown', a
   expect(result.output).not.toContain('force-killed');
 });
 
-test('should time out when removing an exited worker output directory', {
+test('should not fail when the worker artifacts removal does not finish', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44304' },
-}, async ({ runInlineTest }) => {
+}, async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       import fs from 'fs';
       import path from 'path';
       const rm = fs.promises.rm;
       fs.promises.rm = async (target, ...args) => {
-        if (path.basename(String(target)).startsWith('.playwright-artifacts-')) {
-          await new Promise(f => setTimeout(f, 6000));
-          console.log('artifacts removed');
-        }
+        if (path.basename(String(target)).startsWith('.playwright-artifacts-'))
+          await new Promise(() => {});
         return rm(target, ...args);
       };
       export default {};
@@ -274,28 +274,26 @@ test('should time out when removing an exited worker output directory', {
       test('passes', async () => {});
     `,
   }, undefined, { PWTEST_CHILD_PROCESS_TIMEOUT: '2000' });
-  expect(result.exitCode).toBe(1);
+  expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
-  expect(result.report.errors.map(error => error.message)).toEqual([
-    'Error: worker-0 timed out after 2000ms while removing the output directory',
-  ]);
+  expect(result.report.errors).toEqual([]);
   expect(result.output).not.toContain('force-killed');
-  expect(result.output).not.toContain('artifacts removed');
+  expect(fs.existsSync(testInfo.outputPath('test-results', '.playwright-artifacts-0'))).toBe(true);
 });
 
-test('should finish removing worker output beyond the remaining shutdown time', {
+test('should finish the worker artifacts removal after the worker stop timeout', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44304' },
-}, async ({ runInlineTest }) => {
+}, async ({ runInlineTest }, testInfo) => {
+  // The worker takes 2500ms to exit and the removal takes 4000ms more. Together they
+  // exceed the 5000ms timeout, but each of them is within its own 5000ms timeout.
   const result = await runInlineTest({
     'playwright.config.ts': `
       import fs from 'fs';
       import path from 'path';
       const rm = fs.promises.rm;
       fs.promises.rm = async (target, ...args) => {
-        if (path.basename(String(target)).startsWith('.playwright-artifacts-')) {
-          await new Promise(f => setTimeout(f, 1500));
-          console.log('artifacts removed');
-        }
+        if (path.basename(String(target)).startsWith('.playwright-artifacts-'))
+          await new Promise(f => setTimeout(f, 4000));
         return rm(target, ...args);
       };
       export default {};
@@ -305,14 +303,56 @@ test('should finish removing worker output beyond the remaining shutdown time', 
       test('passes', async () => {
         process.on('exit', () => {
           // Delay process exit without sending another shutdown heartbeat.
-          Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1000);
+          Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 2500);
         });
       });
     `,
-  }, undefined, { PWTEST_CHILD_PROCESS_TIMEOUT: '2000' });
+  }, undefined, { PWTEST_CHILD_PROCESS_TIMEOUT: '5000' });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
-  expect(result.output).toContain('artifacts removed');
   expect(result.report.errors).toEqual([]);
   expect(result.output).not.toContain('force-killed');
+  expect(fs.existsSync(testInfo.outputPath('test-results', '.playwright-artifacts-0'))).toBe(false);
+});
+
+test('should not start a worker that was stopped before its process started', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      import fs from 'fs';
+      import path from 'path';
+      // Hold the start of the second worker until the first worker stops because of the failure.
+      let startSecondWorker;
+      const firstWorkerStopped = new Promise(f => startSecondWorker = f);
+      const { mkdir, rm } = fs.promises;
+      fs.promises.mkdir = async (target, ...args) => {
+        if (path.basename(String(target)) === '.playwright-artifacts-1')
+          await firstWorkerStopped;
+        return mkdir(target, ...args);
+      };
+      fs.promises.rm = async (target, ...args) => {
+        if (path.basename(String(target)) === '.playwright-artifacts-0')
+          startSecondWorker();
+        return rm(target, ...args);
+      };
+      export default {};
+    `,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('fails', async () => {
+        expect(1).toBe(2);
+      });
+    `,
+    'b.spec.ts': `
+      import { test } from '@playwright/test';
+      test('does not run', async () => {
+        console.log('%%second worker started');
+      });
+    `,
+  }, { 'max-failures': 1, 'workers': 2 }, { PWTEST_CHILD_PROCESS_TIMEOUT: '2000' });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.didNotRun).toBe(1);
+  expect(result.output).not.toContain('%%second worker started');
+  expect(result.output).not.toContain('force-killed');
+  expect(fs.existsSync(testInfo.outputPath('test-results', '.playwright-artifacts-1'))).toBe(false);
 });

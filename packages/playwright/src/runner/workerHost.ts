@@ -78,10 +78,10 @@ export class WorkerHost extends ProcessHost {
   }
 
   override async onExit() {
+    // Removal can take very long on a slow disk. After the timeout, stop waiting for it.
+    // The removal continues until the runner exits, and the remaining files stay on disk.
     const timeout = +(process.env.PWTEST_CHILD_PROCESS_TIMEOUT || 5 * 60 * 1000);
-    const result = await raceAgainstDeadline(() => removeFolders([this._params.artifactsDir]), monotonicTime() + timeout);
-    if (result.timedOut)
-      this.emit('processError', { message: `Error: worker-${this.workerIndex} timed out after ${timeout}ms while removing the output directory` });
+    await raceAgainstDeadline(() => removeFolders([this._params.artifactsDir]), monotonicTime() + timeout);
   }
 
   override async stop(didFail?: boolean) {
