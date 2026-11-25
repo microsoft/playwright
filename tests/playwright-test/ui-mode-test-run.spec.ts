@@ -849,3 +849,39 @@ test('should run test defined outside of testdir', async ({ runUITest }) => {
         ✅ external <=
   `);
 });
+
+test('should reload current page on disconnect in default ui mode', async ({ runUITest }) => {
+  const { page } = await runUITest({
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      test('passes', () => {});
+    `,
+  });
+  const uiUrl = page.url();
+
+  await page.addInitScript(() => {
+    const OriginalWebSocket = window.WebSocket;
+    (window as any).__sockets = [];
+    window.WebSocket = function(...args: any[]) {
+      const ws = new (OriginalWebSocket as any)(...args);
+      (window as any).__sockets.push(ws);
+      return ws;
+    } as any;
+  });
+  await page.reload();
+  await expect.poll(dumpTestTree(page)).toBe(`
+    ▼ ◯ a.test.ts
+        ◯ passes
+  `);
+
+  await page.evaluate(() => (window as any).__sockets[0].close());
+  await expect(page.getByText('UI Mode disconnected')).toBeVisible();
+
+  await page.getByRole('link', { name: 'Reload the page' }).click();
+  await expect(page.getByText('UI Mode disconnected')).toBeHidden();
+  expect(page.url()).toBe(uiUrl);
+  await expect.poll(dumpTestTree(page)).toBe(`
+    ▼ ◯ a.test.ts
+        ◯ passes
+  `);
+});

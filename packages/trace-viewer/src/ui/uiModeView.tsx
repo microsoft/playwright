@@ -462,7 +462,7 @@ export const UIModeView: React.FC<{}> = ({
     </dialog>}
     {isDisconnected && <div className='disconnected'>
       <div className='title'>UI Mode disconnected</div>
-      <div><a href='#' onClick={() => window.location.href = '/'}>Reload the page</a> to reconnect</div>
+      <div><a href='#' onClick={e => { e.preventDefault(); window.location.reload(); }}>Reload the page</a> to reconnect</div>
     </div>}
     <SplitView
       sidebarSize={250}
