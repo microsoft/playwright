@@ -1512,17 +1512,16 @@ export class InjectedScript {
   async expect(element: Element, options: FrameExpectParams, elements: Element[], frameVisible: boolean): Promise<{ matches: boolean, received?: ExpectReceived }> {
     const isArray = options.expression === 'to.have.count' || options.expression.endsWith('.array');
     const core = isArray ? this.expectArray(elements, options) : await this.expectSingleElement(element, options, frameVisible);
-    const ariaSnapshot = core.matches !== options.isNot ? undefined : this._ariaSnapshotForExpect(element, options, frameVisible);
-    if (core.received === undefined && ariaSnapshot === undefined)
+    if (core.received === undefined)
       return { matches: core.matches };
-    return { matches: core.matches, received: { value: core.received, ariaSnapshot } };
+    return { matches: core.matches, received: { value: core.received } };
   }
 
-  private _ariaSnapshotForExpect(element: Element, options: FrameExpectParams, frameVisible: boolean): string | undefined {
+  ariaSnapshotForExpect(element: Element | undefined, options: FrameExpectParams, frameVisible: boolean): string | undefined {
     const expression = options.expression;
     if (expression === 'to.have.count' || expression.endsWith('.array') || expression === 'to.match.aria')
       return undefined;
-    if (frameVisible && isElementVisible(element) && expression !== 'to.have.title' && expression !== 'to.have.url') {
+    if (element && frameVisible && isElementVisible(element) && expression !== 'to.have.title' && expression !== 'to.have.url') {
       // Element-scoped snapshot. Containment matchers want the full subtree;
       // property matchers only need the element's own line.
       const isContainment = expression === 'to.have.text';

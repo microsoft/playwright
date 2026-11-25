@@ -15,15 +15,48 @@
  */
 
 import { test, expect } from './pageTest';
+import type { Selectors } from 'playwright-core';
+
+async function countSnapshots(selectors: Selectors, name: string) {
+  await selectors.register(name, () => {
+    let instrumented = false;
+    return {
+      query(root: Document | Element, selector: string) {
+        return this.queryAll(root, selector)[0];
+      },
+      queryAll(root: Document | Element, selector: string) {
+        if (!instrumented) {
+          const heading = root.querySelector('h1')!;
+          const getAttribute = heading.getAttribute;
+          let count = 0;
+          heading.getAttribute = attribute => {
+            if (attribute === 'aria-label')
+              heading.setAttribute('data-snapshot-count', String(++count));
+            return getAttribute.call(heading, attribute);
+          };
+          instrumented = true;
+        }
+        return Array.from(root.querySelectorAll(selector));
+      },
+    };
+  }, { contentScript: true });
+}
 
 test.describe('containment matchers print full element subtree', () => {
-  test('EX-313 toHaveText failure includes full element subtree', async ({ page }) => {
-    await page.setContent(`<section id=node><h1>Title</h1><p>Body</p></section>`);
-    const error = await expect(page.locator('#node')).toHaveText('nope', { timeout: 1000 }).catch(e => e);
+  test('EX-313 toHaveText failure includes full element subtree', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44368' } }, async ({ page, playwright }) => {
+    await countSnapshots(playwright.selectors, 'snapshotText');
+    await page.setContent(`<section id=node><h1>Loading</h1><p>Body</p></section>`);
+    await page.evaluate(() => {
+      window.builtins.setTimeout(() => document.querySelector('h1')!.textContent = 'Title', 250);
+    });
+    await expect(page.locator('snapshotText=#node')).toHaveText('TitleBody');
+    expect(await page.locator('h1').getAttribute('data-snapshot-count')).toBeNull();
+    const error = await expect(page.locator('snapshotText=#node')).toHaveText('nope', { timeout: 1000 }).catch(e => e);
     const snapshot = error.matcherResult.ariaSnapshot;
     expect(snapshot).toContain('heading "Title"');
     expect(snapshot).toContain('paragraph');
     expect(snapshot).toContain('Body');
+    expect(await page.locator('h1').getAttribute('data-snapshot-count')).toBe('1');
   });
 
   test('EX-314 toContainText failure includes full element subtree', async ({ page }) => {
@@ -88,11 +121,13 @@ test.describe('hidden or missing elements print full page snapshot', () => {
     expect(snapshot).toContain('heading "Page Heading"');
   });
 
-  test('EX-321 toBeVisible on missing element prints full page snapshot', async ({ page }) => {
+  test('EX-321 toBeVisible on missing element prints full page snapshot', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44368' } }, async ({ page, playwright }) => {
+    await countSnapshots(playwright.selectors, 'snapshotMissing');
     await page.setContent(`<header><h1>Hello</h1></header>`);
-    const error = await expect(page.locator('#nope')).toBeVisible({ timeout: 1000 }).catch(e => e);
+    const error = await expect(page.locator('snapshotMissing=#nope')).toBeVisible({ timeout: 1000 }).catch(e => e);
     const snapshot = error.matcherResult.ariaSnapshot;
     expect(snapshot).toContain('heading "Hello"');
+    expect(await page.locator('h1').getAttribute('data-snapshot-count')).toBe('1');
   });
 
   test('EX-322 toHaveText on missing element prints full page snapshot', async ({ page }) => {

@@ -26,6 +26,7 @@ import { asLocator } from '@isomorphic/locatorGenerators';
 import { assert } from '@isomorphic/assert';
 import { constructURLBasedOnBaseURL } from '@isomorphic/urlMatch';
 import { createGuid } from '@utils/crypto';
+import { debugLogger } from '@utils/debugLogger';
 import { BrowserContext } from './browserContext';
 import * as dom from './dom';
 import { EvaluationStalledError, TimeoutError, isTargetClosedError, rewriteErrorForClosedTarget } from './errors';
@@ -1523,6 +1524,13 @@ export class Frame extends SdkObject<FrameEventMap> {
       } else if (lastIntermediateResult.isSet) {
         details.received = lastIntermediateResult.received;
         details.customErrorMessage = lastIntermediateResult.errorMessage;
+        if (!closedError) {
+          const ariaSnapshot = await this._expectAriaSnapshot(nullProgress, selector, options).catch(error => {
+            debugLogger.log('error', error);
+          });
+          if (ariaSnapshot !== undefined)
+            details.received = { ...details.received, ariaSnapshot };
+        }
       } else if (closedError) {
         details.customErrorMessage = closedError.message;
       }
@@ -1530,6 +1538,28 @@ export class Frame extends SdkObject<FrameEventMap> {
         details.timedOut = true;
       throw new ExpectError(details);
     }
+  }
+
+  private async _expectAriaSnapshot(progress: Progress, selector: string | undefined, options: FrameExpectParams): Promise<string | undefined> {
+    if (options.expression === 'to.have.count' || options.expression.endsWith('.array') || options.expression === 'to.match.aria')
+      return;
+    // Diagnostics must not wait indefinitely after the assertion has already timed out.
+    return await progress.race(new ProgressController().run(async progress => {
+      const resolved = await progress.race(this.selectors.callOnSelector({
+        selector: selector ?? ':root',
+        strict: true,
+        mainWorld: options.expression === 'to.have.property',
+      }, ({ injected, elements, frameVisible }, options) => {
+        return injected.ariaSnapshotForExpect(elements[0], options, frameVisible);
+      }, options));
+      if (resolved)
+        return resolved.result;
+      const context = this.existingContext(options.expression === 'to.have.property' ? 'main' : 'utility');
+      if (!context)
+        return;
+      const injected = await progress.race(context.injectedScript());
+      return await progress.race(injected.evaluate((injected, options) => injected.ariaSnapshotForExpect(undefined, options, false), options));
+    }, 1000));
   }
 
   private async _expectInternal(progress: Progress, selector: string | undefined, options: FrameExpectParams, lastIntermediateResult: { received?: ExpectReceived, isSet: boolean, errorMessage?: string }, noAbort: boolean) {
@@ -1582,16 +1612,6 @@ export class Frame extends SdkObject<FrameEventMap> {
       } else {
         matches = options.isNot;
         missingReceived = true;
-      }
-      if (matches === options.isNot && !isArray) {
-        const context = await progress.race(this.context(mainWorld ? 'main' : 'utility'));
-        const injected = await progress.race(context.injectedScript());
-        const ariaSnapshot = await progress.race(injected.evaluate(injected => {
-          if (injected.document.body)
-            return injected.ariaSnapshotForExpectFailure(injected.document.body, { mode: 'default' });
-        }));
-        if (ariaSnapshot)
-          received = { ...received, ariaSnapshot };
       }
     }
 
