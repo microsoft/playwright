@@ -293,3 +293,52 @@ test('trace attachments lists and extracts attachments', { annotation: { type: '
 
   expect((await runTraceCli(['open', traceFile])).exitCode).toBe(0);
 });
+
+test('trace diff compares two traces and reports first divergence', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44377' } }, async ({ traceFile, targetTraceFile, runTraceCli }) => {
+  const { stdout, exitCode } = await runTraceCli(['diff', traceFile, targetTraceFile]);
+  expect(exitCode).toBe(0);
+  expect(stdout).toContain('Trace Diff:');
+  expect(stdout).toContain('Metadata:');
+  expect(stdout).toContain('Browser:');
+  expect(stdout).toContain('First Divergence');
+  expect(stdout).toContain('Network Diff:');
+  expect(stdout).toContain('Console / Page Errors');
+});
+
+test('trace diff --json outputs structured json', async ({ traceFile, targetTraceFile, runTraceCli }) => {
+  const { stdout, exitCode } = await runTraceCli(['diff', traceFile, targetTraceFile, '--json']);
+  expect(exitCode).toBe(0);
+  const data = JSON.parse(stdout);
+  expect(data.metadata.browser.match).toBe(true);
+  expect(data.metadata.viewport.match).toBe(true);
+  expect(data.firstDivergence).toBeTruthy();
+  expect(data.firstDivergence.step).toBeGreaterThan(0);
+  expect(data.networkDiff.statusMismatches.length).toBeGreaterThan(0);
+  expect(data.consoleDiff.targetErrors.length).toBeGreaterThan(0);
+});
+
+test('trace diff --only filters diff output', async ({ traceFile, targetTraceFile, runTraceCli }) => {
+  const { stdout: actionsOnly, exitCode: actionsExitCode } = await runTraceCli(['diff', traceFile, targetTraceFile, '--only', 'actions']);
+  expect(actionsExitCode).toBe(0);
+  expect(actionsOnly).toContain('First Divergence');
+  expect(actionsOnly).not.toContain('Network Diff:');
+  expect(actionsOnly).not.toContain('Console / Page Errors');
+
+  const { stdout: networkOnly, exitCode: networkExitCode } = await runTraceCli(['diff', traceFile, targetTraceFile, '--only', 'network']);
+  expect(networkExitCode).toBe(0);
+  expect(networkOnly).toContain('Network Diff:');
+  expect(networkOnly).not.toContain('First Divergence');
+});
+
+test('trace diff identical traces reports no divergence', async ({ traceFile, runTraceCli }) => {
+  const { stdout, exitCode } = await runTraceCli(['diff', traceFile, traceFile]);
+  expect(exitCode).toBe(0);
+  expect(stdout).toContain('No divergence detected in action sequence.');
+});
+
+test('trace diff --ignore-timings suppresses duration delta', async ({ traceFile, targetTraceFile, runTraceCli }) => {
+  const { stdout, exitCode } = await runTraceCli(['diff', traceFile, targetTraceFile, '--ignore-timings']);
+  expect(exitCode).toBe(0);
+  expect(stdout).toContain('Trace Diff:');
+  expect(stdout).not.toMatch(/Duration:.*\((\+|-)/);
+});

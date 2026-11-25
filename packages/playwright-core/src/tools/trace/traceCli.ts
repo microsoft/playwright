@@ -26,6 +26,7 @@ import { traceSnapshot } from './traceSnapshot';
 import { traceScreenshot } from './traceScreenshot';
 import { traceAttachments } from './traceAttachments';
 import { traceAttachment } from './traceAttachments';
+import { traceDiff } from './traceDiff';
 import { installSkills } from '../utils/installSkills';
 
 import type { Command } from 'commander';
@@ -47,6 +48,16 @@ export function addTraceCommands(program: Command, logErrorAndExit: (e: Error) =
       .description('remove extracted trace data')
       .action(async () => {
         closeTrace().catch(logErrorAndExit);
+      });
+
+  traceCommand
+      .command('diff <baseline> <target>')
+      .description('compare two trace files to identify differences and first divergence')
+      .option('--json', 'output in JSON format')
+      .option('--only <category>', 'filter output by category (actions, network, console)')
+      .option('--ignore-timings', 'ignore timing differences in action durations')
+      .action(async (baseline: string, target: string, options: { json?: boolean, only?: 'actions' | 'network' | 'console', ignoreTimings?: boolean }) => {
+        traceDiff(baseline, target, options).catch(logErrorAndExit);
       });
 
   traceCommand

@@ -95,6 +95,32 @@ export async function loadTrace(): Promise<LoadedTrace> {
   return new LoadedTrace(model, loader, buildOrdinalMap(model));
 }
 
+export async function loadTraceFromFile(traceFile: string, extractDir: string): Promise<LoadedTrace> {
+  const filePath = path.resolve(traceFile);
+  if (!fs.existsSync(filePath))
+    throw new Error(`Trace file not found: ${filePath}`);
+  await fs.promises.mkdir(extractDir, { recursive: true });
+  if (filePath.endsWith('.zip'))
+    await extractTrace(filePath, extractDir);
+  else
+    await fs.promises.writeFile(path.join(extractDir, '.link'), filePath, 'utf-8');
+  const linkFile = path.join(extractDir, '.link');
+  let targetDir: string;
+  let singleFile: string | undefined;
+  if (fs.existsSync(linkFile)) {
+    const tracePath = await fs.promises.readFile(linkFile, 'utf-8');
+    targetDir = path.dirname(tracePath);
+    singleFile = path.basename(tracePath);
+  } else {
+    targetDir = extractDir;
+  }
+  const backend = new DirTraceLoaderBackend(targetDir);
+  const loader = new TraceLoader();
+  await loader.load(backend, singleFile);
+  const model = new TraceModel(targetDir, loader.contextEntries);
+  return new LoadedTrace(model, loader, buildOrdinalMap(model));
+}
+
 export function formatTimestamp(ms: number, base: number): string {
   const relative = ms - base;
   if (relative < 0)

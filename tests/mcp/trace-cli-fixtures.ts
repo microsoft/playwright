@@ -25,6 +25,7 @@ export { expect };
 
 type TraceCliWorkerFixtures = {
   traceFile: string;
+  targetTraceFile: string;
   traceCwd: string;
 };
 
@@ -121,6 +122,59 @@ export const test = baseTest
         await page.close();
         const tmpDir = path.join(workerInfo.project.outputDir, 'pw-trace-cli-' + workerInfo.workerIndex);
         const tracePath = path.join(tmpDir, 'trace.zip');
+        await context.tracing.stop({ path: tracePath });
+        await browser.close();
+
+        server.reset();
+
+        await use(tracePath);
+
+        await fs.promises.rm(tmpDir, { recursive: true, force: true });
+      }, { scope: 'worker' }],
+
+      targetTraceFile: [async ({ __servers }, use, workerInfo) => {
+        const server = __servers.server;
+        const browser = await chromium.launch();
+        const context = await browser.newContext({ viewport: { width: 800, height: 600 } });
+        await context.tracing.start({ screenshots: true, snapshots: true });
+
+        const page = await context.newPage();
+        server.setContent('/', `
+          <html>
+            <head><title>Test Page</title></head>
+            <body>
+              <button id="btn">Click me</button>
+              <input id="search" type="text" placeholder="Search..." />
+            </body>
+          </html>
+        `, 'text/html');
+
+        server.setRoute('/feedback', (req, res) => {
+          res.writeHead(500);
+          res.end('internal error');
+        });
+
+        server.setContent('/extra', 'extra response', 'text/plain');
+
+        await page.goto(server.PREFIX);
+        await page.locator('#btn').click();
+        await page.locator('#search').fill('test query');
+
+        // Divergent failing action
+        await page.locator('#btn-missing').click({ timeout: 500 }).catch(() => {});
+
+        // Console error
+        await page.evaluate(() => {
+          console.error('unhandled exception in target');
+        });
+
+        // Network requests: 500 on /feedback, 200 on /extra
+        await page.evaluate(() => fetch('/feedback', { method: 'POST' }).catch(() => {}));
+        await page.evaluate(() => fetch('/extra').catch(() => {}));
+
+        await page.close();
+        const tmpDir = path.join(workerInfo.project.outputDir, 'pw-trace-cli-target-' + workerInfo.workerIndex);
+        const tracePath = path.join(tmpDir, 'target-trace.zip');
         await context.tracing.stop({ path: tracePath });
         await browser.close();
 
