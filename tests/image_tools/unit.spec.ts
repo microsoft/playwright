@@ -48,6 +48,30 @@ test('image comparator should skip decoding identical buffers', {
   }
 });
 
+test('image comparator should encode the diff only once on demand', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44366' },
+}, () => {
+  const actual = PNG.sync.write(randomPNG(10, 10, 239));
+  const expected = PNG.sync.write(randomPNG(10, 10, 261));
+  const write = mock.method(PNG.sync, 'write');
+  let encodedDiff: Buffer;
+  let diffImage: PNG;
+  try {
+    const result = utils.getComparator('image/png')(actual, expected);
+    expect(result).not.toBeNull();
+    expect(result!.errorMessage).toContain('are different');
+    expect(write.mock.callCount()).toBe(0);
+    encodedDiff = result!.diff!;
+    expect(write.mock.callCount()).toBe(1);
+    expect(result!.diff).toBe(encodedDiff);
+    expect(write.mock.callCount()).toBe(1);
+    diffImage = write.mock.calls[0].arguments[0];
+  } finally {
+    write.mock.restore();
+  }
+  expect(encodedDiff.equals(PNG.sync.write(diffImage))).toBe(true);
+});
+
 test('srgb to lab conversion should work', async () => {
   const srgb = [123, 81, 252];
   const [x, y, z] = srgb2xyz(srgb);

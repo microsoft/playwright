@@ -106,8 +106,15 @@ function compareImages(mimeType: string, actualBuffer: Buffer | string, expected
     maxDiffPixels = maxDiffPixels1 ?? maxDiffPixels2 ?? 0;
   const ratio = Math.ceil(count / (expected.width * expected.height) * 100) / 100;
   const pixelsMismatchError = count > maxDiffPixels ? `${count} pixels (ratio ${ratio.toFixed(2)} of all image pixels) are different.` : '';
-  if (pixelsMismatchError || sizesMismatchError)
-    return { errorMessage: sizesMismatchError + pixelsMismatchError, diff: PNG.sync.write(diff) };
+  if (pixelsMismatchError || sizesMismatchError) {
+    let diffPng: Buffer | undefined;
+    return {
+      errorMessage: sizesMismatchError + pixelsMismatchError,
+      get diff() {
+        return diffPng ??= PNG.sync.write(diff);
+      },
+    };
+  }
   return null;
 }
 

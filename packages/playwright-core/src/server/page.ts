@@ -50,7 +50,7 @@ import type * as network from './network';
 import type { Progress } from './progress';
 import type { ScreenshotOptions } from './screenshotter';
 import type * as types from './types';
-import type { ImageComparatorOptions } from '@utils/comparators';
+import type { ComparatorResult, ImageComparatorOptions } from '@utils/comparators';
 import type * as channels from './channels';
 import type { BindingPayload } from '@injected/bindingsController';
 import type { AriaNodeJSON, AriaSnapshotJSON } from '@isomorphic/ariaSnapshot';
@@ -732,12 +732,29 @@ export class Page extends SdkObject<PageEventMap> {
         throw new Error('"not" matcher requires expected result');
       const format = validateScreenshotOptions(options || {});
       const comparator = getComparator(`image/${format}`);
+      let baselineComparison: { actual: Buffer, result: ComparatorResult } | undefined;
       const areEqualScreenshots = (actual: Buffer | undefined, expected: Buffer | undefined, previous: Buffer | undefined) => {
-        const comparatorResult = actual && expected ? comparator(actual, expected, options) : undefined;
+        let comparatorResult: ComparatorResult | undefined;
+        if (actual && expected) {
+          if (expected === options.expected && baselineComparison?.actual.equals(actual))
+            comparatorResult = baselineComparison.result;
+          else
+            comparatorResult = comparator(actual, expected, options);
+          if (expected === options.expected)
+            baselineComparison = { actual, result: comparatorResult };
+        }
         if (comparatorResult !== undefined && !!comparatorResult === !!options.isNot)
           return true;
-        if (comparatorResult)
-          intermediateResult = { errorMessage: comparatorResult.errorMessage, diff: comparatorResult.diff, actual, previous };
+        if (comparatorResult) {
+          intermediateResult = {
+            errorMessage: comparatorResult.errorMessage,
+            get diff() {
+              return comparatorResult.diff;
+            },
+            actual,
+            previous,
+          };
+        }
         return false;
       };
       let actual: Buffer | undefined;
