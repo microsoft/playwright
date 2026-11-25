@@ -14,6 +14,26 @@
  * limitations under the License.
  */
 
+import os from 'os';
+import path from 'path';
+
+export const compilationCacheDir = process.env.PLAYWRIGHT_TRANSFORM_CACHE_DIR || process.env.PWTEST_CACHE_DIR || (() => {
+  if (process.platform === 'win32')
+    return path.join(os.tmpdir(), 'playwright-transform-cache');
+  // os.userInfo() is not always available, and geteuid() is not available on Windows.
+  // See https://github.com/microsoft/playwright/issues/22721.
+  return path.join(os.tmpdir(), 'playwright-transform-cache-' + process.geteuid?.());
+})();
+
+export function enableCompileCache() {
+  const nodeModule = require('module');
+  const result = nodeModule.enableCompileCache?.(process.env.NODE_COMPILE_CACHE || path.join(compilationCacheDir, 'node-compile-cache'));
+  if (result && result.status === nodeModule.constants.compileCacheStatus.FAILED) {
+    // eslint-disable-next-line no-console
+    console.error(`Failed to enable Node.js compile cache: ${result.message}`);
+  }
+}
+
 const minimumMajorNodeVersion = 20;
 const currentNodeVersion = process.versions.node;
 const major = +currentNodeVersion.split('.')[0];

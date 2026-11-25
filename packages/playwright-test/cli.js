@@ -15,6 +15,6 @@
  * limitations under the License.
  */
 
-require('module').enableCompileCache?.();
+require('playwright-core/lib/bootstrap').enableCompileCache();
 const { program } = require('playwright/lib/program');
 program.parse(process.argv);

@@ -14,8 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-require('module').enableCompileCache?.();
-require('./lib/bootstrap');
+require('./lib/bootstrap').enableCompileCache();
 const { libCli, libCliTestStub } = require('./lib/coreBundle');
 const { program } = require('./lib/utilsBundle');
 libCli.decorateProgram(program);

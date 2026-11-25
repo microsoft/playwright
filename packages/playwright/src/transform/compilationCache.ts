@@ -15,9 +15,9 @@
  */
 
 import fs from 'fs';
-import os from 'os';
 import path from 'path';
 import url from 'url';
+import { compilationCacheDir } from 'playwright-core/lib/bootstrap';
 
 import sourceMapSupport from 'source-map-support';
 import { MultiMap } from '@isomorphic/multimap';
@@ -51,15 +51,7 @@ export type SerializedCompilationCache = {
 // - For workers-only dynamic imports or some cache problems, we will re-transpile files in
 //   each worker anew.
 
-export const cacheDir = process.env.PLAYWRIGHT_TRANSFORM_CACHE_DIR || process.env.PWTEST_CACHE_DIR || (() => {
-  if (process.platform === 'win32')
-    return path.join(os.tmpdir(), `playwright-transform-cache`);
-  // Use `geteuid()` instead of more natural `os.userInfo().username`
-  // since `os.userInfo()` is not always available.
-  // Note: `process.geteuid()` is not available on windows.
-  // See https://github.com/microsoft/playwright/issues/22721
-  return path.join(os.tmpdir(), `playwright-transform-cache-` + process.geteuid?.());
-})();
+export const cacheDir = compilationCacheDir;
 
 const sourceMaps: Map<string, string> = new Map();
 const memoryCache = new Map<string, MemoryCache>();

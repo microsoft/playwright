@@ -864,6 +864,9 @@ steps.push(new EsbuildStep({
   bundle: true,
   entryPoints: [filePath('packages/playwright/src/loader/loaderProcessEntry.ts')],
   outfile: filePath('packages/playwright/lib/loader/loaderProcessEntry.js'),
+  banner: {
+    js: "'use strict'; require('playwright-core/lib/bootstrap').enableCompileCache();",
+  },
   external: [
     'playwright-core',
     'playwright-core/*',
@@ -884,7 +887,7 @@ steps.push(new EsbuildStep({
   entryPoints: [filePath('packages/playwright/src/worker/workerProcessEntry.ts')],
   outfile: filePath('packages/playwright/lib/worker/workerProcessEntry.js'),
   banner: {
-    js: "'use strict'; require('module').enableCompileCache?.();",
+    js: "'use strict'; require('playwright-core/lib/bootstrap').enableCompileCache();",
   },
   external: [
     'playwright-core',
