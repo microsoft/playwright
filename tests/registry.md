@@ -3879,6 +3879,8 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `NA-097` | `page/page-goto.spec.ts` | should navigate while a new service worker takes over |
 | `NA-098` | `page/page-goto.spec.ts` | should work with redirect chain through visited sites |
 | `NA-099` | `page/page-goto.spec.ts` | should fail request of a canceled cross-process navigation |
+| `NA-100` | `page/page-goto.spec.ts` | should report cross-process redirect chain back to the initial site |
+| `NA-101` | `page/page-goto.spec.ts` | should report cross-process redirect chain through visited {sites, sites with route} *(2 copies)* |
 
 ### NE — Network
 

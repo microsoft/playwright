@@ -17,6 +17,7 @@
 
 import url from 'url';
 import { test as it, expect } from './pageTest';
+import type { Page, Request, Response } from '@playwright/test';
 import { expectedSSLError } from '../config/utils';
 
 it('NA-001 should work @smoke', async ({ page, server }) => {
@@ -115,6 +116,68 @@ it('NA-099 should fail request of a canceled cross-process navigation', async ({
   expect((await requestFailedPromise).url()).toBe(server.CROSS_PROCESS_PREFIX + '/hang.html');
   expect(await error).toBeInstanceOf(Error);
 });
+
+async function expectRedirectChain(page: Page, navigate: () => Promise<Response>, urls: string[]) {
+  const finished: string[] = [];
+  const failed: string[] = [];
+  page.on('requestfinished', request => finished.push(request.url()));
+  page.on('requestfailed', request => failed.push(request.url()));
+  const response = await navigate();
+  const chain: Request[] = [];
+  for (let request = response.request(); request; request = request.redirectedFrom())
+    chain.unshift(request);
+  expect(chain.map(request => request.url())).toEqual(urls);
+  const statuses = await Promise.all(chain.map(async request => (await request.response()).status()));
+  expect(statuses).toEqual([...urls.slice(1).map(() => 302), 200]);
+  await expect.poll(() => urls.filter(url => !finished.includes(url))).toEqual([]);
+  expect(failed).toEqual([]);
+}
+
+it('NA-100 should report cross-process redirect chain back to the initial site', async ({ page, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43067' });
+  server.setRedirect('/redirect1', server.CROSS_PROCESS_PREFIX + '/redirect2');
+  server.setRedirect('/redirect2', server.EMPTY_PAGE);
+  // WebKit reuses the process of the previously visited site for the redirect.
+  await (await page.goto(server.CROSS_PROCESS_PREFIX + '/empty.html')).finished();
+  await (await page.goto(server.PREFIX + '/title.html')).finished();
+
+  await expectRedirectChain(page, () => page.goto(server.PREFIX + '/redirect1'), [
+    server.PREFIX + '/redirect1',
+    server.CROSS_PROCESS_PREFIX + '/redirect2',
+    server.EMPTY_PAGE,
+  ]);
+});
+
+for (const withRoute of [false, true]) {
+  it(`NA-101 should report cross-process redirect chain through visited sites${withRoute ? ' with route' : ''}`, async ({ page, server, channel }) => {
+    it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43067' });
+    it.skip(!!process.env.INSIDE_DOCKER, 'docker does not support IPv6 by default');
+    it.skip(channel === 'webkit-wsl', 'WebKit on WSL does not support IPv6: https://github.com/microsoft/WSL/issues/10803');
+
+    const thirdSite = `http://[::1]:${server.PORT}`;
+    server.setRedirect('/redirect1', server.CROSS_PROCESS_PREFIX + '/redirect2');
+    server.setRedirect('/redirect2', server.EMPTY_PAGE);
+    // WebKit reuses the processes of the previously visited sites for the redirects.
+    for (const site of [server.PREFIX, server.CROSS_PROCESS_PREFIX, thirdSite])
+      await (await page.goto(site + '/empty.html')).finished();
+
+    const routed: string[] = [];
+    if (withRoute) {
+      await page.route('**/*', route => {
+        routed.push(route.request().url());
+        void route.continue();
+      });
+    }
+    await expectRedirectChain(page, () => page.goto(thirdSite + '/redirect1'), [
+      thirdSite + '/redirect1',
+      server.CROSS_PROCESS_PREFIX + '/redirect2',
+      server.EMPTY_PAGE,
+    ]);
+    // Redirects are not intercepted.
+    if (withRoute)
+      expect(routed).toEqual([thirdSite + '/redirect1']);
+  });
+}
 
 it('NA-008 should work with Cross-Origin-Opener-Policy', async ({ page, server }) => {
   server.setRoute('/empty.html', (req, res) => {
