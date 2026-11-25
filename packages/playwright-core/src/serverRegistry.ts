@@ -91,36 +91,36 @@ class ServerRegistry extends EventEmitter {
   }
 
   async list(): Promise<Map<string, BrowserDescriptor[]>> {
-    const ownWatcher = !this._watcher;
-    let dispose: (() => void) | undefined;
-    if (ownWatcher)
-      dispose = this.watch();
-    try {
-      await this._ready;
-      const statuses = await Promise.all(
-          [...this._descriptors.values()].map(async descriptor => {
-            const canConnect = await canConnectTo(descriptor);
-            return { descriptor, canConnect };
-          }),
-      );
-      const result = new Map<string, BrowserDescriptor[]>();
-      for (const { descriptor, canConnect } of statuses) {
-        if (!canConnect) {
-          await fs.promises.unlink(path.join(this._browsersDir(), descriptor.browser.guid)).catch(() => {});
-          continue;
-        }
-        const key = descriptor.workspaceDir ?? '';
-        let list = result.get(key);
-        if (!list) {
-          list = [];
-          result.set(key, list);
-        }
-        list.push(descriptor);
+    // Read the registry from the disk and do not start a file watcher here.
+    // A watcher that is closed while registry files are removed can start again and keep the process alive.
+    const dir = this._browsersDir();
+    const guids = await fs.promises.readdir(dir).catch(() => [] as string[]);
+    const statuses = await Promise.all(guids.map(async guid => {
+      let descriptor: BrowserDescriptor;
+      try {
+        descriptor = JSON.parse(await fs.promises.readFile(path.join(dir, guid), 'utf-8'));
+      } catch {
+        return undefined;
       }
-      return result;
-    } finally {
-      dispose?.();
+      return { guid, descriptor, canConnect: await canConnectTo(descriptor) };
+    }));
+    const result = new Map<string, BrowserDescriptor[]>();
+    for (const status of statuses) {
+      if (!status)
+        continue;
+      if (!status.canConnect) {
+        await this.delete(status.guid);
+        continue;
+      }
+      const key = status.descriptor.workspaceDir ?? '';
+      let list = result.get(key);
+      if (!list) {
+        list = [];
+        result.set(key, list);
+      }
+      list.push(status.descriptor);
     }
+    return result;
   }
 
   async create(browser: BrowserInfo, endpoint: EndpointInfo) {

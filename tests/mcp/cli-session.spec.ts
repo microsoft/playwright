@@ -41,6 +41,39 @@ test('list', async ({ cli, server }) => {
   expect(listOutput).toContain('- default:');
 });
 
+test('list should remove stale registry entries and exit', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-cli/issues/549' },
+}, async ({ cli }, testInfo) => {
+  const registryDir = testInfo.outputPath('registry');
+  await fs.promises.mkdir(registryDir, { recursive: true });
+  for (const guid of ['stale-1', 'stale-2']) {
+    await fs.promises.writeFile(path.join(registryDir, guid), JSON.stringify({
+      playwrightVersion: '0.0.0',
+      title: guid,
+      browser: { guid, browserName: 'chromium', launchOptions: {} },
+      endpoint: testInfo.outputPath(guid + '.sock'),
+    }));
+  }
+
+  const watchLog = testInfo.outputPath('watch.log');
+  const preload = testInfo.outputPath('log-registry-watchers.cjs');
+  await fs.promises.writeFile(preload, `
+    const fs = require('fs');
+    const watch = fs.watch;
+    fs.watch = (...args) => {
+      if (String(args[0]).startsWith(process.env.PWTEST_SERVER_REGISTRY))
+        fs.appendFileSync(${JSON.stringify(watchLog)}, args[0] + '\\n');
+      return watch(...args);
+    };
+  `);
+
+  const { output } = await cli('list', { env: { NODE_OPTIONS: `--require="${preload.replaceAll('\\', '/')}"` } });
+  expect(output).toContain('(no browsers)');
+  expect(await fs.promises.readdir(registryDir)).toEqual([]);
+  // A file watcher on the registry can keep the process alive after the stale entries are removed.
+  expect(fs.existsSync(watchLog)).toBe(false);
+});
+
 test('close', async ({ cli, server }) => {
   await cli('open', server.HELLO_WORLD);
 
