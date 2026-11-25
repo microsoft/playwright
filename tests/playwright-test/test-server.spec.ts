@@ -157,6 +157,42 @@ test('file watching with a directory', async ({ startTestServer, writeFiles }, t
   ]);
 });
 
+for (const separator of ['', path.sep]) {
+  test(`directory watching with external dependency${separator ? ' and trailing separator' : ''}`, {
+    annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44299' },
+  }, async ({ startTestServer, writeFiles }, testInfo) => {
+    await writeFiles({
+      'playwright.config.ts': `
+        export default { testDir: './tests' };
+      `,
+      'utils/helper.ts': `
+        export const expected = 42;
+      `,
+      'tests/nested/a.test.ts': `
+        import { test, expect } from '@playwright/test';
+        import { expected } from '../../utils/helper';
+        test('foo', () => expect(expected).toBe(123));
+      `,
+    });
+
+    const testServerConnection = await startTestServer();
+    const tests = await testServerConnection.listTests({});
+    expect(tests.report.map(e => e.method)).toEqual(['onConfigure', 'onProject', 'onBegin', 'onEnd']);
+
+    await testServerConnection.watch({ fileNames: [testInfo.outputPath('tests') + separator] });
+    await writeFiles({
+      'utils/helper.ts': `
+        export const expected = 123;
+      `,
+    });
+
+    await expect.poll(() => testServerConnection.events).toEqual([
+      ['testFilesChanged', { testFiles: [testInfo.outputPath('tests', 'nested', 'a.test.ts')] }]
+    ]);
+    expect(await testServerConnection.runTests({ locations: [] })).toEqual({ status: 'passed' });
+  });
+}
+
 test('should list tests with testIdAttribute', async ({ startTestServer, writeFiles }) => {
   await writeFiles({
     'a.test.ts': `

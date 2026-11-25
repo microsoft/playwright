@@ -281,6 +281,10 @@ export function internalDependenciesForTestFile(filename: string): Set<string> |
   return fileDependencies.get(filename);
 }
 
+export function testFileNames(): string[] {
+  return [...fileDependencies.keys()];
+}
+
 export function dependenciesForTestFile(filename: string): Set<string> {
   return fileDependencies.get(filename) || new Set();
 }
