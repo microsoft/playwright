@@ -10,16 +10,38 @@ Inspect `.zip` trace files produced by Playwright tests without opening a browse
 
 ## Workflow
 
-1. Start with `trace open <trace.zip>` to extract the trace and see its metadata.
-2. Use `trace actions` to see all actions with their action IDs.
-3. Use `trace action <action-id>` to drill into a specific action — see parameters, logs, source location, and available snapshots.
-4. Use `trace requests`, `trace console`, or `trace errors` for cross-cutting views.
-5. Use `trace snapshot <action-id>` to get the DOM snapshot, or run a browser command against it.
-6. Use `trace close` to remove the extracted trace data when done.
+1. To compare two test runs (e.g. passing vs failing or retry attempts), use `trace diff <baseline.zip> <target.zip>` to find the first divergence in actions, network, or errors without extracting files.
+2. Start with `trace open <trace.zip>` to extract the trace and see its metadata.
+3. Use `trace actions` to see all actions with their action IDs.
+4. Use `trace action <action-id>` to drill into a specific action — see parameters, logs, source location, and available snapshots.
+5. Use `trace requests`, `trace console`, or `trace errors` for cross-cutting views.
+6. Use `trace snapshot <action-id>` to get the DOM snapshot, or run a browser command against it.
+7. Use `trace close` to remove the extracted trace data when done.
 
-All commands after `open` operate on the currently opened trace — no need to pass the trace file again. Opening a new trace replaces the previous one.
+All commands after `open` operate on the currently opened trace — no need to pass the trace file again. Opening a new trace replaces the previous one. `trace diff` operates directly on two trace archives without requiring `open`.
 
 ## Commands
+
+### Compare traces
+
+```bash
+# Compare two traces to identify differences and first divergence
+npx playwright trace diff <baseline-trace.zip> <target-trace.zip>
+
+# Filter by category
+npx playwright trace diff <baseline.zip> <target.zip> --only actions
+npx playwright trace diff <baseline.zip> <target.zip> --only network
+npx playwright trace diff <baseline.zip> <target.zip> --only console
+
+# Output machine-readable JSON for tooling and CI agents
+npx playwright trace diff <baseline.zip> <target.zip> --json
+
+# Suppress duration deltas when comparing across different hardware
+npx playwright trace diff <baseline.zip> <target.zip> --ignore-timings
+
+# Exit with code 1 if differences exist (for CI gating)
+npx playwright trace diff <baseline.zip> <target.zip> --exit-code
+```
 
 ### Open a trace
 

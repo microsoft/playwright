@@ -372,3 +372,27 @@ test('trace diff displays FAILED for aborted network requests', async ({ traceFi
   expect(stdout).toContain('FAILED');
   expect(stdout).not.toContain(' -1');
 });
+
+test('trace diff reports concrete action ordinals for first divergence', async ({ traceFile, targetTraceFile, runTraceCli }) => {
+  const { stdout, exitCode } = await runTraceCli(['diff', traceFile, targetTraceFile, '--only', 'actions']);
+  expect(exitCode).toBe(0);
+  expect(stdout).toContain('First Divergence:');
+  expect(stdout).toMatch(/Target:\s+#\d+/);
+});
+
+test('trace diff with raw .trace files', async ({ traceFile, runTraceCli }) => {
+  const extractCwd = path.join(path.dirname(traceFile), 'extracted-diff');
+  fs.mkdirSync(extractCwd, { recursive: true });
+  const cliPath = path.resolve(__dirname, '../../packages/playwright-core/cli.js');
+  const { execFileSync } = require('child_process');
+  execFileSync(process.execPath, [cliPath, 'trace', 'open', traceFile], { cwd: extractCwd });
+  const extractDir = path.join(extractCwd, '.playwright-cli', 'trace');
+
+  const traceEntries = fs.readdirSync(extractDir).filter((f: string) => f.endsWith('.trace'));
+  expect(traceEntries.length).toBeGreaterThan(0);
+  const dotTraceFile = path.join(extractDir, traceEntries[0]);
+
+  const { stdout, exitCode } = await runTraceCli(['diff', dotTraceFile, dotTraceFile]);
+  expect(exitCode).toBe(0);
+  expect(stdout).toContain('No divergence detected in action sequence.');
+});

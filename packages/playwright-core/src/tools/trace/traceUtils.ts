@@ -21,7 +21,8 @@ import { TraceModel, buildActionTree } from '@isomorphic/trace/traceModel';
 import { TraceLoader } from '@isomorphic/trace/traceLoader';
 import { renderFullTitleForCall, renderSubtitleForCall, renderTitleForCall } from '@isomorphic/protocolFormatter';
 import { resolveWithinRoot } from '@utils/fileUtils';
-import { DirTraceLoaderBackend, extractTrace } from './traceParser';
+import { ZipFile } from '@utils/zipFile';
+import { DirTraceLoaderBackend, SingleFileTraceLoaderBackend, ZipTraceLoaderBackend, extractTrace } from './traceParser';
 
 import type { ActionEntry } from '@isomorphic/trace/entries';
 import type { ActionPhase } from '@isomorphic/trace/trace';
@@ -97,42 +98,42 @@ export async function loadTrace(): Promise<LoadedTrace> {
 
 const MAX_TRACE_SIZE_BYTES = 500 * 1024 * 1024; // 500 MB
 
-export async function loadTraceFromFile(traceFile: string, extractDir: string): Promise<LoadedTrace> {
+export async function loadTraceFromFile(traceFile: string): Promise<LoadedTrace> {
   const filePath = path.resolve(traceFile);
   if (!fs.existsSync(filePath))
     throw new Error(`Trace file not found: ${filePath}`);
 
   const stat = await fs.promises.stat(filePath);
+  let backend: DirTraceLoaderBackend | ZipTraceLoaderBackend | SingleFileTraceLoaderBackend;
+  let singleFile: string | undefined;
+
   if (stat.isFile()) {
     if (stat.size === 0)
       throw new Error(`Trace file is empty: ${filePath}`);
     if (stat.size > MAX_TRACE_SIZE_BYTES)
       throw new Error(`Trace file exceeds maximum supported size (500MB): ${filePath}`);
-    if (!filePath.endsWith('.zip') && !filePath.endsWith('.trace'))
+    if (filePath.endsWith('.zip')) {
+      const zipFile = new ZipFile(filePath);
+      backend = new ZipTraceLoaderBackend(zipFile);
+    } else if (filePath.endsWith('.trace')) {
+      backend = new SingleFileTraceLoaderBackend(filePath);
+      singleFile = path.basename(filePath);
+    } else {
       throw new Error(`Invalid trace file: ${filePath}. Trace must be a .zip archive or .trace file.`);
+    }
   } else if (stat.isDirectory()) {
     const entries = await fs.promises.readdir(filePath);
     const hasTrace = entries.some(f => f.endsWith('.trace') || f === 'trace.network');
     if (!hasTrace)
       throw new Error(`Directory is not a valid trace directory: ${filePath}`);
+    backend = new DirTraceLoaderBackend(filePath);
   } else {
     throw new Error(`Invalid trace path: ${filePath}`);
   }
 
-  let targetDir: string;
-  let singleFile: string | undefined;
-  if (filePath.endsWith('.zip')) {
-    await fs.promises.mkdir(extractDir, { recursive: true });
-    await extractTrace(filePath, extractDir);
-    targetDir = extractDir;
-  } else {
-    targetDir = stat.isDirectory() ? filePath : path.dirname(filePath);
-    singleFile = stat.isDirectory() ? undefined : path.basename(filePath);
-  }
-  const backend = new DirTraceLoaderBackend(targetDir);
   const loader = new TraceLoader();
   await loader.load(backend, singleFile);
-  const model = new TraceModel(targetDir, loader.contextEntries);
+  const model = new TraceModel(filePath, loader.contextEntries);
   return new LoadedTrace(model, loader, buildOrdinalMap(model));
 }
 

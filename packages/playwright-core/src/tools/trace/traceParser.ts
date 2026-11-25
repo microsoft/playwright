@@ -81,6 +81,88 @@ export class DirTraceLoaderBackend implements TraceLoaderBackend {
   }
 }
 
+export class ZipTraceLoaderBackend implements TraceLoaderBackend {
+  private _zipFile: ZipFile;
+
+  constructor(zipFile: ZipFile) {
+    this._zipFile = zipFile;
+  }
+
+  isLive() {
+    return false;
+  }
+
+  async entryNames(): Promise<string[]> {
+    return await this._zipFile.entries();
+  }
+
+  async hasEntry(entryName: string): Promise<boolean> {
+    const entries = await this._zipFile.entries();
+    return entries.includes(entryName);
+  }
+
+  async readText(entryName: string): Promise<string | undefined> {
+    try {
+      const buffer = await this._zipFile.read(entryName);
+      return buffer.toString('utf-8');
+    } catch {
+      return undefined;
+    }
+  }
+
+  async readBlob(entryName: string): Promise<Blob | undefined> {
+    try {
+      const buffer = await this._zipFile.read(entryName);
+      return new Blob([new Uint8Array(buffer)]);
+    } catch {
+      return undefined;
+    }
+  }
+}
+
+export class SingleFileTraceLoaderBackend implements TraceLoaderBackend {
+  private _filePath: string;
+  private _fileName: string;
+
+  constructor(filePath: string) {
+    this._filePath = filePath;
+    this._fileName = path.basename(filePath);
+  }
+
+  isLive() {
+    return false;
+  }
+
+  async entryNames(): Promise<string[]> {
+    return [this._fileName];
+  }
+
+  async hasEntry(entryName: string): Promise<boolean> {
+    return entryName === this._fileName;
+  }
+
+  async readText(entryName: string): Promise<string | undefined> {
+    if (entryName !== this._fileName)
+      return undefined;
+    try {
+      return await fs.promises.readFile(this._filePath, 'utf-8');
+    } catch {
+      return undefined;
+    }
+  }
+
+  async readBlob(entryName: string): Promise<Blob | undefined> {
+    if (entryName !== this._fileName)
+      return undefined;
+    try {
+      const buffer = await fs.promises.readFile(this._filePath);
+      return new Blob([new Uint8Array(buffer)]);
+    } catch {
+      return undefined;
+    }
+  }
+}
+
 export async function extractTrace(traceFile: string, outDir: string): Promise<void> {
   const zipFile = new ZipFile(traceFile);
   try {
