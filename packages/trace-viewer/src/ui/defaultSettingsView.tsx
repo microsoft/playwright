@@ -20,6 +20,7 @@ import { kThemeOptions, type Theme, useThemeSetting } from '@web/theme';
 import { useSetting } from '@web/uiUtils';
 import { canToggleAriaMode, shouldDisplayAriaMode } from './ariaModeView';
 import type { AriaModeInfo } from './ariaModeView';
+import type { TimeZone } from './traceTimestamp';
 
 
 /**
@@ -36,9 +37,12 @@ export const DefaultSettingsView: React.FC<{
   const [displayAriaMode, setDisplayAriaMode] = useSetting('displayAriaMode', false);
   const [theme, setTheme] = useThemeSetting();
   const [mergeFiles, setMergeFiles] = useSetting('mergeFiles', false);
+  const [timeZone, setTimeZone] = useSetting<TimeZone>('timeZone', 'local');
+  const [displaySnapshotTimestamp, setDisplaySnapshotTimestamp] = useSetting('displaySnapshotTimestamp', false);
+  const [displayTimelineTimestamp, setDisplayTimelineTimestamp] = useSetting('displayTimelineTimestamp', false);
   const canToggleAria = canToggleAriaMode(model);
 
-  return (
+  return <>
     <SettingsView
       settings={[
         {
@@ -73,5 +77,28 @@ export const DefaultSettingsView: React.FC<{
         },
       ]}
     />
-  );
+    <SettingsView
+      settings={[
+        {
+          type: 'select',
+          value: timeZone,
+          set: setTimeZone,
+          name: 'Time zone',
+          options: [{ label: 'Local', value: 'local' }, { label: 'UTC', value: 'utc' }],
+        } satisfies Setting<TimeZone>,
+        {
+          type: 'check',
+          value: displaySnapshotTimestamp,
+          set: setDisplaySnapshotTimestamp,
+          name: 'Display snapshot timestamp',
+        },
+        {
+          type: 'check',
+          value: displayTimelineTimestamp,
+          set: setDisplayTimelineTimestamp,
+          name: 'Display timeline timestamp',
+        },
+      ]}
+    />
+  </>;
 };

@@ -66,6 +66,7 @@ export class TraceModel {
   readonly platform?: string;
   readonly playwrightVersion?: string;
   readonly wallTime?: number;
+  readonly wallTimeOffset?: number;
   readonly title?: string;
   readonly options: trace.BrowserContextEventOptions;
   readonly pages: PageEntry[];
@@ -111,6 +112,8 @@ export class TraceModel {
     this.annotations = contexts.find(c => c.origin === 'testRunner')?.annotations;
     // Next call updates all timestamps for all events in library contexts, so it must be done first.
     this.actions = mergeActionsAndUpdateTiming(contexts);
+    const clockContext = contexts.find(c => c.origin === 'testRunner' && c.monotonicTime && c.wallTime) || contexts.find(c => c.monotonicTime && c.wallTime);
+    this.wallTimeOffset = clockContext ? clockContext.wallTime - clockContext.monotonicTime : undefined;
     this.pages = ([] as PageEntry[]).concat(...contexts.map(c => c.pages));
     this.videos = [];
     this.wallTime = contexts.map(c => c.wallTime).reduce((prev, cur) => Math.min(prev || Number.MAX_VALUE, cur!), Number.MAX_VALUE);

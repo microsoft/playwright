@@ -18,6 +18,7 @@ import { ToolbarButton } from '@web/components/toolbarButton';
 import * as React from 'react';
 import type { ActionEntry } from '@isomorphic/trace/entries';
 import type { Boundaries } from './geometry';
+import { TraceTimestamp } from './traceTimestamp';
 import './playbackControl.css';
 
 const speeds = [0.5, 1, 2];
@@ -27,6 +28,7 @@ export type PlaybackState = {
   speed: number;
   currentIndex: number;
   percent: number;
+  time: number;
   animating: boolean;
   screencastTime: number | undefined;
   togglePlay: () => void;
@@ -255,7 +257,7 @@ export function usePlayback(
   const canStop = playing || currentIndex > firstWindowIndex;
 
   return {
-    playing, speed, currentIndex, percent, animating, screencastTime,
+    playing, speed, currentIndex, percent, time: positionTime, animating, screencastTime,
     togglePlay, stop, prev, next, cycleSpeed, selectAction, showSelectedAction,
     onScrubberMouseDown, scrubberRef, actionsLength: actions.length,
     canPrev, canNext, canStop, ticks,
@@ -301,6 +303,7 @@ export const PlaybackScrubber: React.FC<{
     aria-valuemax={100}
     aria-valuenow={Math.round(playback.percent)}
   >
+    <TraceTimestamp location='timeline' time={playback.time} style={{ left: `clamp(65px, ${playback.percent}%, calc(100% - 65px))` }} />
     <div className='playback-track' />
     <div
       className={'playback-track-filled' + (playback.animating ? ' animated' : '')}

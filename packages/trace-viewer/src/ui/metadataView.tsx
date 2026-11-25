@@ -18,15 +18,19 @@ import { msToString } from '@isomorphic/formatUtils';
 import { isHttpUrl } from '@isomorphic/urlMatch';
 import * as React from 'react';
 import type { TraceModel } from '@isomorphic/trace/traceModel';
+import { useSetting } from '@web/uiUtils';
+import type { TimeZone } from './traceTimestamp';
 import './callTab.css';
 
 export const MetadataView: React.FunctionComponent<{
   model?: TraceModel,
 }> = ({ model }) => {
+  const [timeZone] = useSetting<TimeZone>('timeZone', 'local');
   if (!model)
     return <></>;
 
-  const wallTime = model.wallTime !== undefined ? new Date(model.wallTime).toLocaleString(undefined, { timeZoneName: 'short' }) : undefined;
+  const date = model.wallTime !== undefined ? new Date(model.wallTime) : undefined;
+  const wallTime = timeZone === 'utc' ? date?.toISOString() : date?.toLocaleString(undefined, { timeZoneName: 'short' });
 
   return <div style={{ flex: 'auto', display: 'block', overflow: 'hidden auto' }}>
     <div className='call-section' style={{ paddingTop: 2 }}>Time</div>

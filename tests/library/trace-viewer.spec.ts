@@ -2840,3 +2840,64 @@ test('TV-122 take trace paths via stdin', async ({ showTraceViewer }) => {
     /Create page/,
   ]);
 });
+
+test('TV-138 should display clock timestamps during playback', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44374' },
+}, async ({ showTraceViewer }) => {
+  const { model, snapshots } = await parseTrace(traceFile);
+  const action = model.actions.find(action => action.method === 'setContent')!;
+  const beforeSnapshot = snapshots.snapshotForCall(action.callId, 'before')!.snapshot();
+  const afterSnapshot = snapshots.snapshotForCall(action.callId, 'after')!.snapshot();
+  const traceViewer = await showTraceViewer(traceFile);
+  const timelineTimestamp = traceViewer.page.locator('.timeline-timestamp');
+  const snapshotTimestamp = traceViewer.page.locator('.snapshot-timestamp');
+  await traceViewer.selectAction('Set content');
+  await expect(timelineTimestamp).not.toBeVisible();
+  await expect(snapshotTimestamp).not.toBeVisible();
+
+  await traceViewer.showSettings();
+  const timeZone = traceViewer.settingsDialog.getByRole('combobox', { name: 'Time zone' });
+  await expect(timeZone).toHaveValue('local');
+  await timeZone.selectOption('UTC');
+  await traceViewer.settingsDialog.getByRole('checkbox', { name: 'Display timeline timestamp' }).check();
+  await traceViewer.settingsDialog.getByRole('checkbox', { name: 'Display snapshot timestamp' }).check();
+  await traceViewer.showSettings();
+
+  await expect(timelineTimestamp).toHaveAttribute('datetime', new Date(model.wallTime! + action.startTime - model.startTime).toISOString());
+  await traceViewer.selectSnapshot('Before');
+  await expect(snapshotTimestamp).toHaveAttribute('datetime', new Date(beforeSnapshot.wallTime!).toISOString());
+  await traceViewer.selectSnapshot('After');
+  const afterTime = new Date(afterSnapshot.wallTime!).toISOString();
+  await expect(snapshotTimestamp).toHaveAttribute('datetime', afterTime);
+  await expect(snapshotTimestamp).toHaveText(afterTime.slice(11, 23) + 'Z');
+
+  await traceViewer.showMetadataTab();
+  await expect(traceViewer.metadataTab.getByText('start time:')).toContainText(new Date(model.wallTime!).toISOString());
+  await traceViewer.showSettings();
+  await timeZone.selectOption('Local');
+  await traceViewer.showSettings();
+  const localTime = await traceViewer.page.evaluate(time => new Date(time).toLocaleTimeString(undefined, {
+    hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3, hourCycle: 'h23',
+  }), afterSnapshot.wallTime!);
+  await expect(snapshotTimestamp).toHaveText(localTime);
+
+  await traceViewer.page.getByRole('tab', { name: 'Actions', exact: true }).click();
+  await traceViewer.selectAction('Navigate');
+  await traceViewer.page.clock.install({ time: new Date('2026-01-01T00:00:00Z') });
+  await traceViewer.page.clock.pauseAt(new Date('2026-01-01T00:00:01Z'));
+  const initialTime = await timelineTimestamp.getAttribute('datetime');
+  await traceViewer.page.getByRole('button', { name: 'Play', exact: true }).click();
+  await traceViewer.page.clock.runFor(64);
+  const playingTime = await timelineTimestamp.getAttribute('datetime');
+  expect(new Date(playingTime!).getTime()).toBeGreaterThan(new Date(initialTime!).getTime());
+  await expect(snapshotTimestamp).toHaveAttribute('datetime', playingTime!);
+  await traceViewer.page.getByRole('button', { name: 'Stop', exact: true }).click();
+  await traceViewer.selectAction('Set content');
+
+  await traceViewer.showSettings();
+  await traceViewer.settingsDialog.getByRole('checkbox', { name: 'Display timeline timestamp' }).uncheck();
+  await expect(timelineTimestamp).not.toBeVisible();
+  await expect(snapshotTimestamp).toBeVisible();
+  await traceViewer.settingsDialog.getByRole('checkbox', { name: 'Display snapshot timestamp' }).uncheck();
+  await expect(snapshotTimestamp).not.toBeVisible();
+});

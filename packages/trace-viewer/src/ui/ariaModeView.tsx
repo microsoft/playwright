@@ -20,6 +20,7 @@ import { nextActionByStartTime, previousActionByEndTime } from '@isomorphic/trac
 import { renderAriaSnapshotAsYaml } from '@isomorphic/ariaSnapshotRenderer';
 import { clsx, useMeasure } from '@web/uiUtils';
 import { PlaceholderPanel } from './placeholderPanel';
+import { TraceTimestamp } from './traceTimestamp';
 
 import type { ActionPhase, ActionTraceEvent } from '@isomorphic/trace/trace';
 import type { AriaNodeJSON, AriaSnapshotJSON } from '@isomorphic/ariaSnapshot';
@@ -147,7 +148,8 @@ export const AriaModeView: React.FunctionComponent<{
   point?: Point,
   box?: Box,
   screencastFrame?: React.ReactNode,
-}> = ({ model, target, point, box, screencastFrame }) => {
+  screencastTime?: number,
+}> = ({ model, target, point, box, screencastFrame, screencastTime }) => {
   const screenshot = model && target ? model.screenshotForCall(target.callId, target.phase) : undefined;
   const ariaSnapshot = model && target ? model.ariaSnapshotForCall(target.callId, target.phase) : undefined;
   const [lines, setLines] = React.useState<AriaSnapshotLine[]>([]);
@@ -195,6 +197,7 @@ export const AriaModeView: React.FunctionComponent<{
       </div>}
       {!ariaSnapshot && <PlaceholderPanel text='No aria snapshot' />}
     </div>
+    <TraceTimestamp location='snapshot' time={screencastTime ?? screenshot?.timestamp ?? ariaSnapshot?.timestamp} />
   </div>;
 };
 
