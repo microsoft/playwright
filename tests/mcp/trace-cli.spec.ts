@@ -396,3 +396,16 @@ test('trace diff with raw .trace files', async ({ traceFile, runTraceCli }) => {
   expect(exitCode).toBe(0);
   expect(stdout).toContain('No divergence detected in action sequence.');
 });
+
+test('trace diff rejects non-existent trace file', async ({ traceFile, runTraceCli }) => {
+  const { stderr, exitCode } = await runTraceCli(['diff', 'does-not-exist.zip', traceFile]);
+  expect(exitCode).toBe(1);
+  expect(stderr).toContain('Trace file not found');
+});
+
+test('trace diff rejects corrupt trace archive', async ({ traceFile, runTraceCli }) => {
+  const corruptZip = path.join(path.dirname(traceFile), 'corrupt.zip');
+  fs.writeFileSync(corruptZip, 'not a valid zip content');
+  const { exitCode } = await runTraceCli(['diff', corruptZip, traceFile]);
+  expect(exitCode).toBe(1);
+});

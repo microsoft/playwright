@@ -50,11 +50,13 @@ export class ZipFile {
     return [...this._entries.keys()];
   }
 
-  async read(entryPath: string): Promise<Buffer> {
+  async read(entryPath: string, maxBytes?: number): Promise<Buffer> {
     await this._openedPromise;
-    const entry = this._entries.get(entryPath)!;
+    const entry = this._entries.get(entryPath);
     if (!entry)
       throw new Error(`${entryPath} not found in file ${this._fileName}`);
+    if (maxBytes !== undefined && entry.uncompressedSize > maxBytes)
+      throw new Error(`Entry ${entryPath} exceeds maximum size of ${maxBytes} bytes`);
 
     return new Promise((resolve, reject) => {
       this._zipFile!.openReadStream(entry, (error, readStream) => {
@@ -63,8 +65,16 @@ export class ZipFile {
           return;
         }
 
+        let total = 0;
         const buffers: Buffer[] = [];
-        readStream.on('data', data => buffers.push(data));
+        readStream.on('data', data => {
+          total += data.length;
+          if (maxBytes !== undefined && total > maxBytes) {
+            readStream.destroy(new Error(`Entry ${entryPath} exceeds maximum size of ${maxBytes} bytes`));
+            return;
+          }
+          buffers.push(data);
+        });
         readStream.on('end', () => resolve(Buffer.concat(buffers)));
         readStream.on('error', reject);
       });

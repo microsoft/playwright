@@ -81,6 +81,7 @@ export class DirTraceLoaderBackend implements TraceLoaderBackend {
   }
 }
 
+const MAX_ENTRY_SIZE_BYTES = 200 * 1024 * 1024; // 200 MB
 export class ZipTraceLoaderBackend implements TraceLoaderBackend {
   private _zipFile: ZipFile;
 
@@ -90,6 +91,10 @@ export class ZipTraceLoaderBackend implements TraceLoaderBackend {
 
   isLive() {
     return false;
+  }
+
+  close() {
+    this._zipFile.close();
   }
 
   async entryNames(): Promise<string[]> {
@@ -103,7 +108,7 @@ export class ZipTraceLoaderBackend implements TraceLoaderBackend {
 
   async readText(entryName: string): Promise<string | undefined> {
     try {
-      const buffer = await this._zipFile.read(entryName);
+      const buffer = await this._zipFile.read(entryName, MAX_ENTRY_SIZE_BYTES);
       return buffer.toString('utf-8');
     } catch {
       return undefined;
@@ -112,7 +117,7 @@ export class ZipTraceLoaderBackend implements TraceLoaderBackend {
 
   async readBlob(entryName: string): Promise<Blob | undefined> {
     try {
-      const buffer = await this._zipFile.read(entryName);
+      const buffer = await this._zipFile.read(entryName, MAX_ENTRY_SIZE_BYTES);
       return new Blob([new Uint8Array(buffer)]);
     } catch {
       return undefined;

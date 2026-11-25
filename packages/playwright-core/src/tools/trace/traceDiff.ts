@@ -105,7 +105,8 @@ export async function traceDiff(baselineFile: string, targetFile: string, option
   const hasNetworkDiff = (result.networkDiff?.statusMismatches.length ?? 0) > 0 ||
     (result.networkDiff?.targetOnly.length ?? 0) > 0 ||
     (result.networkDiff?.baselineOnly.length ?? 0) > 0;
-  const hasConsoleDiff = (result.consoleDiff?.introduced.length ?? 0) > 0;
+  const hasConsoleDiff = (result.consoleDiff?.introduced.length ?? 0) > 0 ||
+    (result.consoleDiff?.resolved.length ?? 0) > 0;
 
   let hasDifferences = false;
   if (!options.only)
@@ -141,7 +142,7 @@ export function normalizeErrorMessage(msg: string | undefined): string {
   return normalizeTokens(msg)
       .replace(/\b(?:Timeout|waiting|waited)\s+\d+m?s\b/gi, 'Timeout <duration>')
       .replace(/\b\d+(?:\.\d+)?m?s\b/g, '<duration>')
-      .replace(/:\d+:\d+\)?/g, ':<line>:<col>)')
+      .replace(/:\d+:\d+(\)?)/g, ':<line>:<col>$1')
       .replace(/\s+/g, ' ')
       .trim();
 }
@@ -254,22 +255,23 @@ function _myersDiff(bSigs: string[], tSigs: string[], bOffset: number, tOffset: 
   }
 
   const MAX = N + M;
-  const vSize = 2 * MAX + 1;
-  const V = new Int32Array(vSize);
-  V[MAX + 1] = 0;
+  const MAX_D = Math.min(MAX, 1000);
+  const vOffset = MAX_D + 1;
+  const V = new Int32Array(2 * MAX_D + 3);
+  V[vOffset + 1] = 0;
 
   const trace: Int32Array[] = [];
   let foundD = -1;
 
-  for (let d = 0; d <= MAX; d++) {
+  for (let d = 0; d <= MAX_D; d++) {
     trace.push(new Int32Array(V));
 
     for (let k = -d; k <= d; k += 2) {
       let x: number;
-      if (k === -d || (k !== d && V[MAX + k - 1] < V[MAX + k + 1]))
-        x = V[MAX + k + 1];
+      if (k === -d || (k !== d && V[vOffset + k - 1] < V[vOffset + k + 1]))
+        x = V[vOffset + k + 1];
       else
-        x = V[MAX + k - 1] + 1;
+        x = V[vOffset + k - 1] + 1;
 
       let y = x - k;
 
@@ -278,7 +280,7 @@ function _myersDiff(bSigs: string[], tSigs: string[], bOffset: number, tOffset: 
         y++;
       }
 
-      V[MAX + k] = x;
+      V[vOffset + k] = x;
 
       if (x >= N && y >= M) {
         foundD = d;
@@ -290,8 +292,14 @@ function _myersDiff(bSigs: string[], tSigs: string[], bOffset: number, tOffset: 
       break;
   }
 
-  if (foundD === -1)
-    foundD = trace.length - 1;
+  if (foundD === -1) {
+    const ops: DiffOp[] = [];
+    for (let i = 0; i < N; i++)
+      ops.push({ type: 'delete', bIndex: bOffset + i });
+    for (let j = 0; j < M; j++)
+      ops.push({ type: 'insert', tIndex: tOffset + j });
+    return ops;
+  }
 
   const ops: DiffOp[] = [];
   let x = N;
@@ -302,12 +310,12 @@ function _myersDiff(bSigs: string[], tSigs: string[], bOffset: number, tOffset: 
     const k = x - y;
 
     let prevK: number;
-    if (k === -d || (k !== d && vPrev[MAX + k - 1] < vPrev[MAX + k + 1]))
+    if (k === -d || (k !== d && vPrev[vOffset + k - 1] < vPrev[vOffset + k + 1]))
       prevK = k + 1;
     else
       prevK = k - 1;
 
-    const prevX = vPrev[MAX + prevK];
+    const prevX = vPrev[vOffset + prevK];
     const prevY = prevX - prevK;
 
     while (x > prevX && y > prevY) {
@@ -490,24 +498,11 @@ function _diffNetwork(bModel: TraceModel, tModel: TraceModel): NonNullable<Trace
     const deletes: number[] = [];
     const inserts: number[] = [];
 
-    let matchIdx = 0;
     for (const op of ops) {
-      if (op.type === 'match' && op.bIndex !== undefined && op.tIndex !== undefined) {
-        matchIdx++;
-        if (bList[op.bIndex].status !== tList[op.tIndex].status) {
-          statusMismatches.push({
-            method,
-            url: tList[op.tIndex].url,
-            baselineStatus: bList[op.bIndex].status,
-            targetStatus: tList[op.tIndex].status,
-            occurrence: matchIdx,
-          });
-        }
-      } else if (op.type === 'delete' && op.bIndex !== undefined) {
+      if (op.type === 'delete' && op.bIndex !== undefined)
         deletes.push(op.bIndex);
-      } else if (op.type === 'insert' && op.tIndex !== undefined) {
+      else if (op.type === 'insert' && op.tIndex !== undefined)
         inserts.push(op.tIndex);
-      }
     }
 
     const pairedCount = Math.min(deletes.length, inserts.length);
@@ -519,7 +514,7 @@ function _diffNetwork(bModel: TraceModel, tModel: TraceModel): NonNullable<Trace
         url: tList[tIdx].url,
         baselineStatus: bList[bIdx].status,
         targetStatus: tList[tIdx].status,
-        occurrence: k + 1,
+        occurrence: bIdx + 1,
       });
     }
 

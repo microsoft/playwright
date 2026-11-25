@@ -132,7 +132,12 @@ export async function loadTraceFromFile(traceFile: string): Promise<LoadedTrace>
   }
 
   const loader = new TraceLoader();
-  await loader.load(backend, singleFile);
+  try {
+    await loader.load(backend, singleFile);
+  } finally {
+    if (backend instanceof ZipTraceLoaderBackend)
+      backend.close();
+  }
   const model = new TraceModel(filePath, loader.contextEntries);
   return new LoadedTrace(model, loader, buildOrdinalMap(model));
 }
