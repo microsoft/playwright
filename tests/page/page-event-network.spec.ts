@@ -98,15 +98,22 @@ it('NE-147 should preserve intercepted navigation events during cookie lookup', 
   it.skip(browserName !== 'webkit', 'WebKit looks up intercepted request cookies');
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(() => document.cookie = 'myCookie=myValue; path=/');
-  await page.route('**/never-match', route => route.continue());
   const context: { doGetCookies(urls: string[]): Promise<Cookie[]> } = toImpl(page).browserContext;
   const doGetCookies = context.doGetCookies.bind(context);
+  const cookiesRequested = new ManualPromise<void>();
   const releaseCookies = new ManualPromise<void>();
   context.doGetCookies = async urls => {
     const cookies = await doGetCookies(urls);
+    cookiesRequested.resolve();
     await releaseCookies;
     return cookies;
   };
+  let headersPromise: Promise<string | null> | undefined;
+  await page.route('**/*', async route => {
+    headersPromise = route.request().headerValue('cookie');
+    await cookiesRequested;
+    await route.continue();
+  });
   const events = [];
   page.on('request', () => events.push('request'));
   page.on('response', () => events.push('response'));
@@ -117,6 +124,7 @@ it('NE-147 should preserve intercepted navigation events during cookie lookup', 
   ]);
   expect(events).toEqual(['request', 'response', 'requestfinished']);
   releaseCookies.resolve();
+  expect(await headersPromise).toBe('myCookie=myValue');
   expect(await response.request().headerValue('cookie')).toBe('myCookie=myValue');
 });
 
