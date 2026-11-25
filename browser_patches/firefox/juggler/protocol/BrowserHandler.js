@@ -131,8 +131,8 @@ export class BrowserHandler {
     await this._targetRegistry.cancelDownload({uuid});
   }
 
-  async ['Browser.newPage']({browserContextId}) {
-    const targetId = await this._targetRegistry.newPage({browserContextId});
+  async ['Browser.newPage']({browserContextId, background}) {
+    const targetId = await this._targetRegistry.newPage({browserContextId, background});
     return {targetId};
   }
 

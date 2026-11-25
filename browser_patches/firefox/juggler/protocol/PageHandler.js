@@ -462,6 +462,7 @@ export class PageHandler {
           type: 'dragover',
           x: this._lastMousePosition.x,
           y: this._lastMousePosition.y,
+          identifier: this._pageTarget._mousePointerId,
           modifiers: 0
         });
         await this._contentPage.send('dispatchDragEvent', {type: 'dragend'});
@@ -566,7 +567,7 @@ export class PageHandler {
         this._lastMousePosition = { x, y };
         if (this._isDragging) {
           const watcher = new EventWatcher(this._pageEventSink, ['dragover'], this._pendingEventWatchers);
-          await this._contentPage.send('dispatchDragEvent', {type:'dragover', x, y, modifiers});
+          await this._contentPage.send('dispatchDragEvent', {type:'dragover', x, y, modifiers, identifier: this._pageTarget._mousePointerId});
           await watcher.ensureEventsAndDispose(['dragover']);
           return;
         }
@@ -590,8 +591,8 @@ export class PageHandler {
       if (type === 'mouseup') {
         if (this._isDragging) {
           const watcher = new EventWatcher(this._pageEventSink, ['dragover'], this._pendingEventWatchers);
-          await this._contentPage.send('dispatchDragEvent', {type: 'dragover', x, y, modifiers});
-          await this._contentPage.send('dispatchDragEvent', {type: 'drop', x, y, modifiers});
+          await this._contentPage.send('dispatchDragEvent', {type: 'dragover', x, y, modifiers, identifier: this._pageTarget._mousePointerId});
+          await this._contentPage.send('dispatchDragEvent', {type: 'drop', x, y, modifiers, identifier: this._pageTarget._mousePointerId});
           await this._contentPage.send('dispatchDragEvent', {type: 'dragend', x, y, modifiers});
           // NOTE:
           // - 'drop' event might not be dispatched at all, depending on dropAction.

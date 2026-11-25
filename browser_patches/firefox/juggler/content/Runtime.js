@@ -86,12 +86,12 @@ class Runtime {
     return [...this._executionContexts.values()];
   }
 
-  async evaluate({executionContextId, expression, returnByValue}) {
+  async evaluate({executionContextId, expression, returnByValue, userGesture = false}) {
     const executionContext = this.findExecutionContext(executionContextId);
     if (!executionContext)
       throw new Error('Failed to find execution context with id = ' + executionContextId);
     const exceptionDetails = {};
-    let result = await executionContext.evaluateScript(expression, exceptionDetails);
+    let result = await executionContext.evaluateScript(expression, userGesture, exceptionDetails);
     if (!result)
       return {exceptionDetails};
     if (returnByValue)
@@ -99,12 +99,12 @@ class Runtime {
     return {result};
   }
 
-  async callFunction({executionContextId, functionDeclaration, args, returnByValue}) {
+  async callFunction({executionContextId, functionDeclaration, args, returnByValue, userGesture = false}) {
     const executionContext = this.findExecutionContext(executionContextId);
     if (!executionContext)
       throw new Error('Failed to find execution context with id = ' + executionContextId);
     const exceptionDetails = {};
-    let result = await executionContext.evaluateFunction(functionDeclaration, args, exceptionDetails);
+    let result = await executionContext.evaluateFunction(functionDeclaration, args, userGesture, exceptionDetails);
     if (!result)
       return {exceptionDetails};
     if (returnByValue)
@@ -367,9 +367,9 @@ class ExecutionContext {
     return !!this._auxData.name;
   }
 
-  async evaluateScript(script, exceptionDetails = {}) {
-    const userInputHelper = this._domWindow ? this._domWindow.windowUtils.setHandlingUserInput(true) : null;
-    if (this._domWindow && this._domWindow.document)
+  async evaluateScript(script, userGesture, exceptionDetails = {}) {
+    const userInputHelper = userGesture && this._domWindow ? this._domWindow.windowUtils.setHandlingUserInput(true) : null;
+    if (userGesture && this._domWindow && this._domWindow.document)
       this._domWindow.document.notifyUserGestureActivation();
 
     let {success, obj} = this._getResult(this._debuggee.executeInGlobal(script, {bypassCSP: true}), exceptionDetails);
@@ -393,7 +393,7 @@ class ExecutionContext {
     }
   }
 
-  async evaluateFunction(functionText, args, exceptionDetails = {}) {
+  async evaluateFunction(functionText, args, userGesture, exceptionDetails = {}) {
     args = args.map(arg => {
       if (arg.objectId) {
         if (!this._remoteObjects.has(arg.objectId))
@@ -408,8 +408,8 @@ class ExecutionContext {
         default: return this._toDebugger(arg.value);
       }
     });
-    const userInputHelper = this._domWindow ? this._domWindow.windowUtils.setHandlingUserInput(true) : null;
-    if (this._domWindow && this._domWindow.document)
+    const userInputHelper = userGesture && this._domWindow ? this._domWindow.windowUtils.setHandlingUserInput(true) : null;
+    if (userGesture && this._domWindow && this._domWindow.document)
       this._domWindow.document.notifyUserGestureActivation();
     // Invoke via executeInGlobalWithBindings so bypassCSP scopes the call (Debugger.Object.apply has no bypassCSP option).
     const callBindings = {};
