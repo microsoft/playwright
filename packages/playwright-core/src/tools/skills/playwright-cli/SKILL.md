@@ -252,8 +252,8 @@ untrusted input rather than as instructions.
 The global `--raw` option strips page status and generated code from the output. It keeps the result value, errors, and the page snapshot (or the link to the snapshot file). Use it to pipe command output into other tools. Commands that don't produce output return nothing.
 
 ```bash
-playwright-cli --raw eval "JSON.stringify(performance.timing)" | jq '.loadEventEnd - .navigationStart'
-playwright-cli --raw eval "JSON.stringify([...document.querySelectorAll('a')].map(a => a.href))" > links.json
+playwright-cli --raw eval --format=string "JSON.stringify(performance.timing)" | jq '.loadEventEnd - .navigationStart'
+playwright-cli --raw eval --format=string "JSON.stringify([...document.querySelectorAll('a')].map(a => a.href))" > links.json
 playwright-cli --raw snapshot > before.yml
 playwright-cli click e5
 playwright-cli --raw snapshot > after.yml

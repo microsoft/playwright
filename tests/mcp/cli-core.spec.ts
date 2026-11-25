@@ -398,6 +398,12 @@ test('eval --raw', async ({ cli, server }) => {
   expect(output).toBe('"Title"');
 });
 
+test('eval --raw --format=string', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44295' } }, async ({ cli, server }) => {
+  await cli('open', server.HELLO_WORLD);
+  const { output } = await cli('eval', '--raw', '--format=string', '() => document.title');
+  expect(output).toBe('Title');
+});
+
 test('eval --raw with error', async ({ cli, server }) => {
   await cli('open', server.HELLO_WORLD);
   const { output } = await cli('eval', '--raw', '() => { throw new Error("my error") }');
