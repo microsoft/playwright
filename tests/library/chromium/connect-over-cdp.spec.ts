@@ -561,7 +561,29 @@ test('CD-018 should connect via https', async ({ browserType, httpsServer, mode 
   }
 });
 
-test('CD-019 should return valid browser from context.browser()', {
+test('CD-019 should return valid browser from context.browser()', async ({ browserType }, testInfo) => {
+  const port = 9339 + testInfo.workerIndex;
+  const browserServer = await browserType.launch({
+    args: ['--remote-debugging-port=' + port]
+  });
+  try {
+    const cdpBrowser = await browserType.connectOverCDP({
+      endpointURL: `http://127.0.0.1:${port}/`,
+    });
+    const contexts = cdpBrowser.contexts();
+    expect(contexts.length).toBe(1);
+    expect(contexts[0].browser()).toBe(cdpBrowser);
+
+    const context2 = await cdpBrowser.newContext();
+    expect(context2.browser()).toBe(cdpBrowser);
+
+    await cdpBrowser.close();
+  } finally {
+    await browserServer.close();
+  }
+});
+
+test('CD-055 should work with registered selector engines', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44381' },
 }, async ({ playwright, browserType }, testInfo) => {
   const port = 9339 + testInfo.workerIndex;
@@ -573,21 +595,32 @@ test('CD-019 should return valid browser from context.browser()', {
       query: (root, selector) => root.querySelector(selector),
       queryAll: (root, selector) => Array.from(root.querySelectorAll(selector)),
     }));
-    const cdpBrowser = await browserType.connectOverCDP({
-      endpointURL: `http://127.0.0.1:${port}/`,
-    });
-    const contexts = cdpBrowser.contexts();
-    expect(contexts.length).toBe(1);
-    expect(contexts[0].browser()).toBe(cdpBrowser);
-    const page = await contexts[0].newPage();
+    const cdpBrowser = await browserType.connectOverCDP(`http://127.0.0.1:${port}/`);
+    const page = await cdpBrowser.contexts()[0].newPage();
     await page.setContent('<div>hello</div>');
     expect(await page.locator('cdpTag=div').textContent()).toBe('hello');
-
-    const context2 = await cdpBrowser.newContext();
-    expect(context2.browser()).toBe(cdpBrowser);
-
     await cdpBrowser.close();
   } finally {
+    await browserServer.close();
+  }
+});
+
+test('CD-056 should respect the test id attribute in strict mode errors', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44381' },
+}, async ({ playwright, browserType }, testInfo) => {
+  const port = 9339 + testInfo.workerIndex;
+  const browserServer = await browserType.launch({
+    args: ['--remote-debugging-port=' + port]
+  });
+  try {
+    playwright.selectors.setTestIdAttribute('data-foo');
+    const cdpBrowser = await browserType.connectOverCDP(`http://127.0.0.1:${port}/`);
+    const page = await cdpBrowser.contexts()[0].newPage();
+    await page.setContent('<button data-foo="a">x</button><button data-foo="b">x</button>');
+    await expect(page.locator('button').click()).rejects.toThrow(`aka getByTestId('a')`);
+    await cdpBrowser.close();
+  } finally {
+    playwright.selectors.setTestIdAttribute('data-testid');
     await browserServer.close();
   }
 });

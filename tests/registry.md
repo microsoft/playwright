@@ -766,6 +766,8 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `CD-052` | `library/chromium/session.spec.ts` | should work with newBrowserCDPSession |
 | `CD-053` | `library/chromium/connect-over-cdp.spec.ts` | should connect when another client inspects a terminated shared worker |
 | `CD-054` | `library/chromium/connect-over-cdp.spec.ts` | should not wait for a busy page longer than maxPageAttachTime |
+| `CD-055` | `library/chromium/connect-over-cdp.spec.ts` | should work with registered selector engines |
+| `CD-056` | `library/chromium/connect-over-cdp.spec.ts` | should respect the test id attribute in strict mode errors |
 
 ### CF — Code frame
 

@@ -24,7 +24,7 @@ import { BrowserContext, prepareBrowserContextParams } from './browserContext';
 import { ChannelOwner, apiCall } from './channelOwner';
 import { envObjectToArray } from './clientHelper';
 import { connectToBrowser } from './connect';
-import { kNoTimeout, TimeoutSettings } from './timeoutSettings';
+import { TimeoutSettings } from './timeoutSettings';
 
 import type { Playwright } from './playwright';
 import type { ConnectOptions, LaunchOptions, LaunchPersistentContextOptions, LaunchServerOptions } from './types';
@@ -182,8 +182,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
     browser._connectToBrowserType(this, {}, undefined);
     if (result.defaultContext) {
       const context = BrowserContext.from(result.defaultContext);
-      for (const selectorEngine of this._playwright.selectors._withSelectorOptions({}).selectorEngines)
-        await context._channel.registerSelectorEngine({ selectorEngine }, kNoTimeout);
+      await this._playwright.selectors._registerOnContext(context);
       await this._instrumentation.runAfterCreateBrowserContext(context);
     }
     return browser;
