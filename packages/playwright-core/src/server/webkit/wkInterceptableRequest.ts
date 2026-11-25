@@ -64,6 +64,10 @@ export class WKInterceptableRequest {
         resourceType, event.request.method, postDataBuffer, headersObjectToArray(event.request.headers), this._wallTime);
   }
 
+  session(): WKSession {
+    return this._session;
+  }
+
   adoptRequestFromNewProcess(newSession: WKSession, requestId: string) {
     this._session = newSession;
     this._requestId = requestId;
