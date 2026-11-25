@@ -26,6 +26,7 @@ import { traceSnapshot } from './traceSnapshot';
 import { traceScreenshot } from './traceScreenshot';
 import { traceAttachments } from './traceAttachments';
 import { traceAttachment } from './traceAttachments';
+import { traceSummary } from './traceSummary';
 import { installSkills } from '../utils/installSkills';
 
 import type { Command } from 'commander';
@@ -54,15 +55,17 @@ export function addTraceCommands(program: Command, logErrorAndExit: (e: Error) =
       .description('list actions in the trace')
       .option('--grep <pattern>', 'filter actions by title pattern')
       .option('--errors-only', 'only show failed actions')
-      .action(async (options: { grep?: string, errorsOnly?: boolean }) => {
+      .option('--json', 'output in JSON format')
+      .action(async (options: { grep?: string, errorsOnly?: boolean, json?: boolean }) => {
         traceActions(options).catch(logErrorAndExit);
       });
 
   traceCommand
       .command('action <action-id>')
       .description('show details of a specific action')
-      .action(async (actionId: string) => {
-        traceAction(actionId).catch(logErrorAndExit);
+      .option('--json', 'output in JSON format')
+      .action(async (actionId: string, options: { json?: boolean }) => {
+        traceAction(actionId, options).catch(logErrorAndExit);
       });
 
   traceCommand
@@ -72,15 +75,17 @@ export function addTraceCommands(program: Command, logErrorAndExit: (e: Error) =
       .option('--method <method>', 'filter by HTTP method')
       .option('--status <code>', 'filter by status code')
       .option('--failed', 'only show failed requests (status >= 400)')
-      .action(async (options: { grep?: string, method?: string, status?: string, failed?: boolean }) => {
+      .option('--json', 'output in JSON format')
+      .action(async (options: { grep?: string, method?: string, status?: string, failed?: boolean, json?: boolean }) => {
         traceRequests(options).catch(logErrorAndExit);
       });
 
   traceCommand
       .command('request <request-id>')
       .description('show details of a specific network request')
-      .action(async (requestId: string) => {
-        traceRequest(requestId).catch(logErrorAndExit);
+      .option('--json', 'output in JSON format')
+      .action(async (requestId: string, options: { json?: boolean }) => {
+        traceRequest(requestId, options).catch(logErrorAndExit);
       });
 
   traceCommand
@@ -91,15 +96,25 @@ export function addTraceCommands(program: Command, logErrorAndExit: (e: Error) =
       .option('--warnings', 'show errors and warnings')
       .option('--browser', 'only browser console messages')
       .option('--stdio', 'only stdout/stderr')
-      .action(async (options: { grep?: string, errorsOnly?: boolean, warnings?: boolean, browser?: boolean, stdio?: boolean }) => {
+      .option('--json', 'output in JSON format')
+      .action(async (options: { grep?: string, errorsOnly?: boolean, warnings?: boolean, browser?: boolean, stdio?: boolean, json?: boolean }) => {
         traceConsole(options).catch(logErrorAndExit);
       });
 
   traceCommand
       .command('errors')
       .description('show errors with stack traces')
-      .action(async () => {
-        traceErrors().catch(logErrorAndExit);
+      .option('--json', 'output in JSON format')
+      .action(async (options: { json?: boolean }) => {
+        traceErrors(options).catch(logErrorAndExit);
+      });
+
+  traceCommand
+      .command('summary [trace]')
+      .description('show execution summary of the trace')
+      .option('--json', 'output in JSON format')
+      .action(async (trace: string | undefined, options: { json?: boolean }) => {
+        traceSummary(trace, options).catch(logErrorAndExit);
       });
 
   traceCommand

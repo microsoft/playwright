@@ -18,9 +18,39 @@
 
 import { loadTrace, actionFullTitle } from './traceUtils';
 
-export async function traceErrors() {
+export type TraceErrorItem = {
+  actionOrdinal?: number;
+  actionTitle?: string;
+  message: string;
+  stack: Array<{
+    file: string;
+    line?: number;
+    column?: number;
+  }>;
+};
+
+export async function traceErrors(options: { json?: boolean } = {}) {
   const trace = await loadTrace();
   const model = trace.model;
+
+  if (options.json) {
+    const list: TraceErrorItem[] = model.errorDescriptors.map(error => {
+      const actionOrdinal = error.action ? trace.callIdToOrdinal.get(error.action.callId) : undefined;
+      const actionTitle = error.action ? actionFullTitle(error.action) : undefined;
+      return {
+        actionOrdinal,
+        actionTitle,
+        message: error.message,
+        stack: error.stack?.map(f => ({
+          file: f.file,
+          line: f.line,
+          column: f.column,
+        })) ?? [],
+      };
+    });
+    console.log(JSON.stringify(list, null, 2));
+    return;
+  }
 
   if (!model.errorDescriptors.length) {
     console.log('  No errors');

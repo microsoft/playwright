@@ -20,7 +20,52 @@ import path from 'path';
 import { msToString } from '@isomorphic/formatUtils';
 import { loadTrace, formatTimestamp } from './traceUtils';
 
-export async function traceRequests(options: { grep?: string, method?: string, status?: string, failed?: boolean }) {
+export function isFailedRequest(r: { response: { status: number; _failureText?: string } }): boolean {
+  return r.response.status >= 400 || r.response.status <= 0 || !!r.response._failureText;
+}
+
+export type TraceRequestSummary = {
+  ordinal: number;
+  method: string;
+  url: string;
+  status: number;
+  statusText: string;
+  startTime: number | null;
+  duration: number;
+  durationFormatted: string;
+  bodySize: number;
+  contentType?: string;
+  route?: string;
+  failure?: string;
+};
+
+export type TraceRequestDetails = {
+  ordinal: number;
+  method: string;
+  url: string;
+  status: number;
+  statusText: string;
+  startTime: number | null;
+  duration: number;
+  durationFormatted: string;
+  size: number;
+  contentType?: string;
+  route?: string;
+  server?: string;
+  failure?: string;
+  requestHeaders: Array<{ name: string; value: string }>;
+  requestBody?: string;
+  requestBodyFile?: string;
+  responseHeaders: Array<{ name: string; value: string }>;
+  responseBody?: string;
+  responseBodyFile?: string;
+  security?: {
+    protocol?: string;
+    subjectName?: string;
+  };
+};
+
+export async function traceRequests(options: { grep?: string, method?: string, status?: string, failed?: boolean, json?: boolean }) {
   const trace = await loadTrace();
   const model = trace.model;
 
@@ -38,7 +83,29 @@ export async function traceRequests(options: { grep?: string, method?: string, s
     indexed = indexed.filter(({ resource: r }) => r.response.status === code);
   }
   if (options.failed)
-    indexed = indexed.filter(({ resource: r }) => r.response.status >= 400 || r.response.status === -1);
+    indexed = indexed.filter(({ resource: r }) => isFailedRequest(r));
+
+  if (options.json) {
+    const list = indexed.map(({ resource: r, ordinal }) => {
+      const size = r.response._transferSize! > 0 ? r.response._transferSize! : r.response.bodySize;
+      return {
+        ordinal,
+        method: r.request.method,
+        url: r.request.url,
+        status: r.response.status,
+        statusText: r.response.statusText,
+        startTime: r._monotonicTime ?? null,
+        duration: r.time,
+        durationFormatted: msToString(r.time),
+        bodySize: size,
+        contentType: r.response.content.mimeType || undefined,
+        route: formatRouteStatus(r) || undefined,
+        failure: r.response._failureText || undefined,
+      };
+    });
+    console.log(JSON.stringify(list, null, 2));
+    return;
+  }
 
   if (!indexed.length) {
     console.log('  No network requests');
@@ -72,7 +139,7 @@ export async function traceRequests(options: { grep?: string, method?: string, s
 
 // ---- trace request ----
 
-export async function traceRequest(requestId: string) {
+export async function traceRequest(requestId: string, options: { json?: boolean } = {}) {
   const trace = await loadTrace();
   const model = trace.model;
   const ordinal = parseInt(requestId, 10);
@@ -87,6 +154,54 @@ export async function traceRequest(requestId: string) {
   }
 
   const r = resource;
+
+  if (options.json) {
+    const size = r.response._transferSize! > 0 ? r.response._transferSize! : r.response.bodySize;
+    let requestBody: string | undefined;
+    let requestBodyFile: string | undefined;
+    if (r.request.postData) {
+      if (r.request.postData._file)
+        requestBodyFile = path.relative(process.cwd(), path.join(trace.model.traceUri, r.request.postData._file));
+      if (r.request.postData.text)
+        requestBody = r.request.postData.text;
+    }
+    let responseBody: string | undefined;
+    let responseBodyFile: string | undefined;
+    if (r.response.content._file || r.response.content.text || r.response.bodySize > 0) {
+      if (r.response.content._file)
+        responseBodyFile = path.relative(process.cwd(), path.join(trace.model.traceUri, r.response.content._file));
+      if (r.response.content.text)
+        responseBody = r.response.content.text;
+    }
+    const resultJson: TraceRequestDetails = {
+      ordinal,
+      method: r.request.method,
+      url: r.request.url,
+      status: r.response.status,
+      statusText: r.response.statusText,
+      startTime: r._monotonicTime ?? null,
+      duration: r.time,
+      durationFormatted: msToString(r.time),
+      size,
+      contentType: r.response.content.mimeType || undefined,
+      route: formatRouteStatus(r) || undefined,
+      server: r.serverIPAddress ? `${r.serverIPAddress}${r._serverPort ? ':' + r._serverPort : ''}` : undefined,
+      failure: r.response._failureText || undefined,
+      requestHeaders: r.request.headers,
+      requestBody,
+      requestBodyFile,
+      responseHeaders: r.response.headers,
+      responseBody,
+      responseBodyFile,
+      security: r._securityDetails ? {
+        protocol: r._securityDetails.protocol,
+        subjectName: r._securityDetails.subjectName,
+      } : undefined,
+    };
+    console.log(JSON.stringify(resultJson, null, 2));
+    return;
+  }
+
   const status = r.response.status > 0 ? `${r.response.status} ${r.response.statusText}` : 'ERR';
   const size = r.response._transferSize! > 0 ? r.response._transferSize! : r.response.bodySize;
 
@@ -138,7 +253,7 @@ export async function traceRequest(requestId: string) {
   }
 
   // Response body
-  if (r.response.bodySize > 0) {
+  if (r.response.content._file || r.response.content.text || r.response.bodySize > 0) {
     const resource = r.response.content._file;
     if (resource) {
       console.log('\n  Response body');

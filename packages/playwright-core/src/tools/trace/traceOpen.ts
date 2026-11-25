@@ -24,18 +24,33 @@ export async function traceOpen(traceFile: string) {
   await traceInfo();
 }
 
+function formatIsoTime(timestamp?: number): string {
+  if (!timestamp || isNaN(timestamp) || timestamp <= 0)
+    return 'unknown';
+  try {
+    const d = new Date(timestamp);
+    return isNaN(d.getTime()) ? 'unknown' : d.toISOString();
+  } catch {
+    return 'unknown';
+  }
+}
+
 async function traceInfo() {
   const trace = await loadTrace();
   const model = trace.model;
+
+  const durationMs = (model.startTime < model.endTime && model.startTime !== Number.MAX_VALUE && model.endTime !== Number.MIN_VALUE)
+    ? Math.max(0, model.endTime - model.startTime)
+    : 0;
 
   const info = {
     browser: model.browserName || 'unknown',
     platform: model.platform || 'unknown',
     playwrightVersion: model.playwrightVersion || 'unknown',
     title: model.title || '',
-    duration: msToString(model.endTime - model.startTime),
-    durationMs: model.endTime - model.startTime,
-    startTime: model.wallTime ? new Date(model.wallTime).toISOString() : 'unknown',
+    duration: msToString(durationMs),
+    durationMs,
+    startTime: formatIsoTime(model.wallTime),
     viewport: model.options.viewport ? `${model.options.viewport.width}x${model.options.viewport.height}` : 'default',
     actions: model.actions.length,
     pages: model.pages.length,
