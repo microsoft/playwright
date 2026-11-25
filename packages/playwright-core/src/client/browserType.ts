@@ -180,8 +180,11 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
   private async _browserFromConnectResult(result: { browser: channels.BrowserChannel, defaultContext?: channels.BrowserContextChannel }): Promise<Browser> {
     const browser = Browser.from(result.browser);
     browser._connectToBrowserType(this, {}, undefined);
-    if (result.defaultContext)
-      await this._instrumentation.runAfterCreateBrowserContext(BrowserContext.from(result.defaultContext));
+    if (result.defaultContext) {
+      const context = BrowserContext.from(result.defaultContext);
+      await this._playwright.selectors._registerOnContext(context);
+      await this._instrumentation.runAfterCreateBrowserContext(context);
+    }
     return browser;
   }
 }

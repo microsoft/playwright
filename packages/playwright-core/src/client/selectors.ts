@@ -39,6 +39,13 @@ export class Selectors implements api.Selectors {
     this._selectorEngines.push(selectorEngine);
   }
 
+  async _registerOnContext(context: BrowserContext) {
+    for (const selectorEngine of this._selectorEngines)
+      await context._channel.registerSelectorEngine({ selectorEngine }, kNoTimeout);
+    if (this._testIdAttributeName !== undefined)
+      await context._channel.setTestIdAttributeName({ testIdAttributeName: this._testIdAttributeName }, kNoTimeout);
+  }
+
   setTestIdAttribute(attributeName: string) {
     this._testIdAttributeName = attributeName;
     setTestIdAttribute(attributeName);
