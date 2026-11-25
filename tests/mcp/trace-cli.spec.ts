@@ -314,7 +314,7 @@ test('trace diff --json outputs structured json', async ({ traceFile, targetTrac
   expect(data.firstDivergence).toBeTruthy();
   expect(data.firstDivergence.step).toBeGreaterThan(0);
   expect(data.networkDiff.statusMismatches.length).toBeGreaterThan(0);
-  expect(data.consoleDiff.targetErrors.length).toBeGreaterThan(0);
+  expect(data.consoleDiff.introduced.length).toBeGreaterThan(0);
 });
 
 test('trace diff --only filters diff output', async ({ traceFile, targetTraceFile, runTraceCli }) => {
@@ -328,12 +328,33 @@ test('trace diff --only filters diff output', async ({ traceFile, targetTraceFil
   expect(networkExitCode).toBe(0);
   expect(networkOnly).toContain('Network Diff:');
   expect(networkOnly).not.toContain('First Divergence');
+
+  const { stdout: jsonActionsOnly, exitCode: jsonActionsExitCode } = await runTraceCli(['diff', traceFile, targetTraceFile, '--json', '--only', 'actions']);
+  expect(jsonActionsExitCode).toBe(0);
+  const data = JSON.parse(jsonActionsOnly);
+  expect(data.actionsDiff).toBeTruthy();
+  expect(data.networkDiff).toBeUndefined();
+  expect(data.consoleDiff).toBeUndefined();
+});
+
+test('trace diff rejects invalid --only category', async ({ traceFile, targetTraceFile, runTraceCli }) => {
+  const { stderr, exitCode } = await runTraceCli(['diff', traceFile, targetTraceFile, '--only', 'invalid']);
+  expect(exitCode).not.toBe(0);
+  expect(stderr).toContain('Invalid --only category "invalid"');
 });
 
 test('trace diff identical traces reports no divergence', async ({ traceFile, runTraceCli }) => {
   const { stdout, exitCode } = await runTraceCli(['diff', traceFile, traceFile]);
   expect(exitCode).toBe(0);
   expect(stdout).toContain('No divergence detected in action sequence.');
+});
+
+test('trace diff --exit-code returns 1 when differences exist and 0 when identical', async ({ traceFile, targetTraceFile, runTraceCli }) => {
+  const { exitCode: diffExitCode } = await runTraceCli(['diff', traceFile, targetTraceFile, '--exit-code']);
+  expect(diffExitCode).toBe(1);
+
+  const { exitCode: sameExitCode } = await runTraceCli(['diff', traceFile, traceFile, '--exit-code']);
+  expect(sameExitCode).toBe(0);
 });
 
 test('trace diff --ignore-timings suppresses duration delta', async ({ traceFile, targetTraceFile, runTraceCli }) => {

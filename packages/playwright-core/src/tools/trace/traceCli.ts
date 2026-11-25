@@ -56,7 +56,8 @@ export function addTraceCommands(program: Command, logErrorAndExit: (e: Error) =
       .option('--json', 'output in JSON format')
       .option('--only <category>', 'filter output by category (actions, network, console)')
       .option('--ignore-timings', 'ignore timing differences in action durations')
-      .action(async (baseline: string, target: string, options: { json?: boolean, only?: 'actions' | 'network' | 'console', ignoreTimings?: boolean }) => {
+      .option('--exit-code', 'exit with code 1 if differences are found')
+      .action(async (baseline: string, target: string, options: { json?: boolean, only?: 'actions' | 'network' | 'console', ignoreTimings?: boolean, exitCode?: boolean }) => {
         traceDiff(baseline, target, options).catch(logErrorAndExit);
       });
 

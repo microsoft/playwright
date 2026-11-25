@@ -95,22 +95,43 @@ export async function loadTrace(): Promise<LoadedTrace> {
   return new LoadedTrace(model, loader, buildOrdinalMap(model));
 }
 
+const MAX_TRACE_SIZE_BYTES = 500 * 1024 * 1024; // 500 MB
+
 export async function loadTraceFromFile(traceFile: string, extractDir: string): Promise<LoadedTrace> {
   const filePath = path.resolve(traceFile);
   if (!fs.existsSync(filePath))
     throw new Error(`Trace file not found: ${filePath}`);
+
+  const stat = await fs.promises.stat(filePath);
+  if (stat.isFile()) {
+    if (stat.size === 0)
+      throw new Error(`Trace file is empty: ${filePath}`);
+    if (stat.size > MAX_TRACE_SIZE_BYTES)
+      throw new Error(`Trace file exceeds maximum supported size (500MB): ${filePath}`);
+    if (!filePath.endsWith('.zip') && !filePath.endsWith('.trace'))
+      throw new Error(`Invalid trace file: ${filePath}. Trace must be a .zip archive or .trace file.`);
+  } else if (stat.isDirectory()) {
+    const entries = await fs.promises.readdir(filePath);
+    const hasTrace = entries.some(f => f.endsWith('.trace') || f === 'trace.network');
+    if (!hasTrace)
+      throw new Error(`Directory is not a valid trace directory: ${filePath}`);
+  } else {
+    throw new Error(`Invalid trace path: ${filePath}`);
+  }
+
   await fs.promises.mkdir(extractDir, { recursive: true });
   if (filePath.endsWith('.zip'))
     await extractTrace(filePath, extractDir);
   else
     await fs.promises.writeFile(path.join(extractDir, '.link'), filePath, 'utf-8');
+
   const linkFile = path.join(extractDir, '.link');
   let targetDir: string;
   let singleFile: string | undefined;
   if (fs.existsSync(linkFile)) {
     const tracePath = await fs.promises.readFile(linkFile, 'utf-8');
-    targetDir = path.dirname(tracePath);
-    singleFile = path.basename(tracePath);
+    targetDir = stat.isDirectory() ? tracePath : path.dirname(tracePath);
+    singleFile = stat.isDirectory() ? undefined : path.basename(tracePath);
   } else {
     targetDir = extractDir;
   }
