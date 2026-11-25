@@ -24,7 +24,7 @@ import { BrowserContext, prepareBrowserContextParams } from './browserContext';
 import { ChannelOwner, apiCall } from './channelOwner';
 import { envObjectToArray } from './clientHelper';
 import { connectToBrowser } from './connect';
-import { TimeoutSettings } from './timeoutSettings';
+import { kNoTimeout, TimeoutSettings } from './timeoutSettings';
 
 import type { Playwright } from './playwright';
 import type { ConnectOptions, LaunchOptions, LaunchPersistentContextOptions, LaunchServerOptions } from './types';
@@ -180,8 +180,12 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
   private async _browserFromConnectResult(result: { browser: channels.BrowserChannel, defaultContext?: channels.BrowserContextChannel }): Promise<Browser> {
     const browser = Browser.from(result.browser);
     browser._connectToBrowserType(this, {}, undefined);
-    if (result.defaultContext)
-      await this._instrumentation.runAfterCreateBrowserContext(BrowserContext.from(result.defaultContext));
+    if (result.defaultContext) {
+      const context = BrowserContext.from(result.defaultContext);
+      for (const selectorEngine of this._playwright.selectors._withSelectorOptions({}).selectorEngines)
+        await context._channel.registerSelectorEngine({ selectorEngine }, kNoTimeout);
+      await this._instrumentation.runAfterCreateBrowserContext(context);
+    }
     return browser;
   }
 }
