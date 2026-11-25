@@ -17,6 +17,7 @@
 import { electronTest as test, expect } from './electronTest';
 import fs from 'fs';
 import path from 'path';
+import { parseTraceRaw } from '../config/utils';
 
 test.skip(({ trace }) => trace === 'on');
 
@@ -65,4 +66,63 @@ test('should respect tracesDir and name', async ({ launchElectronApp, server }, 
   expect(fs.existsSync(path.join(tracesDir, 'name1.network'))).toBe(true);
 
   await electronApp.close();
+});
+
+test('should collect test runner artifacts', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44384' },
+}, async ({ childProcess, server }, testInfo) => {
+  await fs.promises.writeFile(testInfo.outputPath('playwright.config.ts'), `
+    export default {
+      testDir: '.',
+      testMatch: '**/app.spec.ts',
+      outputDir: './results',
+      use: { trace: 'on', video: 'on', screenshot: 'only-on-failure' },
+    };
+  `);
+  await fs.promises.writeFile(testInfo.outputPath('app.spec.ts'), `
+    import { test as base, expect, _electron } from '@playwright/test';
+    const test = base.extend({
+      app: async ({}, use) => {
+        const app = await _electron.launch({ args: [${JSON.stringify(require.resolve('./electron-window-app.js'))}] });
+        await use(app);
+        await app.close();
+      },
+    });
+    test('fails', async ({ app }) => {
+      const page = await app.firstWindow();
+      await page.setContent('<button>Startup window</button>');
+      await page.getByRole('button').click();
+      await page.goto(${JSON.stringify(server.PREFIX + '/input/button.html')});
+      await page.getByRole('button').click();
+      await page.evaluate(() => console.log('electron console message'));
+      const [other] = await Promise.all([
+        app.waitForEvent('window'),
+        app.evaluate(({ BrowserWindow }) => {
+          void new BrowserWindow().loadURL('about:blank');
+        }),
+      ]);
+      await other.setContent('<button>Second window</button>');
+      await other.getByRole('button').click();
+      await other.close();
+      expect(1).toBe(2);
+    });
+  `);
+  const child = childProcess({
+    command: ['node', path.join(__dirname, '../../packages/playwright-test/cli.js'), 'test', '-c', testInfo.outputPath('playwright.config.ts'), '--workers=1'],
+  });
+  expect(await child.exitCode, child.output).toBe(1);
+  expect(child.output).toContain('1 failed');
+
+  const artifactsDir = testInfo.outputPath('results', 'app-fails');
+  const { events } = await parseTraceRaw(path.join(artifactsDir, 'trace.zip'));
+  expect(events).toContainEqual(expect.objectContaining({
+    type: 'frame-snapshot',
+    snapshot: expect.objectContaining({ frameUrl: 'about:blank' }),
+  }));
+  expect(events).toContainEqual(expect.objectContaining({ type: 'console', text: 'electron console message' }));
+  expect(events).toContainEqual(expect.objectContaining({ type: 'resource-snapshot' }));
+  expect(new Set(events.filter(e => e.type === 'frame-snapshot').map(e => e.snapshot.pageId)).size).toBe(2);
+  expect(fs.readdirSync(artifactsDir)).toEqual(expect.arrayContaining(['video.webm', 'video-1.webm', 'test-failed-1.png', 'error-context.md']));
+  expect(fs.statSync(path.join(artifactsDir, 'video.webm')).size).toBeGreaterThan(0);
+  expect(fs.statSync(path.join(artifactsDir, 'video-1.webm')).size).toBeGreaterThan(0);
 });

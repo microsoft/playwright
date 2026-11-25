@@ -35,7 +35,7 @@ import type * as childProcess from 'child_process';
 import type { BrowserWindow } from 'electron';
 import type { Playwright } from './playwright';
 
-type ElectronOptions = Omit<channels.ElectronLaunchOptions, 'env'|'extraHTTPHeaders'|'recordHar'|'colorScheme'|'acceptDownloads'|'httpCredentials'> & {
+export type ElectronOptions = Omit<channels.ElectronLaunchOptions, 'env'|'extraHTTPHeaders'|'recordHar'|'colorScheme'|'acceptDownloads'|'httpCredentials'> & {
   env?: NodeJS.ProcessEnv,
   extraHTTPHeaders?: Headers,
   recordHar?: BrowserContextOptions['recordHar'],
@@ -49,6 +49,7 @@ type ElectronAppType = typeof import('electron');
 
 export class Electron extends ChannelOwner<channels.ElectronChannel> implements api.Electron {
   _playwright!: Playwright;
+  readonly _contexts = new Set<BrowserContext>();
 
   static from(electron: channels.ElectronChannel): Electron {
     return (electron as any)._object;
@@ -60,6 +61,7 @@ export class Electron extends ChannelOwner<channels.ElectronChannel> implements 
 
   async launch(options: ElectronOptions = {}): Promise<ElectronApplication> {
     options = this._playwright.selectors._withSelectorOptions(options);
+    await this._instrumentation.runBeforeLaunchElectron(options);
     if (options.tracesDir)
       options.tracesDir = path.resolve(options.tracesDir);
     const params: channels.ElectronLaunchParams = {
@@ -69,11 +71,16 @@ export class Electron extends ChannelOwner<channels.ElectronChannel> implements 
       artifactsDir: options.artifactsDir,
     };
     const app = ElectronApplication.from((await this._channel.launch(params, new TimeoutSettings().launchTimeout(options))).electronApplication);
+    this._contexts.add(app._context);
     this._playwright.selectors._contextsForSelectors.add(app._context);
-    app.once(Events.ElectronApplication.Close, () => this._playwright.selectors._contextsForSelectors.delete(app._context));
+    app._context.once(Events.BrowserContext.Close, () => {
+      this._contexts.delete(app._context);
+      this._playwright.selectors._contextsForSelectors.delete(app._context);
+    });
     await app._context._initializeHarFromOptions(options.recordHar);
     app._context.tracing._tracesDir = options.tracesDir;
     app._context.request.tracing._tracesDir = options.tracesDir;
+    await this._instrumentation.runAfterCreateBrowserContext(app._context);
     return app;
   }
 }

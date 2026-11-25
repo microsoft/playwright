@@ -75,7 +75,7 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
   }
 
   _allContexts() {
-    return this._browserTypes().flatMap(type => [...type._contexts]);
+    return [...this._browserTypes().flatMap(type => [...type._contexts]), ...this._electron._contexts];
   }
 
   _allPages() {

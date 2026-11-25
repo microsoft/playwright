@@ -415,7 +415,7 @@ class FrameSession {
   private _swappedIn = false;
   _metricsOverride: Protocol.Emulation.setDeviceMetricsOverrideParameters | undefined;
   private _workerSessions = new Map<string, CRSession>();
-  private _initScriptIds = new Map<InitScript, string>();
+  private _initScriptIds = new Map<InitScript, Promise<string>>();
   private _bufferedAttachedToTargetEvents: Protocol.Target.attachedToTargetPayload[] | undefined;
 
   constructor(crPage: CRPage, client: CRSession, targetId: string, parentSession: FrameSession | null) {
@@ -1122,15 +1122,19 @@ class FrameSession {
   }
 
   async _evaluateOnNewDocument(initScript: InitScript, world: types.World, runImmediately?: boolean): Promise<void> {
-    const worldName = world === 'utility' ? this._crPage.utilityWorldName : undefined;
-    const { identifier } = await this._client.send('Page.addScriptToEvaluateOnNewDocument', { source: initScript.source, worldName, runImmediately });
-    this._initScriptIds.set(initScript, identifier);
+    let identifier = this._initScriptIds.get(initScript);
+    if (!identifier) {
+      const worldName = world === 'utility' ? this._crPage.utilityWorldName : undefined;
+      identifier = this._client.send('Page.addScriptToEvaluateOnNewDocument', { source: initScript.source, worldName, runImmediately }).then(result => result.identifier);
+      this._initScriptIds.set(initScript, identifier);
+    }
+    await identifier;
   }
 
   async _removeEvaluatesOnNewDocument(initScripts: InitScript[]): Promise<void> {
     const ids: string[] = [];
     for (const script of initScripts) {
-      const id = this._initScriptIds.get(script);
+      const id = await this._initScriptIds.get(script);
       if (id)
         ids.push(id);
       this._initScriptIds.delete(script);

@@ -38,7 +38,7 @@ import type { BrowserContext as BrowserContextImpl } from '../../playwright-core
 import type { APIRequestContext as APIRequestContextImpl, NewContextOptions as APIRequestContextOptions } from '../../playwright-core/src/client/fetch';
 import type { ChannelOwner } from '../../playwright-core/src/client/channelOwner';
 import type { Page as PageImpl } from '../../playwright-core/src/client/page';
-import type { BrowserContext, BrowserContextOptions, LaunchOptions, Page, Tracing } from 'playwright-core';
+import type { BrowserContext, BrowserContextOptions, LaunchOptions, Page, Tracing, Video } from 'playwright-core';
 
 export { expect } from './matchers/expect';
 export const _baseTest: TestType<{}, {}> = testType.rootTestType.test;
@@ -72,22 +72,23 @@ type WorkerFixtures = PlaywrightWorkerArgs & PlaywrightWorkerOptions & {
 
 // Note: utility fixtures and _utilityTest are reused in electron package. Be mindful when changing them.
 type UtilityTestFixtures = Pick<TestFixtures, 'testIdAttribute' | 'request' | '_combinedContextOptions' | '_setupArtifacts'>;
-type UtilityWorkerFixtures = Pick<WorkerFixtures, 'playwright' | 'screenshot' | 'trace'>;
+type UtilityWorkerFixtures = Pick<WorkerFixtures, 'playwright' | 'screenshot' | 'trace' | 'video'>;
 const utilityFixtures: Fixtures<UtilityTestFixtures, UtilityWorkerFixtures> = {
   playwright: [async ({}, use) => {
     await use(require('playwright-core'));
   }, { scope: 'worker', box: true }],
   screenshot: ['off', { scope: 'worker', option: true, box: true }],
   trace: ['off', { scope: 'worker', option: true, box: true }],
+  video: ['off', { scope: 'worker', option: true, box: true }],
   testIdAttribute: ['data-testid', { option: true, box: true }],
   _combinedContextOptions: [{}, { box: true }],
-  _setupArtifacts: [async ({ playwright, screenshot, _combinedContextOptions }, use, testInfo) => {
+  _setupArtifacts: [async ({ playwright, screenshot, video, _combinedContextOptions }, use, testInfo) => {
     // This fixture has a separate zero-timeout slot to ensure that artifact collection
     // happens even after some fixtures or hooks time out.
     // Now that default test timeout is known, we can replace zero with an actual value.
     testInfo.setTimeout(testInfo.project.timeout);
 
-    const artifactsRecorder = new ArtifactsRecorder(playwright, tracing().artifactsDir(), screenshot);
+    const artifactsRecorder = new ArtifactsRecorder(playwright, tracing().artifactsDir(), screenshot, video);
     await artifactsRecorder.willStartTest(testInfo as TestInfoImpl);
 
     const tracingGroupSteps: TestStepInternal[] = [];
@@ -140,6 +141,10 @@ const utilityFixtures: Fixtures<UtilityTestFixtures, UtilityWorkerFixtures> = {
           if (!(key in options))
             options[key as keyof BrowserContextOptions] = value;
         }
+      },
+      runBeforeLaunchElectron: async options => {
+        options.artifactsDir ??= tracing().artifactsDir();
+        options.recordVideo ??= videoOptions(video, testInfo).recordVideo;
       },
       runBeforeCreateRequestContext: async (options: APIRequestContextOptions) => {
         for (const [key, value] of Object.entries(_combinedContextOptions)) {
@@ -215,7 +220,6 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
   connectOptions: [async ({ _optionConnectOptions }, use) => {
     await use(connectOptionsFromEnv() || _optionConnectOptions);
   }, { scope: 'worker', option: true, box: true }],
-  video: ['off', { scope: 'worker', option: true, box: true }],
 
   _browserOptions: [async ({ playwright, headless, channel, launchOptions }, use) => {
     const options: LaunchOptions = {
@@ -411,16 +415,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
           `If you would like to configure your page before each test, do that in beforeEach hook instead.`,
         ].join('\n'));
       }
-      const show = typeof video === 'string' ? undefined : video.show;
-      const videoOptions: BrowserContextOptions = captureVideo ? {
-        recordVideo: {
-          dir: tracing().artifactsDir(),
-          size: typeof video === 'string' ? undefined : video.size,
-          fps: typeof video === 'string' ? undefined : video.fps,
-          showActions: show?.actions,
-        }
-      } : {};
-      const context = await browser.newContext({ ...videoOptions, ...options }) as BrowserContextImpl;
+      const context = await browser.newContext({ ...(captureVideo ? videoOptions(video, testInfo) : {}), ...options }) as BrowserContextImpl;
 
       let closed = false;
       const close = async () => {
@@ -434,14 +429,9 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
           const { pagesWithVideo: pagesForVideo } = contexts.get(context)!;
           const videos = pagesForVideo.map(p => p.video()).filter(video => !!video);
           await Promise.all(videos.map(async v => {
-            try {
-              const savedPath = testInfo.outputPath(`video${counter ? '-' + counter : ''}.webm`);
-              ++counter;
-              await v.saveAs(savedPath);
-              testInfo.attachments.push({ name: 'video', path: savedPath, contentType: 'video/webm' });
-            } catch (e) {
-              // Silent catch empty videos.
-            }
+            const savedPath = testInfo.outputPath(`video${counter ? '-' + counter : ''}.webm`);
+            ++counter;
+            await saveVideo(testInfo, v, savedPath);
           }));
         }
       };
@@ -565,6 +555,29 @@ function shouldPreserveVideo(videoMode: VideoMode, testInfo: TestInfo) {
       return testFailed || testInfo.retry > 0;
     default:
       return false;
+  }
+}
+
+function videoOptions(video: PlaywrightWorkerOptions['video'], testInfo: TestInfo): BrowserContextOptions {
+  if (!shouldCaptureVideo(normalizeVideoMode(video), testInfo))
+    return {};
+  const options = typeof video === 'string' ? undefined : video;
+  return {
+    recordVideo: {
+      dir: tracing().artifactsDir(),
+      size: options?.size,
+      fps: options?.fps,
+      showActions: options?.show?.actions,
+    },
+  };
+}
+
+async function saveVideo(testInfo: TestInfo, video: Video, savedPath: string) {
+  try {
+    await video.saveAs(savedPath);
+    testInfo.attachments.push({ name: 'video', path: savedPath, contentType: 'video/webm' });
+  } catch (e) {
+    // Silent catch empty videos.
   }
 }
 
@@ -727,8 +740,9 @@ class ArtifactsRecorder {
 
   private _screenshotRecorder: SnapshotRecorder;
   private _pageSnapshot: string | undefined;
+  private _electronVideos = new Map<BrowserContextImpl, { pages: PageImpl[], onPage: (page: PageImpl) => void }>();
 
-  constructor(playwright: PlaywrightImpl, artifactsDir: string, screenshot: ScreenshotOption) {
+  constructor(playwright: PlaywrightImpl, artifactsDir: string, screenshot: ScreenshotOption, private _video: PlaywrightWorkerOptions['video']) {
     this._playwright = playwright;
     this._artifactsDir = artifactsDir;
     const screenshotOptions = typeof screenshot === 'string' ? undefined : screenshot;
@@ -756,6 +770,14 @@ class ArtifactsRecorder {
   async didCreateBrowserContext(context: BrowserContextImpl) {
     await this._startTraceChunkOnContextCreation(context, context.tracing);
     await this._startTraceChunkOnContextCreation(context.request, context.request.tracing);
+    if (this._playwright._electron._contexts.has(context) && shouldCaptureVideo(normalizeVideoMode(this._video), this._testInfo)) {
+      const pages = context.pages();
+      const onPage = (page: PageImpl) => pages.push(page);
+      this._electronVideos.set(context, { pages, onPage });
+      context.on('page', onPage);
+      const show = typeof this._video === 'string' ? undefined : this._video.show;
+      await installScreencastTitleUpdater(this._testInfo, context, show?.test);
+    }
   }
 
   async willCloseBrowserContext(context: BrowserContextImpl) {
@@ -814,6 +836,20 @@ class ArtifactsRecorder {
     })));
 
     await this._screenshotRecorder.persistTemporary();
+
+    for (const [context, { onPage }] of this._electronVideos)
+      context.off('page', onPage);
+    if (shouldPreserveVideo(normalizeVideoMode(this._video), this._testInfo)) {
+      let counter = this._testInfo.attachments.filter(a => a.name === 'video').length;
+      await Promise.all([...this._electronVideos].filter(([context]) => context.isClosed()).flatMap(([, { pages }]) => pages).map(async page => {
+        const video = page.video();
+        if (!video)
+          return;
+        const savedPath = this._testInfo.outputPath(`video${counter ? '-' + counter : ''}.webm`);
+        ++counter;
+        await saveVideo(this._testInfo, video, savedPath);
+      }));
+    }
 
     const context = leftoverContexts[0];
     if (context)

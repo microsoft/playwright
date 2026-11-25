@@ -19,6 +19,7 @@ import type { APIRequestContext, NewContextOptions } from './fetch';
 import type { StackFrame } from './channels';
 import type { Page } from './page';
 import type { BrowserContextOptions } from './types';
+import type { ElectronOptions } from './electron';
 
 // Instrumentation can mutate the data, for example assign the callId.
 export interface ApiCallData {
@@ -39,6 +40,7 @@ export interface ClientInstrumentation {
   onPage(page: Page): void;
 
   runBeforeCreateBrowserContext(options: BrowserContextOptions): Promise<void>;
+  runBeforeLaunchElectron(options: ElectronOptions): Promise<void>;
   runBeforeCreateRequestContext(options: NewContextOptions): Promise<void>;
   runAfterCreateBrowserContext(context: BrowserContext): Promise<void>;
   runAfterCreateRequestContext(context: APIRequestContext): Promise<void>;
@@ -52,6 +54,7 @@ export interface ClientInstrumentationListener {
   onWillPause?(options: { keepTestTimeout: boolean }): void;
   onPage?(page: Page): void;
   runBeforeCreateBrowserContext?(options: BrowserContextOptions): Promise<void>;
+  runBeforeLaunchElectron?(options: ElectronOptions): Promise<void>;
   runBeforeCreateRequestContext?(options: NewContextOptions): Promise<void>;
   runAfterCreateBrowserContext?(context: BrowserContext): Promise<void>;
   runAfterCreateRequestContext?(context: APIRequestContext): Promise<void>;

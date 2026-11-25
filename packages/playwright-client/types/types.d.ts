@@ -24519,6 +24519,12 @@ export interface WebStorage {
  * **Supported Electron versions are:**
  * - v21+
  *
+ * When using Playwright Test, Electron applications launched in test-scoped fixtures honor the `use.trace`,
+ * `use.video` and `use.screenshot` options. Close the application during fixture teardown to save and attach its
+ * window videos. Explicit
+ * [`recordVideo`](https://playwright.dev/docs/api/class-electron#electron-launch-option-record-video) options take
+ * precedence over the configured video options.
+ *
  * **Known issues:**
  *
  * If you are not able to launch Electron and it will end up in timeouts during launch, try the following:

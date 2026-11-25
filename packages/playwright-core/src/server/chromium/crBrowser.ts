@@ -552,13 +552,13 @@ export class CRBrowserContext extends BrowserContext<CREventsMap> {
   }
 
   async doAddInitScript(initScript: InitScript) {
-    for (const page of this.pages())
-      await (page.delegate as CRPage).addInitScript(initScript);
+    for (const page of this._crPages())
+      await page.addInitScript(initScript);
   }
 
   async doRemoveInitScripts(initScripts: InitScript[]) {
-    for (const page of this.pages())
-      await (page.delegate as CRPage).removeInitScripts(initScripts);
+    for (const page of this._crPages())
+      await page.removeInitScripts(initScripts);
   }
 
   async doUpdateRequestInterception(): Promise<void> {
