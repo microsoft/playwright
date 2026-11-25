@@ -40,6 +40,21 @@ test('attach --extension', async ({ user, cli, browserWithExtension, server }) =
   }
 });
 
+test('attach --extension without a browser name', async ({ user, cli, browserWithExtension, server }) => {
+  const connectPage = user.waitForConnectPage();
+  const attached = cli(['attach', '--extension'], { env: { PWTEST_EXTENSION_USER_DATA_DIR: browserWithExtension.userDataDir } });
+  await user.allow(await connectPage);
+
+  const { output } = await attached;
+  expect(output).toContain(`### Page`);
+  expect(output).toContain(`- Page URL: about:blank`);
+
+  const { output: after } = await cli(['goto', server.HELLO_WORLD]);
+  expect(after).toContain(`### Page`);
+  expect(after).toContain(`- Page URL: ${server.HELLO_WORLD}`);
+  expect(after).toContain(`- Page Title: Title`);
+});
+
 test('attach --extension gives the name and the color of the session to the tab group', async ({ user, cli, browserWithExtension }) => {
   const connectPage = user.waitForConnectPage();
   const attached = cli(['attach', '--extension=chromium', '--session=my session', '--session-color=red'], {

@@ -184,7 +184,9 @@ export async function program(options?: { args?: MinimistArgs, embedderVersion?:
       }
 
       const cdpChannel = typeof args.cdp === 'string' ? attachTargetChannel(args.cdp) : undefined;
-      const targetName = attachTarget ?? cdpChannel ?? extensionChannel ?? args.endpoint as string ?? args.cdp as string;
+      // A bare --extension is the boolean true. A channel is --extension=chrome.
+      const extensionTarget = args.extension ? (extensionChannel || 'extension') : undefined;
+      const targetName = attachTarget ?? cdpChannel ?? extensionTarget ?? args.endpoint as string ?? args.cdp as string;
       if (!targetName)
         output.errorAttachNoTarget();
       const attachSessionName = explicitSessionName(args.session as string) ?? attachTarget ?? cdpChannel ?? extensionChannel ?? sessionName;
