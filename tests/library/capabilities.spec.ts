@@ -242,7 +242,7 @@ it('CA-019 window.GestureEvent in WebKit', async ({ page, server, browserName })
   expect(type).toBe(browserName === 'webkit' ? 'function' : 'undefined');
 });
 
-it('CA-020 requestFullscreen', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44288' } }, async ({ page, server, browserName, headless }) => {
+it('CA-020 requestFullscreen', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44288' } }, async ({ page, server, browserName, headless, platform }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22832' });
   it.info().annotations.push({ type: 'issue', description: 'https://issues.chromium.org/issues/589825018' });
   it.fixme(browserName === 'firefox' && !headless, 'Error: Request for fullscreen was denied because requesting element is not in the currently focused tab');
@@ -260,6 +260,7 @@ it('CA-020 requestFullscreen', { annotation: { type: 'issue', description: 'http
   });
   expect(await page.evaluate(() => !!document.fullscreenElement)).toBeFalsy();
 
+  it.fixme(browserName === 'webkit' && platform !== 'linux', 'requestFullscreen() in a popup rejects with InvalidStateError on Windows and hangs the context teardown on macOS');
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
     page.evaluate(url => window.open(url, 'popup', 'popup'), server.EMPTY_PAGE),
