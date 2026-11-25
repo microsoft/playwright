@@ -17,6 +17,8 @@
 import fs from 'fs';
 import path from 'path';
 
+import { monotonicTime } from '@isomorphic/time';
+import { raceAgainstDeadline } from '@isomorphic/timeoutRunner';
 import { removeFolders } from '@utils/fileUtils';
 
 import { ProcessHost } from './processHost';
@@ -76,7 +78,10 @@ export class WorkerHost extends ProcessHost {
   }
 
   override async onExit() {
-    await removeFolders([this._params.artifactsDir]);
+    // Removal can take very long on a slow disk. After the timeout, stop waiting for it.
+    // The removal continues until the runner exits, and the remaining files stay on disk.
+    const timeout = +(process.env.PWTEST_CHILD_PROCESS_TIMEOUT || 5 * 60 * 1000);
+    await raceAgainstDeadline(() => removeFolders([this._params.artifactsDir]), monotonicTime() + timeout);
   }
 
   override async stop(didFail?: boolean) {

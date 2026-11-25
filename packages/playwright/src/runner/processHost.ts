@@ -19,6 +19,7 @@ import { EventEmitter } from 'events';
 
 import debug from 'debug';
 import { assert } from '@isomorphic/assert';
+import { ManualPromise } from '@isomorphic/manualPromise';
 import { monotonicTime, timeOrigin } from '@isomorphic/time';
 import { raceAgainstDeadline } from '@isomorphic/timeoutRunner';
 import { killProcessTree } from '@utils/processLauncher';
@@ -35,7 +36,9 @@ export class ProcessHost extends EventEmitter {
   private process: child_process.ChildProcess | undefined;
   private _didSendStop = false;
   private _processDidExit = false;
+  private _processExitPromise = new ManualPromise<void>();
   private _didExitAndRanOnExit = false;
+  private _stopPromise: Promise<void> | undefined;
   private _entryScript: string;
   private _lastMessageId = 0;
   private _callbacks = new Map<number, { resolve: (result: any) => void, reject: (error: Error) => void }>();
@@ -53,6 +56,11 @@ export class ProcessHost extends EventEmitter {
 
   async startRunner(runnerParams: any, options: { onStdOut?: (chunk: Buffer | string) => void, onStdErr?: (chunk: Buffer | string) => void } = {}): Promise<ProcessExitData | undefined> {
     assert(!this.process, 'Internal error: starting the same process twice');
+    if (this._didSendStop) {
+      // stop() was called before the process started, so do not start it at all.
+      await this._onProcessExit(null, null);
+      return { unexpectedly: false, code: null, signal: null };
+    }
     this.process = child_process.fork(this._entryScript, {
       // Note: we pass detached:false, so that workers are in the same process group.
       // This way Ctrl+C or a kill command can shutdown all workers in case they misbehave.
@@ -69,12 +77,7 @@ export class ProcessHost extends EventEmitter {
         'ipc',
       ],
     });
-    this.process.on('exit', async (code, signal) => {
-      this._processDidExit = true;
-      await this.onExit();
-      this._didExitAndRanOnExit = true;
-      this.emit('exit', { unexpectedly: !this._didSendStop, code, signal } as ProcessExitData);
-    });
+    this.process.on('exit', (code, signal) => this._onProcessExit(code, signal));
     this.process.on('error', e => {});  // do not yell at a send to dead process.
     this.process.on('message', (message: any) => {
       if (debug.enabled('pw:test:protocol'))
@@ -139,6 +142,14 @@ export class ProcessHost extends EventEmitter {
     });
   }
 
+  private async _onProcessExit(code: number | null, signal: NodeJS.Signals | null) {
+    this._processDidExit = true;
+    this._processExitPromise.resolve();
+    await this.onExit();
+    this._didExitAndRanOnExit = true;
+    this.emit('exit', { unexpectedly: !this._didSendStop, code, signal } as ProcessExitData);
+  }
+
   sendMessage(message: { method: string, params?: any }) {
     const id = ++this._lastMessageId;
     this.send({
@@ -162,13 +173,27 @@ export class ProcessHost extends EventEmitter {
   }
 
   async stop() {
-    if (!this._processDidExit && !this._didSendStop) {
-      this.send({ method: '__stop__' });
-      this._didSendStop = true;
+    this._stopPromise ??= this._stop();
+    await this._stopPromise;
+  }
+
+  private async _stop() {
+    if (!this._processDidExit) {
+      if (!this._didSendStop) {
+        this.send({ method: '__stop__' });
+        this._didSendStop = true;
+      }
+      // Before the process starts, there is nothing to wait for or to kill.
+      // startRunner() will see the stop and will not start the process.
+      if (this.process)
+        await this._waitForProcessExitOrForceKill();
     }
-    if (this._didExitAndRanOnExit)
-      return;
-    const exitPromise = new Promise<void>(f => this.once('exit', () => f()));
+    // The process is gone, but onExit() can still be running.
+    if (!this._didExitAndRanOnExit)
+      await new Promise<void>(f => this.once('exit', () => f()));
+  }
+
+  private async _waitForProcessExitOrForceKill() {
     const timeout = +(process.env.PWTEST_CHILD_PROCESS_TIMEOUT || 5 * 60 * 1000);
     // Child sends heartbeats while gracefully closing, e.g. running a slow fixture
     // teardown with "timeout: 0". Only force-kill when heartbeats stop coming.
@@ -177,14 +202,14 @@ export class ProcessHost extends EventEmitter {
     this.on('__heartbeat__', onHeartbeat);
     try {
       while (true) {
-        const result = await raceAgainstDeadline(() => exitPromise, lastHeartbeat + timeout);
+        const result = await raceAgainstDeadline(() => this._processExitPromise, lastHeartbeat + timeout);
         if (!result.timedOut)
           return;
         if (monotonicTime() < lastHeartbeat + timeout)
           continue;
         this.emit('processError', { message: `Error: ${this._processName} process did not exit within ${timeout}ms after stop, force-killed it` });
         this._forceKill();
-        await exitPromise;
+        await this._processExitPromise;
         return;
       }
     } finally {
