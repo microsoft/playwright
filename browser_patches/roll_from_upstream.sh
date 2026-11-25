@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
-# A script to roll browser patches from internal repository.
+# A script to roll browser patches from the repositories where the browsers are built.
 
 set -e
 set +x
 
 if [[ "$#" -lt 1 || "$#" -gt 2 ]]; then
-  echo "Usage: $0 <path to playwright-browsers checkout> [firefox|webkit|winldd]"
+  echo "Usage: $0 <path to playwright-browsers checkout> [firefox|winldd]"
+  echo
+  echo "To roll ./webkit, run this in a playwright-webkit checkout:"
+  echo "  playwright/export.sh <path to playwright checkout> [<ref>]"
   exit 1
 fi
 
@@ -22,6 +25,14 @@ cd "$(dirname "$0")"
 
 SCRIPT_PATH=$(pwd -P)
 
+# WebKit is developed in playwright-webkit as commits on top of upstream WebKit, not as
+# patch files. A script of that repository writes ./webkit.
+if [[ "${FILTER}" == "webkit" ]]; then
+  echo "ERROR: this script does not roll webkit. In a playwright-webkit checkout, run:"
+  echo "  playwright/export.sh $(dirname "${SCRIPT_PATH}") [<ref>]"
+  exit 1
+fi
+
 # On CI, the playwright-browsers checkout directory can have an arbitrary name,
 # so detect the checkout by a marker file instead of the directory name.
 if ! [[ -f "${SOURCE_DIRECTORY}/browser_patches/build_flavors.sh" ]]; then
@@ -36,13 +47,6 @@ firefox_files=(
   "./firefox/UPSTREAM_CONFIG.sh"
 )
 
-webkit_files=(
-  "./webkit/embedder/"
-  "./webkit/patches/"
-  "./webkit/pw_run.sh"
-  "./webkit/UPSTREAM_CONFIG.sh"
-)
-
 winldd_files=(
   "./winldd/"
 )
@@ -51,17 +55,14 @@ case "${FILTER}" in
   firefox)
     files=("${firefox_files[@]}")
     ;;
-  webkit)
-    files=("${webkit_files[@]}")
-    ;;
   winldd)
     files=("${winldd_files[@]}")
     ;;
   "")
-    files=("${firefox_files[@]}" "${webkit_files[@]}" "${winldd_files[@]}")
+    files=("${firefox_files[@]}" "${winldd_files[@]}")
     ;;
   *)
-    echo "ERROR: unknown filter '${FILTER}'; supported filters: firefox, webkit, winldd"
+    echo "ERROR: unknown filter '${FILTER}'; supported filters: firefox, winldd"
     exit 1
     ;;
 esac
@@ -69,4 +70,3 @@ esac
 for file in "${files[@]}"; do
   rsync -av --delete "${SOURCE_DIRECTORY}/browser_patches/${file}" "${SCRIPT_PATH}/${file}"
 done
-
