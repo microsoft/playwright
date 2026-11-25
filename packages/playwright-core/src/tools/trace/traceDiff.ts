@@ -84,13 +84,13 @@ export async function traceDiff(baselineFile: string, targetFile: string, option
   if (options.only && !['actions', 'network', 'console'].includes(options.only))
     throw new Error(`Invalid --only category "${options.only}". Supported categories: actions, network, console`);
 
-  const tmpBase = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'pw-trace-diff-1-'));
-  const tmpTarget = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'pw-trace-diff-2-'));
+  const tmpRoot = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'pw-trace-diff-'));
+  const tmpBase = path.join(tmpRoot, 'base');
+  const tmpTarget = path.join(tmpRoot, 'target');
 
   const cleanup = () => {
     try {
-      fs.rmSync(tmpBase, { recursive: true, force: true });
-      fs.rmSync(tmpTarget, { recursive: true, force: true });
+      fs.rmSync(tmpRoot, { recursive: true, force: true });
     } catch {
     }
   };
@@ -117,11 +117,21 @@ export async function traceDiff(baselineFile: string, targetFile: string, option
         path.basename(targetFile),
     );
 
-    const hasDifferences = !!result.firstDivergence ||
-      (result.networkDiff?.statusMismatches.length ?? 0) > 0 ||
+    const hasActionDiff = !!result.firstDivergence;
+    const hasNetworkDiff = (result.networkDiff?.statusMismatches.length ?? 0) > 0 ||
       (result.networkDiff?.targetOnly.length ?? 0) > 0 ||
-      (result.networkDiff?.baselineOnly.length ?? 0) > 0 ||
-      (result.consoleDiff?.introduced.length ?? 0) > 0;
+      (result.networkDiff?.baselineOnly.length ?? 0) > 0;
+    const hasConsoleDiff = (result.consoleDiff?.introduced.length ?? 0) > 0;
+
+    let hasDifferences = false;
+    if (!options.only)
+      hasDifferences = hasActionDiff || hasNetworkDiff || hasConsoleDiff;
+    else if (options.only === 'actions')
+      hasDifferences = hasActionDiff;
+    else if (options.only === 'network')
+      hasDifferences = hasNetworkDiff;
+    else if (options.only === 'console')
+      hasDifferences = hasConsoleDiff;
 
     if (options.exitCode && hasDifferences)
       process.exitCode = 1;
@@ -141,9 +151,10 @@ export async function traceDiff(baselineFile: string, targetFile: string, option
 }
 
 export function normalizeTokens(str: string): string {
-  return str
-      .replace(/https?:\/\/(localhost|127\.0\.0\.1|\[::1\]):\d+/gi, 'http://$1:<port>')
-      .replace(/([?&])(?:_cache|ts|timestamp|sessionId|nonce)=\w+/gi, '$1');
+  let normalized = str.replace(/https?:\/\/(localhost|127\.0\.0\.1|\[::1\]):\d+/gi, 'http://$1:<port>');
+  normalized = normalized.replace(/([?&])(?:_cache|ts|timestamp|sessionId|nonce)=[\w\-.~%+/=]+/gi, '$1');
+  normalized = normalized.replace(/\?[&]+/g, '?').replace(/&{2,}/g, '&').replace(/[?&]$/, '');
+  return normalized;
 }
 
 export function computeTraceDiff(
@@ -235,42 +246,79 @@ function _alignActions(
 ): { steps: ActionDiffStep[], firstDivergence?: TraceDiffResult['firstDivergence'] } {
   const bSigs = bActions.map(_actionSignature);
   const tSigs = tActions.map(_actionSignature);
-  const N = bActions.length;
-  const M = tActions.length;
 
-  const dp: number[][] = Array.from({ length: N + 1 }, () => new Array(M + 1).fill(0));
-  for (let i = 0; i < N; i++) {
-    for (let j = 0; j < M; j++) {
-      if (bSigs[i] === tSigs[j])
-        dp[i + 1][j + 1] = dp[i][j] + 1;
-      else
-        dp[i + 1][j + 1] = Math.max(dp[i + 1][j], dp[i][j + 1]);
-    }
-  }
+  // Fast-path common prefix
+  let prefixLen = 0;
+  while (prefixLen < bActions.length && prefixLen < tActions.length && bSigs[prefixLen] === tSigs[prefixLen])
+    prefixLen++;
 
-  type RawOp = { type: 'match' | 'modify' | 'delete' | 'insert', bIndex?: number, tIndex?: number };
+  // Fast-path common suffix (non-overlapping with prefix)
+  let suffixLen = 0;
+  while (
+    suffixLen < (bActions.length - prefixLen) &&
+    suffixLen < (tActions.length - prefixLen) &&
+    bSigs[bActions.length - 1 - suffixLen] === tSigs[tActions.length - 1 - suffixLen]
+  )
+    suffixLen++;
+
+  type RawOp = { type: 'match' | 'delete' | 'insert', bIndex?: number, tIndex?: number };
   const rawOps: RawOp[] = [];
 
-  let i = N;
-  let j = M;
-  while (i > 0 || j > 0) {
-    if (i > 0 && j > 0 && bSigs[i - 1] === tSigs[j - 1]) {
-      rawOps.push({ type: 'match', bIndex: i - 1, tIndex: j - 1 });
-      i--;
-      j--;
-    } else if (i > 0 && j > 0 && dp[i - 1][j] === dp[i][j - 1] && dp[i - 1][j] === dp[i][j]) {
-      rawOps.push({ type: 'modify', bIndex: i - 1, tIndex: j - 1 });
-      i--;
-      j--;
-    } else if (i > 0 && (j === 0 || dp[i - 1][j] >= dp[i][j - 1])) {
-      rawOps.push({ type: 'delete', bIndex: i - 1 });
-      i--;
-    } else {
-      rawOps.push({ type: 'insert', tIndex: j - 1 });
-      j--;
+  // Add prefix matches
+  for (let idx = 0; idx < prefixLen; idx++)
+    rawOps.push({ type: 'match', bIndex: idx, tIndex: idx });
+
+  // Slice middle
+  const bMidStart = prefixLen;
+  const bMidEnd = bActions.length - suffixLen;
+  const tMidStart = prefixLen;
+  const tMidEnd = tActions.length - suffixLen;
+
+  const N = bMidEnd - bMidStart;
+  const M = tMidEnd - tMidStart;
+
+  if (N > 0 && M > 0 && N * M <= 25_000_000) {
+    const dp: number[][] = Array.from({ length: N + 1 }, () => new Array(M + 1).fill(0));
+    for (let i = 0; i < N; i++) {
+      for (let j = 0; j < M; j++) {
+        if (bSigs[bMidStart + i] === tSigs[tMidStart + j])
+          dp[i + 1][j + 1] = dp[i][j] + 1;
+        else
+          dp[i + 1][j + 1] = Math.max(dp[i + 1][j], dp[i][j + 1]);
+      }
     }
+
+    const midOps: RawOp[] = [];
+    let i = N;
+    let j = M;
+    while (i > 0 || j > 0) {
+      if (i > 0 && j > 0 && bSigs[bMidStart + i - 1] === tSigs[tMidStart + j - 1]) {
+        midOps.push({ type: 'match', bIndex: bMidStart + i - 1, tIndex: tMidStart + j - 1 });
+        i--;
+        j--;
+      } else if (i > 0 && (j === 0 || dp[i - 1][j] >= dp[i][j - 1])) {
+        midOps.push({ type: 'delete', bIndex: bMidStart + i - 1 });
+        i--;
+      } else {
+        midOps.push({ type: 'insert', tIndex: tMidStart + j - 1 });
+        j--;
+      }
+    }
+    midOps.reverse();
+    rawOps.push(...midOps);
+  } else {
+    for (let i = bMidStart; i < bMidEnd; i++)
+      rawOps.push({ type: 'delete', bIndex: i });
+    for (let j = tMidStart; j < tMidEnd; j++)
+      rawOps.push({ type: 'insert', tIndex: j });
   }
-  rawOps.reverse();
+
+  // Add suffix matches
+  for (let s = 0; s < suffixLen; s++) {
+    const bIdx = bActions.length - suffixLen + s;
+    const tIdx = tActions.length - suffixLen + s;
+    rawOps.push({ type: 'match', bIndex: bIdx, tIndex: tIdx });
+  }
 
   const steps: ActionDiffStep[] = [];
   let firstDivergence: TraceDiffResult['firstDivergence'];
@@ -288,16 +336,15 @@ function _alignActions(
     let reason: string | undefined;
 
     if (op.type === 'match') {
-      if (bInfo && tInfo && bInfo.status !== tInfo.status) {
-        differs = true;
-        reason = tInfo.status === 'failed' ? 'Target action failed with error' : 'Target action passed where baseline failed';
+      if (bInfo && tInfo) {
+        if (bInfo.status !== tInfo.status) {
+          differs = true;
+          reason = tInfo.status === 'failed' ? 'Target action failed with error' : 'Target action passed where baseline failed';
+        } else if (bInfo.status === 'failed' && tInfo.status === 'failed' && bInfo.error !== tInfo.error) {
+          differs = true;
+          reason = 'Target action failed with a different error';
+        }
       }
-    } else if (op.type === 'modify') {
-      differs = true;
-      if (bInfo && tInfo && bInfo.status !== tInfo.status)
-        reason = tInfo.status === 'failed' ? 'Target action failed with error' : 'Target action passed where baseline failed';
-      else
-        reason = `Action mismatch: "${bInfo?.title}" vs "${tInfo?.title}"`;
     } else if (op.type === 'delete') {
       differs = true;
       reason = `Target trace stopped before baseline action "${bInfo?.title}"`;
@@ -456,7 +503,8 @@ function _extractErrors(model: TraceModel): { type: string, text: string, normal
       });
     }
     if (event.type === 'event' && event.method === 'pageError') {
-      const text = event.params.error?.message || String(event.params.error);
+      const error = event.params.error;
+      const text = error?.error?.message || String(error?.value ?? (error?.message || ''));
       errors.push({
         type: 'pageError',
         text,
@@ -494,6 +542,10 @@ function _filterJsonOutput(result: TraceDiffResult, only?: TraceDiffOptions['onl
     };
   }
   return result;
+}
+
+function _formatStatus(status: number): string {
+  return status <= 0 ? 'FAILED' : String(status);
 }
 
 function _formatDiff(result: TraceDiffResult, options: TraceDiffOptions) {
@@ -555,15 +607,15 @@ function _formatDiff(result: TraceDiffResult, options: TraceDiffOptions) {
       console.log('Network Diff:');
       for (const m of net.statusMismatches) {
         const occ = m.occurrence > 1 ? ` [#${m.occurrence}]` : '';
-        console.log(`  ~ ${m.method} ${m.url}${occ}  ${m.baselineStatus} -> ${m.targetStatus}`);
+        console.log(`  ~ ${m.method} ${m.url}${occ}  ${_formatStatus(m.baselineStatus)} -> ${_formatStatus(m.targetStatus)}`);
       }
       for (const t of net.targetOnly) {
         const occ = t.occurrence > 1 ? ` [#${t.occurrence}]` : '';
-        console.log(`  + ${t.method} ${t.url}${occ}  ${t.status} (new in target)`);
+        console.log(`  + ${t.method} ${t.url}${occ}  ${_formatStatus(t.status)} (new in target)`);
       }
       for (const b of net.baselineOnly) {
         const occ = b.occurrence > 1 ? ` [#${b.occurrence}]` : '';
-        console.log(`  - ${b.method} ${b.url}${occ}  ${b.status} (missing in target)`);
+        console.log(`  - ${b.method} ${b.url}${occ}  ${_formatStatus(b.status)} (missing in target)`);
       }
       console.log('');
     } else if (options.only === 'network') {

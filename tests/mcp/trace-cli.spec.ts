@@ -315,6 +315,8 @@ test('trace diff --json outputs structured json', async ({ traceFile, targetTrac
   expect(data.firstDivergence.step).toBeGreaterThan(0);
   expect(data.networkDiff.statusMismatches.length).toBeGreaterThan(0);
   expect(data.consoleDiff.introduced.length).toBeGreaterThan(0);
+  for (const err of data.consoleDiff.introduced)
+    expect(err.text).not.toContain('[object Object]');
 });
 
 test('trace diff --only filters diff output', async ({ traceFile, targetTraceFile, runTraceCli }) => {
@@ -362,4 +364,11 @@ test('trace diff --ignore-timings suppresses duration delta', async ({ traceFile
   expect(exitCode).toBe(0);
   expect(stdout).toContain('Trace Diff:');
   expect(stdout).not.toMatch(/Duration:.*\((\+|-)/);
+});
+
+test('trace diff displays FAILED for aborted network requests', async ({ traceFile, targetTraceFile, runTraceCli }) => {
+  const { stdout, exitCode } = await runTraceCli(['diff', traceFile, targetTraceFile, '--only', 'network']);
+  expect(exitCode).toBe(0);
+  expect(stdout).toContain('FAILED');
+  expect(stdout).not.toContain(' -1');
 });

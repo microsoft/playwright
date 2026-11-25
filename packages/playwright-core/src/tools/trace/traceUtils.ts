@@ -119,21 +119,15 @@ export async function loadTraceFromFile(traceFile: string, extractDir: string): 
     throw new Error(`Invalid trace path: ${filePath}`);
   }
 
-  await fs.promises.mkdir(extractDir, { recursive: true });
-  if (filePath.endsWith('.zip'))
-    await extractTrace(filePath, extractDir);
-  else
-    await fs.promises.writeFile(path.join(extractDir, '.link'), filePath, 'utf-8');
-
-  const linkFile = path.join(extractDir, '.link');
   let targetDir: string;
   let singleFile: string | undefined;
-  if (fs.existsSync(linkFile)) {
-    const tracePath = await fs.promises.readFile(linkFile, 'utf-8');
-    targetDir = stat.isDirectory() ? tracePath : path.dirname(tracePath);
-    singleFile = stat.isDirectory() ? undefined : path.basename(tracePath);
-  } else {
+  if (filePath.endsWith('.zip')) {
+    await fs.promises.mkdir(extractDir, { recursive: true });
+    await extractTrace(filePath, extractDir);
     targetDir = extractDir;
+  } else {
+    targetDir = stat.isDirectory() ? filePath : path.dirname(filePath);
+    singleFile = stat.isDirectory() ? undefined : path.basename(filePath);
   }
   const backend = new DirTraceLoaderBackend(targetDir);
   const loader = new TraceLoader();
