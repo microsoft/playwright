@@ -72,22 +72,17 @@ class ServerRegistry extends EventEmitter {
   }
 
   watch(): () => void {
-    const dispose = this._watch();
-    return () => { void dispose(); };
-  }
-
-  private _watch(): () => Promise<void> {
     this._watcherRefs++;
     if (!this._watcher)
       this._startWatcher();
     let disposed = false;
-    return async () => {
+    return () => {
       if (disposed)
         return;
       disposed = true;
       this._watcherRefs--;
       if (this._watcherRefs === 0)
-        await this._stopWatcher();
+        this._stopWatcher();
     };
   }
 
@@ -96,39 +91,36 @@ class ServerRegistry extends EventEmitter {
   }
 
   async list(): Promise<Map<string, BrowserDescriptor[]>> {
-    const ownWatcher = !this._watcher;
-    let dispose: (() => Promise<void>) | undefined;
-    if (ownWatcher)
-      dispose = this._watch();
-    const staleGuids: string[] = [];
-    try {
-      await this._ready;
-      const statuses = await Promise.all(
-          [...this._descriptors.values()].map(async descriptor => {
-            const canConnect = await canConnectTo(descriptor);
-            return { descriptor, canConnect };
-          }),
-      );
-      const result = new Map<string, BrowserDescriptor[]>();
-      for (const { descriptor, canConnect } of statuses) {
-        if (!canConnect) {
-          staleGuids.push(descriptor.browser.guid);
-          continue;
-        }
-        const key = descriptor.workspaceDir ?? '';
-        let list = result.get(key);
-        if (!list) {
-          list = [];
-          result.set(key, list);
-        }
-        list.push(descriptor);
+    // Read the registry from the disk and do not start a file watcher here.
+    // A watcher that is closed while registry files are removed can start again and keep the process alive.
+    const dir = this._browsersDir();
+    const guids = await fs.promises.readdir(dir).catch(() => [] as string[]);
+    const statuses = await Promise.all(guids.map(async guid => {
+      let descriptor: BrowserDescriptor;
+      try {
+        descriptor = JSON.parse(await fs.promises.readFile(path.join(dir, guid), 'utf-8'));
+      } catch {
+        return undefined;
       }
-      return result;
-    } finally {
-      await dispose?.();
-      for (const guid of staleGuids)
-        await this.delete(guid);
+      return { guid, descriptor, canConnect: await canConnectTo(descriptor) };
+    }));
+    const result = new Map<string, BrowserDescriptor[]>();
+    for (const status of statuses) {
+      if (!status)
+        continue;
+      if (!status.canConnect) {
+        await this.delete(status.guid);
+        continue;
+      }
+      const key = status.descriptor.workspaceDir ?? '';
+      let list = result.get(key);
+      if (!list) {
+        list = [];
+        result.set(key, list);
+      }
+      list.push(status.descriptor);
     }
+    return result;
   }
 
   async create(browser: BrowserInfo, endpoint: EndpointInfo) {
@@ -220,12 +212,12 @@ class ServerRegistry extends EventEmitter {
     this.emit(event, descriptor);
   }
 
-  private async _stopWatcher() {
+  private _stopWatcher() {
     const watcher = this._watcher;
     this._watcher = undefined;
     this._ready = undefined;
     this._descriptors.clear();
-    await watcher?.close();
+    void watcher?.close();
   }
 }
 

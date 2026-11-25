@@ -30,9 +30,20 @@ function isProcessAlive(pid: number): boolean {
   }
 }
 
-test('list', {
+test('list', async ({ cli, server }) => {
+  const { output: emptyOutput } = await cli('list');
+  expect(emptyOutput).toContain('(no browsers)');
+
+  await cli('open', server.HELLO_WORLD);
+
+  const { output: listOutput } = await cli('list');
+  expect(listOutput).toContain('### Browsers');
+  expect(listOutput).toContain('- default:');
+});
+
+test('list should remove stale registry entries and exit', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-cli/issues/549' },
-}, async ({ cli, server }, testInfo) => {
+}, async ({ cli }, testInfo) => {
   const registryDir = testInfo.outputPath('registry');
   await fs.promises.mkdir(registryDir, { recursive: true });
   for (const guid of ['stale-1', 'stale-2']) {
@@ -40,44 +51,27 @@ test('list', {
       playwrightVersion: '0.0.0',
       title: guid,
       browser: { guid, browserName: 'chromium', launchOptions: {} },
+      endpoint: testInfo.outputPath(guid + '.sock'),
     }));
   }
-  const cleanupLog = testInfo.outputPath('cleanup.log');
-  const preload = testInfo.outputPath('watch-registry.cjs');
+
+  const watchLog = testInfo.outputPath('watch.log');
+  const preload = testInfo.outputPath('log-registry-watchers.cjs');
   await fs.promises.writeFile(preload, `
     const fs = require('fs');
-    const path = require('path');
-    const watchers = new Set();
     const watch = fs.watch;
     fs.watch = (...args) => {
-      const watcher = watch(...args);
-      if (args[0] === process.env.PWTEST_SERVER_REGISTRY || path.dirname(args[0]) === process.env.PWTEST_SERVER_REGISTRY) {
-        watchers.add(watcher);
-        const close = watcher.close.bind(watcher);
-        watcher.close = () => {
-          watchers.delete(watcher);
-          return close();
-        };
-      }
-      return watcher;
-    };
-    const unlink = fs.promises.unlink;
-    fs.promises.unlink = async file => {
-      if (path.dirname(file) === process.env.PWTEST_SERVER_REGISTRY)
-        fs.appendFileSync(${JSON.stringify(cleanupLog)}, watchers.size + '\\n');
-      return await unlink(file);
+      if (String(args[0]).startsWith(process.env.PWTEST_SERVER_REGISTRY))
+        fs.appendFileSync(${JSON.stringify(watchLog)}, args[0] + '\\n');
+      return watch(...args);
     };
   `);
-  const { output: emptyOutput } = await cli('list', { env: { NODE_OPTIONS: `--require="${preload.replaceAll('\\', '/')}"` } });
-  expect(emptyOutput).toContain('(no browsers)');
-  expect((await fs.promises.readFile(cleanupLog, 'utf-8')).trim().split('\n')).toEqual(['0', '0']);
+
+  const { output } = await cli('list', { env: { NODE_OPTIONS: `--require="${preload.replaceAll('\\', '/')}"` } });
+  expect(output).toContain('(no browsers)');
   expect(await fs.promises.readdir(registryDir)).toEqual([]);
-
-  await cli('open', server.HELLO_WORLD);
-
-  const { output: listOutput } = await cli('list');
-  expect(listOutput).toContain('### Browsers');
-  expect(listOutput).toContain('- default:');
+  // A file watcher on the registry can keep the process alive after the stale entries are removed.
+  expect(fs.existsSync(watchLog)).toBe(false);
 });
 
 test('close', async ({ cli, server }) => {
