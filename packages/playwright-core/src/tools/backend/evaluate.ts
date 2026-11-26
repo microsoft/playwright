@@ -70,17 +70,26 @@ const evaluate = defineTabTool({
       else
         response.addCode(`await page.evaluate(${escapeWithQuotes(codeExpression)});`);
 
-      const text = params.format === 'string' ? String(evalResult.result) : params.format === 'json' || isJSONValue(evalResult.result) ? JSON.stringify(evalResult.result, null, 2) : inspect(evalResult.result, {
-        depth: null,
-        maxArrayLength: null,
-        maxStringLength: null,
-        compact: false,
-        colors: false,
-        customInspect: false,
-      });
-      if (text === undefined)
-        throw new Error('Evaluation result cannot be represented as JSON.');
-      await response.addResult('Evaluation result', text, { prefix: 'result', ext: 'json', suggestedFilename: params.filename });
+      let text: string | undefined;
+      let ext = 'txt';
+      if (params.format === 'string') {
+        text = String(evalResult.result);
+      } else if (params.format === 'json' || isJSONValue(evalResult.result)) {
+        text = JSON.stringify(evalResult.result, null, 2);
+        if (text === undefined)
+          throw new Error('Evaluation result cannot be represented as JSON.');
+        ext = 'json';
+      } else {
+        text = inspect(evalResult.result, {
+          depth: null,
+          maxArrayLength: null,
+          maxStringLength: null,
+          compact: false,
+          colors: false,
+          customInspect: false,
+        });
+      }
+      await response.addResult('Evaluation result', text, { prefix: 'result', ext, suggestedFilename: params.filename });
     }).catch(e => {
       response.addError(e instanceof Error ? e.message : String(e));
     });
