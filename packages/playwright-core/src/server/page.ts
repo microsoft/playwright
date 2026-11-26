@@ -732,13 +732,6 @@ export class Page extends SdkObject<PageEventMap> {
         throw new Error('"not" matcher requires expected result');
       const format = validateScreenshotOptions(options || {});
       const comparator = getComparator(`image/${format}`);
-      const areEqualScreenshots = (comparatorResult: ComparatorResult | undefined, actual: Buffer, previous: Buffer | undefined) => {
-        if (comparatorResult !== undefined && !!comparatorResult === !!options.isNot)
-          return true;
-        if (comparatorResult)
-          intermediateResult = { errorMessage: comparatorResult.errorMessage, diff: comparatorResult.diff, actual, previous };
-        return false;
-      };
       let baselineComparison: { actual: Buffer, result: ComparatorResult } | undefined;
       let actual: Buffer | undefined;
       let previous: Buffer | undefined;
@@ -768,8 +761,10 @@ export class Page extends SdkObject<PageEventMap> {
         const comparatorResult = expectation ? comparator(actual, expectation, options) : undefined;
         if (isFirstIteration && options.expected && comparatorResult !== undefined)
           baselineComparison = { actual, result: comparatorResult };
-        if (areEqualScreenshots(comparatorResult, actual, previous))
+        if (comparatorResult !== undefined && !!comparatorResult === !!options.isNot)
           break;
+        if (comparatorResult)
+          intermediateResult = { errorMessage: comparatorResult.errorMessage, diff: comparatorResult.diff, actual, previous };
         if (intermediateResult)
           progress.log(intermediateResult.errorMessage);
         isFirstIteration = false;
@@ -787,10 +782,12 @@ export class Page extends SdkObject<PageEventMap> {
       }
 
       const comparatorResult = baselineComparison?.actual.equals(actual) ? baselineComparison.result : comparator(actual, options.expected, options);
-      if (areEqualScreenshots(comparatorResult, actual, undefined)) {
+      if (!!comparatorResult === !!options.isNot) {
         progress.log(`screenshot matched expectation`);
         return {};
       }
+      if (comparatorResult)
+        intermediateResult = { errorMessage: comparatorResult.errorMessage, diff: comparatorResult.diff, actual };
       throw new Error(intermediateResult!.errorMessage);
     } catch (e) {
       // Q: Why not throw upon isNonRetriableError(e) as in other places?
