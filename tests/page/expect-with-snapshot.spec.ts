@@ -15,6 +15,7 @@
  */
 
 import { test, expect } from './pageTest';
+import type { Page } from 'playwright-core';
 
 test.describe('containment matchers print full element subtree', () => {
   test('EX-313 toHaveText failure includes full element subtree', async ({ page }) => {
@@ -127,5 +128,43 @@ test.describe('matchers that should not include an aria snapshot', () => {
     await page.setContent(`<button id=btn>Y</button>`);
     const error = await expect(page.locator('#btn')).toMatchAriaSnapshot(`- button "X"`, { timeout: 1000 }).catch(e => e);
     expect(error.matcherResult.ariaSnapshot).toBeUndefined();
+  });
+});
+
+test.describe('aria snapshot is taken close to the deadline only', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44368' },
+}, () => {
+  // toHaveJSProperty runs in the main world, so the page can see the snapshot code read the heading.
+  async function recordSnapshotTimes(page: Page) {
+    await page.evaluate(() => {
+      const heading = document.querySelector('h1')!;
+      const start = performance.now();
+      (window as any).snapshotTimes = [];
+      heading.getAttribute = name => {
+        if (name === 'aria-label')
+          (window as any).snapshotTimes.push(performance.now() - start);
+        return Element.prototype.getAttribute.call(heading, name);
+      };
+    });
+  }
+
+  test('EX-329 should not take aria snapshot when the assertion passes after retries', async ({ page }) => {
+    await page.setContent(`<h1>Title</h1>`);
+    await recordSnapshotTimes(page);
+    await page.evaluate(() => {
+      window.builtins.setTimeout(() => (document.querySelector('h1') as any).foo = 'bar', 500);
+    });
+    await expect(page.locator('h1')).toHaveJSProperty('foo', 'bar');
+    expect(await page.evaluate(() => (window as any).snapshotTimes)).toEqual([]);
+  });
+
+  test('EX-330 should take aria snapshot when the assertion fails after retries', async ({ page }) => {
+    await page.setContent(`<h1>Title</h1>`);
+    await recordSnapshotTimes(page);
+    const error = await expect(page.locator('h1')).toHaveJSProperty('foo', 'bar', { timeout: 2500 }).catch(e => e);
+    expect(error.matcherResult.ariaSnapshot).toContain('heading "Title"');
+    // The checks in the first 1500ms are far from the deadline.
+    const snapshotTimes = await page.evaluate(() => (window as any).snapshotTimes);
+    expect(snapshotTimes[0]).toBeGreaterThan(1000);
   });
 });

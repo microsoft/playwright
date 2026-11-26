@@ -25,6 +25,7 @@ import { LongStandingScope } from '@isomorphic/manualPromise';
 import { asLocator } from '@isomorphic/locatorGenerators';
 import { assert } from '@isomorphic/assert';
 import { constructURLBasedOnBaseURL } from '@isomorphic/urlMatch';
+import { monotonicTime } from '@isomorphic/time';
 import { createGuid } from '@utils/crypto';
 import { BrowserContext } from './browserContext';
 import * as dom from './dom';
@@ -115,6 +116,8 @@ export class ExpectError extends Error {
 }
 
 const kDummyFrameId = '<dummy>';
+// A retry that starts with less time than this before the deadline is not counted as a probable retry.
+const kMinTimeForRetry = 500;
 
 export class FrameManager {
   private _page: Page;
@@ -1138,7 +1141,7 @@ export class Frame extends SdkObject<FrameEventMap> {
     return result!;
   }
 
-  async retryWithProgressAndBackoff<R>(progress: Progress, action: (progress: Progress, continuePolling: symbol) => Promise<R | symbol>): Promise<R> {
+  async retryWithProgressAndBackoff<R>(progress: Progress, action: (progress: Progress, continuePolling: symbol, probablyHasMoreRetries: boolean) => Promise<R | symbol>): Promise<R> {
     const backoffScale = [20, 50, 100, 100, 500];
     if (progress.timeout) {
       // For small timeouts, cap the large backoff values to produce meaningul retries.
@@ -1148,7 +1151,7 @@ export class Frame extends SdkObject<FrameEventMap> {
     return await this.retryWithProgressAndTimeouts<R>(progress, backoffScale, action);
   }
 
-  async retryWithProgressAndTimeouts<R>(progress: Progress, timeouts: number[], action: (progress: Progress, continuePolling: symbol) => Promise<R | symbol>): Promise<R> {
+  async retryWithProgressAndTimeouts<R>(progress: Progress, timeouts: number[], action: (progress: Progress, continuePolling: symbol, probablyHasMoreRetries: boolean) => Promise<R | symbol>): Promise<R> {
     const continuePolling = Symbol('continuePolling');
     timeouts = [0, ...timeouts];
     let timeoutIndex = 0;
@@ -1164,7 +1167,8 @@ export class Frame extends SdkObject<FrameEventMap> {
         ], actionPromise));
       }
       try {
-        const result = await action(progress, continuePolling);
+        const nextTimeout = timeouts[Math.min(timeoutIndex, timeouts.length - 1)];
+        const result = await action(progress, continuePolling, this._probablyHasMoreRetries(progress, nextTimeout));
         if (result === continuePolling)
           continue;
         return result as R;
@@ -1174,6 +1178,12 @@ export class Frame extends SdkObject<FrameEventMap> {
         continue;
       }
     }
+  }
+
+  // Tells whether the retry that starts after |nextTimeout| will probably run to the end.
+  // When the deadline aborts that retry, the current attempt is the last one that produces a result.
+  private _probablyHasMoreRetries(progress: Progress, nextTimeout: number): boolean {
+    return !progress.deadline || monotonicTime() + nextTimeout + kMinTimeForRetry < progress.deadline;
   }
 
   isNonRetriableError(e: Error) {
@@ -1490,7 +1500,8 @@ export class Frame extends SdkObject<FrameEventMap> {
       // Supports the case of `expect(locator).toBeVisible({ timeout: 1 })`
       // that should succeed when the locator is already visible.
       try {
-        const resultOneShot = await this._expectInternal(progress, selector, options, lastIntermediateResult, true);
+        // The first retry below starts right after the one-shot.
+        const resultOneShot = await this._expectInternal(progress, selector, options, lastIntermediateResult, true, this._probablyHasMoreRetries(progress, 0));
         if (resultOneShot.matches !== options.isNot)
           return;
       } catch (e) {
@@ -1500,9 +1511,9 @@ export class Frame extends SdkObject<FrameEventMap> {
       }
 
       // Step 3: auto-retry expect with increasing timeouts. Bounded by the total remaining time.
-      await this.retryWithProgressAndBackoff(progress, async (progress, continuePolling) => {
+      await this.retryWithProgressAndBackoff(progress, async (progress, continuePolling, probablyHasMoreRetries) => {
         await this._page.performActionPreChecks(progress);
-        const { matches, received } = await this._expectInternal(progress, selector, options, lastIntermediateResult, false);
+        const { matches, received } = await this._expectInternal(progress, selector, options, lastIntermediateResult, false, probablyHasMoreRetries);
         if (matches === options.isNot) {
           // Keep waiting in these cases:
           // expect(locator).conditionThatDoesNotMatch
@@ -1532,8 +1543,11 @@ export class Frame extends SdkObject<FrameEventMap> {
     }
   }
 
-  private async _expectInternal(progress: Progress, selector: string | undefined, options: FrameExpectParams, lastIntermediateResult: { received?: ExpectReceived, isSet: boolean, errorMessage?: string }, noAbort: boolean) {
+  private async _expectInternal(progress: Progress, selector: string | undefined, options: FrameExpectParams, lastIntermediateResult: { received?: ExpectReceived, isSet: boolean, errorMessage?: string }, noAbort: boolean, probablyHasMoreRetries: boolean) {
     const progressLog = (text: string) => progress.log(text);
+    // The aria snapshot is only reported when the assertion fails, and it must come from the same task
+    // as the check that it describes. So we take it only when this check can be the last one.
+    const withAriaSnapshot = !probablyHasMoreRetries;
     // The first expect check, a.k.a. one-shot, always finishes - even when progress is aborted.
     if (noAbort)
       progress = nullProgress;
@@ -1546,13 +1560,13 @@ export class Frame extends SdkObject<FrameEventMap> {
     let missingReceived = false;
 
     // Non-array expectations are strict (callOnSelector throws on multiple); array ones are not.
-    const resolved = await progress.race(this.selectors.callOnSelector({ selector: effectiveSelector, strict: !isArray, mainWorld, markTargets: 'all' }, async ({ injected, elements, frameVisible }, options) => {
+    const resolved = await progress.race(this.selectors.callOnSelector({ selector: effectiveSelector, strict: !isArray, mainWorld, markTargets: 'all' }, async ({ injected, elements, frameVisible }, { options, withAriaSnapshot }) => {
       const isArray = options.expression === 'to.have.count' || options.expression.endsWith('.array');
       const log = isArray
         ? `  locator resolved to ${elements.length} element${elements.length === 1 ? '' : 's'}`
         : `  locator resolved to ${injected.previewNode(elements[0])}`;
-      return { log, ...await injected.expect(elements[0], options, elements, frameVisible) };
-    }, options));
+      return { log, ...await injected.expect(elements[0], options, elements, frameVisible, withAriaSnapshot) };
+    }, { options, withAriaSnapshot }));
 
     if (resolved) {
       received = resolved.result.received;
@@ -1583,7 +1597,7 @@ export class Frame extends SdkObject<FrameEventMap> {
         matches = options.isNot;
         missingReceived = true;
       }
-      if (matches === options.isNot && !isArray) {
+      if (matches === options.isNot && !isArray && withAriaSnapshot) {
         const context = await progress.race(this.context(mainWorld ? 'main' : 'utility'));
         const injected = await progress.race(context.injectedScript());
         const ariaSnapshot = await progress.race(injected.evaluate(injected => {
