@@ -15,35 +15,18 @@
  */
 
 import * as React from 'react';
-import { useSetting } from '@web/uiUtils';
+import { msToString } from '@isomorphic/formatUtils';
 import { useTraceModel } from './traceModelContext';
 import './traceTimestamp.css';
 
-export type TimeZone = 'local' | 'utc';
-
 export const TraceTimestamp: React.FC<{
-  location: 'timeline' | 'snapshot';
-  time?: number;
-  wallTime?: number;
-  style?: React.CSSProperties;
-}> = ({ location, time, wallTime, style }) => {
+  time: number;
+}> = ({ time }) => {
   const model = useTraceModel();
-  const [timeZone] = useSetting<TimeZone>('timeZone', 'local');
-  const [displayTimestamp] = useSetting(location === 'timeline' ? 'displayTimelineTimestamp' : 'displaySnapshotTimestamp', false);
-  const timestamp = wallTime ?? (time !== undefined && model?.wallTimeOffset !== undefined ? model.wallTimeOffset + time : undefined);
-  if (!displayTimestamp || timestamp === undefined)
+  if (!model?.actions.length)
     return null;
 
-  const date = new Date(timestamp);
-  const text = timeZone === 'utc' ? date.toISOString().slice(11, 23) + 'Z' : date.toLocaleTimeString(undefined, {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    fractionalSecondDigits: 3,
-    hourCycle: 'h23',
-  });
-  return <time className={`trace-timestamp ${location}-timestamp`} style={style} dateTime={date.toISOString()} title={date.toLocaleString(undefined, {
-    timeZone: timeZone === 'utc' ? 'UTC' : undefined,
-    timeZoneName: 'short',
-  })}>{text}</time>;
+  const date = model.wallTimeOffset !== undefined ? new Date(model.wallTimeOffset + time) : undefined;
+  const title = date ? `${date.toLocaleString(undefined, { timeZoneName: 'short' })} (UTC ${date.toISOString()})` : undefined;
+  return <time className='trace-timestamp' dateTime={date?.toISOString()} title={title}>{msToString(time - model.startTime)}</time>;
 };

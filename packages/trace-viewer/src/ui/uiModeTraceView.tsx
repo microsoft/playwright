@@ -38,7 +38,7 @@ if (searchParams.has('isUnderTest'))
 traceViewerParams.set('theme', settings.getString('theme', 'system'));
 const traceViewerUrl = new URL('uiModeTrace.html?' + traceViewerParams, traceViewerBase).toString();
 // The settings that UI mode shows, and the trace viewer uses.
-const sharedSettings = ['theme', 'shouldPopulateCanvasFromScreenshot', 'displayAriaMode', 'timeZone', 'displaySnapshotTimestamp', 'displayTimelineTimestamp'];
+const sharedSettings = ['theme', 'shouldPopulateCanvasFromScreenshot', 'displayAriaMode'];
 // Chromium does not match an origin with an IPv6 address in the "allow" list.
 const clipboardAllowList = traceViewerOrigin.includes('[') ? '*' : traceViewerOrigin;
 

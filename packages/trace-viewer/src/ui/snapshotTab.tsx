@@ -38,7 +38,6 @@ import type { PlaybackState } from './playbackControl';
 import { AriaModeView, collectAriaModeTargets, shouldDisplayAriaMode } from './ariaModeView';
 import { useVideoSources } from './videoThumbnails';
 import { VideoFrame, lastVideoIndex } from './videoFrame';
-import { TraceTimestamp } from './traceTimestamp';
 
 export type HighlightedElement = {
   locator?: string,
@@ -114,7 +113,6 @@ export const SnapshotTabsView: React.FunctionComponent<{
       point={snapshotTab === 'action' ? action?.point : undefined}
       box={snapshotTab === 'action' ? action?.box : undefined}
       screencastFrame={screencastFrame}
-      screencastTime={screencastTime}
     />}
     {!displayAriaMode && <SnapshotView
       snapshotUrls={snapshotUrls}
@@ -125,7 +123,6 @@ export const SnapshotTabsView: React.FunctionComponent<{
       highlightedElement={highlightedElement}
       setHighlightedElement={setHighlightedElement}
       screencastFrame={screencastFrame}
-      screencastTime={screencastTime}
     />}
   </div>;
 };
@@ -139,8 +136,7 @@ export const SnapshotView: React.FunctionComponent<{
   highlightedElement: HighlightedElement,
   setHighlightedElement: (element: HighlightedElement) => void,
   screencastFrame?: React.ReactNode,
-  screencastTime?: number,
-}> = ({ snapshotUrls, sdkLanguage, testIdAttributeName, isInspecting, setIsInspecting, highlightedElement, setHighlightedElement, screencastFrame, screencastTime }) => {
+}> = ({ snapshotUrls, sdkLanguage, testIdAttributeName, isInspecting, setIsInspecting, highlightedElement, setHighlightedElement, screencastFrame }) => {
   const iframeRef0 = React.useRef<HTMLIFrameElement>(null);
   const iframeRef1 = React.useRef<HTMLIFrameElement>(null);
   const [snapshotInfo, setSnapshotInfo] = React.useState<SnapshotInfo>({ viewport: kDefaultViewport, url: '' });
@@ -192,7 +188,7 @@ export const SnapshotView: React.FunctionComponent<{
   }, [snapshotUrls, screencastFrame]);
 
   return <div
-    className='snapshot-view vbox'
+    className='vbox'
     tabIndex={0}
     onKeyDown={event => {
       if (event.key === 'Escape') {
@@ -224,7 +220,6 @@ export const SnapshotView: React.FunctionComponent<{
         {screencastFrame}
       </div>
     </SnapshotWrapper>
-    <TraceTimestamp location='snapshot' time={screencastTime ?? snapshotInfo.timestamp} wallTime={screencastTime === undefined ? snapshotInfo.wallTime : undefined} />
   </div>;
 };
 
@@ -390,7 +385,7 @@ export type SnapshotInfo = {
   url: string;
   viewport: { width: number, height: number };
   timestamp?: number;
-  wallTime?: number;
+  wallTime?: undefined;
 };
 
 export type Snapshots = {
@@ -479,7 +474,7 @@ export function extendSnapshot(traceUri: string, snapshot: Snapshot, shouldPopul
 }
 
 export async function fetchSnapshotInfo(snapshotInfoUrl: string | undefined) {
-  const result: SnapshotInfo = { url: '', viewport: kDefaultViewport };
+  const result = { url: '', viewport: kDefaultViewport, timestamp: undefined, wallTime: undefined };
   if (snapshotInfoUrl) {
     const response = await fetch(snapshotInfoUrl);
     const info = await response.json();

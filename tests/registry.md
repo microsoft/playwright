@@ -5261,7 +5261,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `TV-135` | `library/snapshot-renderer.spec.ts` | stripAnsiEscapes handles common ANSI sequences after fix |
 | `TV-136` | `library/snapshot-renderer.spec.ts` | snapshot renderer selects the nearest out-of-order screencast frame |
 | `TV-137` | `library/snapshot-renderer.spec.ts` | snapshot renderer neutralizes declarative shadow roots |
-| `TV-138` | `library/trace-viewer.spec.ts` | should display clock timestamps during playback |
+| `TV-138` | `library/trace-viewer.spec.ts` | should display relative playback time in the toolbar |
 
 ### TZ — Timezone
 

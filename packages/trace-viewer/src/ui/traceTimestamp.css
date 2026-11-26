@@ -15,29 +15,16 @@
 */
 
 .trace-timestamp {
-  position: absolute;
-  z-index: 2;
+  flex: none;
+  min-width: 48px;
+  margin: 0 6px;
   padding: 2px 6px;
+  border: 1px solid var(--vscode-panel-border);
   border-radius: 3px;
-  background: rgba(0, 0, 0, .75);
-  color: white;
+  background-color: var(--vscode-editor-background);
+  color: var(--vscode-descriptionForeground);
   font-size: 12px;
   font-variant-numeric: tabular-nums;
+  text-align: right;
   white-space: nowrap;
-  pointer-events: none;
-}
-
-.timeline-timestamp {
-  bottom: 14px;
-  transform: translateX(-50%);
-}
-
-.snapshot-view,
-.aria-mode-view {
-  position: relative;
-}
-
-.snapshot-timestamp {
-  bottom: 10px;
-  right: 10px;
 }

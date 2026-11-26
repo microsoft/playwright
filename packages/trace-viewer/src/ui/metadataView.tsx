@@ -18,23 +18,20 @@ import { msToString } from '@isomorphic/formatUtils';
 import { isHttpUrl } from '@isomorphic/urlMatch';
 import * as React from 'react';
 import type { TraceModel } from '@isomorphic/trace/traceModel';
-import { useSetting } from '@web/uiUtils';
-import type { TimeZone } from './traceTimestamp';
 import './callTab.css';
 
 export const MetadataView: React.FunctionComponent<{
   model?: TraceModel,
 }> = ({ model }) => {
-  const [timeZone] = useSetting<TimeZone>('timeZone', 'local');
   if (!model)
     return <></>;
 
-  const date = model.wallTime !== undefined ? new Date(model.wallTime) : undefined;
-  const wallTime = timeZone === 'utc' ? date?.toISOString() : date?.toLocaleString(undefined, { timeZoneName: 'short' });
+  const date = new Date(model.wallTime ?? NaN);
+  const wallTime = !isNaN(date.getTime()) ? date.toLocaleString(undefined, { timeZoneName: 'short' }) : undefined;
 
   return <div style={{ flex: 'auto', display: 'block', overflow: 'hidden auto' }}>
     <div className='call-section' style={{ paddingTop: 2 }}>Time</div>
-    {!!wallTime && <div className='call-line'>start time:<span className='call-value datetime' title={wallTime}>{wallTime}</span></div>}
+    {!!wallTime && <div className='call-line'>start time:<span className='call-value datetime' title={`UTC ${date.toISOString()}`}>{wallTime}</span></div>}
     <div className='call-line'>duration:<span className='call-value number' title={msToString(model.endTime - model.startTime)}>{msToString(model.endTime - model.startTime)}</span></div>
     {model.testTimeout !== undefined && <div className='call-line'>test timeout:<span className='call-value number' title={msToString(model.testTimeout)}>{msToString(model.testTimeout)}</span></div>}
     <div className='call-section'>Browser</div>

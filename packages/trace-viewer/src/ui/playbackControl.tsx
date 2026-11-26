@@ -268,6 +268,7 @@ export const PlaybackButtons: React.FC<{
   playback: PlaybackState;
 }> = ({ playback }) => {
   return <>
+    <TraceTimestamp time={playback.time} />
     <ToolbarButton icon='chevron-left' title='Previous action' onClick={playback.prev} disabled={!playback.canPrev} />
     <ToolbarButton icon={playback.playing ? 'debug-pause' : 'play'} disabled={!playback.actionsLength} title={playback.playing ? 'Pause' : 'Play'} onClick={playback.togglePlay} />
     <ToolbarButton icon='debug-stop' title='Stop' onClick={playback.stop} disabled={!playback.canStop} />
@@ -303,7 +304,6 @@ export const PlaybackScrubber: React.FC<{
     aria-valuemax={100}
     aria-valuenow={Math.round(playback.percent)}
   >
-    <TraceTimestamp location='timeline' time={playback.time} style={{ left: `clamp(65px, ${playback.percent}%, calc(100% - 65px))` }} />
     <div className='playback-track' />
     <div
       className={'playback-track-filled' + (playback.animating ? ' animated' : '')}
