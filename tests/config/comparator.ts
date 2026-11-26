@@ -19,7 +19,7 @@ import { utils } from '../../packages/playwright-core/lib/coreBundle';
 const { getComparator } = utils;
 
 const pngComparator = getComparator('image/png');
-type ComparatorResult = { diff?: Buffer; errorMessage: string; } | null;
+type ComparatorResult = { diff?(): Buffer; errorMessage: string; } | null;
 type ImageComparatorOptions = { threshold?: number, maxDiffPixels?: number, maxDiffPixelRatio?: number };
 
 export function comparePNGs(actual: Buffer, expected: Buffer, options: ImageComparatorOptions = {}): ComparatorResult {

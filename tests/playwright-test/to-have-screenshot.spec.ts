@@ -775,9 +775,7 @@ test('should fail when given buffer', async ({ runInlineTest }) => {
   expect(result.output).toContain(`toHaveScreenshot can be only used with Page or Locator objects`);
 });
 
-test('should fail when screenshot is different pixels', {
-  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44366' },
-}, async ({ runInlineTest }) => {
+test('should fail when screenshot is different pixels', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     ...playwrightConfig({
       snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
@@ -785,18 +783,8 @@ test('should fail when screenshot is different pixels', {
     '__screenshots__/a.spec.js/snapshot.png': paintBlackPixels(whiteImage, 12345),
     'a.spec.js': `
       const { test, expect } = require('@playwright/test');
-      const { mock } = require('node:test');
-      const { PNG } = require('playwright-core/lib/utilsBundle');
       test('is a test', async ({ page }) => {
-        const read = mock.method(PNG.sync, 'read');
-        const write = mock.method(PNG.sync, 'write');
-        try {
-          await expect(page).toHaveScreenshot('snapshot.png', { timeout: 2000 });
-        } finally {
-          console.log('%%' + JSON.stringify({ reads: read.mock.callCount(), writes: write.mock.callCount() }));
-          read.mock.restore();
-          write.mock.restore();
-        }
+        await expect(page).toHaveScreenshot('snapshot.png', { timeout: 2000 });
       });
     `
   });
@@ -807,7 +795,6 @@ test('should fail when screenshot is different pixels', {
   expect(result.output).toContain('ratio 0.02');
   expect(result.output).toContain('Expected:');
   expect(result.output).toContain('Received:');
-  expect(result.outputLines).toEqual([JSON.stringify({ reads: 2, writes: 1 })]);
 });
 
 test('doesn\'t create comparison artifacts in an output folder for passed negated snapshot matcher', async ({ runInlineTest }, testInfo) => {

@@ -61,9 +61,9 @@ test('image comparator should encode the diff only once on demand', {
     expect(result).not.toBeNull();
     expect(result!.errorMessage).toContain('are different');
     expect(write.mock.callCount()).toBe(0);
-    encodedDiff = result!.diff!;
+    encodedDiff = result!.diff!();
     expect(write.mock.callCount()).toBe(1);
-    expect(result!.diff).toBe(encodedDiff);
+    expect(result!.diff!()).toBe(encodedDiff);
     expect(write.mock.callCount()).toBe(1);
     diffImage = write.mock.calls[0].arguments[0];
   } finally {

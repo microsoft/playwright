@@ -313,7 +313,7 @@ export function toMatchSnapshot(
     return helper.handleMatching();
 
   const header = formatMatcherMessage(this.utils, { promise: this.promise, isNot: this.isNot, matcherName: 'toMatchSnapshot', receiver: isString(received) ? 'string' : 'Buffer', expectation: 'expected' });
-  return helper.handleDifferent(received, expected, undefined, result.diff, header, result.errorMessage, undefined);
+  return helper.handleDifferent(received, expected, undefined, result.diff?.(), header, result.errorMessage, undefined);
 }
 
 export function toHaveScreenshotStepTitle(

@@ -724,7 +724,7 @@ export class Page extends SdkObject<PageEventMap> {
       actual?: Buffer,
       previous?: Buffer,
       errorMessage: string,
-      diff?: Buffer,
+      diff?(): Buffer,
     } | undefined;
 
     try {
@@ -732,31 +732,14 @@ export class Page extends SdkObject<PageEventMap> {
         throw new Error('"not" matcher requires expected result');
       const format = validateScreenshotOptions(options || {});
       const comparator = getComparator(`image/${format}`);
-      let baselineComparison: { actual: Buffer, result: ComparatorResult } | undefined;
-      const areEqualScreenshots = (actual: Buffer | undefined, expected: Buffer | undefined, previous: Buffer | undefined) => {
-        let comparatorResult: ComparatorResult | undefined;
-        if (actual && expected) {
-          if (expected === options.expected && baselineComparison?.actual.equals(actual))
-            comparatorResult = baselineComparison.result;
-          else
-            comparatorResult = comparator(actual, expected, options);
-          if (expected === options.expected)
-            baselineComparison = { actual, result: comparatorResult };
-        }
+      const areEqualScreenshots = (comparatorResult: ComparatorResult | undefined, actual: Buffer, previous: Buffer | undefined) => {
         if (comparatorResult !== undefined && !!comparatorResult === !!options.isNot)
           return true;
-        if (comparatorResult) {
-          intermediateResult = {
-            errorMessage: comparatorResult.errorMessage,
-            get diff() {
-              return comparatorResult.diff;
-            },
-            actual,
-            previous,
-          };
-        }
+        if (comparatorResult)
+          intermediateResult = { errorMessage: comparatorResult.errorMessage, diff: comparatorResult.diff, actual, previous };
         return false;
       };
+      let baselineComparison: { actual: Buffer, result: ComparatorResult } | undefined;
       let actual: Buffer | undefined;
       let previous: Buffer | undefined;
       const pollIntervals = [0, 100, 250, 500];
@@ -782,7 +765,10 @@ export class Page extends SdkObject<PageEventMap> {
           continue;
         // Compare against expectation for the first iteration.
         const expectation = options.expected && isFirstIteration ? options.expected : previous;
-        if (areEqualScreenshots(actual, expectation, previous))
+        const comparatorResult = expectation ? comparator(actual, expectation, options) : undefined;
+        if (isFirstIteration && options.expected && comparatorResult !== undefined)
+          baselineComparison = { actual, result: comparatorResult };
+        if (areEqualScreenshots(comparatorResult, actual, previous))
           break;
         if (intermediateResult)
           progress.log(intermediateResult.errorMessage);
@@ -800,7 +786,8 @@ export class Page extends SdkObject<PageEventMap> {
         return {};
       }
 
-      if (areEqualScreenshots(actual, options.expected, undefined)) {
+      const comparatorResult = baselineComparison?.actual.equals(actual) ? baselineComparison.result : comparator(actual, options.expected, options);
+      if (areEqualScreenshots(comparatorResult, actual, undefined)) {
         progress.log(`screenshot matched expectation`);
         return {};
       }
@@ -817,7 +804,7 @@ export class Page extends SdkObject<PageEventMap> {
         log: compressCallLog(e.message ? [...progress.metadata.log, e.message] : progress.metadata.log),
         actual: intermediateResult?.actual,
         previous: intermediateResult?.previous,
-        diff: intermediateResult?.diff,
+        diff: intermediateResult?.diff?.(),
         timedOut: (e instanceof TimeoutError),
         customErrorMessage: errorMessage,
       };

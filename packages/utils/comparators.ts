@@ -28,7 +28,7 @@ import { decodeWebp } from './webp/webp';
 import type { ImageData } from '@isomorphic/imageUtils';
 
 export type ImageComparatorOptions = { threshold?: number, maxDiffPixels?: number, maxDiffPixelRatio?: number, comparator?: string };
-export type ComparatorResult = { diff?: Buffer; errorMessage: string; } | null;
+export type ComparatorResult = { diff?(): Buffer; errorMessage: string; } | null;
 export type Comparator = (actualBuffer: Buffer | string, expectedBuffer: Buffer, options?: any) => ComparatorResult;
 
 export function getComparator(mimeType: string): Comparator {
@@ -110,7 +110,7 @@ function compareImages(mimeType: string, actualBuffer: Buffer | string, expected
     let diffPng: Buffer | undefined;
     return {
       errorMessage: sizesMismatchError + pixelsMismatchError,
-      get diff() {
+      diff() {
         return diffPng ??= PNG.sync.write(diff);
       },
     };
