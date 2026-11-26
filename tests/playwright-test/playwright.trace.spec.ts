@@ -439,6 +439,73 @@ test('should not override trace file in afterAll', async ({ runInlineTest, serve
   expect(error).toBeTruthy();
 });
 
+for (const mode of ['retain-on-failure', 'retain-on-first-failure', 'retain-on-failure-and-retries']) {
+  for (const sharedContext of [false, true]) {
+    test(`trace:${mode} should retain browser snapshots when only afterAll fails (shared context: ${sharedContext})`, async ({ runInlineTest }, testInfo) => {
+      const result = await runInlineTest({
+        'playwright.config.ts': `
+          module.exports = { use: { trace: '${mode}' } };
+        `,
+        'a.spec.ts': `
+          import { test, expect } from '@playwright/test';
+
+          ${sharedContext ? `
+            let context;
+            let sharedPage;
+            test.beforeAll(async ({ browser }) => {
+              context = await browser.newContext();
+              sharedPage = await context.newPage();
+            });
+          ` : ''}
+
+          test('passes', async ({ page }) => {
+            const target = ${sharedContext ? 'sharedPage' : 'page'};
+            await target.setContent('<button onclick="this.textContent = \\'clicked\\'">click me</button>');
+            await target.getByRole('button', { name: 'click me' }).click();
+            await expect(target.getByRole('button')).toHaveText('clicked');
+          });
+
+          test.afterAll(async () => {
+            ${sharedContext ? 'await context.close();' : ''}
+            throw new Error('afterAll failed');
+          });
+        `,
+      }, { workers: 1 });
+
+      expect(result.exitCode).toBe(1);
+      expect(result.failed).toBe(1);
+      expect(result.output).toContain('afterAll failed');
+      const trace = await parseTraceRaw(testInfo.outputPath('test-results', 'a-passes', 'trace.zip'));
+      const click = trace.actionObjects.find(action => action.method === 'click');
+      expect(click).toBeTruthy();
+      expect(trace.events).toContainEqual(expect.objectContaining({
+        type: 'frame-snapshot',
+        snapshot: expect.objectContaining({ callId: click!.callId }),
+      }));
+    });
+  }
+}
+
+test('should discard traces when afterAll succeeds', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { use: { trace: 'retain-on-failure' } };
+    `,
+    'a.spec.ts': `
+      import { test } from '@playwright/test';
+      test('passes', async ({ page }) => {
+        await page.setContent('<button>click me</button>');
+        await page.getByRole('button').click();
+      });
+      test.afterAll(async () => {});
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-passes', 'trace.zip'))).toBeFalsy();
+});
+
 test('should retain traces for interrupted tests', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.ts': `

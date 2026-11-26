@@ -441,7 +441,13 @@ export class WorkerMain extends ProcessRunner {
         firstAfterHooksError = firstAfterHooksError ?? error;
       }
 
-      testInfo._tracing.didFinishTestFunctionAndAfterEachHooks();
+      // Keep browser trace chunks until afterAll hooks have had a chance to fail.
+      // Test-scoped fixture teardown stops tracing before these hooks run.
+      const hasPendingAfterAllHooks = reversedSuites.some(suite =>
+        this._activeSuites.has(suite) && (!nextSuites.has(suite) || testInfo._isFailure()) &&
+        suite._hooks.some(hook => hook.type === 'afterAll'));
+      if (!hasPendingAfterAllHooks)
+        testInfo._tracing.didFinishTestFunctionAndAfterEachHooks();
 
       try {
         // Teardown test-scoped fixtures. Attribute to 'test' so that users understand
@@ -464,6 +470,7 @@ export class WorkerMain extends ProcessRunner {
           }
         }
       }
+      testInfo._tracing.didFinishTestFunctionAndAfterEachHooks();
       if (firstAfterHooksError)
         throw firstAfterHooksError;
     }).catch(() => {});  // Ignore the top-level error, it is already inside TestInfo.errors.
