@@ -447,9 +447,10 @@ const evaluate = declareCommand({
   }),
   options: z.object({
     filename: z.string().optional().describe('Save evaluation result to a file instead of returning it in the response.'),
+    format: z.enum(['json', 'string', 'default']).optional().describe('Result format: json (JSON.stringify), string (String), or default (JSON for JSON-compatible values, JavaScript inspection otherwise).'),
   }),
   toolName: 'browser_evaluate',
-  toolParams: ({ func, target, filename }) => ({ function: func, filename, target }),
+  toolParams: ({ func, target, filename, format }) => ({ function: func, filename, target, format }),
 });
 
 const dialogAccept = declareCommand({

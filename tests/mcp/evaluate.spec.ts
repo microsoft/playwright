@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
+
 import { test, expect } from './fixtures';
 
 test('browser_evaluate', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43752' } }, async ({ client, server }) => {
@@ -139,6 +141,11 @@ test('browser_evaluate object', { annotation: { type: 'issue', description: 'htt
     name: 'browser_evaluate',
     arguments: { function: '() => window.evaluationCount' },
   })).toHaveResponse({ result: '1' });
+
+  expect(await client.callTool({
+    name: 'browser_evaluate',
+    arguments: { function: `() => new Date('2026-01-01T00:00:00Z')`, format: 'json' },
+  })).toHaveResponse({ result: '"2026-01-01T00:00:00.000Z"' });
 });
 
 test('browser_evaluate expression', async ({ client, server }) => {
@@ -200,6 +207,44 @@ test('browser_evaluate expression', async ({ client, server }) => {
   });
 });
 
+test('browser_evaluate format', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44295' } }, async ({ client, server }, testInfo) => {
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  });
+
+  const expression = `() => 'first line\\nsecond line\\n'`;
+  expect(await client.callTool({
+    name: 'browser_evaluate',
+    arguments: { function: expression, filename: 'eval-out.txt' },
+  })).toHaveResponse({
+    result: expect.stringContaining('eval-out.txt'),
+  });
+  expect(await fs.promises.readFile(testInfo.outputPath('eval-out.txt'), 'utf8')).toBe(JSON.stringify('first line\nsecond line\n'));
+
+  await client.callTool({
+    name: 'browser_evaluate',
+    arguments: { function: expression, filename: 'eval-out.json', format: 'string' },
+  });
+  expect(await fs.promises.readFile(testInfo.outputPath('eval-out.json'), 'utf8')).toBe('first line\nsecond line\n');
+
+  expect(await client.callTool({
+    name: 'browser_evaluate',
+    arguments: { function: expression, format: 'string' },
+  })).toHaveResponse({ result: 'first line\nsecond line' });
+
+  expect(await client.callTool({
+    name: 'browser_evaluate',
+    arguments: { function: expression, format: 'default' },
+  })).toHaveResponse({ result: JSON.stringify('first line\nsecond line\n') });
+
+  await client.callTool({
+    name: 'browser_evaluate',
+    arguments: { function: `() => ({ a: 1 })`, filename: 'eval-object.txt', format: 'json' },
+  });
+  expect(await fs.promises.readFile(testInfo.outputPath('eval-object.txt'), 'utf8')).toBe(JSON.stringify({ a: 1 }, null, 2));
+});
+
 test('browser_evaluate (error)', async ({ client, server }) => {
   expect(await client.callTool({
     name: 'browser_navigate',
@@ -220,4 +265,12 @@ test('browser_evaluate (error)', async ({ client, server }) => {
   // Check for common error patterns across browsers
   const errorText = result.content?.[0]?.text || '';
   expect(errorText).toMatch(/not defined|Can't find variable/);
+
+  expect(await client.callTool({
+    name: 'browser_evaluate',
+    arguments: { function: '() => undefined', format: 'json' },
+  })).toHaveResponse({
+    isError: true,
+    error: 'Evaluation result cannot be represented as JSON.',
+  });
 });

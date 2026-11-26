@@ -27,6 +27,7 @@ import type { Tab } from './tab';
 const evaluateSchema = optionalElementSchema.extend({
   function: z.string().describe('() => { /* code */ } or (element) => { /* code */ } when element is provided'),
   filename: z.string().optional().describe('File name to save the result to. Relative file names are resolved against the workspace root. If not provided, result is returned as text.'),
+  format: z.enum(['json', 'string', 'default']).optional().describe('Result format: "json" uses JSON.stringify, "string" uses String, and "default" (the default) uses JSON for JSON-compatible values and JavaScript inspection otherwise. Applies to both inline and file results, regardless of filename extension.'),
 });
 
 const evaluate = defineTabTool({
@@ -69,15 +70,26 @@ const evaluate = defineTabTool({
       else
         response.addCode(`await page.evaluate(${escapeWithQuotes(codeExpression)});`);
 
-      const text = isJSONValue(evalResult.result) ? JSON.stringify(evalResult.result, null, 2) : inspect(evalResult.result, {
-        depth: null,
-        maxArrayLength: null,
-        maxStringLength: null,
-        compact: false,
-        colors: false,
-        customInspect: false,
-      });
-      await response.addResult('Evaluation result', text, { prefix: 'result', ext: 'json', suggestedFilename: params.filename });
+      let text: string | undefined;
+      let ext = 'txt';
+      if (params.format === 'string') {
+        text = String(evalResult.result);
+      } else if (params.format === 'json' || isJSONValue(evalResult.result)) {
+        text = JSON.stringify(evalResult.result, null, 2);
+        if (text === undefined)
+          throw new Error('Evaluation result cannot be represented as JSON.');
+        ext = 'json';
+      } else {
+        text = inspect(evalResult.result, {
+          depth: null,
+          maxArrayLength: null,
+          maxStringLength: null,
+          compact: false,
+          colors: false,
+          customInspect: false,
+        });
+      }
+      await response.addResult('Evaluation result', text, { prefix: 'result', ext, suggestedFilename: params.filename });
     }).catch(e => {
       response.addError(e instanceof Error ? e.message : String(e));
     });
