@@ -1153,12 +1153,12 @@ System.out.println(result); // prints "myId text 56"
 ```
 
 ```python async
-result = await page.get_by_testid("myId").evaluate("(element, [x, y]) => element.textContent + ' ' + x * y", [7, 8])
+result = await page.get_by_test_id("myId").evaluate("(element, [x, y]) => element.textContent + ' ' + x * y", [7, 8])
 print(result) # prints "myId text 56"
 ```
 
 ```python sync
-result = page.get_by_testid("myId").evaluate("(element, [x, y]) => element.textContent + ' ' + x * y", [7, 8])
+result = page.get_by_test_id("myId").evaluate("(element, [x, y]) => element.textContent + ' ' + x * y", [7, 8])
 print(result) # prints "myId text 56"
 ```
 
