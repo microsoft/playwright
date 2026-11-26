@@ -95,6 +95,22 @@ test('client controls the tab again after a frame with an unknown scheme detache
   });
 });
 
+test('client controls the tab again after a second detach shortly after the first one', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44399' },
+}, async ({ user, connectWithToken }) => {
+  const client = await connectWithToken('worker');
+  await client.navigate('SignIn');
+  const detaches = await recordDebuggerDetach(user);
+
+  await addFrameWithUnknownScheme(user, 'SignIn');
+  await expect.poll(detaches).toHaveLength(1);
+  await client.expectControls('SignIn');
+
+  await addFrameWithUnknownScheme(user, 'SignIn');
+  await expect.poll(detaches).toHaveLength(2);
+  await client.expectControls('SignIn');
+});
+
 testWithFrameInjector('client reports an error when the frame of another extension detaches the debugger', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43230' },
 }, async ({ user, connectWithToken }) => {
