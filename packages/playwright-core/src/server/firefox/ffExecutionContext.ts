@@ -37,6 +37,7 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
   async rawEvaluateJSON(expression: string): Promise<any> {
     const payload = await this._session.send('Runtime.evaluate', {
       expression,
+      userGesture: true,
       returnByValue: true,
       executionContextId: this._executionContextId,
     }).catch(rewriteError);
@@ -47,6 +48,7 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
   async rawEvaluateHandle(context: js.ExecutionContext, expression: string): Promise<js.JSHandle> {
     const payload = await this._session.send('Runtime.evaluate', {
       expression,
+      userGesture: true,
       returnByValue: false,
       executionContextId: this._executionContextId,
     }).catch(rewriteError);
@@ -57,6 +59,7 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
   async evaluateWithArguments(expression: string, returnByValue: boolean, utilityScript: js.JSHandle, values: any[], handles: js.JSHandle[]): Promise<any> {
     const payload = await this._session.send('Runtime.callFunction', {
       functionDeclaration: expression,
+      userGesture: true,
       args: [
         { objectId: utilityScript._objectId, value: undefined },
         ...values.map(value => ({ value })),

@@ -437,8 +437,12 @@ class NetworkRequest {
     // Turns out webcompat shims might redirect to
     // SimpleChannel, so we get requests from a different channel.
     // See https://github.com/microsoft/playwright/issues/9418#issuecomment-944836244
-    if (aRequest !== this.httpChannel)
+    if (aRequest !== this.httpChannel) {
+      // The non-HTTP redirect has finished, but its original channel is still tracked.
+      this._networkObserver._channelToRequest.delete(this.httpChannel);
+      this._releaseReferences();
       return;
+    }
     try {
       this._originalListener.onStopRequest(aRequest, aStatusCode);
     } catch (e) {

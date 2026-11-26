@@ -22,6 +22,7 @@ juggler.jar:
   content/content/main.js (content/main.js)
   content/content/FrameTree.js (content/FrameTree.js)
   content/content/PageAgent.js (content/PageAgent.js)
+  content/content/FilePicker.js (content/FilePicker.js)
   content/content/Runtime.js (content/Runtime.js)
   content/content/WorkerMain.js (content/WorkerMain.js)
   content/content/hidden-scrollbars.css (content/hidden-scrollbars.css)

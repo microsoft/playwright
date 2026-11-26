@@ -231,6 +231,7 @@ const Browser = {
     'newPage': {
       params: {
         browserContextId: t.Optional(t.String),
+        background: t.Optional(t.Boolean),
       },
       returns: {
         targetId: t.String,
@@ -583,6 +584,8 @@ const Runtime = {
         executionContextId: t.String,
         expression: t.String,
         returnByValue: t.Optional(t.Boolean),
+        // Defaults to false.
+        userGesture: t.Optional(t.Boolean),
       },
 
       returns: {
@@ -596,6 +599,8 @@ const Runtime = {
         executionContextId: t.String,
         functionDeclaration: t.String,
         returnByValue: t.Optional(t.Boolean),
+        // Defaults to false.
+        userGesture: t.Optional(t.Boolean),
         args: t.Array(runtimeTypes.CallFunctionArgument),
       },
 

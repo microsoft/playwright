@@ -91,6 +91,7 @@ export namespace Protocol {
     export type removeBrowserContextReturnValue = void;
     export type newPageParameters = {
       browserContextId?: string;
+      background?: boolean;
     };
     export type newPageReturnValue = {
       targetId: string;
@@ -816,6 +817,7 @@ export namespace Protocol {
       executionContextId: string;
       expression: string;
       returnByValue?: boolean;
+      userGesture?: boolean;
     };
     export type evaluateReturnValue = {
       result?: {
@@ -835,6 +837,7 @@ export namespace Protocol {
       executionContextId: string;
       functionDeclaration: string;
       returnByValue?: boolean;
+      userGesture?: boolean;
       args: {
         objectId?: string;
         unserializableValue?: ("Infinity"|"-Infinity"|"-0"|"NaN");
