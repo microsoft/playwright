@@ -50,7 +50,7 @@ import type * as network from './network';
 import type { Progress } from './progress';
 import type { ScreenshotOptions } from './screenshotter';
 import type * as types from './types';
-import type { ImageComparatorOptions } from '@utils/comparators';
+import type { ComparatorResult, ImageComparatorOptions } from '@utils/comparators';
 import type * as channels from './channels';
 import type { BindingPayload } from '@injected/bindingsController';
 import type { AriaNodeJSON, AriaSnapshotJSON } from '@isomorphic/ariaSnapshot';
@@ -720,11 +720,11 @@ export class Page extends SdkObject<PageEventMap> {
       return await this.screenshotter.screenshotPage(progress, options || {});
     };
 
-    let intermediateResult: {
-      actual?: Buffer,
+    let lastMismatch: {
+      actual: Buffer,
       previous?: Buffer,
       errorMessage: string,
-      diff?: Buffer,
+      diff?(): Buffer,
     } | undefined;
 
     try {
@@ -732,75 +732,97 @@ export class Page extends SdkObject<PageEventMap> {
         throw new Error('"not" matcher requires expected result');
       const format = validateScreenshotOptions(options || {});
       const comparator = getComparator(`image/${format}`);
-      const areEqualScreenshots = (actual: Buffer | undefined, expected: Buffer | undefined, previous: Buffer | undefined) => {
-        const comparatorResult = actual && expected ? comparator(actual, expected, options) : undefined;
-        if (comparatorResult !== undefined && !!comparatorResult === !!options.isNot)
-          return true;
-        if (comparatorResult)
-          intermediateResult = { errorMessage: comparatorResult.errorMessage, diff: comparatorResult.diff, actual, previous };
-        return false;
-      };
-      let actual: Buffer | undefined;
-      let previous: Buffer | undefined;
       const pollIntervals = [0, 100, 250, 500];
       if (options.expected)
         progress.log(`  verifying given screenshot expectation`);
       else
         progress.log(`  generating new stable screenshot expectation`);
-      let isFirstIteration = true;
-      while (true) {
+
+      // Returns undefined when the screenshot failed and it is safe to try again.
+      const takeScreenshot = async (progress: Progress): Promise<Buffer | undefined> => {
         if (this.isClosed())
           throw new Error('The page has closed');
         const screenshotTimeout = pollIntervals.shift() ?? 1000;
         if (screenshotTimeout)
           progress.log(`waiting ${screenshotTimeout}ms before taking screenshot`);
-        previous = actual;
-        actual = await rafrafScreenshot(progress, screenshotTimeout).catch(e => {
+        return await rafrafScreenshot(progress, screenshotTimeout).catch(e => {
           if (this.mainFrame().isNonRetriableError(e))
             throw e;
           progress.log(`failed to take screenshot - ` + e.message);
           return undefined;
         });
-        if (!actual)
+      };
+
+      if (options.isNot) {
+        // Pass as soon as a screenshot differs from the expectation, otherwise poll until the timeout.
+        while (true) {
+          const actual = await takeScreenshot(progress);
+          if (actual && comparator(actual, options.expected!, options)) {
+            progress.log(`screenshot matched expectation`);
+            return {};
+          }
+        }
+      }
+
+      // Step 1: take the first screenshot. When it matches the expectation, we are done.
+      let first: Buffer | undefined;
+      while (!first)
+        first = await takeScreenshot(progress);
+      let firstMismatch: ComparatorResult = null;
+      if (options.expected) {
+        firstMismatch = comparator(first, options.expected, options);
+        if (!firstMismatch) {
+          progress.log(`screenshot matched expectation`);
+          return {};
+        }
+        lastMismatch = { ...firstMismatch, actual: first };
+        progress.log(firstMismatch.errorMessage);
+      }
+
+      // Step 2: take screenshots until two consecutive ones are equal.
+      let stable = first;
+      while (true) {
+        const next = await takeScreenshot(progress);
+        if (!next)
           continue;
-        // Compare against expectation for the first iteration.
-        const expectation = options.expected && isFirstIteration ? options.expected : previous;
-        if (areEqualScreenshots(actual, expectation, previous))
+        const previous = stable;
+        stable = next;
+        const mismatch = comparator(next, previous, options);
+        if (!mismatch)
           break;
-        if (intermediateResult)
-          progress.log(intermediateResult.errorMessage);
-        isFirstIteration = false;
+        lastMismatch = { ...mismatch, actual: next, previous };
+        progress.log(mismatch.errorMessage);
       }
+      progress.log(`captured a stable screenshot`);
 
-      if (!isFirstIteration)
-        progress.log(`captured a stable screenshot`);
-
+      // Step 3: compare the stable screenshot with the expectation.
       if (!options.expected)
-        return { actual };
-
-      if (isFirstIteration) {
+        return { actual: stable };
+      const stableMismatch = stable.equals(first) ? firstMismatch : comparator(stable, options.expected, options);
+      if (!stableMismatch) {
         progress.log(`screenshot matched expectation`);
         return {};
       }
-
-      if (areEqualScreenshots(actual, options.expected, undefined)) {
-        progress.log(`screenshot matched expectation`);
-        return {};
-      }
-      throw new Error(intermediateResult!.errorMessage);
+      lastMismatch = { ...stableMismatch, actual: stable };
+      throw new Error(stableMismatch.errorMessage);
     } catch (e) {
       // Q: Why not throw upon isNonRetriableError(e) as in other places?
       // A: We want user to receive a friendly diff between actual and expected/previous.
       if (js.isJavaScriptErrorInEvaluate(e) || isInvalidSelectorError(e))
         throw e;
       let errorMessage = e.message;
-      if (e instanceof TimeoutError && intermediateResult?.previous)
+      if (e instanceof TimeoutError && lastMismatch?.previous)
         errorMessage = `Failed to take two consecutive stable screenshots.`;
+      let diff: Buffer | undefined;
+      try {
+        diff = lastMismatch?.diff?.();
+      } catch {
+      }
       const details: channels.PageExpectScreenshotErrorDetails = {
         log: compressCallLog(e.message ? [...progress.metadata.log, e.message] : progress.metadata.log),
-        actual: intermediateResult?.actual,
-        previous: intermediateResult?.previous,
-        diff: intermediateResult?.diff,
+        actual: lastMismatch?.actual,
+        previous: lastMismatch?.previous,
+        diff,
         timedOut: (e instanceof TimeoutError),
         customErrorMessage: errorMessage,
       };
