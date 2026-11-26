@@ -43,7 +43,7 @@ stateDiagram-v2
 
 Two details:
 
-- **Second announcement.** Chrome reports `target_closed` for a tab that stays open, for example when a frame goes to an unknown scheme. The client forgets the tab on each detach. Thus, 150 ms after such a detach, `OwnedTab` announces the tab again, at most one time in 3 seconds for each tab.
+- **Second announcement.** Chrome reports `target_closed` for a tab that stays open, for example when a frame goes to an unknown scheme. The client forgets the tab on each detach. Thus, 150 ms after such a detach, `OwnedTab` announces the tab again, at most one time in 3 seconds for each tab. A detach within these 3 seconds delays the announcement to their end.
 - **Closed tab in a group.** When a grouped tab closes, Chrome first reports that the tab left its group. The client then gets a release, not `chrome.tabs.onRemoved`. The client drops the tab in both cases.
 
 ## Classes

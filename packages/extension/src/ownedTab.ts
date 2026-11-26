@@ -32,6 +32,7 @@ export class OwnedTab {
   private _attached = false;
   private _disposed = false;
   private _lastReannounceTime = 0;
+  private _reannounceTimer: ReturnType<typeof setTimeout> | undefined;
 
   constructor(tab: chrome.tabs.Tab, session: ClientSession, announce: boolean) {
     this.tabId = tab.id!;
@@ -87,16 +88,18 @@ export class OwnedTab {
       this._reannounceLater();
   }
 
+  // A detach within the cooldown delays the announcement instead of dropping it, so that the tab is not lost.
   private _reannounceLater(): void {
-    const now = Date.now();
-    if (now - this._lastReannounceTime < REANNOUNCE_COOLDOWN_MS)
+    if (this._reannounceTimer)
       return;
-    this._lastReannounceTime = now;
-    setTimeout(async () => {
+    const delay = Math.max(REANNOUNCE_DELAY_MS, this._lastReannounceTime + REANNOUNCE_COOLDOWN_MS - Date.now());
+    this._reannounceTimer = setTimeout(async () => {
+      this._reannounceTimer = undefined;
+      this._lastReannounceTime = Date.now();
       const tab = await chrome.tabs.get(this.tabId).catch(() => undefined);
       if (tab && !this._disposed)
         this._announce(tab);
-    }, REANNOUNCE_DELAY_MS);
+    }, delay);
   }
 
   // The client attaches the debugger to each tab that is announced to it.
