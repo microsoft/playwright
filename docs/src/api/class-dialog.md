@@ -53,7 +53,7 @@ async def run(playwright: Playwright):
     browser = await chromium.launch()
     page = await browser.new_page()
     page.on("dialog", handle_dialog)
-    page.evaluate("alert('1')")
+    await page.evaluate("alert('1')")
     await browser.close()
 
 async def main():

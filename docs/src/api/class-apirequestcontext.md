@@ -56,7 +56,7 @@ async def run(playwright: Playwright):
         data={"name": REPO},
     )
     assert response.ok
-    assert response.json()["name"] == REPO
+    assert (await response.json())["name"] == REPO
 
     # Delete a repository.
     response = await api_request_context.delete(
@@ -68,7 +68,7 @@ async def run(playwright: Playwright):
         },
     )
     assert response.ok
-    assert await response.body() == '{"status": "ok"}'
+    assert await response.text() == '{"status": "ok"}'
 
 async def main():
     async with async_playwright() as playwright:
@@ -121,7 +121,7 @@ with sync_playwright() as p:
         },
     )
     assert response.ok
-    assert await response.body() == '{"status": "ok"}'
+    assert response.text() == '{"status": "ok"}'
 ```
 
 ## async method: APIRequestContext.addCookies

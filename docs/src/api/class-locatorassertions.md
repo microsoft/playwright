@@ -1161,7 +1161,7 @@ await expect(locator).to_contain_class(["inactive", "active", "inactive"])
 from playwright.sync_api import expect
 
 locator = page.locator(".list > .component")
-await expect(locator).to_contain_class(["inactive", "active", "inactive"])
+expect(locator).to_contain_class(["inactive", "active", "inactive"])
 ```
 
 ```csharp
