@@ -222,6 +222,35 @@ test('should fallback to *:* when baseurl and paths are specified', async ({ run
   expect(result.output).not.toContain(`Could not`);
 });
 
+test('should use the first path substitution that resolves', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a/util.ts': `
+      export const who = 'a';
+    `,
+    'b/util.ts': `
+      export const who = 'b';
+    `,
+    'tsconfig.json': `{
+      "compilerOptions": {
+        "baseUrl": ".",
+        "paths": {
+          "@lib/*": ["./a/*", "./b/*"],
+        },
+      },
+    }`,
+    'a.test.ts': `
+      import { who } from '@lib/util';
+      import { test, expect } from '@playwright/test';
+      test('test', ({}) => {
+        expect(who).toBe('a');
+      });
+    `,
+  });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
 test('should use the location of the tsconfig as the paths root when no baseUrl is specified', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'foo/bar/util/b.ts': `
