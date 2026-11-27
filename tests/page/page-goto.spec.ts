@@ -87,6 +87,35 @@ it('NA-007 should work with cross-process that fails before committing', async (
   expect(error instanceof Error).toBeTruthy();
 });
 
+it('NA-098 should work with redirect chain through visited sites', async ({ page, server, channel }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43067' });
+  it.skip(!!process.env.INSIDE_DOCKER, 'docker does not support IPv6 by default');
+  it.skip(channel === 'webkit-wsl', 'WebKit on WSL does not support IPv6: https://github.com/microsoft/WSL/issues/10803');
+
+  const thirdSite = `http://[::1]:${server.PORT}`;
+  server.setRedirect('/redirect1', server.CROSS_PROCESS_PREFIX + '/redirect2');
+  server.setRedirect('/redirect2', server.EMPTY_PAGE);
+  // WebKit reuses the processes of the previously visited sites for the redirects.
+  for (const site of [server.PREFIX, server.CROSS_PROCESS_PREFIX, thirdSite])
+    await (await page.goto(site + '/empty.html')).finished();
+
+  const response = await page.goto(thirdSite + '/redirect1');
+  expect(response.status()).toBe(200);
+  expect(page.url()).toBe(server.EMPTY_PAGE);
+});
+
+it('NA-099 should fail request of a canceled cross-process navigation', async ({ page, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43067' });
+  server.setRoute('/hang.html', () => {});
+  await page.goto(server.EMPTY_PAGE);
+  const requestFailedPromise = page.waitForEvent('requestfailed');
+  const error = page.goto(server.CROSS_PROCESS_PREFIX + '/hang.html').catch(e => e);
+  await server.waitForRequest('/hang.html');
+  await page.goto(server.PREFIX + '/title.html');
+  expect((await requestFailedPromise).url()).toBe(server.CROSS_PROCESS_PREFIX + '/hang.html');
+  expect(await error).toBeInstanceOf(Error);
+});
+
 it('NA-008 should work with Cross-Origin-Opener-Policy', async ({ page, server }) => {
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
