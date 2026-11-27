@@ -6,6 +6,13 @@
 #
 # Generated from 773 failing tests across 16 categories.
 
+# Intercepted request cookies are estimated only in the patched WebKit backend.
+# Stock WebView still exposes provisional headers without cookies.
+page/page-route.spec.ts › RO-009 should not override cookie header [fail]
+page/page-network-request.spec.ts › NE-146 should report cookies with an unrelated route [fail]
+page/page-network-request.spec.ts › NE-148 should report sent cookies after a route changes the URL and cookies [fail]
+page/page-event-network.spec.ts › NE-147 should preserve intercepted navigation events during cookie lookup [fail]
+
 # ============================================================================
 # viewport-emulation  (56 tests)
 # Viewport emulation is not available over the stock iOS Web Inspector

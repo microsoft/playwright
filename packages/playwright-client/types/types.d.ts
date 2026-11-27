@@ -22822,6 +22822,15 @@ export const webkit: BrowserType;
 export interface Request {
   /**
    * An object with all the request HTTP headers associated with this request. The header names are lower-cased.
+   *
+   * **NOTE** When a page or browser context has any routes registered with
+   * [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route) or
+   * [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route),
+   * headers may not exactly match those sent over the network, even if no route matches this request. In WebKit, the
+   * first header read uses the real headers if the response has arrived. Otherwise, it uses provisional headers with
+   * cookies estimated from the browser context's cookie jar. The estimate cannot account for the request's credentials
+   * mode or all browser cookie policies. Later reads return the same headers as the first read.
+   *
    */
   allHeaders(): Promise<{ [key: string]: string; }>;
 
@@ -22899,6 +22908,10 @@ export interface Request {
    * An array with all the request HTTP headers associated with this request. Unlike
    * [request.allHeaders()](https://playwright.dev/docs/api/class-request#request-all-headers), header names are NOT
    * lower-cased. Headers with multiple entries, such as `Set-Cookie`, appear in the array multiple times.
+   *
+   * **NOTE** When a page or browser context has routes registered, the same accuracy limits as
+   * [request.allHeaders()](https://playwright.dev/docs/api/class-request#request-all-headers) apply.
+   *
    */
   headersArray(): Promise<Array<{
     /**
@@ -22914,6 +22927,10 @@ export interface Request {
 
   /**
    * Returns the value of the header matching the name. The name is case-insensitive.
+   *
+   * **NOTE** When a page or browser context has routes registered, the same accuracy limits as
+   * [request.allHeaders()](https://playwright.dev/docs/api/class-request#request-all-headers) apply.
+   *
    * @param name Name of the header.
    */
   headerValue(name: string): Promise<null|string>;

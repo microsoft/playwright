@@ -167,7 +167,7 @@ it('RO-008 should properly return navigation response when URL has cookies', asy
   expect(response.status()).toBe(200);
 });
 
-it('RO-009 should not override cookie header', async ({ page, server, browserName }) => {
+it('RO-009 should not override cookie header', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/16773' });
 
   await page.goto(server.EMPTY_PAGE);
@@ -184,8 +184,7 @@ it('RO-009 should not override cookie header', async ({ page, server, browserNam
     page.goto(server.EMPTY_PAGE),
   ]);
 
-  if (browserName !== 'webkit')
-    expect.soft(cookieValueInRoute).toBe('original=value');
+  expect.soft(cookieValueInRoute).toBe('original=value');
   expect.soft(serverReq.headers['cookie']).toBe('original=value');
 });
 

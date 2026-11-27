@@ -23,6 +23,8 @@ import { eventsHelper } from '@utils/eventsHelper';
 import { hostPlatform } from '@utils/hostPlatform';
 import { encodeWebp } from '@utils/webp/webp';
 import { assert } from '@isomorphic/assert';
+import { debugLogger } from '@utils/debugLogger';
+import { serializeCookieNameValue } from '../cookieStore';
 import * as dialog from '../dialog';
 import * as dom from '../dom';
 import { TargetClosedError } from '../errors';
@@ -1098,9 +1100,10 @@ export class WKPage implements PageDelegate {
     let route;
     if (intercepted) {
       route = new WKRouteImpl(session, event.requestId);
-      // There is no point in waiting for the raw headers in Network.responseReceived when intercepting.
-      // Use provisional headers as raw headers, so that client can call allHeaders() from the route handler.
-      request.request.setRawRequestHeaders(null);
+      // Prefer responseReceived's real headers, unless headers are requested before the response.
+      const topLevelNavigation = isNavigationRequest && !frame.parentFrame();
+      const topLevelURL = topLevelNavigation ? event.request.url : this._page.mainFrame().url();
+      request.request.setRawRequestHeadersFallback(() => this._interceptedRequestHeaders(event, topLevelNavigation, topLevelURL));
     }
     this._requestIdToRequest.set(event.requestId, request);
     this._page.frameManager.requestStarted(request.request, route);
@@ -1129,6 +1132,40 @@ export class WKPage implements PageDelegate {
     }
     this._requestIdToRequestWillBeSentEvent.delete(event.requestId);
     this._onRequest(session, requestWillBeSentEvent, true);
+  }
+
+  private async _interceptedRequestHeaders(event: Protocol.Network.requestWillBeSentPayload, topLevelNavigation: boolean, topLevelURL: string): Promise<types.HeadersArray> {
+    const headers = headersObjectToArray(event.request.headers);
+    if (headers.some(header => header.name.toLowerCase() === 'cookie'))
+      return headers;
+    const url = new URL(event.request.url);
+    const fetchSite = headers.find(header => header.name.toLowerCase() === 'sec-fetch-site')?.value;
+    const crossSite = fetchSite === 'cross-site';
+    const topLevel = network.parseURL(topLevelURL);
+    try {
+      const cookies = await this._browserContext.doGetCookies([event.request.url]);
+      const matchingCookies = cookies.filter(cookie => {
+        if (cookie.secure && url.protocol !== 'https:')
+          return false;
+        if (cookie.partitionKey) {
+          const partition = network.parseURL(cookie.partitionKey);
+          if (!partition || !topLevel || partition.protocol !== topLevel.protocol || !network.domainMatches(topLevel.hostname, '.' + partition.hostname))
+            return false;
+        } else if (process.platform === 'darwin' && crossSite && !topLevelNavigation) {
+          return false;
+        }
+        if (crossSite && cookie.sameSite !== 'None') {
+          if (cookie.sameSite === 'Strict' || !topLevelNavigation || !['GET', 'HEAD', 'OPTIONS', 'TRACE'].includes(event.request.method))
+            return false;
+        }
+        return true;
+      }).sort((a, b) => b.path.length - a.path.length);
+      if (matchingCookies.length)
+        headers.push({ name: 'Cookie', value: matchingCookies.map(serializeCookieNameValue).join('; ') });
+    } catch (error) {
+      debugLogger.log('error', error);
+    }
+    return headers;
   }
 
   _onResponseReceived(session: WKSession, event: Protocol.Network.responseReceivedPayload) {

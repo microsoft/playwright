@@ -19,6 +19,8 @@ import { test as it, expect } from './pageTest';
 import { attachFrame } from '../config/utils';
 import fs from 'fs';
 
+import type { Cookie } from 'playwright-core';
+
 function adjustServerHeaders(headers: Object, browserName: string) {
   if (browserName === 'firefox')
     delete headers['priority'];
@@ -384,7 +386,7 @@ it('NE-023 should return navigation bit when navigating to image', async ({ page
   expect(requests[0].isNavigationRequest()).toBe(true);
 });
 
-it('NE-024 should report raw headers', async ({ page, server, browserName, platform, isElectron, browserMajorVersion, channel }) => {
+it('NE-024 should report raw headers', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44170' } }, async ({ page, server, browserName, platform, isElectron, browserMajorVersion, channel }) => {
   it.skip(isElectron && browserMajorVersion < 99, 'This needs Chromium >= 99');
 
   let expectedHeaders: { name: string, value: string }[];
@@ -413,6 +415,8 @@ it('NE-024 should report raw headers', async ({ page, server, browserName, platf
     res.end();
   });
   await page.goto(server.EMPTY_PAGE);
+  if (browserName === 'webkit')
+    await page.route('**/never-match', route => route.continue());
   const [request] = await Promise.all([
     page.waitForRequest('**/*'),
     page.evaluate(() => fetch('/headers', {
@@ -568,4 +572,99 @@ it('NE-029 should handle mixed-content blocked requests', async ({ page, asset, 
   const headers = await request.allHeaders();
   expect(headers['origin']).toBeTruthy();
   expect(request.failure().errorText).toBe('mixed-content');
+});
+
+it('NE-146 should report cookies with an unrelated route', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44170' } }, async ({ page, server }) => {
+  await page.route('**/never-match', route => route.continue());
+  await page.goto(server.EMPTY_PAGE);
+  await page.evaluate(() => {
+    document.cookie = 'myCookie=myValue; path=/';
+    document.cookie = 'myCookie=specificValue; path=/headers';
+  });
+  const requestPromise = page.waitForRequest('**/headers');
+  const headersPromise = requestPromise.then(request => request.allHeaders());
+  server.setRoute('/headers', async (req, res) => {
+    await headersPromise;
+    res.setHeader('Set-Cookie', 'myCookie=updatedValue; path=/');
+    res.end();
+  });
+
+  const [request, serverRequest, headers] = await Promise.all([
+    requestPromise,
+    server.waitForRequest('/headers'),
+    headersPromise,
+    page.evaluate(() => fetch('/headers').then(response => response.text())),
+  ]);
+  expect(serverRequest.headers.cookie).toBe('myCookie=specificValue; myCookie=myValue');
+  expect(await page.evaluate(() => document.cookie)).toBe('myCookie=updatedValue');
+  expect(headers['cookie']).toBe(serverRequest.headers.cookie);
+  expect(await request.allHeaders()).toEqual(headers);
+  expect(await request.headerValue('cookie')).toBe(serverRequest.headers.cookie);
+  expect((await request.headersArray()).find(header => header.name.toLowerCase() === 'cookie')?.value).toBe(serverRequest.headers.cookie);
+});
+
+it('NE-148 should report sent cookies after a route changes the URL and cookies', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44170' } }, async ({ page, server, browserName, toImpl }) => {
+  it.skip(browserName !== 'webkit', 'WebKit reports sent headers after interception');
+  await page.goto(server.EMPTY_PAGE);
+  const context: { doGetCookies(urls: string[]): Promise<Cookie[]> } = toImpl(page).browserContext;
+  const doGetCookies = context.doGetCookies.bind(context);
+  let cookieLookups = 0;
+  context.doGetCookies = async urls => {
+    ++cookieLookups;
+    return doGetCookies(urls);
+  };
+  await page.route('**/before', async route => {
+    await page.evaluate(() => document.cookie = 'myCookie=updatedValue; path=/after');
+    await route.continue({ url: server.PREFIX + '/after' });
+  });
+  server.setRoute('/after', (req, res) => res.end());
+  const [response, serverRequest] = await Promise.all([
+    page.waitForResponse('**/after'),
+    server.waitForRequest('/after'),
+    page.evaluate(() => fetch('/before').then(response => response.text())),
+  ]);
+  expect(serverRequest.headers.cookie).toBe('myCookie=updatedValue');
+  expect(await response.request().headerValue('cookie')).toBe(serverRequest.headers.cookie);
+  expect(cookieLookups).toBe(0);
+});
+
+it('NE-149 should omit cross-site cookies from early headers', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44170' } }, async ({ page, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  await page.evaluate(() => document.cookie = 'strictCookie=value; SameSite=Strict; path=/');
+  await page.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
+  let cookie: string | null = null;
+  await page.route('**/headers', async route => {
+    cookie = await route.request().headerValue('cookie');
+    await route.continue();
+  });
+  server.setRoute('/headers', (req, res) => {
+    res.setHeader('Access-Control-Allow-Origin', server.CROSS_PROCESS_PREFIX);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.end();
+  });
+  const [serverRequest] = await Promise.all([
+    server.waitForRequest('/headers'),
+    page.evaluate(url => fetch(url, { credentials: 'include' }).then(response => response.text()), server.PREFIX + '/headers'),
+  ]);
+  expect(serverRequest.headers.cookie).toBeUndefined();
+  expect(cookie).toBe(null);
+});
+
+it('NE-150 should use provisional headers when the cookie lookup fails', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44170' } }, async ({ page, server, browserName, toImpl }) => {
+  it.skip(browserName !== 'webkit', 'WebKit looks up intercepted request cookies');
+  await page.goto(server.EMPTY_PAGE);
+  const context: { doGetCookies(urls: string[]): Promise<Cookie[]> } = toImpl(page).browserContext;
+  context.doGetCookies = async () => {
+    throw new Error('Cookie lookup failed');
+  };
+  let cookie: string | null = null;
+  await page.route('**/*', async route => {
+    cookie = await route.request().headerValue('cookie');
+    expect(await route.request().headerValue('user-agent')).toBeTruthy();
+    await route.continue();
+  });
+  const response = await page.goto(server.EMPTY_PAGE);
+  expect(response.ok()).toBe(true);
+  expect(cookie).toBe(null);
+  expect(await response.request().headerValue('cookie')).toBe(null);
 });

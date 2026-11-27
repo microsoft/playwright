@@ -23,6 +23,15 @@ request is  issued to a redirected url.
 
 An object with all the request HTTP headers associated with this request. The header names are lower-cased.
 
+:::note
+When a page or browser context has any routes registered with [`method: Page.route`] or
+[`method: BrowserContext.route`], headers may not exactly match those sent over the network, even if no route
+matches this request. In WebKit, the first header read uses the real headers if the response has arrived.
+Otherwise, it uses provisional headers with cookies estimated from the browser context's cookie jar.
+The estimate cannot account for the request's credentials mode or all browser cookie policies.
+Later reads return the same headers as the first read.
+:::
+
 ## method: Request.failure
 * since: v1.8
 - returns: <[null]|[string]>
@@ -121,11 +130,21 @@ You can use [`method: Request.allHeaders`] for complete list of headers that inc
 An array with all the request HTTP headers associated with this request. Unlike [`method: Request.allHeaders`], header names are NOT lower-cased.
 Headers with multiple entries, such as `Set-Cookie`, appear in the array multiple times.
 
+:::note
+When a page or browser context has routes registered, the same accuracy limits as
+[`method: Request.allHeaders`] apply.
+:::
+
 ## async method: Request.headerValue
 * since: v1.15
 - returns: <[null]|[string]>
 
 Returns the value of the header matching the name. The name is case-insensitive.
+
+:::note
+When a page or browser context has routes registered, the same accuracy limits as
+[`method: Request.allHeaders`] apply.
+:::
 
 ### param: Request.headerValue.name
 * since: v1.15

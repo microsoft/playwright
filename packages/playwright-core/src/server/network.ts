@@ -227,7 +227,8 @@ export class Request extends SdkObject {
   readonly _frame: frames.Frame | null = null;
   readonly _serviceWorker: pages.Worker | null = null;
   readonly _context: contexts.BrowserContext;
-  private _rawRequestHeadersPromise = new ManualPromise<HeadersArray>();
+  private _rawRequestHeadersPromise = new ManualPromise<HeadersArray | Promise<HeadersArray>>();
+  private _rawRequestHeadersFallback?: () => Promise<HeadersArray>;
   private _waitForResponsePromise = new ManualPromise<Response | null>();
   _responseEndTiming = -1;
   private _overrides: NormalizedContinueOverrides | undefined;
@@ -330,12 +331,20 @@ export class Request extends SdkObject {
   }
 
   // "null" means no raw headers available - we'll use provisional headers as raw headers.
-  setRawRequestHeaders(headers: HeadersArray | null) {
-    if (!this._rawRequestHeadersPromise.isDone())
+  setRawRequestHeaders(headers: HeadersArray | Promise<HeadersArray> | null) {
+    if (!this._rawRequestHeadersPromise.isDone()) {
       this._rawRequestHeadersPromise.resolve(headers || this._headers);
+      this._rawRequestHeadersFallback = undefined;
+    }
+  }
+
+  setRawRequestHeadersFallback(fallback: () => Promise<HeadersArray>) {
+    this._rawRequestHeadersFallback = fallback;
   }
 
   async internalRawRequestHeaders(): Promise<HeadersArray> {
+    if (!this._overrides?.headers && !this._rawRequestHeadersPromise.isDone() && this._rawRequestHeadersFallback)
+      this.setRawRequestHeaders(this._rawRequestHeadersFallback());
     return this._overrides?.headers || this._rawRequestHeadersPromise;
   }
 
