@@ -453,6 +453,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     }
   }
 
+  @apiCall()
   async removeLocatorHandler(locator: Locator): Promise<void> {
     for (const [uid, data] of this._locatorHandlers) {
       if (data.locator._equals(locator)) {

@@ -47,6 +47,11 @@ test('TR-001 should collect trace with resources, but no js', {
   await page.keyboard.insertText('abc');
   await page.goto(server.PREFIX + '/input/fileupload.html');
   await page.locator('input[type="file"]').setInputFiles(asset('file-to-upload.txt'));
+  const input = await page.$('input[type="file"]');
+  await input.setInputFiles(asset('file-to-upload.txt'));
+  await page.addLocatorHandler(page.locator('dialog'), async () => {});
+  await page.addLocatorHandler(page.locator('dialog'), async () => {});
+  await page.removeLocatorHandler(page.locator('dialog'));
   await page.waitForTimeout(2000);  // Give it some time to produce screenshots.
   await page.close();
   await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
@@ -62,6 +67,11 @@ test('TR-001 should collect trace with resources, but no js', {
     'Insert "abc"',
     `Navigate ${server.HOST}/input/fileupload.html`,
     `Set input files locator('input[type="file"]')`,
+    `Query selector locator('input[type="file"]')`,
+    'Set input files',
+    `Register locator handler locator('dialog')`,
+    `Register locator handler locator('dialog')`,
+    'Unregister locator handler',
     'Wait for timeout',
     'Close page',
   ]);
