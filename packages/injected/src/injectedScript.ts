@@ -1509,10 +1509,10 @@ export class InjectedScript {
     this.onGlobalListenersRemoved.add(addHitTargetInterceptorListeners);
   }
 
-  async expect(element: Element, options: FrameExpectParams, elements: Element[], frameVisible: boolean): Promise<{ matches: boolean, received?: ExpectReceived }> {
+  async expect(element: Element, options: FrameExpectParams, elements: Element[], frameVisible: boolean, withAriaSnapshot: boolean): Promise<{ matches: boolean, received?: ExpectReceived }> {
     const isArray = options.expression === 'to.have.count' || options.expression.endsWith('.array');
     const core = isArray ? this.expectArray(elements, options) : await this.expectSingleElement(element, options, frameVisible);
-    const ariaSnapshot = core.matches !== options.isNot ? undefined : this._ariaSnapshotForExpect(element, options, frameVisible);
+    const ariaSnapshot = !withAriaSnapshot || core.matches !== options.isNot ? undefined : this._ariaSnapshotForExpect(element, options, frameVisible);
     if (core.received === undefined && ariaSnapshot === undefined)
       return { matches: core.matches };
     return { matches: core.matches, received: { value: core.received, ariaSnapshot } };
