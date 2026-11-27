@@ -149,7 +149,7 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> implements
   }
 
   async setInputFiles(files: string | FilePayload | string[] | FilePayload[], options: channels.ElementHandleSetInputFilesOptions & TimeoutOptions = {}) {
-    const frame = await this.ownerFrame();
+    const frame = await this._wrapApiCall(() => this.ownerFrame(), { internal: true });
     if (!frame)
       throw new Error('Cannot set input files to detached element');
     const converted = await convertInputFiles(files, frame.page().context());
