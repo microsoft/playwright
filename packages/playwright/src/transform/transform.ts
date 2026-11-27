@@ -203,6 +203,8 @@ export function resolveHook(filename: string, specifier: string): string | undef
         if (existing) {
           longestPrefixLength = keyPrefix.length;
           pathMatchedByLongestPrefix = existing;
+          // Like TypeScript, use the first substitution that resolves.
+          break;
         }
       }
     }
