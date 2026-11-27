@@ -27,6 +27,7 @@ import { pathToFileURL } from 'url';
 import { expect, playwrightTest } from '../config/browserTest';
 import type { FrameLocator, Locator } from '@playwright/test';
 import { parseTrace, rafraf, roundBox } from '../config/utils';
+import { msToString } from '../../packages/isomorphic/formatUtils';
 
 const test = playwrightTest.extend<TraceViewerFixtures>(traceViewerFixtures);
 
@@ -1940,12 +1941,20 @@ test('TV-085 should not record network actions', {
 });
 
 test('TV-086 should show baseURL in metadata pane', {
-  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31847' },
+  annotation: [
+    { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31847' },
+    { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44374' },
+  ],
 }, async ({ showTraceViewer }) => {
+  const { model } = await parseTrace(traceFile);
   const traceViewer = await showTraceViewer(traceFile);
   await traceViewer.selectAction('Evaluate');
   await traceViewer.showMetadataTab();
   await expect(traceViewer.metadataTab).toContainText('baseURL:https://example.com');
+  const startTime = traceViewer.metadataTab.getByText('start time:').locator('.datetime');
+  const localTime = await traceViewer.page.evaluate(time => new Date(time).toLocaleString(undefined, { timeZoneName: 'short' }), model.wallTime!);
+  await expect(startTime).toHaveText(localTime);
+  await expect(startTime).toHaveAttribute('title', `UTC ${new Date(model.wallTime!).toISOString()}`);
 });
 
 test('TV-087 should not leak recorders', {
@@ -2839,4 +2848,34 @@ test('TV-122 take trace paths via stdin', async ({ showTraceViewer }) => {
   await expect(traceViewer.actionTitles).toContainText([
     /Create page/,
   ]);
+});
+
+test('TV-138 should display relative playback time in the toolbar', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44374' },
+}, async ({ showTraceViewer }) => {
+  const { model } = await parseTrace(traceFile);
+  const action = model.actions.find(action => action.method === 'setContent')!;
+  const traceViewer = await showTraceViewer(traceFile);
+  const timestamp = traceViewer.page.locator('.snapshot-tab > .toolbar .trace-timestamp');
+  await traceViewer.selectAction('Set content');
+  await expect(timestamp).toHaveText(msToString(action.startTime - model.startTime));
+  const wallTime = model.wallTime! + action.startTime - model.startTime;
+  const localTime = await traceViewer.page.evaluate(time => new Date(time).toLocaleString(undefined, { timeZoneName: 'short' }), wallTime);
+  await expect(timestamp).toHaveAttribute('datetime', new Date(wallTime).toISOString());
+  await expect(timestamp).toHaveAttribute('title', `${localTime} (UTC ${new Date(wallTime).toISOString()})`);
+  await expect(traceViewer.page.locator('.snapshot-timestamp, .timeline-timestamp')).toHaveCount(0);
+
+  await traceViewer.selectAction('Navigate');
+  await traceViewer.page.clock.install({ time: new Date('2026-01-01T00:00:00Z') });
+  await traceViewer.page.clock.pauseAt(new Date('2026-01-01T00:00:01Z'));
+  const initialTime = await timestamp.getAttribute('datetime');
+  const initialText = await timestamp.textContent();
+  await traceViewer.page.getByRole('button', { name: 'Play', exact: true }).click();
+  await traceViewer.page.clock.runFor(64);
+  const playingTime = await timestamp.getAttribute('datetime');
+  expect(new Date(playingTime!).getTime()).toBeGreaterThan(new Date(initialTime!).getTime());
+  await expect(timestamp).not.toHaveText(initialText!);
+  await traceViewer.page.getByRole('button', { name: 'Stop', exact: true }).click();
+  await traceViewer.selectAction('Set content');
+  await expect(timestamp).toHaveText(msToString(action.startTime - model.startTime));
 });

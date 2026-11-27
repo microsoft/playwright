@@ -18,6 +18,7 @@ import { ToolbarButton } from '@web/components/toolbarButton';
 import * as React from 'react';
 import type { ActionEntry } from '@isomorphic/trace/entries';
 import type { Boundaries } from './geometry';
+import { TraceTimestamp } from './traceTimestamp';
 import './playbackControl.css';
 
 const speeds = [0.5, 1, 2];
@@ -27,6 +28,7 @@ export type PlaybackState = {
   speed: number;
   currentIndex: number;
   percent: number;
+  time: number;
   animating: boolean;
   screencastTime: number | undefined;
   togglePlay: () => void;
@@ -255,7 +257,7 @@ export function usePlayback(
   const canStop = playing || currentIndex > firstWindowIndex;
 
   return {
-    playing, speed, currentIndex, percent, animating, screencastTime,
+    playing, speed, currentIndex, percent, time: positionTime, animating, screencastTime,
     togglePlay, stop, prev, next, cycleSpeed, selectAction, showSelectedAction,
     onScrubberMouseDown, scrubberRef, actionsLength: actions.length,
     canPrev, canNext, canStop, ticks,
@@ -266,6 +268,7 @@ export const PlaybackButtons: React.FC<{
   playback: PlaybackState;
 }> = ({ playback }) => {
   return <>
+    <TraceTimestamp time={playback.time} />
     <ToolbarButton icon='chevron-left' title='Previous action' onClick={playback.prev} disabled={!playback.canPrev} />
     <ToolbarButton icon={playback.playing ? 'debug-pause' : 'play'} disabled={!playback.actionsLength} title={playback.playing ? 'Pause' : 'Play'} onClick={playback.togglePlay} />
     <ToolbarButton icon='debug-stop' title='Stop' onClick={playback.stop} disabled={!playback.canStop} />
