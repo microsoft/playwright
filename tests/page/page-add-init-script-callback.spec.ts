@@ -48,12 +48,12 @@ it('IS-015 should accept a function as the whole argument', async ({ page, serve
 });
 
 it('IS-016 should pass arguments to the callback', async ({ page, server }) => {
-  const argsPromise = new Promise<any[]>(resolve => {
-    void page.addInitScript(({ cb }) => cb(1, 'two', { three: 3 }, [4]), {
-      cb: (...a: any[]) => resolve(a),
-    }, { exposeFunctions: true }).then(() => page.goto(server.EMPTY_PAGE));
-  });
-  expect(await argsPromise).toEqual([1, 'two', { three: 3 }, [4]]);
+  let args: any[] | undefined;
+  await page.addInitScript(({ cb }) => cb(1, 'two', { three: 3 }, [4]), {
+    cb: (...a: any[]) => { args = a; },
+  }, { exposeFunctions: true });
+  await page.goto(server.EMPTY_PAGE);
+  await expect.poll(() => args).toEqual([1, 'two', { three: 3 }, [4]]);
 });
 
 it('IS-017 should return the callback result to the page', async ({ page, server }) => {

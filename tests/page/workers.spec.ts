@@ -440,7 +440,9 @@ it('WO-025 should resolve worker script allHeaders in nested worker inside ifram
 
 it('WO-032 should run a shared worker after redirected dedicated workers', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44134' },
-}, async ({ page, server }) => {
+}, async ({ page, server, isAndroid }) => {
+  it.skip(isAndroid, 'SharedWorker is not available on Android');
+
   for (const name of ['classic', 'module', 'shared']) {
     server.setRedirect(`/${name}/worker.js`, 'v2/worker.js');
     server.setRoute(`/${name}/v2/helper.js`, (req, res) => {

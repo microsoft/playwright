@@ -64,6 +64,7 @@ const config: Config<PlaywrightWorkerOptions & PlaywrightTestOptions & TestModeW
   maxFailures: 200,
   timeout: video || (process.platform === 'darwin' && process.arch === 'x64') ? 60000 : 30000,
   globalTimeout: 7200000,
+  globalSetup: process.env.CI ? '../config/warmUpBrowsers.ts' : undefined,
   workers: undefined,
   fullyParallel: !process.env.CI,
   forbidOnly: !!process.env.CI,
