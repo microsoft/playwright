@@ -705,7 +705,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
             const module = {};
             ${rawStorageSource.source}
             const script = new (module.exports.StorageScript())(${JSON.stringify(this._browser.options.name)});
-            return script.restore(${JSON.stringify(newOrigins.get(origin))});
+            return script.restore(${JSON.stringify(newOrigins.get(origin))}, ${mode !== 'initial'});
           })()`;
           await frame.evaluateExpression(progress, restoreScript, { world: 'utility' });
         }
