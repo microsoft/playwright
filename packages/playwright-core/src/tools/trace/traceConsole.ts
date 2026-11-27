@@ -18,19 +18,22 @@
 
 import { loadTrace, formatTimestamp } from './traceUtils';
 
-export async function traceConsole(options: { grep?: string, errorsOnly?: boolean, warnings?: boolean, browser?: boolean, stdio?: boolean }) {
+export type TraceConsoleItem = {
+  ordinal: number;
+  type: 'browser' | 'stdout' | 'stderr';
+  level: string;
+  text: string;
+  location?: string;
+  timestamp: number;
+};
+
+type RawConsoleItem = Omit<TraceConsoleItem, 'ordinal'>;
+
+export async function traceConsole(options: { grep?: string, errorsOnly?: boolean, warnings?: boolean, browser?: boolean, stdio?: boolean, json?: boolean }) {
   const trace = await loadTrace();
   const model = trace.model;
 
-  type ConsoleItem = {
-    type: 'browser' | 'stdout' | 'stderr';
-    level: string;
-    text: string;
-    location?: string;
-    timestamp: number;
-  };
-
-  const items: ConsoleItem[] = [];
+  const items: RawConsoleItem[] = [];
 
   for (const event of model.events) {
     if (event.type === 'console') {
@@ -92,6 +95,19 @@ export async function traceConsole(options: { grep?: string, errorsOnly?: boolea
   if (options.grep) {
     const pattern = new RegExp(options.grep, 'i');
     filtered = filtered.filter(item => pattern.test(item.text));
+  }
+
+  if (options.json) {
+    const list: TraceConsoleItem[] = filtered.map((item, index) => ({
+      ordinal: index + 1,
+      type: item.type,
+      level: item.level,
+      text: item.text,
+      location: item.location,
+      timestamp: item.timestamp,
+    }));
+    console.log(JSON.stringify(list, null, 2));
+    return;
   }
 
   if (!filtered.length) {

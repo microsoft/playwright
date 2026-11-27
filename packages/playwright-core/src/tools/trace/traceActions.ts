@@ -24,9 +24,61 @@ import { kActionPhases } from './traceUtils';
 
 import type { ActionEntry } from '@isomorphic/trace/entries';
 
-export async function traceActions(options: { grep?: string, errorsOnly?: boolean }) {
+export type TraceActionSummary = {
+  ordinal: number;
+  callId: string;
+  title: string;
+  startTime: number;
+  duration: number | null;
+  durationFormatted: string;
+  status: 'passed' | 'failed';
+  error?: string;
+  parentId?: string;
+  parentOrdinal?: number;
+};
+
+export type TraceActionDetails = {
+  ordinal: number;
+  callId: string;
+  title: string;
+  startTime: number;
+  duration: number | null;
+  durationFormatted: string;
+  status: 'passed' | 'failed';
+  params: Record<string, any>;
+  result?: Record<string, any>;
+  error?: string;
+  log: Array<{ time: number; message: string }>;
+  stack: Array<{ file: string; line?: number; column?: number }>;
+  snapshots: string[];
+};
+
+export async function traceActions(options: { grep?: string, errorsOnly?: boolean, json?: boolean }) {
   const trace = await loadTrace();
   const actions = filterActions(trace.model.actions, options);
+
+  if (options.json) {
+    const list: TraceActionSummary[] = actions.map(action => {
+      const ordinal = trace.callIdToOrdinal.get(action.callId) ?? 0;
+      const parentOrdinal = action.parentId ? trace.callIdToOrdinal.get(action.parentId) : undefined;
+      const duration = action.endTime ? action.endTime - action.startTime : null;
+      return {
+        ordinal,
+        callId: action.callId,
+        title: actionFullTitle(action),
+        startTime: action.startTime,
+        duration,
+        durationFormatted: duration !== null ? msToString(duration) : (action.error ? 'Timed Out' : 'running'),
+        status: action.error ? 'failed' : 'passed',
+        error: action.error?.message,
+        parentId: action.parentId || undefined,
+        parentOrdinal,
+      };
+    });
+    list.sort((a, b) => a.ordinal - b.ordinal);
+    console.log(JSON.stringify(list, null, 2));
+    return;
+  }
 
   // Tree view
   const { rootItem } = buildActionTree(actions);
@@ -62,12 +114,35 @@ function filterActions(actions: ActionEntry[], options: { grep?: string, errorsO
   return result;
 }
 
-export async function traceAction(actionId: string) {
+export async function traceAction(actionId: string, options: { json?: boolean } = {}) {
   const trace = await loadTrace();
   const action = trace.resolveActionId(actionId);
   if (!action) {
     console.error(`Action '${actionId}' not found. Use 'trace actions' to see available action IDs.`);
     process.exitCode = 1;
+    return;
+  }
+
+  if (options.json) {
+    const ordinal = trace.callIdToOrdinal.get(action.callId) ?? 0;
+    const duration = action.endTime ? action.endTime - action.startTime : null;
+    const phases = kActionPhases.filter(phase => trace.model.hasDomSnapshotForCall(action.callId, phase));
+    const resultJson: TraceActionDetails = {
+      ordinal,
+      callId: action.callId,
+      title: actionFullTitle(action),
+      startTime: action.startTime,
+      duration,
+      durationFormatted: duration !== null ? msToString(duration) : (action.error ? 'Timed Out' : 'running'),
+      status: action.error ? 'failed' : 'passed',
+      params: Object.fromEntries(Object.entries(action.params).filter(([name]) => name !== 'info')),
+      result: action.result,
+      error: action.error?.message,
+      log: action.log.map(e => ({ time: e.time, message: e.message })),
+      stack: action.stack?.map(f => ({ file: f.file, line: f.line, column: f.column })) ?? [],
+      snapshots: phases,
+    };
+    console.log(JSON.stringify(resultJson, null, 2));
     return;
   }
 

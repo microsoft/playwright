@@ -293,3 +293,251 @@ test('trace attachments lists and extracts attachments', { annotation: { type: '
 
   expect((await runTraceCli(['open', traceFile])).exitCode).toBe(0);
 });
+
+test('trace actions --json outputs structured actions array', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44396' } }, async ({ runTraceCli }) => {
+  const { stdout, exitCode } = await runTraceCli(['actions', '--json']);
+  expect(exitCode).toBe(0);
+  const actions = JSON.parse(stdout);
+  expect(Array.isArray(actions)).toBe(true);
+  expect(actions.length).toBeGreaterThan(0);
+  expect(actions[0]).toHaveProperty('ordinal');
+  expect(actions[0]).toHaveProperty('callId');
+  expect(actions[0]).toHaveProperty('title');
+  expect(actions[0]).toHaveProperty('status');
+  expect(actions[0]).toHaveProperty('durationFormatted');
+  // Ordinals should be monotonically increasing
+  for (let i = 1; i < actions.length; i++)
+    expect(actions[i].ordinal).toBeGreaterThanOrEqual(actions[i - 1].ordinal);
+});
+
+test('trace action <id> --json outputs action details in JSON', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44396' } }, async ({ runTraceCli }) => {
+  const { stdout, exitCode } = await runTraceCli(['action', '1', '--json']);
+  expect(exitCode).toBe(0);
+  const action = JSON.parse(stdout);
+  expect(action.ordinal).toBe(1);
+  expect(action).toHaveProperty('title');
+  expect(action).toHaveProperty('params');
+  expect(action).toHaveProperty('snapshots');
+  expect(action.status).toBe('passed');
+});
+
+test('trace action with invalid ID and --json', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44396' } }, async ({ runTraceCli }) => {
+  const { stderr, exitCode } = await runTraceCli(['action', '99999', '--json']);
+  expect(exitCode).toBe(1);
+  expect(stderr).toContain("Action '99999' not found");
+});
+
+test('trace requests --json outputs structured requests array', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44396' } }, async ({ runTraceCli }) => {
+  const { stdout, exitCode } = await runTraceCli(['requests', '--json']);
+  expect(exitCode).toBe(0);
+  const requests = JSON.parse(stdout);
+  expect(Array.isArray(requests)).toBe(true);
+  expect(requests.length).toBeGreaterThan(0);
+  expect(requests[0]).toHaveProperty('ordinal');
+  expect(requests[0]).toHaveProperty('method');
+  expect(requests[0]).toHaveProperty('url');
+  expect(requests[0]).toHaveProperty('status');
+  expect(requests[0]).toHaveProperty('durationFormatted');
+});
+
+test('trace request <id> --json outputs request details in JSON', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44396' } }, async ({ runTraceCli }) => {
+  const { stdout, exitCode } = await runTraceCli(['request', '1', '--json']);
+  expect(exitCode).toBe(0);
+  const request = JSON.parse(stdout);
+  expect(request.ordinal).toBe(1);
+  expect(request).toHaveProperty('method');
+  expect(request).toHaveProperty('url');
+  expect(request).toHaveProperty('status');
+  expect(request).toHaveProperty('requestHeaders');
+  expect(request).toHaveProperty('responseHeaders');
+});
+
+test('trace request with invalid ID and --json', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44396' } }, async ({ runTraceCli }) => {
+  const { stderr, exitCode } = await runTraceCli(['request', '99999', '--json']);
+  expect(exitCode).toBe(1);
+  expect(stderr).toContain("Request '99999' not found");
+});
+
+test('trace console --json outputs structured console events array', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44396' } }, async ({ runTraceCli }) => {
+  const { stdout, exitCode } = await runTraceCli(['console', '--json']);
+  expect(exitCode).toBe(0);
+  const entries = JSON.parse(stdout);
+  expect(Array.isArray(entries)).toBe(true);
+  expect(entries.length).toBeGreaterThan(0);
+  expect(entries[0]).toHaveProperty('ordinal');
+  expect(entries[0]).toHaveProperty('type');
+  expect(entries[0]).toHaveProperty('level');
+  expect(entries[0]).toHaveProperty('text');
+});
+
+test('trace errors --json outputs structured errors array', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44396' } }, async ({ runTraceCli }) => {
+  const { stdout, exitCode } = await runTraceCli(['errors', '--json']);
+  expect(exitCode).toBe(0);
+  const errors = JSON.parse(stdout);
+  expect(Array.isArray(errors)).toBe(true);
+});
+
+test('trace summary shows execution overview', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44396' } }, async ({ runTraceCli }) => {
+  const { stdout, exitCode } = await runTraceCli(['summary']);
+  expect(exitCode).toBe(0);
+  expect(stdout).toContain('Trace Summary');
+  expect(stdout).toContain('Status:       PASSED');
+  expect(stdout).toContain('Browser:');
+  expect(stdout).toContain('Actions:');
+  expect(stdout).toContain('Network:');
+  expect(stdout).toContain('Errors:');
+});
+
+test('trace summary --json outputs structured summary object', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44396' } }, async ({ runTraceCli }) => {
+  const { stdout, exitCode } = await runTraceCli(['summary', '--json']);
+  expect(exitCode).toBe(0);
+  const summary = JSON.parse(stdout);
+  expect(summary.status).toBe('passed');
+  expect(summary).toHaveProperty('metadata');
+  expect(summary.metadata.browser).toBe('chromium');
+  expect(summary).toHaveProperty('actions');
+  expect(summary.actions.total).toBeGreaterThan(0);
+  expect(summary.actions.failed).toBe(0);
+  expect(summary).toHaveProperty('network');
+  expect(summary).toHaveProperty('errors');
+  expect(summary.errors.testErrors).toBe(0);
+});
+
+test('trace summary <traceFile> directly summarizes archive', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44396' } }, async ({ traceFile, runTraceCli }) => {
+  const { stdout, exitCode } = await runTraceCli(['summary', traceFile]);
+  expect(exitCode).toBe(0);
+  expect(stdout).toContain('Trace Summary');
+  expect(stdout).toContain('Status:       PASSED');
+  expect(stdout).toContain('Actions:');
+});
+
+test('trace summary <traceFile> --json directly outputs summary JSON', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44396' } }, async ({ traceFile, runTraceCli }) => {
+  const { stdout, exitCode } = await runTraceCli(['summary', traceFile, '--json']);
+  expect(exitCode).toBe(0);
+  const summary = JSON.parse(stdout);
+  expect(summary.status).toBe('passed');
+  expect(summary.metadata.browser).toBe('chromium');
+  expect(summary.actions.total).toBeGreaterThan(0);
+});
+
+test('trace commands with failed actions and network errors', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44396' } }, async ({ traceCwd, traceFile, runTraceCli }) => {
+  const failedTrace = path.join(traceCwd, 'failed.trace');
+  await fs.promises.writeFile(failedTrace, [
+    { type: 'context-options', version: 10, browserName: 'chromium', wallTime: Date.now(), startTime: 0, endTime: 2000, options: { viewport: { width: 1280, height: 720 } } },
+    { type: 'before', callId: 'call@1', startTime: 10, class: 'Test', method: 'step', params: { title: 'step 1' } },
+    { type: 'after', callId: 'call@1', endTime: 50 },
+    {
+      type: 'before',
+      callId: 'call@2',
+      startTime: 60,
+      class: 'Test',
+      method: 'step',
+      params: { title: 'step 2' },
+      stack: [{ file: 'test.spec.ts', line: 42, column: 10 }],
+    },
+    {
+      type: 'after',
+      callId: 'call@2',
+      endTime: 1000,
+      error: {
+        message: 'Timeout 5000ms exceeded waiting for locator("button#missing")',
+        stack: 'Error: Timeout 5000ms exceeded\n    at test.spec.ts:42:10',
+      },
+    },
+    {
+      type: 'resource-snapshot',
+      snapshot: {
+        _monotonicTime: 100,
+        time: 50,
+        request: { method: 'POST', url: 'https://example.com/api/data', headers: [] },
+        response: { status: 500, statusText: 'Internal Server Error', headers: [], content: { mimeType: 'application/json' }, bodySize: 0 },
+      },
+    },
+    {
+      type: 'console',
+      messageType: 'error',
+      text: 'Unhandled promise rejection in application',
+      location: { url: 'https://example.com/app.js', lineNumber: 99 },
+      time: 200,
+    },
+  ].map(event => JSON.stringify(event)).join('\n'));
+
+  expect((await runTraceCli(['open', failedTrace])).exitCode).toBe(0);
+
+  // trace actions --errors-only --json
+  const { stdout: actionsOut, exitCode: actionsExit } = await runTraceCli(['actions', '--errors-only', '--json']);
+  expect(actionsExit).toBe(0);
+  const failedActions = JSON.parse(actionsOut);
+  expect(failedActions.length).toBe(1);
+  expect(failedActions[0].ordinal).toBe(2);
+  expect(failedActions[0].status).toBe('failed');
+  expect(failedActions[0].error).toContain('Timeout 5000ms exceeded');
+
+  // trace requests --failed --json
+  const { stdout: requestsOut, exitCode: requestsExit } = await runTraceCli(['requests', '--failed', '--json']);
+  expect(requestsExit).toBe(0);
+  const failedRequests = JSON.parse(requestsOut);
+  expect(failedRequests.length).toBe(1);
+  expect(failedRequests[0].status).toBe(500);
+  expect(failedRequests[0].method).toBe('POST');
+
+  // trace console --errors-only --json
+  const { stdout: consoleOut, exitCode: consoleExit } = await runTraceCli(['console', '--errors-only', '--json']);
+  expect(consoleExit).toBe(0);
+  const consoleErrors = JSON.parse(consoleOut);
+  expect(consoleErrors.length).toBe(1);
+  expect(consoleErrors[0].level).toBe('error');
+  expect(consoleErrors[0].text).toContain('Unhandled promise rejection');
+
+  // trace errors --json
+  const { stdout: errorsOut, exitCode: errorsExit } = await runTraceCli(['errors', '--json']);
+  expect(errorsExit).toBe(0);
+  const errors = JSON.parse(errorsOut);
+  expect(errors.length).toBe(1);
+  expect(errors[0].actionOrdinal).toBe(2);
+  expect(errors[0].message).toContain('Timeout 5000ms exceeded');
+  expect(errors[0].stack.length).toBeGreaterThan(0);
+  expect(errors[0].stack[0].file).toBe('test.spec.ts');
+
+  // trace summary --json
+  const { stdout: summaryJsonOut, exitCode: summaryJsonExit } = await runTraceCli(['summary', '--json']);
+  expect(summaryJsonExit).toBe(0);
+  const summary = JSON.parse(summaryJsonOut);
+  expect(summary.status).toBe('failed');
+  expect(summary.actions.total).toBe(2);
+  expect(summary.actions.failed).toBe(1);
+  expect(summary.actions.firstFailure.ordinal).toBe(2);
+  expect(summary.network.failed).toBe(1);
+  expect(summary.network.failures[0].status).toBe(500);
+  expect(summary.errors.testErrors).toBe(1);
+  expect(summary.errors.consoleErrors).toBe(1);
+
+  // trace summary text
+  const { stdout: summaryTextOut, exitCode: summaryTextExit } = await runTraceCli(['summary']);
+  expect(summaryTextExit).toBe(0);
+  expect(summaryTextOut).toContain('Status:       FAILED');
+  expect(summaryTextOut).toContain('First Fail:   #2');
+
+  // Reopen original trace to keep environment clean
+  expect((await runTraceCli(['open', traceFile])).exitCode).toBe(0);
+});
+
+test('trace summary on empty trace handles edge cases safely', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44396' } }, async ({ traceCwd, traceFile, runTraceCli }) => {
+  const emptyTrace = path.join(traceCwd, 'empty.trace');
+  await fs.promises.writeFile(emptyTrace, '');
+
+  expect((await runTraceCli(['open', emptyTrace])).exitCode).toBe(0);
+
+  const { stdout, exitCode } = await runTraceCli(['summary', '--json']);
+  expect(exitCode).toBe(0);
+  const summary = JSON.parse(stdout);
+  expect(summary.status).toBe('passed');
+  expect(summary.metadata.startTime).toBe('unknown');
+  expect(summary.metadata.durationMs).toBe(0);
+  expect(summary.actions.total).toBe(0);
+  expect(summary.network.total).toBe(0);
+  expect(summary.errors.total).toBe(0);
+
+  // Reopen original trace
+  expect((await runTraceCli(['open', traceFile])).exitCode).toBe(0);
+});
