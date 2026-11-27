@@ -150,11 +150,11 @@ scheme.AndroidDeviceInputDragParams = tObject({
 });
 scheme.AndroidDeviceInputDragResult = tOptional(tObject({}));
 scheme.AndroidDeviceLaunchBrowserParams = tObject({}, {
-  noDefaultViewport: tBoolean,
   viewport: tObject({
     width: tInt,
     height: tInt,
   }),
+  viewportMode: tEnum(['none', 'maximized', 'fixed']),
   screen: tObject({
     width: tInt,
     height: tInt,
@@ -471,11 +471,11 @@ scheme.BrowserDefaultUserAgentForTestResult = tObject({
   userAgent: tString,
 });
 scheme.BrowserNewContextParams = tObject({}, {
-  noDefaultViewport: tBoolean,
   viewport: tObject({
     width: tInt,
     height: tInt,
   }),
+  viewportMode: tEnum(['none', 'maximized', 'fixed']),
   screen: tObject({
     width: tInt,
     height: tInt,
@@ -554,11 +554,11 @@ scheme.BrowserNewContextResult = tObject({
   context: tChannel(['BrowserContext']),
 });
 scheme.BrowserNewContextForReuseParams = tObject({}, {
-  noDefaultViewport: tBoolean,
   viewport: tObject({
     width: tInt,
     height: tInt,
   }),
+  viewportMode: tEnum(['none', 'maximized', 'fixed']),
   screen: tObject({
     width: tInt,
     height: tInt,
@@ -659,11 +659,11 @@ scheme.BrowserContextInitializer = tObject({
   requestContext: tChannel(['APIRequestContext']),
   tracing: tChannel(['Tracing']),
   options: tObject({}, {
-    noDefaultViewport: tBoolean,
     viewport: tObject({
       width: tInt,
       height: tInt,
     }),
+    viewportMode: tEnum(['none', 'maximized', 'fixed']),
     screen: tObject({
       width: tInt,
       height: tInt,
@@ -1086,11 +1086,11 @@ scheme.BrowserTypeLaunchPersistentContextParams = tObject({
   chromiumSandbox: tBoolean,
   firefoxUserPrefs: tAny,
   cdpPort: tInt,
-  noDefaultViewport: tBoolean,
   viewport: tObject({
     width: tInt,
     height: tInt,
   }),
+  viewportMode: tEnum(['none', 'maximized', 'fixed']),
   screen: tObject({
     width: tInt,
     height: tInt,

@@ -185,6 +185,10 @@ async function generateFirefoxProtocol(executablePath) {
       return {"$type": "enum", "$values": values};
     }
 
+    t.Either = function(leftScheme, rightScheme) {
+      return {"$type": "union", "$types": [leftScheme, rightScheme]};
+    }
+
     t.Nullable = function(scheme) {
       return {...scheme, "$nullable": true};
     }
@@ -251,6 +255,8 @@ function firefoxTypeToString(type, indent='    ') {
     return firefoxTypeToString(type['$items'], indent) + '[]';
   if (type['$type'] === 'enum')
     return '(' + type['$values'].map(v => JSON.stringify(v)).join('|') + ')';
+  if (type['$type'] === 'union')
+    return '(' + type['$types'].map(t => firefoxTypeToString(t, indent)).join('|') + ')';
   return type['$type'];
 }
 

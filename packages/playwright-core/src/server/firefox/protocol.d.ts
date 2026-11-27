@@ -216,7 +216,7 @@ export namespace Protocol {
     export type setTouchOverrideReturnValue = void;
     export type setDefaultViewportParameters = {
       browserContextId?: string;
-      viewport: {
+      viewport: (("maximized")|{
         viewportSize: {
           width: number;
           height: number;
@@ -227,7 +227,7 @@ export namespace Protocol {
           height: number;
         };
         isMobile?: boolean;
-      }|null;
+      })|null;
     };
     export type setDefaultViewportReturnValue = void;
     export type setInitScriptsParameters = {
