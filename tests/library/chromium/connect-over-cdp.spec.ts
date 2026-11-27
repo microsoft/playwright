@@ -34,7 +34,13 @@ test('CD-001 should connect to an existing cdp session', {
     args: ['--remote-debugging-port=0']
   });
   try {
-    const [port] = (await fs.promises.readFile(path.join(userDataDir, 'DevToolsActivePort'), 'utf-8')).split('\n');
+    // The browser writes this file some time after the launch, and not atomically.
+    let activePort = '';
+    await expect.poll(async () => {
+      activePort = await fs.promises.readFile(path.join(userDataDir, 'DevToolsActivePort'), 'utf-8').catch(() => '');
+      return activePort;
+    }).toMatch(/^\d+\n\/devtools\/browser\/.+/);
+    const [port] = activePort.split('\n');
     const cdpBrowser = await browserType.connectOverCDP({
       endpointURL: `http://127.0.0.1:${port}/`,
     });
