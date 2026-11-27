@@ -792,6 +792,8 @@ function fakePerformance(clock: ClockController, performance: Builtins['performa
     else
       result[key] = () => {};
   }
+  for (const key of ['addEventListener', 'removeEventListener', 'dispatchEvent'] as const)
+    result[key] = performance[key].bind(performance);
   return result;
 }
 

@@ -1224,6 +1224,15 @@ it.describe('stubTimers', () => {
     expect(measureEntry.duration).toBe(50);
   });
 
+  it('CK-222 should keep EventTarget methods on performance', async ({ install }) => {
+    it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44407' });
+    install();
+    const events: string[] = [];
+    performance.addEventListener('foo', event => events.push(event.type));
+    performance.dispatchEvent(new Event('foo'));
+    expect(events).toEqual(['foo']);
+  });
+
   it('CK-167 restores global property on uninstall if it was inherited onto the global object', ({}) => {
     // Give the global object an inherited 'setTimeout' method
     const proto = {
