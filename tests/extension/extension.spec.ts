@@ -214,8 +214,11 @@ test('token is not in the url of the connect page', {
   expect(JSON.stringify(response)).not.toContain(await user.token());
 });
 
-test('client reports an error when the extension refuses the token', {
-  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-mcp/issues/1732' },
+test('client retries when the extension does not connect', {
+  annotation: [
+    { type: 'issue', description: 'https://github.com/microsoft/playwright-mcp/issues/1732' },
+    { type: 'issue', description: 'https://github.com/microsoft/playwright-mcp/issues/1877' },
+  ],
 }, async ({ user, start }) => {
   const client = await start('worker', {
     env: { PLAYWRIGHT_MCP_EXTENSION_TOKEN: 'wrong-token', PWTEST_EXTENSION_CONNECT_TIMEOUT: '500' },
@@ -230,6 +233,22 @@ test('client reports an error when the extension refuses the token', {
 
   // The client does not keep the failed attempt. The next tool call opens a new connect page.
   await Promise.all([user.waitForConnectPage(), client.tabs()]);
+
+  const manualClient = await start('manual-worker', {
+    env: { PLAYWRIGHT_MCP_EXTENSION_TOKEN: '', PWTEST_EXTENSION_CONNECT_TIMEOUT: '2000' },
+  });
+  const manualConnectPage = user.waitForConnectPage();
+  const response = manualClient.mcp.callTool({ name: 'browser_tabs', arguments: { action: 'list' } });
+  await (await manualConnectPage).close();
+  expect(await response).toHaveResponse({
+    error: expect.stringContaining('Playwright extension did not connect within 2s after opening the connect page. Make sure the extension is installed in the Chrome profile "Default", and allow the connection on the connect page.'),
+    isError: true,
+  });
+
+  const retryConnectPage = user.waitForConnectPage();
+  const retryResponse = manualClient.mcp.callTool({ name: 'browser_tabs', arguments: { action: 'list' } });
+  await user.allow(await retryConnectPage);
+  expect(await retryResponse).toHaveResponse({ result: expect.stringContaining('about:blank') });
 });
 
 test('client reconnects after the user disconnects it', {

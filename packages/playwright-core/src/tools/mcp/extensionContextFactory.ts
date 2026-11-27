@@ -40,8 +40,9 @@ export async function createExtensionBrowser(extensionURL: string, options: Exte
   };
   for (const [name, value] of Object.entries(options.headers ?? {}))
     headers[name.toLowerCase()] = value;
-  // Without a token the user approves the connection in the browser, which has no time limit.
-  const timeout = options.timeout ?? (headers['x-playwright-extension-token'] ? +(process.env.PWTEST_EXTENSION_CONNECT_TIMEOUT ?? 30_000) : 0);
+  // Give the user more time to approve manually, but let a missed approval be retried.
+  const defaultTimeout = headers['x-playwright-extension-token'] ? 30_000 : 120_000;
+  const timeout = options.timeout ?? +(process.env.PWTEST_EXTENSION_CONNECT_TIMEOUT ?? defaultTimeout);
   return await playwright.chromium.connectOverCDP(extensionURL, {
     headers: Object.fromEntries(Object.entries(headers).filter(([, value]) => value)) as Record<string, string>,
     timeout,
