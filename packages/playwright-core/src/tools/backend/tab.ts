@@ -115,6 +115,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   private _mainDocumentStatus: { status: number, statusText: string } | undefined;
   private _onPageClose: (tab: Tab) => void;
   crashed = false;
+  closeWasCalled = false;
   private _modalStates: ModalState[] = [];
   private _initializedPromise: Promise<void>;
   private _recentEventEntries: EventEntry[] = [];
@@ -173,6 +174,11 @@ export class Tab extends EventEmitter<TabEventsInterface> {
 
   async waitForInitialized() {
     await this._initializedPromise;
+  }
+
+  async close() {
+    this.closeWasCalled = true;
+    await this.page.close();
   }
 
   static forPage(page: playwright.Page): Tab | undefined {

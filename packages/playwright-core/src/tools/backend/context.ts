@@ -82,6 +82,7 @@ type ContextOptions = {
   sessionLog?: SessionLog;
   cwd: string;
   onWebMCPToolsChanged?: () => void;
+  onLastPageClosed?: () => void;
 };
 
 export type RouteEntry = {
@@ -226,7 +227,7 @@ export class Context {
     await this.ensureBrowserContext();
     const crashed = this._currentTab?.crashed;
     if (crashed) {
-      await this._currentTab!.page.close().catch(() => {});
+      await this._currentTab!.close().catch(() => {});
       this._setCurrentTab(undefined);
     }
     if (!this._currentTab)
@@ -242,7 +243,7 @@ export class Context {
     if (!tab)
       throw new Error(`Tab ${index} not found`);
     const url = tab.page.url();
-    await tab.page.close();
+    await tab.close();
     return url;
   }
 
@@ -391,6 +392,9 @@ export class Context {
 
     if (this._currentTab === tab)
       this._setCurrentTab(this._tabs[Math.min(index, this._tabs.length - 1)]);
+
+    if (!this._tabs.length && this.options.onLastPageClosed && !tab.closeWasCalled)
+      this.options.onLastPageClosed();
   }
 
   currentWebMCPTools(): WebMCPToolDefinition[] {

@@ -95,7 +95,10 @@ export async function startCliDaemonServer(
     }
   }
 
-  const backend = new BrowserBackend(contextConfig, browserContext, browserTools, { idleTimer: options.idleTimer });
+  const backend = new BrowserBackend(contextConfig, browserContext, browserTools, {
+    idleTimer: options.idleTimer,
+    onLastPageClosed: options.ownership === 'own' && !browserInfo.launchOptions.headless ? () => void exit() : undefined,
+  });
   await backend.initialize(mcpClientInfo);
 
   if (browserContext.isClosed())
