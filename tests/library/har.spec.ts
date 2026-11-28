@@ -24,6 +24,7 @@ import type { Log } from '../../packages/isomorphic/trace/versions/har';
 import { parseHar } from '../config/utils';
 import { TestServer } from '../config/testserver';
 import { utils } from '../../packages/playwright-core/lib/coreBundle';
+import { ManualPromise } from '../../packages/isomorphic/manualPromise';
 const { createHttp2Server } = utils;
 
 async function pageWithHar(contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>, testInfo: any, options: { outputPath?: string } & Partial<Pick<BrowserContextOptions['recordHar'], 'content' | 'omitContent' | 'mode'>> = {}) {
@@ -1105,6 +1106,94 @@ it('HA-059 should record resource type', async ({ contextFactory, server, asset 
 });
 
 it.describe('tracing.startHar', () => {
+  it('HA-44427 should wait for response bodies added while flushing HAR', async ({ contextFactory, server, toImpl, browserName }, testInfo) => {
+    testInfo.skip(browserName !== 'chromium', 'Requires Chromium CDP session');
+
+    server.setRoute('/har-flush-a', (_, res) => {
+      res.setHeader('Content-Type', 'text/plain');
+      res.end('body-a');
+    });
+    server.setRoute('/har-flush-b', (_, res) => {
+      res.setHeader('Content-Type', 'text/plain');
+      res.end('body-b');
+    });
+
+    const context = await contextFactory();
+    const harPath = testInfo.outputPath('tracing.har');
+    const page = await context.newPage();
+    const pageB = await context.newPage();
+    await page.goto(server.EMPTY_PAGE);
+    await pageB.goto(server.EMPTY_PAGE);
+    await context.tracing.startHar(harPath);
+
+    const sessions = [page, pageB].map(page => {
+      const session = toImpl(page).delegate._mainFrameSession._client as any;
+      const originalSend = session.send.bind(session);
+      return { session, originalSend };
+    });
+    const enteredA = new ManualPromise<void>();
+    const enteredB = new ManualPromise<void>();
+    const releaseA = new ManualPromise<void>();
+    const releaseB = new ManualPromise<void>();
+    const gates = [
+      { entered: enteredA, release: releaseA },
+      { entered: enteredB, release: releaseB },
+    ];
+    let nextGate = 0;
+
+    for (const { session, originalSend } of sessions) {
+      session.send = async (method: string, ...args: any[]) => {
+        if (method === 'Network.getResponseBody') {
+          const gate = gates[nextGate++];
+          if (gate) {
+            gate.entered.resolve(undefined);
+            await gate.release;
+          }
+        }
+        return originalSend(method, ...args);
+      };
+    }
+
+    let stopPromise: Promise<void> | undefined;
+    try {
+      await page.evaluate(url => fetch(url).then(response => response.text()), server.PREFIX + '/har-flush-a');
+      await enteredA;
+
+      let stopResolved = false;
+      stopPromise = context.tracing.stopHar().then(() => {
+        stopResolved = true;
+      });
+
+      await pageB.evaluate(url => fetch(url).then(response => response.text()), server.PREFIX + '/har-flush-b');
+      await enteredB;
+
+      releaseA.resolve(undefined);
+      const completedBeforeB = await Promise.race([
+        stopPromise.then(() => true),
+        new Promise<boolean>(resolve => setTimeout(() => resolve(false), 100)),
+      ]);
+      expect(completedBeforeB).toBe(false);
+
+      releaseB.resolve(undefined);
+      await stopPromise;
+    } finally {
+      releaseA.resolve(undefined);
+      releaseB.resolve(undefined);
+      for (const { session, originalSend } of sessions)
+        session.send = originalSend;
+      if (stopPromise)
+        await stopPromise;
+      await context.close();
+    }
+
+    const log = JSON.parse(fs.readFileSync(harPath).toString()).log as Log;
+    expect(log.entries.map(entry => entry.request.url)).toEqual([
+      server.PREFIX + '/har-flush-a',
+      server.PREFIX + '/har-flush-b',
+    ]);
+    expect(log.entries.map(entry => entry.response.content.text)).toEqual(['body-a', 'body-b']);
+  });
+
   it('HA-060 should record a HAR with options', async ({ contextFactory, server }, testInfo) => {
     const context = await contextFactory();
     const harPath = testInfo.outputPath('tracing.har');
