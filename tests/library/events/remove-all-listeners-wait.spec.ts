@@ -34,6 +34,48 @@ test('EE-032 should not throw with ignoreErrors', async () => {
   releaseHandler.resolve();
 });
 
+test('EE-036 ignoreErrors should not suppress errors from other events', async () => {
+  const ee = new EventEmitter();
+  const releaseHandler = new ManualPromise();
+  const errors: Error[] = [];
+
+  ee.on('error', error => errors.push(error));
+  ee.on('a', async () => {
+    await releaseHandler;
+    throw new Error('Error in event A');
+  });
+  ee.on('b', async () => {
+    await releaseHandler;
+    throw new Error('Error in event B');
+  });
+
+  ee.emit('a');
+  ee.emit('b');
+
+  await ee.removeAllListeners('a', { behavior: 'ignoreErrors' });
+  releaseHandler.resolve();
+  await new Promise(resolve => setTimeout(resolve, 0));
+
+  expect(errors.map(error => error.message)).toEqual(['Error in event B']);
+});
+
+test('EE-037 ignoreErrors should not affect listeners added after removal', async () => {
+  const ee = new EventEmitter();
+  const errors: Error[] = [];
+
+  ee.on('error', error => errors.push(error));
+  await ee.removeAllListeners('a', { behavior: 'ignoreErrors' });
+
+  ee.on('b', async () => {
+    throw new Error('Error in a later event B listener');
+  });
+  ee.emit('b');
+
+  await new Promise(resolve => setTimeout(resolve, 0));
+
+  expect(errors.map(error => error.message)).toEqual(['Error in a later event B listener']);
+});
+
 test('EE-033 should wait', async () => {
   const ee = new EventEmitter();
   const releaseHandler = new ManualPromise();
