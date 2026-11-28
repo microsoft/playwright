@@ -1130,3 +1130,21 @@ function relativeStack(action: ActionTraceEvent, stacks: Map<string, StackFrame[
   const stack = stacks.get(action.callId) || [];
   return stack.map(f => f.file.replace(__dirname + path.sep, ''));
 }
+
+
+test('should remove HAR page lifecycle listeners when tracing stops', async ({ context, page, toImplInWorkerScope }) => {
+  const frame = toImplInWorkerScope(page).mainFrame();
+  const initialCount = frame.listenerCount('addlifecycle');
+
+  await context.tracing.start({ snapshots: true });
+  expect(frame.listenerCount('addlifecycle')).toBe(initialCount + 1);
+
+  await context.tracing.stop();
+  expect(frame.listenerCount('addlifecycle')).toBe(initialCount);
+
+  await context.tracing.start({ snapshots: true });
+  expect(frame.listenerCount('addlifecycle')).toBe(initialCount + 1);
+
+  await context.tracing.stop();
+  expect(frame.listenerCount('addlifecycle')).toBe(initialCount);
+});
