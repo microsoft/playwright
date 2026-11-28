@@ -73,6 +73,7 @@ export class HarTracer {
   private _options: HarTracerOptions;
   private _pageEntries: har.Page[] = [];
   private _eventListeners: RegisteredListener[] = [];
+  private _pagesWithLifecycleListener = new WeakSet<Page>();
   private _started = false;
   private _entrySymbol: symbol;
   private _pageEntrySymbol: symbol;
@@ -110,7 +111,7 @@ export class HarTracer {
     this._eventListeners = [];
     if (this._context instanceof BrowserContext) {
       this._eventListeners.push(
-          eventsHelper.addEventListener(this._context, BrowserContext.Events.Page, (page: Page) => this._createPageEntryIfNeeded(page)),
+          eventsHelper.addEventListener(this._context, BrowserContext.Events.Page, (page: Page) => this._addPageLifecycleListener(page)),
           eventsHelper.addEventListener(this._context, BrowserContext.Events.Request, (request: network.Request) => this._onRequest(request)),
           eventsHelper.addEventListener(this._context, BrowserContext.Events.RequestFinished, ({ request, response }) => this._onRequestFinished(request, response).catch(() => {})),
           eventsHelper.addEventListener(this._context, BrowserContext.Events.RequestFailed, request => this._onRequestFailed(request)),
@@ -121,7 +122,7 @@ export class HarTracer {
           eventsHelper.addEventListener(this._context, BrowserContext.Events.WebSocket, (webSocket: network.WebSocket, page: Page) => this._onWebSocket(page, webSocket)),
       );
       for (const page of this._context.pages())
-        this._createPageEntryIfNeeded(page);
+        this._addPageLifecycleListener(page);
     }
     if (this._context instanceof APIRequestContext) {
       this._eventListeners.push(
@@ -160,17 +161,25 @@ export class HarTracer {
       };
       (pageEntry as any)[startedDateSymbol] = date;
 
-      page.mainFrame().on(Frame.Events.AddLifecycle, (event: LifecycleEvent) => {
-        if (event === 'load')
-          this._onLoad(page, pageEntry!);
-        if (event === 'domcontentloaded')
-          this._onDOMContentLoaded(page, pageEntry!);
-      });
-
       (page as any)[this._pageEntrySymbol] = pageEntry;
       this._pageEntries.push(pageEntry);
     }
     return pageEntry;
+  }
+
+  private _addPageLifecycleListener(page: Page) {
+    if (this._pagesWithLifecycleListener.has(page))
+      return;
+    const pageEntry = this._createPageEntryIfNeeded(page);
+    if (!pageEntry)
+      return;
+    this._pagesWithLifecycleListener.add(page);
+    this._eventListeners.push(eventsHelper.addEventListener(page.mainFrame(), Frame.Events.AddLifecycle, (event: LifecycleEvent) => {
+      if (event === 'load')
+        this._onLoad(page, pageEntry);
+      if (event === 'domcontentloaded')
+        this._onDOMContentLoaded(page, pageEntry);
+    }));
   }
 
   private _onDOMContentLoaded(page: Page, pageEntry: har.Page) {
@@ -660,6 +669,7 @@ export class HarTracer {
   stop() {
     this._started = false;
     eventsHelper.removeEventListeners(this._eventListeners);
+    this._pagesWithLifecycleListener = new WeakSet();
     this._barrierPromises.clear();
 
     const context = this._context instanceof BrowserContext ? this._context : undefined;
@@ -688,6 +698,10 @@ export class HarTracer {
         else
           pageEntry.pageTimings.onLoad = -1;
       }
+    }
+    if (context) {
+      for (const page of context.pages())
+        delete (page as any)[this._pageEntrySymbol];
     }
     this._pageEntries = [];
     return log;
