@@ -85,7 +85,7 @@ export class Chromium extends BrowserType {
     return await this._connectOverCDPInternal(progress, params.endpointURL!, params);
   }
 
-  async _connectOverCDPInternal(progress: Progress, endpointURL: string, options: types.LaunchOptions & { headers?: types.HeadersArray, isLocal?: boolean, noDefaults?: boolean, isWebView?: boolean, maxPageAttachTime?: number, artifactsDir?: string }, onClose?: () => Promise<void>): Promise<CRBrowser> {
+  async _connectOverCDPInternal(progress: Progress, endpointURL: string, options: types.LaunchOptions & { headers?: types.HeadersArray, isLocal?: boolean, noDefaults?: boolean, isWebView?: boolean, maxPageAttachTime?: number, artifactsDir?: string, selectorEngines?: channels.SelectorEngine[], testIdAttributeName?: string }, onClose?: () => Promise<void>): Promise<CRBrowser> {
     const attachURL = parseAttachURL(endpointURL);
     if (attachURL?.kind === 'extension') {
       const relay = await startExtensionRelay(progress, attachURL, headersArrayToObject(options.headers ?? [], true));
@@ -124,7 +124,7 @@ export class Chromium extends BrowserType {
     return this._connectOverCDPImpl(progress, chromeTransport, closeAndWait, options, onClose);
   }
 
-  private async _connectOverCDPImpl(progress: Progress, transport: ConnectionTransport, closeAndWait: () => Promise<void>, options: types.LaunchOptions & { isLocal?: boolean, noDefaults?: boolean, isWebView?: boolean, maxPageAttachTime?: number, artifactsDir?: string }, onClose?: () => Promise<void>) {
+  private async _connectOverCDPImpl(progress: Progress, transport: ConnectionTransport, closeAndWait: () => Promise<void>, options: types.LaunchOptions & { isLocal?: boolean, noDefaults?: boolean, isWebView?: boolean, maxPageAttachTime?: number, artifactsDir?: string, selectorEngines?: channels.SelectorEngine[], testIdAttributeName?: string }, onClose?: () => Promise<void>) {
     let artifactsDir: string;
     const tempDirectories: string[] = [];
     if (options.artifactsDir) {
@@ -150,6 +150,8 @@ export class Chromium extends BrowserType {
       const persistent: types.BrowserContextOptions = {
         noDefaultViewport: true,
         ...(options.noDefaults ? { acceptDownloads: 'internal-browser-default' as const } : {}),
+        selectorEngines: options.selectorEngines,
+        testIdAttributeName: options.testIdAttributeName,
       };
       const browserOptions: BrowserOptions = {
         slowMo: options.slowMo,
