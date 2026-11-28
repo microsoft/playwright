@@ -81,6 +81,54 @@ export class DirTraceLoaderBackend implements TraceLoaderBackend {
   }
 }
 
+export class ZipTraceLoaderBackend implements TraceLoaderBackend {
+  private _zipFile: ZipFile;
+  private _entriesPromise: Promise<string[]> | undefined;
+
+  constructor(traceFile: string) {
+    this._zipFile = new ZipFile(traceFile);
+  }
+
+  isLive() {
+    return false;
+  }
+
+  entryNames(): Promise<string[]> {
+    if (!this._entriesPromise)
+      this._entriesPromise = this._zipFile.entries();
+    return this._entriesPromise;
+  }
+
+  async hasEntry(entryName: string): Promise<boolean> {
+    const entries = await this.entryNames();
+    return entries.includes(entryName);
+  }
+
+  async readText(entryName: string): Promise<string | undefined> {
+    if (!(await this.hasEntry(entryName)))
+      return;
+    try {
+      const buffer = await this._zipFile.read(entryName);
+      return buffer.toString('utf-8');
+    } catch {
+    }
+  }
+
+  async readBlob(entryName: string): Promise<Blob | undefined> {
+    if (!(await this.hasEntry(entryName)))
+      return;
+    try {
+      const buffer = await this._zipFile.read(entryName);
+      return new Blob([new Uint8Array(buffer)]);
+    } catch {
+    }
+  }
+
+  close() {
+    this._zipFile.close();
+  }
+}
+
 export async function extractTrace(traceFile: string, outDir: string): Promise<void> {
   const zipFile = new ZipFile(traceFile);
   try {

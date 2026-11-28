@@ -21,7 +21,7 @@ import { TraceModel, buildActionTree } from '@isomorphic/trace/traceModel';
 import { TraceLoader } from '@isomorphic/trace/traceLoader';
 import { renderFullTitleForCall, renderSubtitleForCall, renderTitleForCall } from '@isomorphic/protocolFormatter';
 import { resolveWithinRoot } from '@utils/fileUtils';
-import { DirTraceLoaderBackend, extractTrace } from './traceParser';
+import { DirTraceLoaderBackend, ZipTraceLoaderBackend, extractTrace } from './traceParser';
 
 import type { ActionEntry } from '@isomorphic/trace/entries';
 import type { ActionPhase } from '@isomorphic/trace/trace';
@@ -76,7 +76,32 @@ export async function openTrace(traceFile: string) {
     await fs.promises.writeFile(path.join(traceDir, '.link'), filePath, 'utf-8');
 }
 
-export async function loadTrace(): Promise<LoadedTrace> {
+export async function loadTrace(explicitTraceFile?: string): Promise<LoadedTrace> {
+  if (explicitTraceFile) {
+    const filePath = path.resolve(explicitTraceFile);
+    if (!fs.existsSync(filePath))
+      throw new Error(`Trace file not found: ${filePath}`);
+    if (filePath.endsWith('.zip')) {
+      const backend = new ZipTraceLoaderBackend(filePath);
+      try {
+        const loader = new TraceLoader();
+        await loader.load(backend);
+        const model = new TraceModel(filePath, loader.contextEntries);
+        return new LoadedTrace(model, loader, buildOrdinalMap(model));
+      } finally {
+        backend.close();
+      }
+    }
+    const stat = await fs.promises.stat(filePath);
+    const traceRoot = stat.isDirectory() ? filePath : path.dirname(filePath);
+    const traceEntry = stat.isDirectory() ? undefined : path.basename(filePath);
+    const backend = new DirTraceLoaderBackend(traceRoot);
+    const loader = new TraceLoader();
+    await loader.load(backend, traceEntry);
+    const model = new TraceModel(traceRoot, loader.contextEntries);
+    return new LoadedTrace(model, loader, buildOrdinalMap(model));
+  }
+
   const dir = ensureTraceOpen();
   const linkFile = path.join(dir, '.link');
   let traceDir: string;
@@ -93,6 +118,12 @@ export async function loadTrace(): Promise<LoadedTrace> {
   await loader.load(backend, traceFile);
   const model = new TraceModel(traceDir, loader.contextEntries);
   return new LoadedTrace(model, loader, buildOrdinalMap(model));
+}
+
+export function roundMs(ms: number): number {
+  if (!isFinite(ms) || ms < 0)
+    return 0;
+  return Math.round(ms * 1000) / 1000;
 }
 
 export function formatTimestamp(ms: number, base: number): string {
