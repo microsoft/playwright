@@ -155,10 +155,14 @@ export class SerializedFS {
         // Note: 'wx' flag only writes when the file does not exist.
         // See https://nodejs.org/api/fs.html#file-system-flags.
         // This way tracing never have to write the same resource twice.
-        if (op.skipIfExists)
-          await fs.promises.writeFile(op.file, op.content, { flag: 'wx' }).catch(() => {});
-        else
+        if (op.skipIfExists) {
+          await fs.promises.writeFile(op.file, op.content, { flag: 'wx' }).catch(error => {
+            if (error.code !== 'EEXIST')
+              throw error;
+          });
+        } else {
           await fs.promises.writeFile(op.file, op.content);
+        }
         return;
       }
       case 'copyFile': {
