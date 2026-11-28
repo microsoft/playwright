@@ -654,7 +654,8 @@ export class HarTracer {
   }
 
   async flush() {
-    await Promise.all(this._barrierPromises);
+    while (this._barrierPromises.size)
+      await Promise.all(this._barrierPromises);
   }
 
   stop() {
