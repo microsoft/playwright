@@ -293,3 +293,292 @@ test('trace attachments lists and extracts attachments', { annotation: { type: '
 
   expect((await runTraceCli(['open', traceFile])).exitCode).toBe(0);
 });
+
+test('trace actions --json outputs structured actions', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44396' } }, async ({ traceFile, runTraceCli }) => {
+  const { stdout, exitCode } = await runTraceCli(['actions', '--json']);
+  expect(exitCode).toBe(0);
+  expect(stdout).not.toContain('\x1b[');
+
+  const items = JSON.parse(stdout);
+  expect(Array.isArray(items)).toBe(true);
+  expect(items.length).toBeGreaterThan(0);
+  for (const item of items) {
+    expect(item).toEqual({
+      ordinal: expect.any(Number),
+      callId: expect.any(String),
+      startTime: expect.any(Number),
+      duration: expect.any(Number),
+      title: expect.any(String),
+      status: 'passed',
+      error: null,
+    });
+  }
+  expect(items.some((a: any) => a.title.includes('Navigate'))).toBe(true);
+  expect(items.some((a: any) => a.title.includes('Click'))).toBe(true);
+  expect(items.some((a: any) => a.title.includes('Fill'))).toBe(true);
+
+  const { stdout: fileAfterFlagStdout, exitCode: fileAfterFlagExit } = await runTraceCli(['actions', traceFile, '--json']);
+  expect(fileAfterFlagExit).toBe(0);
+  expect(JSON.parse(fileAfterFlagStdout)).toEqual(items);
+
+  const { stdout: globalFlagStdout, exitCode: globalFlagExit } = await runTraceCli(['--json', 'actions', traceFile]);
+  expect(globalFlagExit).toBe(0);
+  expect(JSON.parse(globalFlagStdout)).toEqual(items);
+
+  const { stdout: filteredStdout, exitCode: filteredExitCode } = await runTraceCli(['actions', '--grep', 'Click', '--json']);
+  expect(filteredExitCode).toBe(0);
+  const filtered = JSON.parse(filteredStdout);
+  expect(filtered.length).toBeGreaterThan(0);
+  expect(filtered.every((a: any) => /click/i.test(a.title))).toBe(true);
+});
+
+test('trace requests --json outputs structured requests', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44396' } }, async ({ traceFile, runTraceCli }) => {
+  const { stdout, exitCode } = await runTraceCli(['requests', '--json']);
+  expect(exitCode).toBe(0);
+  expect(stdout).not.toContain('\x1b[');
+
+  const items = JSON.parse(stdout);
+  expect(Array.isArray(items)).toBe(true);
+  expect(items.length).toBeGreaterThan(0);
+
+  const feedback = items.find((r: any) => r.url.endsWith('/feedback'));
+  expect(feedback).toEqual({
+    ordinal: expect.any(Number),
+    method: 'POST',
+    url: expect.stringContaining('/feedback'),
+    status: 200,
+    duration: expect.any(Number),
+    failure: null,
+  });
+
+  const blocked = items.find((r: any) => r.url.endsWith('/blocked'));
+  expect(blocked).toEqual({
+    ordinal: expect.any(Number),
+    method: 'GET',
+    url: expect.stringContaining('/blocked'),
+    status: -1,
+    duration: expect.any(Number),
+    failure: expect.any(String),
+  });
+
+  expect(JSON.parse((await runTraceCli(['requests', traceFile, '--json'])).stdout)).toEqual(items);
+  expect(JSON.parse((await runTraceCli(['--json', 'requests', traceFile])).stdout)).toEqual(items);
+});
+
+test('trace console --json outputs structured console messages', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44396' } }, async ({ traceFile, runTraceCli }, testInfo) => {
+  const { stdout, exitCode } = await runTraceCli(['console', '--json']);
+  expect(exitCode).toBe(0);
+  expect(stdout).not.toContain('\x1b[');
+
+  const items = JSON.parse(stdout);
+  expect(items).toEqual([
+    { ordinal: 1, type: 'log', text: 'info message', location: expect.any(String) },
+    { ordinal: 2, type: 'warning', text: 'warning message', location: expect.any(String) },
+    { ordinal: 3, type: 'error', text: 'error message', location: expect.any(String) },
+    { ordinal: 4, type: 'error', text: expect.stringContaining('Failed to load resource'), location: expect.any(String) },
+  ]);
+
+  expect(JSON.parse((await runTraceCli(['console', traceFile, '--json'])).stdout)).toEqual(items);
+  expect(JSON.parse((await runTraceCli(['--json', 'console', traceFile])).stdout)).toEqual(items);
+
+  const stdioTrace = testInfo.outputPath('stdio.trace');
+  await fs.promises.writeFile(stdioTrace, [
+    { type: 'context-options', version: 8, origin: 'library', browserName: 'chromium', options: {}, platform: 'linux', wallTime: 1000, monotonicTime: 0 },
+    { type: 'stdout', timestamp: 10, text: 'hello stdout\n' },
+  ].map(event => JSON.stringify(event)).join('\n'));
+  expect(JSON.parse((await runTraceCli(['console', stdioTrace, '--json'])).stdout)).toEqual([
+    { ordinal: 1, type: 'stdout', text: 'hello stdout', location: null },
+  ]);
+});
+
+test('trace errors --json outputs structured errors', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44396' } }, async ({ traceFile, runTraceCli }, testInfo) => {
+  const { stdout: fixtureStdout, exitCode: fixtureExitCode } = await runTraceCli(['errors', '--json']);
+  expect(fixtureExitCode).toBe(0);
+  const fixtureErrors = JSON.parse(fixtureStdout);
+  expect(fixtureErrors).toEqual([
+    { type: 'console', message: 'error message', location: expect.any(String) },
+    { type: 'console', message: expect.stringContaining('Failed to load resource'), location: expect.any(String) },
+  ]);
+
+  expect(JSON.parse((await runTraceCli(['errors', traceFile, '--json'])).stdout)).toEqual(fixtureErrors);
+  expect(JSON.parse((await runTraceCli(['--json', 'errors', traceFile])).stdout)).toEqual(fixtureErrors);
+
+  const errorTrace = testInfo.outputPath('errors.trace');
+  await fs.promises.writeFile(errorTrace, [
+    { type: 'context-options', version: 8, origin: 'library', browserName: 'chromium', options: {}, platform: 'linux', wallTime: 1000, monotonicTime: 0 },
+    { type: 'before', callId: 'call@1', startTime: 10, class: 'Frame', method: 'click', params: { selector: '#missing' }, stack: [{ file: '/app/tests/example.spec.ts', line: 14, column: 7 }] },
+    { type: 'after', callId: 'call@1', endTime: 50, error: { name: 'TimeoutError', message: 'Timeout 30000ms exceeded.' } },
+    { type: 'event', time: 20, class: 'BrowserContext', method: 'pageError', params: { error: { error: { name: 'Error', message: 'boom in page', stack: 'Error: boom in page\n    at http://localhost:3000/app.js:9:3' } } } },
+    { type: 'console', time: 30, messageType: 'error', text: 'console failure', location: { url: 'http://localhost:3000/app.js', lineNumber: 12, columnNumber: 1 } },
+    { type: 'stderr', timestamp: 40, text: 'stderr failure\n' },
+  ].map(event => JSON.stringify(event)).join('\n'));
+
+  const { stdout, exitCode } = await runTraceCli(['errors', errorTrace, '--json']);
+  expect(exitCode).toBe(0);
+  expect(JSON.parse(stdout)).toEqual([
+    { type: 'assertion', message: 'Timeout 30000ms exceeded.', location: 'example.spec.ts:14:7' },
+    { type: 'pageError', message: 'boom in page', location: 'app.js:9:3' },
+    { type: 'console', message: 'console failure', location: 'app.js:12' },
+    { type: 'stderr', message: 'stderr failure', location: null },
+  ]);
+});
+
+test('empty trace with --json returns empty arrays', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44396' } }, async ({ traceFile, runTraceCli }, testInfo) => {
+  const emptyTrace = testInfo.outputPath('empty.trace');
+  await fs.promises.writeFile(emptyTrace, JSON.stringify({
+    type: 'context-options',
+    version: 8,
+    origin: 'library',
+    browserName: 'chromium',
+    options: {},
+    platform: process.platform,
+    wallTime: 1000,
+    monotonicTime: 100,
+  }));
+
+  expect((await runTraceCli(['open', emptyTrace])).exitCode).toBe(0);
+
+  for (const subcommand of ['actions', 'requests', 'console', 'errors']) {
+    const { stdout, exitCode } = await runTraceCli([subcommand, '--json']);
+    expect(exitCode).toBe(0);
+    expect(stdout).toBe('[]');
+    expect(JSON.parse(stdout)).toEqual([]);
+  }
+
+  expect((await runTraceCli(['open', traceFile])).exitCode).toBe(0);
+});
+
+test('trace summary on passing trace', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44396' } }, async ({ traceFile, runTraceCli }) => {
+  const { stdout: textStdout, exitCode: textExitCode } = await runTraceCli(['summary', traceFile]);
+  expect(textExitCode).toBe(0);
+  expect(textStdout).toContain('Browser:       chromium');
+  expect(textStdout).toContain('Viewport:      800x600');
+  expect(textStdout).toContain(`Platform:      ${process.platform}`);
+  expect(textStdout).toContain('Duration:');
+  expect(textStdout).toMatch(/Actions:\s+\d+ total, \d+ passed, 0 failed/);
+  expect(textStdout).not.toContain('First failed:');
+  expect(textStdout).toMatch(/Network:\s+\d+ requests \(\d+ ok, 1 errors\)/);
+  expect(textStdout).toContain('Console:       2 errors');
+  expect(textStdout).toContain('Page errors:   0');
+
+  const { stdout: jsonStdout, exitCode: jsonExitCode } = await runTraceCli(['summary', traceFile, '--json']);
+  expect(jsonExitCode).toBe(0);
+  const summary = JSON.parse(jsonStdout);
+  expect(summary).toEqual({
+    browser: 'chromium',
+    viewport: { width: 800, height: 600 },
+    platform: process.platform,
+    testTitle: null,
+    duration: expect.any(Number),
+    actions: {
+      total: expect.any(Number),
+      passed: expect.any(Number),
+      failed: 0,
+      firstFailed: null,
+    },
+    network: {
+      total: expect.any(Number),
+      ok: expect.any(Number),
+      errors: 1,
+    },
+    errors: {
+      console: 2,
+      pageError: 0,
+    },
+  });
+  expect(summary.actions.total).toBeGreaterThan(0);
+  expect(summary.actions.passed).toBe(summary.actions.total);
+
+  const { stdout: openSummaryStdout, exitCode: openSummaryExitCode } = await runTraceCli(['summary', '--json']);
+  expect(openSummaryExitCode).toBe(0);
+  expect(JSON.parse(openSummaryStdout)).toEqual(summary);
+
+  const { stdout: globalJsonStdout, exitCode: globalJsonExitCode } = await runTraceCli(['--json', 'summary', traceFile]);
+  expect(globalJsonExitCode).toBe(0);
+  expect(JSON.parse(globalJsonStdout)).toEqual(summary);
+});
+
+test('trace summary on failing trace', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44396' } }, async ({ runTraceCli }, testInfo) => {
+  const failingDir = testInfo.outputPath('failing-trace');
+  await fs.promises.mkdir(failingDir, { recursive: true });
+  const failingTrace = path.join(failingDir, 'failing.trace');
+  const failingNetwork = path.join(failingDir, 'failing.network');
+
+  await fs.promises.writeFile(failingTrace, [
+    {
+      type: 'context-options',
+      version: 8,
+      origin: 'library',
+      browserName: 'firefox',
+      title: 'checkout should succeed',
+      options: { viewport: { width: 1280, height: 720 } },
+      platform: 'darwin',
+      wallTime: 1000,
+      monotonicTime: 100,
+    },
+    { type: 'before', callId: 'call@1', startTime: 110, class: 'Frame', method: 'goto', params: { url: 'http://localhost:3000/' } },
+    { type: 'after', callId: 'call@1', endTime: 150 },
+    { type: 'before', callId: 'call@2', startTime: 160, class: 'Frame', method: 'click', params: { selector: '#submit' } },
+    { type: 'after', callId: 'call@2', endTime: 350, error: { name: 'TimeoutError', message: 'Waiting for #submit failed' } },
+    { type: 'console', time: 200, messageType: 'error', text: 'API error 500', location: { url: 'http://localhost:3000/main.js', lineNumber: 4, columnNumber: 2 } },
+    { type: 'event', time: 210, class: 'BrowserContext', method: 'pageError', params: { error: { error: { name: 'TypeError', message: 'Cannot read properties of null' } } } },
+  ].map(event => JSON.stringify(event)).join('\n'));
+
+  const makeHarResource = (url: string, status: number) => ({
+    type: 'resource-snapshot',
+    snapshot: {
+      _monotonicTime: 120,
+      startedDateTime: '2026-01-01T00:00:00.000Z',
+      time: 25,
+      request: { method: 'GET', url, httpVersion: 'HTTP/1.1', cookies: [], headers: [], queryString: [], headersSize: -1, bodySize: 0 },
+      response: { status, statusText: status === 200 ? 'OK' : 'Internal Server Error', httpVersion: 'HTTP/1.1', cookies: [], headers: [], content: { size: 0, mimeType: 'text/plain' }, redirectURL: '', headersSize: -1, bodySize: 0 },
+      cache: {},
+      timings: { send: 0, wait: 25, receive: 0 },
+    },
+  });
+  await fs.promises.writeFile(failingNetwork, [
+    makeHarResource('http://localhost:3000/', 200),
+    makeHarResource('http://localhost:3000/api/checkout', 500),
+  ].map(event => JSON.stringify(event)).join('\n'));
+
+  const { stdout: textStdout, exitCode: textExitCode } = await runTraceCli(['summary', failingTrace]);
+  expect(textExitCode).toBe(0);
+  expect(textStdout).toContain('Browser:       firefox');
+  expect(textStdout).toContain('Platform:      darwin');
+  expect(textStdout).toContain('Viewport:      1280x720');
+  expect(textStdout).toContain('Title:         checkout should succeed');
+  expect(textStdout).toContain('Duration:      250ms');
+  expect(textStdout).toContain('Actions:       2 total, 1 passed, 1 failed');
+  expect(textStdout).toContain('First failed:  #2 Click locator(\'#submit\')');
+  expect(textStdout).toContain('Network:       2 requests (1 ok, 1 errors)');
+  expect(textStdout).toContain('Console:       1 errors');
+  expect(textStdout).toContain('Page errors:   1');
+
+  const { stdout: jsonStdout, exitCode: jsonExitCode } = await runTraceCli(['summary', failingTrace, '--json']);
+  expect(jsonExitCode).toBe(0);
+  expect(JSON.parse(jsonStdout)).toEqual({
+    browser: 'firefox',
+    viewport: { width: 1280, height: 720 },
+    platform: 'darwin',
+    testTitle: 'checkout should succeed',
+    duration: 250,
+    actions: {
+      total: 2,
+      passed: 1,
+      failed: 1,
+      firstFailed: {
+        ordinal: 2,
+        title: 'Click locator(\'#submit\')',
+      },
+    },
+    network: {
+      total: 2,
+      ok: 1,
+      errors: 1,
+    },
+    errors: {
+      console: 1,
+      pageError: 1,
+    },
+  });
+});

@@ -22,6 +22,7 @@ import { traceRequests } from './traceRequests';
 import { traceRequest } from './traceRequests';
 import { traceConsole } from './traceConsole';
 import { traceErrors } from './traceErrors';
+import { traceSummary } from './traceSummary';
 import { traceSnapshot } from './traceSnapshot';
 import { traceScreenshot } from './traceScreenshot';
 import { traceAttachments } from './traceAttachments';
@@ -33,7 +34,8 @@ import type { Command } from 'commander';
 export function addTraceCommands(program: Command, logErrorAndExit: (e: Error) => void) {
   const traceCommand = program
       .command('trace')
-      .description('inspect trace files from the command line');
+      .description('inspect trace files from the command line')
+      .option('--json', 'Output in JSON format');
 
   traceCommand
       .command('open <trace>')
@@ -50,12 +52,21 @@ export function addTraceCommands(program: Command, logErrorAndExit: (e: Error) =
       });
 
   traceCommand
-      .command('actions')
+      .command('summary [trace]')
+      .description('show trace summary')
+      .option('--json', 'Output in JSON format')
+      .action(async (trace: string | undefined, _options: unknown, cmd: Command) => {
+        traceSummary(trace, cmd.optsWithGlobals()).catch(logErrorAndExit);
+      });
+
+  traceCommand
+      .command('actions [trace]')
       .description('list actions in the trace')
       .option('--grep <pattern>', 'filter actions by title pattern')
       .option('--errors-only', 'only show failed actions')
-      .action(async (options: { grep?: string, errorsOnly?: boolean }) => {
-        traceActions(options).catch(logErrorAndExit);
+      .option('--json', 'Output in JSON format')
+      .action(async (trace: string | undefined, _options: unknown, cmd: Command) => {
+        traceActions(cmd.optsWithGlobals(), trace).catch(logErrorAndExit);
       });
 
   traceCommand
@@ -66,14 +77,15 @@ export function addTraceCommands(program: Command, logErrorAndExit: (e: Error) =
       });
 
   traceCommand
-      .command('requests')
+      .command('requests [trace]')
       .description('show network requests')
       .option('--grep <pattern>', 'filter by URL pattern')
       .option('--method <method>', 'filter by HTTP method')
       .option('--status <code>', 'filter by status code')
       .option('--failed', 'only show failed requests (status >= 400)')
-      .action(async (options: { grep?: string, method?: string, status?: string, failed?: boolean }) => {
-        traceRequests(options).catch(logErrorAndExit);
+      .option('--json', 'Output in JSON format')
+      .action(async (trace: string | undefined, _options: unknown, cmd: Command) => {
+        traceRequests(cmd.optsWithGlobals(), trace).catch(logErrorAndExit);
       });
 
   traceCommand
@@ -84,22 +96,24 @@ export function addTraceCommands(program: Command, logErrorAndExit: (e: Error) =
       });
 
   traceCommand
-      .command('console')
+      .command('console [trace]')
       .description('show console messages')
       .option('--grep <pattern>', 'filter by message text pattern')
       .option('--errors-only', 'only show errors')
       .option('--warnings', 'show errors and warnings')
       .option('--browser', 'only browser console messages')
       .option('--stdio', 'only stdout/stderr')
-      .action(async (options: { grep?: string, errorsOnly?: boolean, warnings?: boolean, browser?: boolean, stdio?: boolean }) => {
-        traceConsole(options).catch(logErrorAndExit);
+      .option('--json', 'Output in JSON format')
+      .action(async (trace: string | undefined, _options: unknown, cmd: Command) => {
+        traceConsole(cmd.optsWithGlobals(), trace).catch(logErrorAndExit);
       });
 
   traceCommand
-      .command('errors')
+      .command('errors [trace]')
       .description('show errors with stack traces')
-      .action(async () => {
-        traceErrors().catch(logErrorAndExit);
+      .option('--json', 'Output in JSON format')
+      .action(async (trace: string | undefined, _options: unknown, cmd: Command) => {
+        traceErrors(cmd.optsWithGlobals(), trace).catch(logErrorAndExit);
       });
 
   traceCommand

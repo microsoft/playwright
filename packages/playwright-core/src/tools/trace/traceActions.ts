@@ -18,37 +18,107 @@
 
 import { buildActionTree } from '@isomorphic/trace/traceModel';
 import { msToString } from '@isomorphic/formatUtils';
-import { loadTrace, formatTimestamp, actionFullTitle, actionSubtitle, actionTitle } from './traceUtils';
+import { loadTrace, formatTimestamp, actionFullTitle, actionSubtitle, actionTitle, roundMs } from './traceUtils';
 
 import { kActionPhases } from './traceUtils';
 
 import type { ActionEntry } from '@isomorphic/trace/entries';
+import type { LoadedTrace } from './traceUtils';
 
-export async function traceActions(options: { grep?: string, errorsOnly?: boolean }) {
-  const trace = await loadTrace();
+export type TraceActionOptions = {
+  grep?: string;
+  errorsOnly?: boolean;
+  json?: boolean;
+};
+
+export type TraceActionItem = {
+  ordinal: number;
+  callId: string;
+  startTime: number;
+  duration: number;
+  title: string;
+  status: 'passed' | 'failed';
+  error: string | null;
+};
+
+type ActionFormatMeta = {
+  rawStartTime: number;
+  modelStartTime: number;
+  rawDuration: number | undefined;
+  shortTitle: string;
+  subtitle?: string;
+  indent: string;
+};
+
+const actionFormatMeta = new WeakMap<TraceActionItem, ActionFormatMeta>();
+
+export function collectTraceActions(trace: LoadedTrace, options: { grep?: string, errorsOnly?: boolean } = {}): TraceActionItem[] {
   const actions = filterActions(trace.model.actions, options);
-
-  // Tree view
   const { rootItem } = buildActionTree(actions);
-  console.log(`  ${'#'.padStart(4)} ${'Time'.padEnd(9)}  ${'Action'.padEnd(55)} ${'Duration'.padStart(8)}`);
-  console.log(`  ${'─'.repeat(4)} ${'─'.repeat(9)}  ${'─'.repeat(55)} ${'─'.repeat(8)}`);
+  const items: TraceActionItem[] = [];
+
   const visit = (item: ReturnType<typeof buildActionTree>['rootItem'], indent: string) => {
     const action = item.action;
-    const ordinal = trace.callIdToOrdinal.get(action.callId) ?? '?';
-    const ts = formatTimestamp(action.startTime, trace.model.startTime);
-    const duration = action.endTime ? msToString(action.endTime - action.startTime) : 'running';
-    const title = actionTitle(action);
-    const subtitle = actionSubtitle(action);
-    const error = action.error ? '  ✗' : '';
+    const ordinal = trace.callIdToOrdinal.get(action.callId) ?? 0;
+    const startTime = roundMs(action.startTime - trace.model.startTime);
+    const duration = action.endTime ? roundMs(action.endTime - action.startTime) : 0;
+    const status: 'passed' | 'failed' = action.error ? 'failed' : 'passed';
+    const error = action.error ? (action.error.message || action.error.name || 'Error') : null;
+    const entry: TraceActionItem = {
+      ordinal,
+      callId: action.callId,
+      startTime,
+      duration,
+      title: actionFullTitle(action),
+      status,
+      error,
+    };
+    actionFormatMeta.set(entry, {
+      rawStartTime: action.startTime,
+      modelStartTime: trace.model.startTime,
+      rawDuration: action.endTime ? action.endTime - action.startTime : undefined,
+      shortTitle: actionTitle(action),
+      subtitle: actionSubtitle(action),
+      indent,
+    });
+    items.push(entry);
+    for (const child of item.children)
+      visit(child, indent + '  ');
+  };
+
+  for (const child of rootItem.children)
+    visit(child, '');
+
+  return items;
+}
+
+function formatTraceActions(items: TraceActionItem[]) {
+  console.log(`  ${'#'.padStart(4)} ${'Time'.padEnd(9)}  ${'Action'.padEnd(55)} ${'Duration'.padStart(8)}`);
+  console.log(`  ${'─'.repeat(4)} ${'─'.repeat(9)}  ${'─'.repeat(55)} ${'─'.repeat(8)}`);
+  for (const item of items) {
+    const meta = actionFormatMeta.get(item);
+    const ordinal = item.ordinal || '?';
+    const ts = meta ? formatTimestamp(meta.rawStartTime, meta.modelStartTime) : formatTimestamp(item.startTime, 0);
+    const duration = meta ? (meta.rawDuration !== undefined ? msToString(meta.rawDuration) : 'running') : msToString(item.duration);
+    const title = meta ? meta.shortTitle : item.title;
+    const subtitle = meta?.subtitle;
+    const indent = meta?.indent ?? '';
+    const error = item.status === 'failed' ? '  ✗' : '';
     const prefix = `  ${(ordinal + '.').padStart(4)} ${ts}  ${indent}`;
     console.log(`${prefix}${title.padEnd(Math.max(1, 55 - indent.length))} ${duration.padStart(8)}${error}`);
     if (subtitle)
       console.log(`${' '.repeat(prefix.length)}${subtitle}`);
-    for (const child of item.children)
-      visit(child, indent + '  ');
-  };
-  for (const child of rootItem.children)
-    visit(child, '');
+  }
+}
+
+export async function traceActions(options: TraceActionOptions = {}, traceFile?: string) {
+  const trace = await loadTrace(traceFile);
+  const items = collectTraceActions(trace, options);
+  if (options.json) {
+    console.log(JSON.stringify(items, null, 2));
+    return;
+  }
+  formatTraceActions(items);
 }
 
 function filterActions(actions: ActionEntry[], options: { grep?: string, errorsOnly?: boolean }): ActionEntry[] {

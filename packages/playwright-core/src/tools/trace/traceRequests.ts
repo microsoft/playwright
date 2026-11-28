@@ -18,10 +18,37 @@
 
 import path from 'path';
 import { msToString } from '@isomorphic/formatUtils';
-import { loadTrace, formatTimestamp } from './traceUtils';
+import { loadTrace, formatTimestamp, roundMs } from './traceUtils';
 
-export async function traceRequests(options: { grep?: string, method?: string, status?: string, failed?: boolean }) {
-  const trace = await loadTrace();
+import type { LoadedTrace } from './traceUtils';
+
+export type TraceRequestOptions = {
+  grep?: string;
+  method?: string;
+  status?: string;
+  failed?: boolean;
+  json?: boolean;
+};
+
+export type TraceRequestItem = {
+  ordinal: number;
+  method: string;
+  url: string;
+  status: number;
+  duration: number;
+  failure: string | null;
+};
+
+type RequestFormatMeta = {
+  start: string;
+  rawDuration: number;
+  size: number;
+  route: string;
+};
+
+const requestFormatMeta = new WeakMap<TraceRequestItem, RequestFormatMeta>();
+
+export function collectTraceRequests(trace: LoadedTrace, options: { grep?: string, method?: string, status?: string, failed?: boolean } = {}): TraceRequestItem[] {
   const model = trace.model;
 
   // Build indexed list with stable ordinals before filtering.
@@ -40,34 +67,68 @@ export async function traceRequests(options: { grep?: string, method?: string, s
   if (options.failed)
     indexed = indexed.filter(({ resource: r }) => r.response.status >= 400 || r.response.status === -1);
 
-  if (!indexed.length) {
+  return indexed.map(({ resource: r, ordinal }) => {
+    const failure = r.response._failureText || null;
+    const item: TraceRequestItem = {
+      ordinal,
+      method: r.request.method,
+      url: r.request.url,
+      status: r.response.status,
+      duration: roundMs(r.time),
+      failure,
+    };
+    const size = r.response._transferSize! > 0 ? r.response._transferSize! : r.response.bodySize;
+    requestFormatMeta.set(item, {
+      start: r._monotonicTime ? formatTimestamp(r._monotonicTime, model.startTime) : '-',
+      rawDuration: r.time,
+      size,
+      route: formatRouteStatus(r),
+    });
+    return item;
+  });
+}
+
+function formatTraceRequests(items: TraceRequestItem[]) {
+  if (!items.length) {
     console.log('  No network requests');
     return;
   }
   console.log(`  ${'#'.padStart(4)} ${'Start'.padEnd(9)} ${'Method'.padEnd(8)} ${'Status'.padEnd(8)} ${'Name'.padEnd(45)} ${'Duration'.padStart(10)} ${'Size'.padStart(8)} ${'Route'.padEnd(10)}`);
   console.log(`  ${'─'.repeat(4)} ${'─'.repeat(9)} ${'─'.repeat(8)} ${'─'.repeat(8)} ${'─'.repeat(45)} ${'─'.repeat(10)} ${'─'.repeat(8)} ${'─'.repeat(10)}`);
 
-  for (const { resource: r, ordinal } of indexed) {
+  for (const item of items) {
+    const meta = requestFormatMeta.get(item);
     let name: string;
     try {
-      const url = new URL(r.request.url);
+      const url = new URL(item.url);
       name = url.pathname.substring(url.pathname.lastIndexOf('/') + 1);
       if (!name)
         name = url.host;
       if (url.search)
         name += url.search;
     } catch {
-      name = r.request.url;
+      name = item.url;
     }
     if (name.length > 45)
       name = name.substring(0, 42) + '...';
 
-    const status = r.response.status > 0 ? String(r.response.status) : 'ERR';
-    const size = r.response._transferSize! > 0 ? r.response._transferSize! : r.response.bodySize;
-    const route = formatRouteStatus(r);
-    const start = r._monotonicTime ? formatTimestamp(r._monotonicTime, model.startTime) : '-';
-    console.log(`  ${(ordinal + '.').padStart(4)} ${start.padEnd(9)} ${r.request.method.padEnd(8)} ${status.padEnd(8)} ${name.padEnd(45)} ${msToString(r.time).padStart(10)} ${bytesToString(size).padStart(8)} ${route.padEnd(10)}`);
+    const status = item.status > 0 ? String(item.status) : 'ERR';
+    const start = meta ? meta.start : '-';
+    const duration = msToString(meta ? meta.rawDuration : item.duration);
+    const size = meta ? bytesToString(meta.size) : '-';
+    const route = meta ? meta.route : '';
+    console.log(`  ${(item.ordinal + '.').padStart(4)} ${start.padEnd(9)} ${item.method.padEnd(8)} ${status.padEnd(8)} ${name.padEnd(45)} ${duration.padStart(10)} ${size.padStart(8)} ${route.padEnd(10)}`);
   }
+}
+
+export async function traceRequests(options: TraceRequestOptions = {}, traceFile?: string) {
+  const trace = await loadTrace(traceFile);
+  const items = collectTraceRequests(trace, options);
+  if (options.json) {
+    console.log(JSON.stringify(items, null, 2));
+    return;
+  }
+  formatTraceRequests(items);
 }
 
 // ---- trace request ----
