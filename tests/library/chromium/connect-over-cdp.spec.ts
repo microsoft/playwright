@@ -625,6 +625,31 @@ test('CD-056 should respect the test id attribute in strict mode errors', {
   }
 });
 
+test('CD-057 should work with registered selector engines in existing pages that logged a DOM element', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/44416' },
+}, async ({ playwright, browserType }, testInfo) => {
+  const port = 9339 + testInfo.workerIndex;
+  const browserServer = await browserType.launch({
+    args: ['--remote-debugging-port=' + port]
+  });
+  try {
+    const existingPage = await browserServer.newPage();
+    await existingPage.setContent('<div>hello</div>');
+    await existingPage.evaluate(() => console.log(document.querySelector('div')));
+
+    await playwright.selectors.register('cdpTagLogged', () => ({
+      query: (root, selector) => root.querySelector(selector),
+      queryAll: (root, selector) => Array.from(root.querySelectorAll(selector)),
+    }));
+    const cdpBrowser = await browserType.connectOverCDP(`http://127.0.0.1:${port}/`);
+    const reattachedPage = cdpBrowser.contexts()[0].pages()[0];
+    expect(await reattachedPage.locator('cdpTagLogged=div').textContent()).toBe('hello');
+    await cdpBrowser.close();
+  } finally {
+    await browserServer.close();
+  }
+});
+
 test('CD-020 should report an expected error when the endpointURL returns a non-expected status code', async ({ browserType, server }) => {
   server.setRoute('/json/version/', (req, resp) => {
     resp.statusCode = 404;

@@ -1168,6 +1168,8 @@ scheme.BrowserTypeConnectOverCDPParams = tObject({}, {
   maxPageAttachTime: tFloat,
   artifactsDir: tString,
   transport: tBinary,
+  selectorEngines: tArray(tType('SelectorEngine')),
+  testIdAttributeName: tString,
 });
 scheme.BrowserTypeConnectOverCDPResult = tObject({
   browser: tChannel(['Browser']),

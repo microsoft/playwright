@@ -54,6 +54,10 @@ BrowserType:
         maxPageAttachTime: float?
         artifactsDir: string?
         transport: binary?
+        selectorEngines:
+          type: array?
+          items: SelectorEngine
+        testIdAttributeName: string?
       returns:
         browser: Browser
         defaultContext: BrowserContext?

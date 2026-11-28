@@ -163,7 +163,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
     if (endpointURL && this.name() !== 'chromium' && this.name() !== 'webkit')
       throw new Error('Connecting over CDP is only supported in Chromium and WebKit.');
 
-    const result = await this._channel.connectOverCDP({
+    const result = await this._channel.connectOverCDP(this._playwright.selectors._withSelectorOptions({
       endpointURL,
       transport: transport as any,
       headers: params.headers ? headersObjectToArray(params.headers) : undefined,
@@ -173,7 +173,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       isWebView: (params as any).isWebView,
       maxPageAttachTime: (params as any).maxPageAttachTime,
       artifactsDir: params.artifactsDir,
-    }, new TimeoutSettings().timeout(params));
+    }), new TimeoutSettings().timeout(params));
     return await this._browserFromConnectResult(result);
   }
 
@@ -182,7 +182,6 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
     browser._connectToBrowserType(this, {}, undefined);
     if (result.defaultContext) {
       const context = BrowserContext.from(result.defaultContext);
-      await this._playwright.selectors._registerOnContext(context);
       await this._instrumentation.runAfterCreateBrowserContext(context);
     }
     return browser;

@@ -768,6 +768,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `CD-054` | `library/chromium/connect-over-cdp.spec.ts` | should not wait for a busy page longer than maxPageAttachTime |
 | `CD-055` | `library/chromium/connect-over-cdp.spec.ts` | should work with registered selector engines |
 | `CD-056` | `library/chromium/connect-over-cdp.spec.ts` | should respect the test id attribute in strict mode errors |
+| `CD-057` | `library/chromium/connect-over-cdp.spec.ts` | should work with registered selector engines in existing pages that logged a DOM element |
 
 ### CF — Code frame
 

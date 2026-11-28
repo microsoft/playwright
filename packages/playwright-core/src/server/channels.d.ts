@@ -2062,6 +2062,8 @@ export type BrowserTypeConnectOverCDPParams = {
   maxPageAttachTime?: number,
   artifactsDir?: string,
   transport?: Binary,
+  selectorEngines?: SelectorEngine[],
+  testIdAttributeName?: string,
 };
 export type BrowserTypeConnectOverCDPOptions = {
   endpointURL?: string,
@@ -2073,6 +2075,8 @@ export type BrowserTypeConnectOverCDPOptions = {
   maxPageAttachTime?: number,
   artifactsDir?: string,
   transport?: Binary,
+  selectorEngines?: SelectorEngine[],
+  testIdAttributeName?: string,
 };
 export type BrowserTypeConnectOverCDPResult = {
   browser: BrowserChannel,
