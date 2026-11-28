@@ -38,7 +38,7 @@ export class EventEmitter implements EventEmitterType {
   private _eventsCount = 0;
   private _maxListeners: number | undefined = undefined;
   readonly _pendingHandlers = new Map<EventType, Set<Promise<void>>>();
-  private _rejectionHandler: ((error: Error) => void) | undefined;
+  private _pendingHandlersToIgnoreErrors = new Set<Promise<void>>();
 
   constructor() {
     if (this._events === undefined || this._events === Object.getPrototypeOf(this)._events) {
@@ -100,11 +100,12 @@ export class EventEmitter implements EventEmitterType {
     }
     set.add(promise);
     promise.catch(e => {
-      if (this._rejectionHandler)
-        this._rejectionHandler(e);
-      else
+      if (!this._pendingHandlersToIgnoreErrors.has(promise))
         this._handleListenerError(type, e);
-    }).finally(() => set.delete(promise));
+    }).finally(() => {
+      set.delete(promise);
+      this._pendingHandlersToIgnoreErrors.delete(promise);
+    });
   }
 
   private _handleListenerError(type: EventType, error: unknown): void {
@@ -258,16 +259,12 @@ export class EventEmitter implements EventEmitterType {
       return this;
 
     if (options.behavior === 'wait') {
-      const errors: Error[] = [];
-      this._rejectionHandler = error => errors.push(error);
-      return this._waitFor(type).then(() => {
-        if (errors.length)
-          throw errors[0];
-      });
+      this._ignorePendingHandlerErrors(type);
+      return this._waitFor(type);
     }
 
     if (options.behavior === 'ignoreErrors')
-      this._rejectionHandler = () => {};
+      this._ignorePendingHandlerErrors(type);
 
     return Promise.resolve();
   }
@@ -342,9 +339,21 @@ export class EventEmitter implements EventEmitterType {
     return this._eventsCount > 0 && this._events ? Reflect.ownKeys(this._events) : [];
   }
 
+  private _ignorePendingHandlerErrors(type?: EventType) {
+    if (type !== undefined) {
+      for (const promise of this._pendingHandlers.get(type) || [])
+        this._pendingHandlersToIgnoreErrors.add(promise);
+    } else {
+      for (const pending of this._pendingHandlers.values()) {
+        for (const promise of pending)
+          this._pendingHandlersToIgnoreErrors.add(promise);
+      }
+    }
+  }
+
   private async _waitFor(type?: EventType) {
     let promises: Promise<void>[] = [];
-    if (type) {
+    if (type !== undefined) {
       promises = [...(this._pendingHandlers.get(type) || [])];
     } else {
       promises = [];
