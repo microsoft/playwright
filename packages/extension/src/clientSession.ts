@@ -17,23 +17,48 @@
 
 import { checkCdpMethod } from './cdpPolicy';
 
-import type { Channel } from './channel';
+import type { ClientChannel } from './channel';
 import type { OwnedTab } from './ownedTab';
 import type { TabRegistry } from './tabRegistry';
 import type { SessionOptions } from './types';
 
+type CDPCommand = {
+  id: number;
+  method: string;
+  params?: any;
+  sessionId?: string;
+};
+
+type Target = {
+  tab: OwnedTab;
+  sessionId: string;
+  targetInfo: { targetId: string };
+  // Sessions of the workers and the frames of the tab. Chrome gives their ids.
+  childSessionIds: Set<string>;
+};
+
+// One connected client. The client sends CDP commands and gets CDP events, as if it is connected to a browser
+// that has only the tabs of this client. Each attached tab is a target with a session.
+// This class is the only one that sends the commands of a client to Chrome, for all protocol versions.
 export class ClientSession {
   readonly options: SessionOptions;
-  private _channel: Channel;
+  private _channel: ClientChannel;
   private _registry: TabRegistry;
+  private _attachableTabIds = new Set<number>();
+  private _targets = new Map<number, Target>();
+  private _autoAttach = false;
+  private _lastSessionId = 0;
+  private _didInitialize!: () => void;
+  // The client gets no response before its first tabs are known.
+  private _initialized = new Promise<void>(resolve => this._didInitialize = resolve);
 
   onClose?: () => void;
 
-  constructor(channel: Channel, registry: TabRegistry, options: SessionOptions) {
+  constructor(channel: ClientChannel, registry: TabRegistry, options: SessionOptions) {
     this.options = options;
     this._channel = channel;
     this._registry = registry;
-    this._channel.onCommand = (method, params) => this._handleCommand(method, params);
+    this._channel.onMessage = message => void this._handleMessage(message);
     this._channel.onClose = () => this.onClose?.();
   }
 
@@ -42,68 +67,140 @@ export class ClientSession {
   }
 
   didInitialize(): void {
-    this._channel.sendEvent('extension.initialized', []);
+    this._didInitialize();
   }
 
   tabClaimed(tab: chrome.tabs.Tab): void {
-    this._channel.sendEvent('chrome.tabs.onCreated', [tab]);
+    this._attachableTabIds.add(tab.id!);
+    if (this._autoAttach)
+      void this._attach(tab.id!).catch(() => {});
   }
 
-  tabReleased(tabId: number): void {
-    // chrome.debugger.detach does not fire onDetach for the caller.
-    this.debuggerDetached(tabId, 'target_closed');
+  // The client lost the tab, the tab closed, or Chrome detached the debugger.
+  tabDetached(tabId: number): void {
+    this._attachableTabIds.delete(tabId);
+    const target = this._targets.get(tabId);
+    if (!target)
+      return;
+    this._targets.delete(tabId);
+    this._channel.send({
+      method: 'Target.detachedFromTarget',
+      params: { sessionId: target.sessionId, targetId: target.targetInfo.targetId },
+    });
   }
 
-  tabClosed(tabId: number, removeInfo: chrome.tabs.OnRemovedInfo): void {
-    this._channel.sendEvent('chrome.tabs.onRemoved', [tabId, removeInfo]);
+  cdpEvent(source: chrome.debugger.DebuggerSession, method: string, params?: any): void {
+    const target = this._targets.get(source.tabId!);
+    if (!target)
+      return;
+    if (method === 'Target.attachedToTarget')
+      target.childSessionIds.add(params.sessionId);
+    else if (method === 'Target.detachedFromTarget')
+      target.childSessionIds.delete(params.sessionId);
+    this._channel.send({ sessionId: source.sessionId ?? target.sessionId, method, params });
   }
 
-  debuggerDetached(tabId: number, reason: string): void {
-    this._channel.sendEvent('chrome.debugger.onDetach', [{ tabId }, reason]);
-  }
-
-  cdpEvent(source: chrome.debugger.DebuggerSession, method: string, params?: object): void {
-    this._channel.sendEvent('chrome.debugger.onEvent', [source, method, params]);
-  }
-
-  private async _handleCommand(method: string, params: any[]): Promise<unknown> {
-    switch (method) {
-      case 'chrome.debugger.attach': {
-        const [target, requiredVersion] = params;
-        return await this._ownedTab(target).attach(requiredVersion);
-      }
-      case 'chrome.debugger.detach': {
-        const [target] = params;
-        return await this._ownedTab(target).detach();
-      }
-      case 'chrome.debugger.sendCommand': {
-        const [target, cdpMethod, cdpParams] = params;
-        checkCdpMethod(cdpMethod);
-        return await this._ownedTab(target).sendCommand(target.sessionId, cdpMethod, cdpParams);
-      }
-      case 'chrome.tabs.create': {
-        const [{ url, active }] = params;
-        const tab = await chrome.tabs.create({ url, active });
-        // The response announces the tab to the client.
-        if (!this._channel.closed)
-          this._registry.claim(tab, this, { announce: false });
-        return tab;
-      }
-      case 'chrome.tabs.remove': {
-        const tabIds = [params[0]].flat() as number[];
-        for (const tabId of tabIds)
-          this._ownedTab({ tabId });
-        return await chrome.tabs.remove(tabIds);
-      }
+  private async _handleMessage({ id, method, params, sessionId }: CDPCommand): Promise<void> {
+    try {
+      await this._initialized;
+      const result = await this._handleCommand(method, params, sessionId);
+      this._channel.send({ id, sessionId, result: result ?? {} });
+    } catch (error: any) {
+      this._channel.send({ id, sessionId, error: cdpError(error) });
     }
-    throw new Error(`Unknown method: ${method}`);
   }
 
-  private _ownedTab(target: chrome.debugger.Debuggee): OwnedTab {
-    const onlyTabId = target?.tabId !== undefined && target.targetId === undefined && target.extensionId === undefined;
-    const tab = onlyTabId ? this._registry.ownedTab(target.tabId!) : undefined;
-    if (tab?.session !== this)
-      throw new Error(`Tab ${target?.tabId} is not owned by this client`);
-    return tab;
+  private async _handleCommand(method: string, params: any, sessionId: string | undefined): Promise<unknown> {
+    switch (method) {
+      case 'Browser.getVersion':
+        return { protocolVersion: '1.3', product: 'Chrome/Extension-Bridge', userAgent: 'CDP-Bridge-Server/1.0.0' };
+      case 'Browser.setDownloadBehavior':
+        return {};
+      case 'Target.setAutoAttach':
+        if (sessionId)
+          break;
+        this._autoAttach = true;
+        await Promise.all([...this._attachableTabIds].map(tabId => this._attach(tabId).catch(() => {})));
+        return {};
+      case 'Target.createTarget':
+        return await this._createTarget(params?.url);
+      case 'Target.closeTarget':
+        return await this._closeTarget(params?.targetId);
+      case 'Page.bringToFront':
+      case 'Target.activateTarget':
+        if (this.options.background)
+          return {};
+        break;
+    }
+    checkCdpMethod(method);
+    const target = this._targetForSession(method, sessionId);
+    return await target.tab.sendCommand(target.sessionId === sessionId ? undefined : sessionId, method, params);
   }
+
+  private async _createTarget(url: string | undefined): Promise<{ targetId: string }> {
+    const tab = await chrome.tabs.create({ url, active: !this.options.background });
+    if (this._channel.closed)
+      throw new Error('Client disconnected');
+    // The response announces the tab to the client.
+    this._registry.claim(tab, this, { announce: false });
+    this._attachableTabIds.add(tab.id!);
+    const target = await this._attach(tab.id!);
+    return { targetId: target.targetInfo.targetId };
+  }
+
+  private async _closeTarget(targetId: string | undefined): Promise<{ success: boolean }> {
+    const target = this._findTarget(target => target.targetInfo.targetId === targetId);
+    if (!target)
+      return { success: false };
+    await chrome.tabs.remove(target.tab.tabId);
+    return { success: true };
+  }
+
+  // A command with no session is for the browser. Chrome needs a tab for each command, and the result does not depend on the tab.
+  private _targetForSession(method: string, sessionId: string | undefined): Target {
+    if (!sessionId) {
+      const [target] = this._targets.values();
+      if (!target)
+        throw new Error(`No attached tab to forward browser-level command: ${method}`);
+      return target;
+    }
+    const target = this._findTarget(target => target.sessionId === sessionId || target.childSessionIds.has(sessionId));
+    if (!target)
+      throw new Error(`No tab found for sessionId: ${sessionId}`);
+    return target;
+  }
+
+  private async _attach(tabId: number): Promise<Target> {
+    const existing = this._targets.get(tabId);
+    if (existing)
+      return existing;
+    const tab = this._registry.ownedTab(tabId);
+    if (tab?.session !== this)
+      throw new Error(`Tab ${tabId} is not owned by this client`);
+    await tab.attach('1.3');
+    const { targetInfo } = await tab.sendCommand(undefined, 'Target.getTargetInfo') as { targetInfo: { targetId: string } };
+    const target: Target = { tab, sessionId: `pw-tab-${++this._lastSessionId}`, targetInfo, childSessionIds: new Set() };
+    this._targets.set(tabId, target);
+    this._channel.send({
+      method: 'Target.attachedToTarget',
+      // `tabId` is not in CDP. It is the id of the tab in the chrome.tabs API.
+      params: { sessionId: target.sessionId, targetInfo: { ...targetInfo, attached: true, tabId }, waitingForDebugger: false },
+    });
+    return target;
+  }
+
+  private _findTarget(predicate: (target: Target) => boolean): Target | undefined {
+    return [...this._targets.values()].find(predicate);
+  }
+}
+
+// chrome.debugger gives the CDP error as JSON in the message.
+function cdpError(error: Error): { code?: number, message: string } {
+  try {
+    const { code, message } = JSON.parse(error.message);
+    if (typeof message === 'string')
+      return { code, message };
+  } catch {
+  }
+  return { message: error.message };
 }

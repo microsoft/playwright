@@ -17,11 +17,20 @@
 
 const OPEN_TIMEOUT_MS = 5000;
 
-export class Channel {
+// The connection of a client: CDP commands from the client, CDP responses and events to it.
+export interface ClientChannel {
+  onMessage?: (message: any) => void;
+  onClose?: () => void;
+  readonly closed: boolean;
+  send(message: object): void;
+  close(reason: string): void;
+}
+
+export class Channel implements ClientChannel {
   private _ws: WebSocket;
   private _closed = false;
 
-  onCommand?: (method: string, params: any[]) => Promise<unknown>;
+  onMessage?: (message: any) => void;
   onClose?: () => void;
 
   static async open(url: string): Promise<Channel> {
@@ -44,7 +53,7 @@ export class Channel {
 
   private constructor(ws: WebSocket) {
     this._ws = ws;
-    this._ws.onmessage = event => void this._onMessage(event.data);
+    this._ws.onmessage = event => this._onMessage(event.data);
     this._ws.onclose = () => this._didClose();
   }
 
@@ -52,8 +61,9 @@ export class Channel {
     return this._closed;
   }
 
-  sendEvent(method: string, params: unknown[]): void {
-    this._send({ method, params });
+  send(message: object): void {
+    if (this._ws.readyState === WebSocket.OPEN)
+      this._ws.send(JSON.stringify(message));
   }
 
   close(reason: string): void {
@@ -62,8 +72,8 @@ export class Channel {
     this._didClose();
   }
 
-  private async _onMessage(data: string): Promise<void> {
-    let message: { id: number, method: string, params?: any[] };
+  private _onMessage(data: string): void {
+    let message: any;
     try {
       message = JSON.parse(data);
     } catch (error: any) {
@@ -71,17 +81,7 @@ export class Channel {
       this.close(`Error parsing message: ${error.message}`);
       return;
     }
-    try {
-      const result = await this.onCommand!(message.method, message.params ?? []);
-      this._send({ id: message.id, result: result ?? {} });
-    } catch (error: any) {
-      this._send({ id: message.id, error: error.message });
-    }
-  }
-
-  private _send(message: object): void {
-    if (this._ws.readyState === WebSocket.OPEN)
-      this._ws.send(JSON.stringify(message));
+    this.onMessage?.(message);
   }
 
   private _didClose(): void {

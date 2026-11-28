@@ -39,7 +39,7 @@ import { registry } from '../registry';
 import { WebSocketTransport } from '../transport';
 import { CRDevTools } from './crDevTools';
 import { parseAttachURL } from './crAttachURL';
-import { startExtensionRelay } from './crExtensionRelay';
+import { connectToExtension } from './crExtensionTransport';
 import { Browser } from '../browser';
 
 import type { HTTPRequestParams } from '@utils/network';
@@ -88,13 +88,8 @@ export class Chromium extends BrowserType {
   async _connectOverCDPInternal(progress: Progress, endpointURL: string, options: types.LaunchOptions & { headers?: types.HeadersArray, isLocal?: boolean, noDefaults?: boolean, isWebView?: boolean, maxPageAttachTime?: number, artifactsDir?: string }, onClose?: () => Promise<void>): Promise<CRBrowser> {
     const attachURL = parseAttachURL(endpointURL);
     if (attachURL?.kind === 'extension') {
-      const relay = await startExtensionRelay(progress, attachURL, headersArrayToObject(options.headers ?? [], true));
-      try {
-        return await this._connectOverCDPInternal(progress, relay.cdpEndpoint(), { ...options, headers: undefined, isLocal: true }, async () => relay.stop());
-      } catch (e) {
-        relay.stop();
-        throw e;
-      }
+      const transport = await connectToExtension(progress, attachURL, headersArrayToObject(options.headers ?? [], true));
+      return this._connectOverCDPImpl(progress, transport, () => transport.closeAndWait(), { ...options, isLocal: true }, onClose);
     }
 
     let headersMap: { [key: string]: string; } | undefined;
@@ -125,14 +120,7 @@ export class Chromium extends BrowserType {
   }
 
   private async _connectOverCDPImpl(progress: Progress, transport: ConnectionTransport, closeAndWait: () => Promise<void>, options: types.LaunchOptions & { isLocal?: boolean, noDefaults?: boolean, isWebView?: boolean, maxPageAttachTime?: number, artifactsDir?: string }, onClose?: () => Promise<void>) {
-    let artifactsDir: string;
     const tempDirectories: string[] = [];
-    if (options.artifactsDir) {
-      artifactsDir = options.artifactsDir;
-    } else {
-      artifactsDir = await progress.race(fs.promises.mkdtemp(ARTIFACTS_FOLDER));
-      tempDirectories.push(artifactsDir);
-    }
     const doCleanup = async () => {
       await removeFolders(tempDirectories);
       const cb = onClose;
@@ -146,6 +134,11 @@ export class Chromium extends BrowserType {
     };
 
     try {
+      let artifactsDir = options.artifactsDir;
+      if (!artifactsDir) {
+        artifactsDir = await progress.race(fs.promises.mkdtemp(ARTIFACTS_FOLDER));
+        tempDirectories.push(artifactsDir);
+      }
       const browserProcess: BrowserProcess = { close: doClose, kill: doClose };
       const persistent: types.BrowserContextOptions = {
         noDefaultViewport: true,

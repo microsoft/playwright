@@ -29,7 +29,7 @@ export class TabRegistry {
 
   constructor(listeners: ChromeListeners) {
     listeners.add(chrome.tabs.onCreated, tab => this._onTabCreated(tab));
-    listeners.add(chrome.tabs.onRemoved, (tabId, removeInfo) => this._onTabRemoved(tabId, removeInfo));
+    listeners.add(chrome.tabs.onRemoved, tabId => this._onTabRemoved(tabId));
     listeners.add(chrome.tabs.onUpdated, (tabId, changeInfo, tab) => {
       if (changeInfo.url !== undefined)
         this._tabs.get(tabId)?.didNavigate(tab);
@@ -81,7 +81,9 @@ export class TabRegistry {
       throw new Error('This tab is already connected to another client');
     if (this._reservedTabIds.has(tabId))
       throw new Error('This tab is a connect page');
-    this._tabs.set(tabId, new OwnedTab(tab, session, options.announce));
+    const ownedTab = new OwnedTab(tab, session, options.announce);
+    this._tabs.set(tabId, ownedTab);
+    ownedTab.announce(tab);
     this.onTabClaimed?.(tab, session);
   }
 
@@ -90,7 +92,7 @@ export class TabRegistry {
     if (!tab)
       return;
     this._tabs.delete(tabId);
-    tab.session.tabReleased(tabId);
+    tab.session.tabDetached(tabId);
     await tab.dispose();
   }
 
@@ -109,13 +111,13 @@ export class TabRegistry {
       this.claim(tab, opener);
   }
 
-  private _onTabRemoved(tabId: number, removeInfo: chrome.tabs.OnRemovedInfo): void {
+  private _onTabRemoved(tabId: number): void {
     this._reservedTabIds.delete(tabId);
     const tab = this._tabs.get(tabId);
     if (!tab)
       return;
     this._tabs.delete(tabId);
-    tab.session.tabClosed(tabId, removeInfo);
+    tab.session.tabDetached(tabId);
     void tab.dispose();
   }
 }

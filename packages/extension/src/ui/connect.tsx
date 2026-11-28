@@ -27,7 +27,8 @@ type Status =
   | { type: 'connecting' | 'connected' | 'error', message: string }
   | { type: 'error', versionMismatch: { extensionVersion: string } };
 
-const SUPPORTED_PROTOCOL_VERSION = 2;
+// Version 2 clients send chrome.* commands. Version 3 clients send CDP.
+const SUPPORTED_PROTOCOL_VERSIONS = [2, 3];
 const params = new URLSearchParams(window.location.search);
 const options = sessionOptions();
 
@@ -41,7 +42,7 @@ function sessionOptions(): SessionOptions {
     title: params.get('tabGroupTitle') ?? undefined,
     color: params.get('tabGroupColor') ?? undefined,
   };
-  return { clientName, tabGroup, background: params.get('background') === 'true' };
+  return { protocolVersion: requestedProtocolVersion(), clientName, tabGroup, background: params.get('background') === 'true' };
 }
 
 function relayUrlError(relayUrl: string | null): string | undefined {
@@ -56,12 +57,15 @@ function relayUrlError(relayUrl: string | null): string | undefined {
   }
 }
 
+function requestedProtocolVersion(): number {
+  const version = parseInt(params.get('protocolVersion') ?? '', 10);
+  return isNaN(version) ? 1 : version;
+}
+
 function protocolVersionError(): Status | undefined {
-  const parsedVersion = parseInt(params.get('protocolVersion') ?? '', 10);
-  const requestedVersion = isNaN(parsedVersion) ? 1 : parsedVersion;
-  if (requestedVersion > SUPPORTED_PROTOCOL_VERSION)
+  if (options.protocolVersion > Math.max(...SUPPORTED_PROTOCOL_VERSIONS))
     return { type: 'error', versionMismatch: { extensionVersion: chrome.runtime.getManifest().version } };
-  if (requestedVersion < SUPPORTED_PROTOCOL_VERSION)
+  if (options.protocolVersion < Math.min(...SUPPORTED_PROTOCOL_VERSIONS))
     return { type: 'error', message: 'The client uses an unsupported protocol version. Update Playwright MCP or CLI to the latest version.' };
 }
 

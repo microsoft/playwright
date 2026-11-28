@@ -17,6 +17,7 @@
 
 import { Channel } from './channel';
 import { ClientSession } from './clientSession';
+import { ProtocolV2Channel } from './protocolV2';
 
 import type { ChromeListeners } from './chromeListeners';
 import type { TabGroupManager } from './tabGroupManager';
@@ -66,7 +67,8 @@ export class ConnectionBroker {
       this._didChangeActivity();
       throw error;
     });
-    const session = new ClientSession(channel, this._registry, options);
+    // A version 3 client speaks CDP. For a version 2 client, a layer changes its chrome.* protocol into CDP.
+    const session = new ClientSession(options.protocolVersion === 2 ? new ProtocolV2Channel(channel) : channel, this._registry, options);
     const sessionId = ++this._lastSessionId;
     this._sessions.set(sessionId, session);
     this._didChangeActivity();
